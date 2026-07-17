@@ -5,11 +5,15 @@ import jwtPlugin from "./plugins/jwt.js";
 import errorHandler from "./plugins/error-handler.js";
 
 import { healthRoutes } from "./routes/health.js";
+import authModule from "./modules/auth/index.js";
+
 
 export function buildApp() {
+
   const app = Fastify({
     logger: true,
   });
+
 
   app.register(errorHandler);
 
@@ -17,7 +21,19 @@ export function buildApp() {
 
   app.register(jwtPlugin);
 
-  app.register(healthRoutes);
+
+  app.register(
+    healthRoutes,
+  );
+
+
+  app.register(
+    authModule,
+    {
+      prefix: "/api/v1",
+    },
+  );
+
 
   return app;
 }
