@@ -1,0 +1,16 @@
+{
+  "name": "imai",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@11.12.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "echo Development",
+    "build": "echo Build",
+    "test": "echo Test",
+    "lint": "echo Lint",
+    "format": "echo Format"
+  }
+}
