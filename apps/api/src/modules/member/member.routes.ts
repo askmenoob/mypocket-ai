@@ -6,6 +6,12 @@ import {
   MemberController,
 } from "./member.controller.js";
 
+import {
+  requireRole,
+  Roles,
+} from "../../shared/auth/index.js";
+
+
 
 const memberRoutes:
   FastifyPluginAsync = async (
@@ -19,8 +25,17 @@ const memberRoutes:
       );
 
 
+
     app.get(
       "/members",
+      {
+        preHandler:
+          requireRole(
+            Roles.OWNER,
+            Roles.ADMIN,
+            Roles.MEMBER,
+          ),
+      },
       controller.list,
     );
 
