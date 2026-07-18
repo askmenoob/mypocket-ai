@@ -55,7 +55,8 @@ export const ModelName = {
   Workspace: 'Workspace',
   GoogleAccount: 'GoogleAccount',
   WhatsAppInstance: 'WhatsAppInstance',
-  Subscription: 'Subscription'
+  Subscription: 'Subscription',
+  WorkspaceMember: 'WorkspaceMember'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -101,6 +102,8 @@ export const GoogleAccountScalarFieldEnum = {
   email: 'email',
   refreshToken: 'refreshToken',
   accessToken: 'accessToken',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
   workspaceId: 'workspaceId'
 } as const
 
@@ -109,9 +112,11 @@ export type GoogleAccountScalarFieldEnum = (typeof GoogleAccountScalarFieldEnum)
 
 export const WhatsAppInstanceScalarFieldEnum = {
   id: 'id',
-  name: 'name',
-  instanceKey: 'instanceKey',
+  instanceName: 'instanceName',
+  phoneNumber: 'phoneNumber',
   status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
   workspaceId: 'workspaceId'
 } as const
 
@@ -121,11 +126,25 @@ export type WhatsAppInstanceScalarFieldEnum = (typeof WhatsAppInstanceScalarFiel
 export const SubscriptionScalarFieldEnum = {
   id: 'id',
   plan: 'plan',
+  status: 'status',
   expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
   userId: 'userId'
 } as const
 
 export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
+
+
+export const WorkspaceMemberScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  workspaceId: 'workspaceId',
+  role: 'role',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkspaceMemberScalarFieldEnum = (typeof WorkspaceMemberScalarFieldEnum)[keyof typeof WorkspaceMemberScalarFieldEnum]
 
 
 export const SortOrder = {

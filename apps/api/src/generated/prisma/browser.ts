@@ -42,3 +42,8 @@ export type WhatsAppInstance = Prisma.WhatsAppInstanceModel
  * 
  */
 export type Subscription = Prisma.SubscriptionModel
+/**
+ * Model WorkspaceMember
+ * 
+ */
+export type WorkspaceMember = Prisma.WorkspaceMemberModel

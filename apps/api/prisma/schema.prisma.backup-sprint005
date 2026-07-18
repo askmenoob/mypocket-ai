@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  workspaces    Workspace[]
+  subscription  Subscription?
+}
+
+model Workspace {
+  id          String               @id @default(cuid())
+  name        String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  ownerId     String
+  owner       User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  google      GoogleAccount?
+  whatsapp    WhatsAppInstance[]
+}
+
+model GoogleAccount {
+  id            String      @id @default(cuid())
+  email         String
+  refreshToken  String?
+  accessToken   String?
+
+  workspaceId   String      @unique
+  workspace     Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model WhatsAppInstance {
+  id            String      @id @default(cuid())
+  name          String
+  instanceKey   String      @unique
+  status        String      @default("DISCONNECTED")
+
+  workspaceId   String
+  workspace     Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id            String      @id @default(cuid())
+  plan          String
+  expiresAt     DateTime?
+
+  userId        String      @unique
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

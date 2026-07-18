@@ -1,6 +1,7 @@
 import type {
   FastifyInstance,
   FastifyRequest,
+  FastifyReply,
 } from "fastify";
 
 import { AuthService } from "./auth.service.js";
@@ -28,8 +29,8 @@ export class AuthController {
 
 
   googleLogin = async (
-    _request,
-    reply,
+    _request: FastifyRequest,
+    reply: FastifyReply,
   ) => {
 
     const url =

@@ -185,6 +185,7 @@ export type WorkspaceWhereInput = {
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   google?: Prisma.XOR<Prisma.GoogleAccountNullableScalarRelationFilter, Prisma.GoogleAccountWhereInput> | null
   whatsapp?: Prisma.WhatsAppInstanceListRelationFilter
+  members?: Prisma.WorkspaceMemberListRelationFilter
 }
 
 export type WorkspaceOrderByWithRelationInput = {
@@ -196,6 +197,7 @@ export type WorkspaceOrderByWithRelationInput = {
   owner?: Prisma.UserOrderByWithRelationInput
   google?: Prisma.GoogleAccountOrderByWithRelationInput
   whatsapp?: Prisma.WhatsAppInstanceOrderByRelationAggregateInput
+  members?: Prisma.WorkspaceMemberOrderByRelationAggregateInput
 }
 
 export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
@@ -210,6 +212,7 @@ export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   google?: Prisma.XOR<Prisma.GoogleAccountNullableScalarRelationFilter, Prisma.GoogleAccountWhereInput> | null
   whatsapp?: Prisma.WhatsAppInstanceListRelationFilter
+  members?: Prisma.WorkspaceMemberListRelationFilter
 }, "id">
 
 export type WorkspaceOrderByWithAggregationInput = {
@@ -242,6 +245,7 @@ export type WorkspaceCreateInput = {
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   google?: Prisma.GoogleAccountCreateNestedOneWithoutWorkspaceInput
   whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateInput = {
@@ -252,6 +256,7 @@ export type WorkspaceUncheckedCreateInput = {
   ownerId: string
   google?: Prisma.GoogleAccountUncheckedCreateNestedOneWithoutWorkspaceInput
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUpdateInput = {
@@ -262,6 +267,7 @@ export type WorkspaceUpdateInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   google?: Prisma.GoogleAccountUpdateOneWithoutWorkspaceNestedInput
   whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateInput = {
@@ -272,6 +278,7 @@ export type WorkspaceUncheckedUpdateInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   google?: Prisma.GoogleAccountUncheckedUpdateOneWithoutWorkspaceNestedInput
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateManyInput = {
@@ -406,6 +413,20 @@ export type WorkspaceUpdateOneRequiredWithoutWhatsappNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutWhatsappInput, Prisma.WorkspaceUpdateWithoutWhatsappInput>, Prisma.WorkspaceUncheckedUpdateWithoutWhatsappInput>
 }
 
+export type WorkspaceCreateNestedOneWithoutMembersInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutMembersInput, Prisma.WorkspaceUncheckedCreateWithoutMembersInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutMembersInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+}
+
+export type WorkspaceUpdateOneRequiredWithoutMembersNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutMembersInput, Prisma.WorkspaceUncheckedCreateWithoutMembersInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutMembersInput
+  upsert?: Prisma.WorkspaceUpsertWithoutMembersInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutMembersInput, Prisma.WorkspaceUpdateWithoutMembersInput>, Prisma.WorkspaceUncheckedUpdateWithoutMembersInput>
+}
+
 export type WorkspaceCreateWithoutOwnerInput = {
   id?: string
   name: string
@@ -413,6 +434,7 @@ export type WorkspaceCreateWithoutOwnerInput = {
   updatedAt?: Date | string
   google?: Prisma.GoogleAccountCreateNestedOneWithoutWorkspaceInput
   whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutOwnerInput = {
@@ -422,6 +444,7 @@ export type WorkspaceUncheckedCreateWithoutOwnerInput = {
   updatedAt?: Date | string
   google?: Prisma.GoogleAccountUncheckedCreateNestedOneWithoutWorkspaceInput
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutOwnerInput = {
@@ -468,6 +491,7 @@ export type WorkspaceCreateWithoutGoogleInput = {
   updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutGoogleInput = {
@@ -477,6 +501,7 @@ export type WorkspaceUncheckedCreateWithoutGoogleInput = {
   updatedAt?: Date | string
   ownerId: string
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutGoogleInput = {
@@ -502,6 +527,7 @@ export type WorkspaceUpdateWithoutGoogleInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutGoogleInput = {
@@ -511,6 +537,7 @@ export type WorkspaceUncheckedUpdateWithoutGoogleInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutWhatsappInput = {
@@ -520,6 +547,7 @@ export type WorkspaceCreateWithoutWhatsappInput = {
   updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   google?: Prisma.GoogleAccountCreateNestedOneWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutWhatsappInput = {
@@ -529,6 +557,7 @@ export type WorkspaceUncheckedCreateWithoutWhatsappInput = {
   updatedAt?: Date | string
   ownerId: string
   google?: Prisma.GoogleAccountUncheckedCreateNestedOneWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutWhatsappInput = {
@@ -554,6 +583,7 @@ export type WorkspaceUpdateWithoutWhatsappInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   google?: Prisma.GoogleAccountUpdateOneWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutWhatsappInput = {
@@ -563,6 +593,63 @@ export type WorkspaceUncheckedUpdateWithoutWhatsappInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   google?: Prisma.GoogleAccountUncheckedUpdateOneWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceCreateWithoutMembersInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
+  google?: Prisma.GoogleAccountCreateNestedOneWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
+}
+
+export type WorkspaceUncheckedCreateWithoutMembersInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  ownerId: string
+  google?: Prisma.GoogleAccountUncheckedCreateNestedOneWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+}
+
+export type WorkspaceCreateOrConnectWithoutMembersInput = {
+  where: Prisma.WorkspaceWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutMembersInput, Prisma.WorkspaceUncheckedCreateWithoutMembersInput>
+}
+
+export type WorkspaceUpsertWithoutMembersInput = {
+  update: Prisma.XOR<Prisma.WorkspaceUpdateWithoutMembersInput, Prisma.WorkspaceUncheckedUpdateWithoutMembersInput>
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutMembersInput, Prisma.WorkspaceUncheckedCreateWithoutMembersInput>
+  where?: Prisma.WorkspaceWhereInput
+}
+
+export type WorkspaceUpdateToOneWithWhereWithoutMembersInput = {
+  where?: Prisma.WorkspaceWhereInput
+  data: Prisma.XOR<Prisma.WorkspaceUpdateWithoutMembersInput, Prisma.WorkspaceUncheckedUpdateWithoutMembersInput>
+}
+
+export type WorkspaceUpdateWithoutMembersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
+  google?: Prisma.GoogleAccountUpdateOneWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceUncheckedUpdateWithoutMembersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  google?: Prisma.GoogleAccountUncheckedUpdateOneWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateManyOwnerInput = {
@@ -579,6 +666,7 @@ export type WorkspaceUpdateWithoutOwnerInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   google?: Prisma.GoogleAccountUpdateOneWithoutWorkspaceNestedInput
   whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutOwnerInput = {
@@ -588,6 +676,7 @@ export type WorkspaceUncheckedUpdateWithoutOwnerInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   google?: Prisma.GoogleAccountUncheckedUpdateOneWithoutWorkspaceNestedInput
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateManyWithoutOwnerInput = {
@@ -604,10 +693,12 @@ export type WorkspaceUncheckedUpdateManyWithoutOwnerInput = {
 
 export type WorkspaceCountOutputType = {
   whatsapp: number
+  members: number
 }
 
 export type WorkspaceCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   whatsapp?: boolean | WorkspaceCountOutputTypeCountWhatsappArgs
+  members?: boolean | WorkspaceCountOutputTypeCountMembersArgs
 }
 
 /**
@@ -627,6 +718,13 @@ export type WorkspaceCountOutputTypeCountWhatsappArgs<ExtArgs extends runtime.Ty
   where?: Prisma.WhatsAppInstanceWhereInput
 }
 
+/**
+ * WorkspaceCountOutputType without action
+ */
+export type WorkspaceCountOutputTypeCountMembersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkspaceMemberWhereInput
+}
+
 
 export type WorkspaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -637,6 +735,7 @@ export type WorkspaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   google?: boolean | Prisma.Workspace$googleArgs<ExtArgs>
   whatsapp?: boolean | Prisma.Workspace$whatsappArgs<ExtArgs>
+  members?: boolean | Prisma.Workspace$membersArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workspace"]>
 
@@ -671,6 +770,7 @@ export type WorkspaceInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   google?: boolean | Prisma.Workspace$googleArgs<ExtArgs>
   whatsapp?: boolean | Prisma.Workspace$whatsappArgs<ExtArgs>
+  members?: boolean | Prisma.Workspace$membersArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkspaceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -686,6 +786,7 @@ export type $WorkspacePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     owner: Prisma.$UserPayload<ExtArgs>
     google: Prisma.$GoogleAccountPayload<ExtArgs> | null
     whatsapp: Prisma.$WhatsAppInstancePayload<ExtArgs>[]
+    members: Prisma.$WorkspaceMemberPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1090,6 +1191,7 @@ export interface Prisma__WorkspaceClient<T, Null = never, ExtArgs extends runtim
   owner<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   google<T extends Prisma.Workspace$googleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$googleArgs<ExtArgs>>): Prisma.Prisma__GoogleAccountClient<runtime.Types.Result.GetResult<Prisma.$GoogleAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   whatsapp<T extends Prisma.Workspace$whatsappArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$whatsappArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WhatsAppInstancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  members<T extends Prisma.Workspace$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1565,6 +1667,30 @@ export type Workspace$whatsappArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.WhatsAppInstanceScalarFieldEnum | Prisma.WhatsAppInstanceScalarFieldEnum[]
+}
+
+/**
+ * Workspace.members
+ */
+export type Workspace$membersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkspaceMember
+   */
+  select?: Prisma.WorkspaceMemberSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkspaceMember
+   */
+  omit?: Prisma.WorkspaceMemberOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkspaceMemberInclude<ExtArgs> | null
+  where?: Prisma.WorkspaceMemberWhereInput
+  orderBy?: Prisma.WorkspaceMemberOrderByWithRelationInput | Prisma.WorkspaceMemberOrderByWithRelationInput[]
+  cursor?: Prisma.WorkspaceMemberWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WorkspaceMemberScalarFieldEnum | Prisma.WorkspaceMemberScalarFieldEnum[]
 }
 
 /**
