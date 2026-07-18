@@ -8,6 +8,7 @@ import { healthRoutes } from "./routes/health.js";
 import authModule from "./modules/auth/index.js";
 import workspaceModule from "./modules/workspace/index.js";
 import memberModule from "./modules/member/index.js";
+import transactionModule from "./modules/transaction/index.js";
 
 
 export function buildApp() {
@@ -47,6 +48,14 @@ export function buildApp() {
 
   app.register(
     memberModule,
+    {
+      prefix: "/api/v1",
+    },
+  );
+
+
+  app.register(
+    transactionModule,
     {
       prefix: "/api/v1",
     },

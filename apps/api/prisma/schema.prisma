@@ -24,6 +24,8 @@ model User {
   workspaces   Workspace[]
   memberships  WorkspaceMember[]
   subscription Subscription?
+
+  transactions Transaction[]
 }
 
 model Workspace {
@@ -38,6 +40,11 @@ model Workspace {
   google   GoogleAccount?
   whatsapp WhatsAppInstance[]
   members  WorkspaceMember[]
+
+  transactions   Transaction[]
+  categories     Category[]
+  merchants      Merchant[]
+  paymentMethods PaymentMethod[]
 }
 
 model GoogleAccount {
@@ -54,10 +61,10 @@ model GoogleAccount {
 }
 
 model WhatsAppInstance {
-  id           String @id @default(cuid())
-  instanceName String @unique
+  id           String  @id @default(cuid())
+  instanceName String  @unique
   phoneNumber  String?
-  status       String @default("OFFLINE")
+  status       String  @default("OFFLINE")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,4 +101,103 @@ model WorkspaceMember {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, workspaceId])
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+}
+
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Transaction {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  amount Decimal
+
+  currency String @default("MYR")
+
+  type TransactionType
+
+  status TransactionStatus @default(PENDING)
+
+  description String?
+
+  transactionDate DateTime
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  merchantId String?
+  merchant   Merchant? @relation(fields: [merchantId], references: [id])
+
+  paymentMethodId String?
+  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+
+  receiptUrl String?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([createdById])
+}
+
+model Category {
+  id String @id @default(cuid())
+
+  workspaceId String
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  name String
+
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([workspaceId, name])
+}
+
+model Merchant {
+  id String @id @default(cuid())
+
+  workspaceId String
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  name String
+
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([workspaceId, name])
+}
+
+model PaymentMethod {
+  id String @id @default(cuid())
+
+  workspaceId String
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  name String
+
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([workspaceId, name])
 }
