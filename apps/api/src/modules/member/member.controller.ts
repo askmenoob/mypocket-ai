@@ -3,9 +3,16 @@ import type {
   FastifyRequest,
 } from "fastify";
 
+
 import {
   MemberService,
 } from "./member.service.js";
+
+
+import {
+  CreateMemberSchema,
+} from "./member.schemas.js";
+
 
 
 export class MemberController {
@@ -41,6 +48,34 @@ export class MemberController {
     return this.service
       .getMembers(
         request.user.workspaceId,
+      );
+
+  };
+
+
+
+
+  add = async (
+    request: FastifyRequest,
+  ) => {
+
+
+    await request.jwtVerify();
+
+
+
+    const body =
+      CreateMemberSchema.parse(
+        request.body,
+      );
+
+
+
+    return this.service
+      .addMember(
+        request.user.workspaceId,
+        body.email,
+        body.role,
       );
 
   };

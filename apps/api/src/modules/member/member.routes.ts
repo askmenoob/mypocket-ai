@@ -2,9 +2,11 @@ import type {
   FastifyPluginAsync,
 } from "fastify";
 
+
 import {
   MemberController,
 } from "./member.controller.js";
+
 
 import {
   requireRole,
@@ -40,7 +42,22 @@ const memberRoutes:
     );
 
 
+
+    app.post(
+      "/members",
+      {
+        preHandler:
+          requireRole(
+            Roles.OWNER,
+            Roles.ADMIN,
+          ),
+      },
+      controller.add,
+    );
+
+
 };
+
 
 
 export default memberRoutes;

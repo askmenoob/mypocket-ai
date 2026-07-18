@@ -62,9 +62,63 @@ export class MemberRepository {
 
 
 
+  async findUserByEmail(
+    email: string,
+  ) {
+
+    return this.prisma.user.findUnique({
+
+      where: {
+        email,
+      },
+
+    });
+
+  }
+
+
+
+  async createMember(
+    workspaceId: string,
+    userId: string,
+    role:
+      "OWNER"
+      | "ADMIN"
+      | "MEMBER"
+      | "VIEWER",
+  ) {
+
+    return this.prisma.workspaceMember.create({
+
+      data: {
+
+        workspaceId,
+
+        userId,
+
+        role,
+
+      },
+
+      include: {
+
+        user: true,
+
+      },
+
+    });
+
+  }
+
+
+
   async updateRole(
     id: string,
-    role: "OWNER" | "ADMIN" | "MEMBER" | "VIEWER",
+    role:
+      "OWNER"
+      | "ADMIN"
+      | "MEMBER"
+      | "VIEWER",
   ) {
 
     return this.prisma.workspaceMember.update({

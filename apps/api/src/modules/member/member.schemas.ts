@@ -10,11 +10,36 @@ export const MemberRoleSchema =
   ]);
 
 
+
+export const CreateMemberSchema =
+  z.object({
+
+    email:
+      z.string()
+        .email(),
+
+
+    role:
+      MemberRoleSchema
+        .default("MEMBER"),
+
+  });
+
+
+
+export type CreateMemberInput =
+  z.infer<
+    typeof CreateMemberSchema
+  >;
+
+
+
 export const WorkspaceMemberResponseSchema =
   z.object({
 
     id:
       z.string(),
+
 
     user:
       z.object({
@@ -30,10 +55,12 @@ export const WorkspaceMemberResponseSchema =
 
       }),
 
+
     role:
       MemberRoleSchema,
 
   });
+
 
 
 export type WorkspaceMemberResponse =

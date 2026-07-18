@@ -46,17 +46,11 @@ export class AuthRepository {
 
       include: {
 
-        workspaces: {
+        memberships: {
 
           include: {
 
-            members: {
-
-              where: {
-                userId,
-              },
-
-            },
+            workspace: true,
 
           },
 

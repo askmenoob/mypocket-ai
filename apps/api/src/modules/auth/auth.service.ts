@@ -115,27 +115,27 @@ export class AuthService {
     }
 
 
-    const workspace =
-      user.workspaces[0];
-
-
-    if (!workspace) {
-
-      throw new Error(
-        "WORKSPACE_NOT_FOUND",
-      );
-
-    }
-
-
     const membership =
-      workspace.members[0];
+      user.memberships[0];
 
 
     if (!membership) {
 
       throw new Error(
         "WORKSPACE_MEMBERSHIP_NOT_FOUND",
+      );
+
+    }
+
+
+    const workspace =
+      membership.workspace;
+
+
+    if (!workspace) {
+
+      throw new Error(
+        "WORKSPACE_NOT_FOUND",
       );
 
     }
