@@ -11,6 +11,7 @@ import {
 
 import {
   CreateMemberSchema,
+  UpdateMemberRoleSchema,
 } from "./member.schemas.js";
 
 
@@ -40,9 +41,7 @@ export class MemberController {
     request: FastifyRequest,
   ) => {
 
-
     await request.jwtVerify();
-
 
 
     return this.service
@@ -59,9 +58,7 @@ export class MemberController {
     request: FastifyRequest,
   ) => {
 
-
     await request.jwtVerify();
-
 
 
     const body =
@@ -70,12 +67,64 @@ export class MemberController {
       );
 
 
-
     return this.service
       .addMember(
         request.user.workspaceId,
         body.email,
         body.role,
+      );
+
+  };
+
+
+
+
+  updateRole = async (
+    request: FastifyRequest<{
+      Params: {
+        id:string;
+      };
+    }>,
+  ) => {
+
+    await request.jwtVerify();
+
+
+    const body =
+      UpdateMemberRoleSchema.parse(
+        request.body,
+      );
+
+
+    return this.service
+      .updateRole(
+        request.user.userId,
+        request.user.workspaceId,
+        request.params.id,
+        body.role,
+      );
+
+  };
+
+
+
+
+  remove = async (
+    request: FastifyRequest<{
+      Params:{
+        id:string;
+      };
+    }>,
+  ) => {
+
+    await request.jwtVerify();
+
+
+    return this.service
+      .removeMember(
+        request.user.userId,
+        request.user.workspaceId,
+        request.params.id,
       );
 
   };

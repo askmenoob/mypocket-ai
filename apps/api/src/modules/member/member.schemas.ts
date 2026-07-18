@@ -34,6 +34,23 @@ export type CreateMemberInput =
 
 
 
+export const UpdateMemberRoleSchema =
+  z.object({
+
+    role:
+      MemberRoleSchema,
+
+  });
+
+
+
+export type UpdateMemberRoleInput =
+  z.infer<
+    typeof UpdateMemberRoleSchema
+  >;
+
+
+
 export const WorkspaceMemberResponseSchema =
   z.object({
 

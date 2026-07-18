@@ -78,6 +78,32 @@ export class MemberRepository {
 
 
 
+  async findMembership(
+    userId: string,
+    workspaceId: string,
+  ) {
+
+    return this.prisma.workspaceMember.findUnique({
+
+      where: {
+
+        userId_workspaceId: {
+
+          userId,
+
+          workspaceId,
+
+        },
+
+      },
+
+    });
+
+  }
+
+
+
+
   async createMember(
     workspaceId: string,
     userId: string,

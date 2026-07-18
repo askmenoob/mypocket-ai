@@ -56,6 +56,42 @@ const memberRoutes:
     );
 
 
+
+    app.patch<{
+      Params:{
+        id:string;
+      };
+    }>(
+      "/members/:id/role",
+      {
+        preHandler:
+          requireRole(
+            Roles.OWNER,
+            Roles.ADMIN,
+          ),
+      },
+      controller.updateRole,
+    );
+
+
+
+    app.delete<{
+      Params:{
+        id:string;
+      };
+    }>(
+      "/members/:id",
+      {
+        preHandler:
+          requireRole(
+            Roles.OWNER,
+            Roles.ADMIN,
+          ),
+      },
+      controller.remove,
+    );
+
+
 };
 
 
