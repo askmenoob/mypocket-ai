@@ -95,4 +95,78 @@ export class AuthService {
       },
     };
   }
+
+  async getCurrentSession(
+    userId: string,
+  ) {
+
+    const user =
+      await this.repository.findUserSession(
+        userId,
+      );
+
+
+    if (!user) {
+
+      throw new Error(
+        "USER_NOT_FOUND",
+      );
+
+    }
+
+
+    const workspace =
+      user.workspaces[0];
+
+
+    if (!workspace) {
+
+      throw new Error(
+        "WORKSPACE_NOT_FOUND",
+      );
+
+    }
+
+
+    const membership =
+      workspace.members[0];
+
+
+    if (!membership) {
+
+      throw new Error(
+        "WORKSPACE_MEMBERSHIP_NOT_FOUND",
+      );
+
+    }
+
+
+    return {
+
+      user: {
+
+        id: user.id,
+
+        email: user.email,
+
+        name: user.name,
+
+      },
+
+
+      workspace: {
+
+        id: workspace.id,
+
+        name: workspace.name,
+
+        role: membership.role,
+
+      },
+
+    };
+
+  }
+
+
 }

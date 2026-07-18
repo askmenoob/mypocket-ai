@@ -95,10 +95,10 @@ export class AuthController {
     await request.jwtVerify();
 
 
-    return {
-      user:
-        request.user,
-    };
+    return this.service
+      .getCurrentSession(
+        request.user.userId,
+      );
 
   };
 

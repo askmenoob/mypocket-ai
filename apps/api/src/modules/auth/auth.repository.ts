@@ -33,6 +33,41 @@ export class AuthRepository {
     });
   }
 
+
+  async findUserSession(
+    userId: string,
+  ) {
+
+    return this.prisma.user.findUnique({
+
+      where: {
+        id: userId,
+      },
+
+      include: {
+
+        workspaces: {
+
+          include: {
+
+            members: {
+
+              where: {
+                userId,
+              },
+
+            },
+
+          },
+
+        },
+
+      },
+
+    });
+
+  }
+
   async createUserWithWorkspace(
     profile: GoogleProfile,
   ) {
