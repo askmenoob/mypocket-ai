@@ -9,6 +9,7 @@ import authModule from "./modules/auth/index.js";
 import workspaceModule from "./modules/workspace/index.js";
 import memberModule from "./modules/member/index.js";
 import transactionModule from "./modules/transaction/index.js";
+import googleModule from "./modules/google/index.js";
 
 
 export function buildApp() {
@@ -56,6 +57,11 @@ export function buildApp() {
 
   app.register(
     transactionModule,
+  );
+
+
+  app.register(
+    googleModule,
     {
       prefix: "/api/v1",
     },

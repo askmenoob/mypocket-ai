@@ -1217,8 +1217,12 @@ export type WorkspaceScalarFieldEnum = (typeof WorkspaceScalarFieldEnum)[keyof t
 export const GoogleAccountScalarFieldEnum = {
   id: 'id',
   email: 'email',
-  refreshToken: 'refreshToken',
   accessToken: 'accessToken',
+  refreshToken: 'refreshToken',
+  expiresAt: 'expiresAt',
+  scopes: 'scopes',
+  status: 'status',
+  connectedAt: 'connectedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   workspaceId: 'workspaceId'

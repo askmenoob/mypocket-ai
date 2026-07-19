@@ -27,16 +27,16 @@ const token =
   await app.jwt.sign({
 
     userId:
-      "cmrqizbur0000hot7qq2egs11",
+      "cmrqb2lyd000027t7lk93mksr",
 
     email:
-      "member2@test.com",
+      "member@test.com",
 
     workspaceId:
       "cmrpedr090001pbt72bmapjzu",
 
     role:
-      "MEMBER",
+      "ADMIN",
 
   });
 

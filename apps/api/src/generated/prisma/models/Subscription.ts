@@ -388,10 +388,6 @@ export type SubscriptionUncheckedUpdateOneWithoutUserNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SubscriptionUpdateToOneWithWhereWithoutUserInput, Prisma.SubscriptionUpdateWithoutUserInput>, Prisma.SubscriptionUncheckedUpdateWithoutUserInput>
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type SubscriptionCreateWithoutUserInput = {
   id?: string
   plan?: string

@@ -27,8 +27,12 @@ export type AggregateGoogleAccount = {
 export type GoogleAccountMinAggregateOutputType = {
   id: string | null
   email: string | null
-  refreshToken: string | null
   accessToken: string | null
+  refreshToken: string | null
+  expiresAt: Date | null
+  scopes: string | null
+  status: string | null
+  connectedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   workspaceId: string | null
@@ -37,8 +41,12 @@ export type GoogleAccountMinAggregateOutputType = {
 export type GoogleAccountMaxAggregateOutputType = {
   id: string | null
   email: string | null
-  refreshToken: string | null
   accessToken: string | null
+  refreshToken: string | null
+  expiresAt: Date | null
+  scopes: string | null
+  status: string | null
+  connectedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   workspaceId: string | null
@@ -47,8 +55,12 @@ export type GoogleAccountMaxAggregateOutputType = {
 export type GoogleAccountCountAggregateOutputType = {
   id: number
   email: number
-  refreshToken: number
   accessToken: number
+  refreshToken: number
+  expiresAt: number
+  scopes: number
+  status: number
+  connectedAt: number
   createdAt: number
   updatedAt: number
   workspaceId: number
@@ -59,8 +71,12 @@ export type GoogleAccountCountAggregateOutputType = {
 export type GoogleAccountMinAggregateInputType = {
   id?: true
   email?: true
-  refreshToken?: true
   accessToken?: true
+  refreshToken?: true
+  expiresAt?: true
+  scopes?: true
+  status?: true
+  connectedAt?: true
   createdAt?: true
   updatedAt?: true
   workspaceId?: true
@@ -69,8 +85,12 @@ export type GoogleAccountMinAggregateInputType = {
 export type GoogleAccountMaxAggregateInputType = {
   id?: true
   email?: true
-  refreshToken?: true
   accessToken?: true
+  refreshToken?: true
+  expiresAt?: true
+  scopes?: true
+  status?: true
+  connectedAt?: true
   createdAt?: true
   updatedAt?: true
   workspaceId?: true
@@ -79,8 +99,12 @@ export type GoogleAccountMaxAggregateInputType = {
 export type GoogleAccountCountAggregateInputType = {
   id?: true
   email?: true
-  refreshToken?: true
   accessToken?: true
+  refreshToken?: true
+  expiresAt?: true
+  scopes?: true
+  status?: true
+  connectedAt?: true
   createdAt?: true
   updatedAt?: true
   workspaceId?: true
@@ -162,8 +186,12 @@ export type GoogleAccountGroupByArgs<ExtArgs extends runtime.Types.Extensions.In
 export type GoogleAccountGroupByOutputType = {
   id: string
   email: string
-  refreshToken: string | null
   accessToken: string | null
+  refreshToken: string | null
+  expiresAt: Date | null
+  scopes: string | null
+  status: string
+  connectedAt: Date
   createdAt: Date
   updatedAt: Date
   workspaceId: string
@@ -193,8 +221,12 @@ export type GoogleAccountWhereInput = {
   NOT?: Prisma.GoogleAccountWhereInput | Prisma.GoogleAccountWhereInput[]
   id?: Prisma.StringFilter<"GoogleAccount"> | string
   email?: Prisma.StringFilter<"GoogleAccount"> | string
-  refreshToken?: Prisma.StringNullableFilter<"GoogleAccount"> | string | null
   accessToken?: Prisma.StringNullableFilter<"GoogleAccount"> | string | null
+  refreshToken?: Prisma.StringNullableFilter<"GoogleAccount"> | string | null
+  expiresAt?: Prisma.DateTimeNullableFilter<"GoogleAccount"> | Date | string | null
+  scopes?: Prisma.StringNullableFilter<"GoogleAccount"> | string | null
+  status?: Prisma.StringFilter<"GoogleAccount"> | string
+  connectedAt?: Prisma.DateTimeFilter<"GoogleAccount"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"GoogleAccount"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GoogleAccount"> | Date | string
   workspaceId?: Prisma.StringFilter<"GoogleAccount"> | string
@@ -204,8 +236,12 @@ export type GoogleAccountWhereInput = {
 export type GoogleAccountOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  refreshToken?: Prisma.SortOrderInput | Prisma.SortOrder
   accessToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  refreshToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  scopes?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
+  connectedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
@@ -219,8 +255,12 @@ export type GoogleAccountWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.GoogleAccountWhereInput[]
   NOT?: Prisma.GoogleAccountWhereInput | Prisma.GoogleAccountWhereInput[]
   email?: Prisma.StringFilter<"GoogleAccount"> | string
-  refreshToken?: Prisma.StringNullableFilter<"GoogleAccount"> | string | null
   accessToken?: Prisma.StringNullableFilter<"GoogleAccount"> | string | null
+  refreshToken?: Prisma.StringNullableFilter<"GoogleAccount"> | string | null
+  expiresAt?: Prisma.DateTimeNullableFilter<"GoogleAccount"> | Date | string | null
+  scopes?: Prisma.StringNullableFilter<"GoogleAccount"> | string | null
+  status?: Prisma.StringFilter<"GoogleAccount"> | string
+  connectedAt?: Prisma.DateTimeFilter<"GoogleAccount"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"GoogleAccount"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GoogleAccount"> | Date | string
   workspace?: Prisma.XOR<Prisma.WorkspaceScalarRelationFilter, Prisma.WorkspaceWhereInput>
@@ -229,8 +269,12 @@ export type GoogleAccountWhereUniqueInput = Prisma.AtLeast<{
 export type GoogleAccountOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  refreshToken?: Prisma.SortOrderInput | Prisma.SortOrder
   accessToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  refreshToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  scopes?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
+  connectedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
@@ -245,8 +289,12 @@ export type GoogleAccountScalarWhereWithAggregatesInput = {
   NOT?: Prisma.GoogleAccountScalarWhereWithAggregatesInput | Prisma.GoogleAccountScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"GoogleAccount"> | string
   email?: Prisma.StringWithAggregatesFilter<"GoogleAccount"> | string
-  refreshToken?: Prisma.StringNullableWithAggregatesFilter<"GoogleAccount"> | string | null
   accessToken?: Prisma.StringNullableWithAggregatesFilter<"GoogleAccount"> | string | null
+  refreshToken?: Prisma.StringNullableWithAggregatesFilter<"GoogleAccount"> | string | null
+  expiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"GoogleAccount"> | Date | string | null
+  scopes?: Prisma.StringNullableWithAggregatesFilter<"GoogleAccount"> | string | null
+  status?: Prisma.StringWithAggregatesFilter<"GoogleAccount"> | string
+  connectedAt?: Prisma.DateTimeWithAggregatesFilter<"GoogleAccount"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"GoogleAccount"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"GoogleAccount"> | Date | string
   workspaceId?: Prisma.StringWithAggregatesFilter<"GoogleAccount"> | string
@@ -255,8 +303,12 @@ export type GoogleAccountScalarWhereWithAggregatesInput = {
 export type GoogleAccountCreateInput = {
   id?: string
   email: string
-  refreshToken?: string | null
   accessToken?: string | null
+  refreshToken?: string | null
+  expiresAt?: Date | string | null
+  scopes?: string | null
+  status?: string
+  connectedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspace: Prisma.WorkspaceCreateNestedOneWithoutGoogleInput
@@ -265,8 +317,12 @@ export type GoogleAccountCreateInput = {
 export type GoogleAccountUncheckedCreateInput = {
   id?: string
   email: string
-  refreshToken?: string | null
   accessToken?: string | null
+  refreshToken?: string | null
+  expiresAt?: Date | string | null
+  scopes?: string | null
+  status?: string
+  connectedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaceId: string
@@ -275,8 +331,12 @@ export type GoogleAccountUncheckedCreateInput = {
 export type GoogleAccountUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scopes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspace?: Prisma.WorkspaceUpdateOneRequiredWithoutGoogleNestedInput
@@ -285,8 +345,12 @@ export type GoogleAccountUpdateInput = {
 export type GoogleAccountUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scopes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -295,8 +359,12 @@ export type GoogleAccountUncheckedUpdateInput = {
 export type GoogleAccountCreateManyInput = {
   id?: string
   email: string
-  refreshToken?: string | null
   accessToken?: string | null
+  refreshToken?: string | null
+  expiresAt?: Date | string | null
+  scopes?: string | null
+  status?: string
+  connectedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaceId: string
@@ -305,8 +373,12 @@ export type GoogleAccountCreateManyInput = {
 export type GoogleAccountUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scopes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -314,8 +386,12 @@ export type GoogleAccountUpdateManyMutationInput = {
 export type GoogleAccountUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scopes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -329,8 +405,12 @@ export type GoogleAccountNullableScalarRelationFilter = {
 export type GoogleAccountCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  refreshToken?: Prisma.SortOrder
   accessToken?: Prisma.SortOrder
+  refreshToken?: Prisma.SortOrder
+  expiresAt?: Prisma.SortOrder
+  scopes?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  connectedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
@@ -339,8 +419,12 @@ export type GoogleAccountCountOrderByAggregateInput = {
 export type GoogleAccountMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  refreshToken?: Prisma.SortOrder
   accessToken?: Prisma.SortOrder
+  refreshToken?: Prisma.SortOrder
+  expiresAt?: Prisma.SortOrder
+  scopes?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  connectedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
@@ -349,8 +433,12 @@ export type GoogleAccountMaxOrderByAggregateInput = {
 export type GoogleAccountMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  refreshToken?: Prisma.SortOrder
   accessToken?: Prisma.SortOrder
+  refreshToken?: Prisma.SortOrder
+  expiresAt?: Prisma.SortOrder
+  scopes?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  connectedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
@@ -388,11 +476,19 @@ export type GoogleAccountUncheckedUpdateOneWithoutWorkspaceNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.GoogleAccountUpdateToOneWithWhereWithoutWorkspaceInput, Prisma.GoogleAccountUpdateWithoutWorkspaceInput>, Prisma.GoogleAccountUncheckedUpdateWithoutWorkspaceInput>
 }
 
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
 export type GoogleAccountCreateWithoutWorkspaceInput = {
   id?: string
   email: string
-  refreshToken?: string | null
   accessToken?: string | null
+  refreshToken?: string | null
+  expiresAt?: Date | string | null
+  scopes?: string | null
+  status?: string
+  connectedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -400,8 +496,12 @@ export type GoogleAccountCreateWithoutWorkspaceInput = {
 export type GoogleAccountUncheckedCreateWithoutWorkspaceInput = {
   id?: string
   email: string
-  refreshToken?: string | null
   accessToken?: string | null
+  refreshToken?: string | null
+  expiresAt?: Date | string | null
+  scopes?: string | null
+  status?: string
+  connectedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -425,8 +525,12 @@ export type GoogleAccountUpdateToOneWithWhereWithoutWorkspaceInput = {
 export type GoogleAccountUpdateWithoutWorkspaceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scopes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -434,8 +538,12 @@ export type GoogleAccountUpdateWithoutWorkspaceInput = {
 export type GoogleAccountUncheckedUpdateWithoutWorkspaceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scopes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -445,8 +553,12 @@ export type GoogleAccountUncheckedUpdateWithoutWorkspaceInput = {
 export type GoogleAccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
-  refreshToken?: boolean
   accessToken?: boolean
+  refreshToken?: boolean
+  expiresAt?: boolean
+  scopes?: boolean
+  status?: boolean
+  connectedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   workspaceId?: boolean
@@ -456,8 +568,12 @@ export type GoogleAccountSelect<ExtArgs extends runtime.Types.Extensions.Interna
 export type GoogleAccountSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
-  refreshToken?: boolean
   accessToken?: boolean
+  refreshToken?: boolean
+  expiresAt?: boolean
+  scopes?: boolean
+  status?: boolean
+  connectedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   workspaceId?: boolean
@@ -467,8 +583,12 @@ export type GoogleAccountSelectCreateManyAndReturn<ExtArgs extends runtime.Types
 export type GoogleAccountSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
-  refreshToken?: boolean
   accessToken?: boolean
+  refreshToken?: boolean
+  expiresAt?: boolean
+  scopes?: boolean
+  status?: boolean
+  connectedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   workspaceId?: boolean
@@ -478,14 +598,18 @@ export type GoogleAccountSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
 export type GoogleAccountSelectScalar = {
   id?: boolean
   email?: boolean
-  refreshToken?: boolean
   accessToken?: boolean
+  refreshToken?: boolean
+  expiresAt?: boolean
+  scopes?: boolean
+  status?: boolean
+  connectedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   workspaceId?: boolean
 }
 
-export type GoogleAccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "refreshToken" | "accessToken" | "createdAt" | "updatedAt" | "workspaceId", ExtArgs["result"]["googleAccount"]>
+export type GoogleAccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "accessToken" | "refreshToken" | "expiresAt" | "scopes" | "status" | "connectedAt" | "createdAt" | "updatedAt" | "workspaceId", ExtArgs["result"]["googleAccount"]>
 export type GoogleAccountInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   workspace?: boolean | Prisma.WorkspaceDefaultArgs<ExtArgs>
 }
@@ -504,8 +628,12 @@ export type $GoogleAccountPayload<ExtArgs extends runtime.Types.Extensions.Inter
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     email: string
-    refreshToken: string | null
     accessToken: string | null
+    refreshToken: string | null
+    expiresAt: Date | null
+    scopes: string | null
+    status: string
+    connectedAt: Date
     createdAt: Date
     updatedAt: Date
     workspaceId: string
@@ -935,8 +1063,12 @@ export interface Prisma__GoogleAccountClient<T, Null = never, ExtArgs extends ru
 export interface GoogleAccountFieldRefs {
   readonly id: Prisma.FieldRef<"GoogleAccount", 'String'>
   readonly email: Prisma.FieldRef<"GoogleAccount", 'String'>
-  readonly refreshToken: Prisma.FieldRef<"GoogleAccount", 'String'>
   readonly accessToken: Prisma.FieldRef<"GoogleAccount", 'String'>
+  readonly refreshToken: Prisma.FieldRef<"GoogleAccount", 'String'>
+  readonly expiresAt: Prisma.FieldRef<"GoogleAccount", 'DateTime'>
+  readonly scopes: Prisma.FieldRef<"GoogleAccount", 'String'>
+  readonly status: Prisma.FieldRef<"GoogleAccount", 'String'>
+  readonly connectedAt: Prisma.FieldRef<"GoogleAccount", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"GoogleAccount", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"GoogleAccount", 'DateTime'>
   readonly workspaceId: Prisma.FieldRef<"GoogleAccount", 'String'>

@@ -33,6 +33,9 @@ const token =
     workspaceId:
       "cmrpedr090001pbt72bmapjzu",
 
+    role:
+      "VIEWER",
+
   });
 
 
