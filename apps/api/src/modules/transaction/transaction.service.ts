@@ -9,8 +9,8 @@ import {
 
 
 import {
-  AppsScriptClient,
-} from "../google/apps-script/apps-script.client.js";
+  TransactionSyncService,
+} from "./transaction-sync.service.js";
 
 
 import {
@@ -32,8 +32,8 @@ export class TransactionService {
     TransactionRepository;
 
 
-  private readonly appsScriptClient:
-    AppsScriptClient;
+  private readonly syncService:
+    TransactionSyncService;
 
 
 
@@ -49,9 +49,11 @@ export class TransactionService {
       );
 
 
-    this.appsScriptClient =
+    this.syncService =
 
-      new AppsScriptClient();
+      new TransactionSyncService(
+        app,
+      );
 
 
   }
@@ -114,74 +116,51 @@ export class TransactionService {
     try{
 
 
-      const appsScriptResult =
-        await this.appsScriptClient.post({
+      await this.syncService.sync({
 
-        action:
-          "ADD_TRANSACTION",
-
-        workspace:
-          transaction.workspace.type,
-
-        data:{
+        workspaceId:
+          transaction.workspaceId,
 
 
-          type:
-            transaction.type,
+        transactionId:
+          transaction.id,
 
 
-          category:
-            transaction.category?.name
-            ??
-            "Others",
+        amount:
+          transaction.amount.toString(),
 
 
-          merchant:
-            transaction.merchant?.name
-            ??
-            "-",
+        currency:
+          transaction.currency,
 
 
-          description:
-            transaction.description
-            ??
-            "",
+        type:
+          transaction.type,
 
 
-          amount:
-            Number(
-              transaction.amount
-            ),
+        category:
+          transaction.category?.name
+          ??
+          "Others",
 
 
-          paymentMethod:
-            transaction.paymentMethod?.name
-            ??
-            "-",
+        merchant:
+          transaction.merchant?.name
+          ??
+          "-",
 
 
-          receiptUrl:
-            transaction.receiptUrl
-            ??
-            "",
+        description:
+          transaction.description
+          ??
+          "",
 
 
-        },
+        transactionDate:
+          transaction.transactionDate,
 
 
       });
-
-
-
-
-      console.log(
-        "APPS SCRIPT SYNC RESULT:",
-        JSON.stringify(
-          appsScriptResult,
-          null,
-          2
-        )
-      );
 
 
     }catch(error){
