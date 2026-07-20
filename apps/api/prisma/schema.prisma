@@ -7,87 +7,59 @@ datasource db {
   provider = "postgresql"
 }
 
-enum WorkspaceRole {
-  OWNER
-  ADMIN
-  MEMBER
-  VIEWER
-}
-
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id           String            @id @default(cuid())
+  email        String            @unique
+  name         String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  subscription Subscription?
+  transactions Transaction[]
   workspaces   Workspace[]
   memberships  WorkspaceMember[]
-  subscription Subscription?
-
-  transactions Transaction[]
 }
 
 model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-
-  google   GoogleAccount?
-  whatsapp WhatsAppInstance[]
-  members  WorkspaceMember[]
-
-  transactions   Transaction[]
+  id             String             @id @default(cuid())
+  name           String
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  ownerId        String
+  type           WorkspaceType      @default(PERSONAL)
   categories     Category[]
+  google         GoogleAccount?
   merchants      Merchant[]
   paymentMethods PaymentMethod[]
+  transactions   Transaction[]
+  whatsapp       WhatsAppInstance[]
+  owner          User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members        WorkspaceMember[]
 }
 
 model GoogleAccount {
-
-  id String @id @default(cuid())
-
-  email String
-
-  accessToken String?
-
+  id           String    @id @default(cuid())
+  email        String
   refreshToken String?
-
-  expiresAt DateTime?
-
-  scopes String?
-
-  status String @default("CONNECTED")
-
-  connectedAt DateTime @default(now())
-
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-
-  workspaceId String @unique
-
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
+  accessToken  String?
+  workspaceId  String    @unique
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  connectedAt  DateTime  @default(now())
+  expiresAt    DateTime?
+  scopes       String?
+  status       String    @default("CONNECTED")
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
 model WhatsAppInstance {
-  id           String  @id @default(cuid())
-  instanceName String  @unique
+  id           String    @id @default(cuid())
+  instanceName String    @unique
   phoneNumber  String?
-  status       String  @default("OFFLINE")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  status       String    @default("OFFLINE")
+  workspaceId  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
 model Subscription {
@@ -95,29 +67,94 @@ model Subscription {
   plan      String    @default("FREE")
   status    String    @default("ACTIVE")
   expiresAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model WorkspaceMember {
-  id String @id @default(cuid())
-
+  id          String        @id @default(cuid())
   userId      String
   workspaceId String
-
-  role WorkspaceRole @default(MEMBER)
-
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  role        WorkspaceRole @default(MEMBER)
+  createdAt   DateTime      @default(now())
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, workspaceId])
+}
+
+model Transaction {
+  id              String            @id @default(cuid())
+  workspaceId     String
+  createdById     String
+  amount          Decimal
+  currency        String            @default("MYR")
+  type            TransactionType
+  status          TransactionStatus @default(PENDING)
+  description     String?
+  transactionDate DateTime
+  categoryId      String?
+  merchantId      String?
+  paymentMethodId String?
+  receiptUrl      String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  category        Category?         @relation(fields: [categoryId], references: [id])
+  createdBy       User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  merchant        Merchant?         @relation(fields: [merchantId], references: [id])
+  paymentMethod   PaymentMethod?    @relation(fields: [paymentMethodId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([createdById])
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  workspaceId  String
+  name         String
+  createdAt    DateTime      @default(now())
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([workspaceId, name])
+}
+
+model Merchant {
+  id           String        @id @default(cuid())
+  workspaceId  String
+  name         String
+  createdAt    DateTime      @default(now())
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([workspaceId, name])
+}
+
+model PaymentMethod {
+  id           String        @id @default(cuid())
+  workspaceId  String
+  name         String
+  createdAt    DateTime      @default(now())
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([workspaceId, name])
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum WorkspaceType {
+  PERSONAL
+  FAMILY
+  BUSINESS
 }
 
 enum TransactionType {
@@ -129,92 +166,4 @@ enum TransactionStatus {
   PENDING
   CONFIRMED
   CANCELLED
-}
-
-model Transaction {
-  id String @id @default(cuid())
-
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
-  createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
-
-  amount Decimal
-
-  currency String @default("MYR")
-
-  type TransactionType
-
-  status TransactionStatus @default(PENDING)
-
-  description String?
-
-  transactionDate DateTime
-
-  categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id])
-
-  merchantId String?
-  merchant   Merchant? @relation(fields: [merchantId], references: [id])
-
-  paymentMethodId String?
-  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
-
-  receiptUrl String?
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  @@index([workspaceId])
-  @@index([createdById])
-}
-
-model Category {
-  id String @id @default(cuid())
-
-  workspaceId String
-
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
-  name String
-
-  transactions Transaction[]
-
-  createdAt DateTime @default(now())
-
-  @@unique([workspaceId, name])
-}
-
-model Merchant {
-  id String @id @default(cuid())
-
-  workspaceId String
-
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
-  name String
-
-  transactions Transaction[]
-
-  createdAt DateTime @default(now())
-
-  @@unique([workspaceId, name])
-}
-
-model PaymentMethod {
-  id String @id @default(cuid())
-
-  workspaceId String
-
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
-  name String
-
-  transactions Transaction[]
-
-  createdAt DateTime @default(now())
-
-  @@unique([workspaceId, name])
 }

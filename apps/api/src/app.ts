@@ -57,6 +57,9 @@ export function buildApp() {
 
   app.register(
     transactionModule,
+    {
+      prefix: "/api/v1",
+    },
   );
 
 

@@ -1208,7 +1208,8 @@ export const WorkspaceScalarFieldEnum = {
   name: 'name',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  ownerId: 'ownerId'
+  ownerId: 'ownerId',
+  type: 'type'
 } as const
 
 export type WorkspaceScalarFieldEnum = (typeof WorkspaceScalarFieldEnum)[keyof typeof WorkspaceScalarFieldEnum]
@@ -1217,15 +1218,15 @@ export type WorkspaceScalarFieldEnum = (typeof WorkspaceScalarFieldEnum)[keyof t
 export const GoogleAccountScalarFieldEnum = {
   id: 'id',
   email: 'email',
-  accessToken: 'accessToken',
   refreshToken: 'refreshToken',
-  expiresAt: 'expiresAt',
-  scopes: 'scopes',
-  status: 'status',
-  connectedAt: 'connectedAt',
+  accessToken: 'accessToken',
+  workspaceId: 'workspaceId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  workspaceId: 'workspaceId'
+  connectedAt: 'connectedAt',
+  expiresAt: 'expiresAt',
+  scopes: 'scopes',
+  status: 'status'
 } as const
 
 export type GoogleAccountScalarFieldEnum = (typeof GoogleAccountScalarFieldEnum)[keyof typeof GoogleAccountScalarFieldEnum]
@@ -1236,9 +1237,9 @@ export const WhatsAppInstanceScalarFieldEnum = {
   instanceName: 'instanceName',
   phoneNumber: 'phoneNumber',
   status: 'status',
+  workspaceId: 'workspaceId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  workspaceId: 'workspaceId'
+  updatedAt: 'updatedAt'
 } as const
 
 export type WhatsAppInstanceScalarFieldEnum = (typeof WhatsAppInstanceScalarFieldEnum)[keyof typeof WhatsAppInstanceScalarFieldEnum]
@@ -1249,9 +1250,9 @@ export const SubscriptionScalarFieldEnum = {
   plan: 'plan',
   status: 'status',
   expiresAt: 'expiresAt',
+  userId: 'userId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  userId: 'userId'
+  updatedAt: 'updatedAt'
 } as const
 
 export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
@@ -1374,6 +1375,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'WorkspaceType'
+ */
+export type EnumWorkspaceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkspaceType'>
+    
+
+
+/**
+ * Reference to a field of type 'WorkspaceType[]'
+ */
+export type ListEnumWorkspaceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkspaceType[]'>
     
 
 

@@ -1,6 +1,6 @@
-import { PrismaClient } from "../src/generated/prisma/client.js";
+import { PrismaClient } from "../../src/generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { env } from "../src/config/index.js";
+import { env } from "../../src/config/index.js";
 
 
 async function main(){

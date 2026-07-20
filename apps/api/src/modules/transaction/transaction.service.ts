@@ -9,6 +9,11 @@ import {
 
 
 import {
+  AppsScriptClient,
+} from "../google/apps-script/apps-script.client.js";
+
+
+import {
   AppError,
 } from "../../shared/errors/index.js";
 
@@ -27,15 +32,27 @@ export class TransactionService {
     TransactionRepository;
 
 
+  private readonly appsScriptClient:
+    AppsScriptClient;
+
+
 
   constructor(
     app:FastifyInstance,
   ){
 
+
     this.repository =
+
       new TransactionRepository(
         app.prisma,
       );
+
+
+    this.appsScriptClient =
+
+      new AppsScriptClient();
+
 
   }
 
@@ -82,10 +99,108 @@ export class TransactionService {
     }
 
 
-    return this.repository
-      .createTransaction(
-        input,
+
+    const transaction =
+
+      await this.repository
+        .createTransaction(
+          input,
+        );
+
+
+
+
+
+    try{
+
+
+      const appsScriptResult =
+        await this.appsScriptClient.post({
+
+        action:
+          "ADD_TRANSACTION",
+
+        workspace:
+          transaction.workspace.type,
+
+        data:{
+
+
+          type:
+            transaction.type,
+
+
+          category:
+            transaction.category?.name
+            ??
+            "Others",
+
+
+          merchant:
+            transaction.merchant?.name
+            ??
+            "-",
+
+
+          description:
+            transaction.description
+            ??
+            "",
+
+
+          amount:
+            Number(
+              transaction.amount
+            ),
+
+
+          paymentMethod:
+            transaction.paymentMethod?.name
+            ??
+            "-",
+
+
+          receiptUrl:
+            transaction.receiptUrl
+            ??
+            "",
+
+
+        },
+
+
+      });
+
+
+
+
+      console.log(
+        "APPS SCRIPT SYNC RESULT:",
+        JSON.stringify(
+          appsScriptResult,
+          null,
+          2
+        )
       );
+
+
+    }catch(error){
+
+
+      console.error(
+        "GOOGLE SHEET SYNC FAILED:",
+        error,
+      );
+
+
+    }
+
+
+
+
+
+    return transaction;
+
 
   }
 
@@ -108,6 +223,7 @@ export class TransactionService {
   ){
 
 
+
     if(
       actorRole !== "OWNER"
       &&
@@ -123,7 +239,11 @@ export class TransactionService {
     }
 
 
+
+
+
     const transaction =
+
       await this.repository
         .findTransaction(
           workspaceId,
@@ -131,7 +251,11 @@ export class TransactionService {
         );
 
 
+
+
+
     if(!transaction){
+
 
       throw new AppError(
         "TRANSACTION_NOT_FOUND",
@@ -139,7 +263,11 @@ export class TransactionService {
         404,
       );
 
+
     }
+
+
+
 
 
     return this.repository
@@ -148,6 +276,7 @@ export class TransactionService {
         id,
         input,
       );
+
 
   }
 
@@ -168,6 +297,7 @@ export class TransactionService {
   ){
 
 
+
     if(
       actorRole !== "OWNER"
       &&
@@ -183,7 +313,11 @@ export class TransactionService {
     }
 
 
+
+
+
     const transaction =
+
       await this.repository
         .findTransaction(
           workspaceId,
@@ -191,7 +325,11 @@ export class TransactionService {
         );
 
 
+
+
+
     if(!transaction){
+
 
       throw new AppError(
         "TRANSACTION_NOT_FOUND",
@@ -199,7 +337,11 @@ export class TransactionService {
         404,
       );
 
+
     }
+
+
+
 
 
     return this.repository
@@ -208,7 +350,9 @@ export class TransactionService {
         id,
       );
 
+
   }
+
 
 
 }

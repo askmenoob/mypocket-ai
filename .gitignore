@@ -35,3 +35,7 @@ logs/
 *.pem
 *.key
 
+
+# Development backups
+*.backup*
+backups/

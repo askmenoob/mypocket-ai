@@ -24,6 +24,24 @@ const workspaceRoutes:
       controller.me,
     );
 
+
+    app.get(
+      "/all",
+      controller.list,
+    );
+
+
+    app.post(
+      "/",
+      controller.create,
+    );
+
+
+    app.post(
+      "/:id/switch",
+      controller.switch,
+    );
+
 };
 
 

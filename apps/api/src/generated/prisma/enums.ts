@@ -19,6 +19,15 @@ export const WorkspaceRole = {
 export type WorkspaceRole = (typeof WorkspaceRole)[keyof typeof WorkspaceRole]
 
 
+export const WorkspaceType = {
+  PERSONAL: 'PERSONAL',
+  FAMILY: 'FAMILY',
+  BUSINESS: 'BUSINESS'
+} as const
+
+export type WorkspaceType = (typeof WorkspaceType)[keyof typeof WorkspaceType]
+
+
 export const TransactionType = {
   EXPENSE: 'EXPENSE',
   INCOME: 'INCOME'

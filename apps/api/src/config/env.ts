@@ -40,6 +40,21 @@ const EnvSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 
   GOOGLE_REDIRECT_URI: z.string().optional(),
+
+  GOOGLE_APPS_SCRIPT_URL:
+    z.string()
+     .url()
+     .optional(),
+
+
+  MYPOCKET_APPS_SCRIPT_API_KEY:
+    z.string()
+     .min(64)
+     .optional(),
+
+  GOOGLE_TOKEN_ENCRYPTION_KEY:
+    z.string()
+      .min(64),
 });
 
 export const env = EnvSchema.parse(process.env);

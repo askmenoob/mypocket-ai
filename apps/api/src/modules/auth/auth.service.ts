@@ -6,10 +6,16 @@ import type {
   AuthSession,
 } from "./auth.types.js";
 
+
+import {
+  TokenService,
+} from "../../shared/auth/index.js";
+
 export class AuthService {
 
   private readonly repository: AuthRepository;
   private readonly google: GoogleService;
+  private readonly tokenService: TokenService;
 
   constructor(
     private readonly app: FastifyInstance,
@@ -19,6 +25,12 @@ export class AuthService {
     );
 
     this.google = new GoogleService();
+
+
+    this.tokenService =
+      new TokenService(
+        app,
+      );
   }
 
 
@@ -72,12 +84,22 @@ export class AuthService {
     }
 
 
+    const membership =
+      user.memberships?.find(
+        (item) =>
+          item.workspaceId === workspace.id
+      );
+
+
     const token =
-      await this.app.jwt.sign({
-        userId: user.id,
-        email: user.email,
-        workspaceId: workspace.id,
-      });
+      await this.tokenService.generate(
+        user.id,
+        user.email,
+        workspace.id,
+        membership?.role
+        ??
+        "OWNER",
+      );
 
 
     return {
@@ -95,6 +117,10 @@ export class AuthService {
       },
     };
   }
+
+
+
+
 
   async getCurrentSession(
     userId: string,

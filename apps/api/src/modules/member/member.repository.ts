@@ -97,6 +97,12 @@ export class MemberRepository {
 
       },
 
+      include: {
+
+        workspace: true,
+
+      },
+
     });
 
   }

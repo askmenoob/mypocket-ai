@@ -101,6 +101,70 @@ export class GoogleRepository {
 
 
 
+
+  async upsert(
+    workspaceId:string,
+    email:string,
+    accessToken:string,
+    refreshToken:string|null,
+    expiresAt:Date|null,
+    scopes:string|null,
+  ){
+
+    return this.prisma.googleAccount.upsert({
+
+      where:{
+        workspaceId,
+      },
+
+
+      create:{
+
+        workspaceId,
+
+        email,
+
+        accessToken,
+
+        refreshToken,
+
+        expiresAt,
+
+        scopes,
+
+        status:
+          "CONNECTED",
+
+      },
+
+
+      update:{
+
+        email,
+
+        accessToken,
+
+        refreshToken,
+
+        expiresAt,
+
+        scopes,
+
+        status:
+          "CONNECTED",
+
+        connectedAt:
+          new Date(),
+
+      },
+
+    });
+
+  }
+
+
+
+
   async disconnect(
     workspaceId:string,
   ){

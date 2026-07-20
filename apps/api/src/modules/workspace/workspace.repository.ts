@@ -24,4 +24,58 @@ export class WorkspaceRepository {
 
   }
 
+
+
+  async findWorkspacesForUser(
+    userId: string,
+  ) {
+
+    return this.prisma.workspaceMember.findMany({
+
+      where: {
+        userId,
+      },
+
+      include: {
+        workspace: true,
+      },
+
+    });
+
+  }
+
+
+
+
+
+  async createWorkspace(
+    userId: string,
+    name: string,
+    type:
+      "PERSONAL"
+      | "FAMILY"
+      | "BUSINESS",
+  ) {
+
+
+    return this.prisma.workspace.create({
+
+      data: {
+
+        name,
+
+        type,
+
+        ownerId:
+          userId,
+
+      },
+
+    });
+
+
+  }
+
+
+
 }

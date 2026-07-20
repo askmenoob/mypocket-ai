@@ -16,10 +16,6 @@ async (
 
   await app.register(
     transactionRoutes,
-    {
-      prefix:
-        "/workspace",
-    },
   );
 
 

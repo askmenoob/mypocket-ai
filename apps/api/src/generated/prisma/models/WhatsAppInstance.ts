@@ -29,9 +29,9 @@ export type WhatsAppInstanceMinAggregateOutputType = {
   instanceName: string | null
   phoneNumber: string | null
   status: string | null
+  workspaceId: string | null
   createdAt: Date | null
   updatedAt: Date | null
-  workspaceId: string | null
 }
 
 export type WhatsAppInstanceMaxAggregateOutputType = {
@@ -39,9 +39,9 @@ export type WhatsAppInstanceMaxAggregateOutputType = {
   instanceName: string | null
   phoneNumber: string | null
   status: string | null
+  workspaceId: string | null
   createdAt: Date | null
   updatedAt: Date | null
-  workspaceId: string | null
 }
 
 export type WhatsAppInstanceCountAggregateOutputType = {
@@ -49,9 +49,9 @@ export type WhatsAppInstanceCountAggregateOutputType = {
   instanceName: number
   phoneNumber: number
   status: number
+  workspaceId: number
   createdAt: number
   updatedAt: number
-  workspaceId: number
   _all: number
 }
 
@@ -61,9 +61,9 @@ export type WhatsAppInstanceMinAggregateInputType = {
   instanceName?: true
   phoneNumber?: true
   status?: true
+  workspaceId?: true
   createdAt?: true
   updatedAt?: true
-  workspaceId?: true
 }
 
 export type WhatsAppInstanceMaxAggregateInputType = {
@@ -71,9 +71,9 @@ export type WhatsAppInstanceMaxAggregateInputType = {
   instanceName?: true
   phoneNumber?: true
   status?: true
+  workspaceId?: true
   createdAt?: true
   updatedAt?: true
-  workspaceId?: true
 }
 
 export type WhatsAppInstanceCountAggregateInputType = {
@@ -81,9 +81,9 @@ export type WhatsAppInstanceCountAggregateInputType = {
   instanceName?: true
   phoneNumber?: true
   status?: true
+  workspaceId?: true
   createdAt?: true
   updatedAt?: true
-  workspaceId?: true
   _all?: true
 }
 
@@ -164,9 +164,9 @@ export type WhatsAppInstanceGroupByOutputType = {
   instanceName: string
   phoneNumber: string | null
   status: string
+  workspaceId: string
   createdAt: Date
   updatedAt: Date
-  workspaceId: string
   _count: WhatsAppInstanceCountAggregateOutputType | null
   _min: WhatsAppInstanceMinAggregateOutputType | null
   _max: WhatsAppInstanceMaxAggregateOutputType | null
@@ -195,9 +195,9 @@ export type WhatsAppInstanceWhereInput = {
   instanceName?: Prisma.StringFilter<"WhatsAppInstance"> | string
   phoneNumber?: Prisma.StringNullableFilter<"WhatsAppInstance"> | string | null
   status?: Prisma.StringFilter<"WhatsAppInstance"> | string
+  workspaceId?: Prisma.StringFilter<"WhatsAppInstance"> | string
   createdAt?: Prisma.DateTimeFilter<"WhatsAppInstance"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WhatsAppInstance"> | Date | string
-  workspaceId?: Prisma.StringFilter<"WhatsAppInstance"> | string
   workspace?: Prisma.XOR<Prisma.WorkspaceScalarRelationFilter, Prisma.WorkspaceWhereInput>
 }
 
@@ -206,9 +206,9 @@ export type WhatsAppInstanceOrderByWithRelationInput = {
   instanceName?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  workspaceId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  workspaceId?: Prisma.SortOrder
   workspace?: Prisma.WorkspaceOrderByWithRelationInput
 }
 
@@ -220,9 +220,9 @@ export type WhatsAppInstanceWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.WhatsAppInstanceWhereInput | Prisma.WhatsAppInstanceWhereInput[]
   phoneNumber?: Prisma.StringNullableFilter<"WhatsAppInstance"> | string | null
   status?: Prisma.StringFilter<"WhatsAppInstance"> | string
+  workspaceId?: Prisma.StringFilter<"WhatsAppInstance"> | string
   createdAt?: Prisma.DateTimeFilter<"WhatsAppInstance"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WhatsAppInstance"> | Date | string
-  workspaceId?: Prisma.StringFilter<"WhatsAppInstance"> | string
   workspace?: Prisma.XOR<Prisma.WorkspaceScalarRelationFilter, Prisma.WorkspaceWhereInput>
 }, "id" | "instanceName">
 
@@ -231,9 +231,9 @@ export type WhatsAppInstanceOrderByWithAggregationInput = {
   instanceName?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  workspaceId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  workspaceId?: Prisma.SortOrder
   _count?: Prisma.WhatsAppInstanceCountOrderByAggregateInput
   _max?: Prisma.WhatsAppInstanceMaxOrderByAggregateInput
   _min?: Prisma.WhatsAppInstanceMinOrderByAggregateInput
@@ -247,9 +247,9 @@ export type WhatsAppInstanceScalarWhereWithAggregatesInput = {
   instanceName?: Prisma.StringWithAggregatesFilter<"WhatsAppInstance"> | string
   phoneNumber?: Prisma.StringNullableWithAggregatesFilter<"WhatsAppInstance"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"WhatsAppInstance"> | string
+  workspaceId?: Prisma.StringWithAggregatesFilter<"WhatsAppInstance"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WhatsAppInstance"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"WhatsAppInstance"> | Date | string
-  workspaceId?: Prisma.StringWithAggregatesFilter<"WhatsAppInstance"> | string
 }
 
 export type WhatsAppInstanceCreateInput = {
@@ -267,9 +267,9 @@ export type WhatsAppInstanceUncheckedCreateInput = {
   instanceName: string
   phoneNumber?: string | null
   status?: string
+  workspaceId: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  workspaceId: string
 }
 
 export type WhatsAppInstanceUpdateInput = {
@@ -287,9 +287,9 @@ export type WhatsAppInstanceUncheckedUpdateInput = {
   instanceName?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type WhatsAppInstanceCreateManyInput = {
@@ -297,9 +297,9 @@ export type WhatsAppInstanceCreateManyInput = {
   instanceName: string
   phoneNumber?: string | null
   status?: string
+  workspaceId: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  workspaceId: string
 }
 
 export type WhatsAppInstanceUpdateManyMutationInput = {
@@ -316,9 +316,9 @@ export type WhatsAppInstanceUncheckedUpdateManyInput = {
   instanceName?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type WhatsAppInstanceListRelationFilter = {
@@ -336,9 +336,9 @@ export type WhatsAppInstanceCountOrderByAggregateInput = {
   instanceName?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  workspaceId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  workspaceId?: Prisma.SortOrder
 }
 
 export type WhatsAppInstanceMaxOrderByAggregateInput = {
@@ -346,9 +346,9 @@ export type WhatsAppInstanceMaxOrderByAggregateInput = {
   instanceName?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  workspaceId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  workspaceId?: Prisma.SortOrder
 }
 
 export type WhatsAppInstanceMinOrderByAggregateInput = {
@@ -356,9 +356,9 @@ export type WhatsAppInstanceMinOrderByAggregateInput = {
   instanceName?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  workspaceId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  workspaceId?: Prisma.SortOrder
 }
 
 export type WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput = {
@@ -455,9 +455,9 @@ export type WhatsAppInstanceScalarWhereInput = {
   instanceName?: Prisma.StringFilter<"WhatsAppInstance"> | string
   phoneNumber?: Prisma.StringNullableFilter<"WhatsAppInstance"> | string | null
   status?: Prisma.StringFilter<"WhatsAppInstance"> | string
+  workspaceId?: Prisma.StringFilter<"WhatsAppInstance"> | string
   createdAt?: Prisma.DateTimeFilter<"WhatsAppInstance"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WhatsAppInstance"> | Date | string
-  workspaceId?: Prisma.StringFilter<"WhatsAppInstance"> | string
 }
 
 export type WhatsAppInstanceCreateManyWorkspaceInput = {
@@ -503,9 +503,9 @@ export type WhatsAppInstanceSelect<ExtArgs extends runtime.Types.Extensions.Inte
   instanceName?: boolean
   phoneNumber?: boolean
   status?: boolean
+  workspaceId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  workspaceId?: boolean
   workspace?: boolean | Prisma.WorkspaceDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["whatsAppInstance"]>
 
@@ -514,9 +514,9 @@ export type WhatsAppInstanceSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   instanceName?: boolean
   phoneNumber?: boolean
   status?: boolean
+  workspaceId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  workspaceId?: boolean
   workspace?: boolean | Prisma.WorkspaceDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["whatsAppInstance"]>
 
@@ -525,9 +525,9 @@ export type WhatsAppInstanceSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   instanceName?: boolean
   phoneNumber?: boolean
   status?: boolean
+  workspaceId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  workspaceId?: boolean
   workspace?: boolean | Prisma.WorkspaceDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["whatsAppInstance"]>
 
@@ -536,12 +536,12 @@ export type WhatsAppInstanceSelectScalar = {
   instanceName?: boolean
   phoneNumber?: boolean
   status?: boolean
+  workspaceId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  workspaceId?: boolean
 }
 
-export type WhatsAppInstanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instanceName" | "phoneNumber" | "status" | "createdAt" | "updatedAt" | "workspaceId", ExtArgs["result"]["whatsAppInstance"]>
+export type WhatsAppInstanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instanceName" | "phoneNumber" | "status" | "workspaceId" | "createdAt" | "updatedAt", ExtArgs["result"]["whatsAppInstance"]>
 export type WhatsAppInstanceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   workspace?: boolean | Prisma.WorkspaceDefaultArgs<ExtArgs>
 }
@@ -562,9 +562,9 @@ export type $WhatsAppInstancePayload<ExtArgs extends runtime.Types.Extensions.In
     instanceName: string
     phoneNumber: string | null
     status: string
+    workspaceId: string
     createdAt: Date
     updatedAt: Date
-    workspaceId: string
   }, ExtArgs["result"]["whatsAppInstance"]>
   composites: {}
 }
@@ -993,9 +993,9 @@ export interface WhatsAppInstanceFieldRefs {
   readonly instanceName: Prisma.FieldRef<"WhatsAppInstance", 'String'>
   readonly phoneNumber: Prisma.FieldRef<"WhatsAppInstance", 'String'>
   readonly status: Prisma.FieldRef<"WhatsAppInstance", 'String'>
+  readonly workspaceId: Prisma.FieldRef<"WhatsAppInstance", 'String'>
   readonly createdAt: Prisma.FieldRef<"WhatsAppInstance", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"WhatsAppInstance", 'DateTime'>
-  readonly workspaceId: Prisma.FieldRef<"WhatsAppInstance", 'String'>
 }
     
 

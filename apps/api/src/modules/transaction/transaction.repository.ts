@@ -140,6 +140,12 @@ export class TransactionRepository {
 
         paymentMethod:true,
 
+        workspace:{
+          select:{
+            type:true,
+          },
+        },
+
       },
 
     });
