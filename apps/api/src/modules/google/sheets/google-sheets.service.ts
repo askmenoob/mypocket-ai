@@ -50,7 +50,7 @@ export class GoogleSheetsService {
 
     const accessToken =
       await this.tokenService
-        .getAccessToken(
+        .getValidAccessToken(
           workspaceId,
         );
 

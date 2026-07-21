@@ -11,6 +11,7 @@ import {
 
 import {
   GoogleSettingsSchema,
+  AutoCreateGoogleSheetSchema,
 } from "./google-settings.schemas.js";
 
 
@@ -93,6 +94,35 @@ export class GoogleSettingsController {
   }
 
 
+
+
+
+
+  autoCreate = async (
+    request:
+      FastifyRequest,
+  ) => {
+
+
+    await request.jwtVerify();
+
+
+
+    const body =
+      AutoCreateGoogleSheetSchema
+        .parse(
+          request.body,
+        );
+
+
+
+    return this.service
+      .autoCreateSheet(
+        request.user.workspaceId,
+        body.title,
+      );
+
+  };
 
 
 

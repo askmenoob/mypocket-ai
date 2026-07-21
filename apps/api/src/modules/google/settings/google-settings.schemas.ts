@@ -17,3 +17,13 @@ z.object({
       .optional(),
 
 });
+
+
+export const AutoCreateGoogleSheetSchema =
+z.object({
+
+  title:
+    z.string()
+      .min(1),
+
+});

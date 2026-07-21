@@ -44,6 +44,19 @@ export default async function googleSettingsRoutes(
 
 
 
+  app.post(
+    "/settings/auto-create",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    controller.autoCreate,
+  );
+
+
+
+
   app.delete(
     "/settings",
     {

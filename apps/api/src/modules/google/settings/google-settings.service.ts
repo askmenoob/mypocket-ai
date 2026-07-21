@@ -8,12 +8,21 @@ import {
 } from "./google-settings.repository.js";
 
 
+import {
+  SpreadsheetProvisioner,
+} from "../provisioner/spreadsheet.provisioner.js";
+
+
 
 export class GoogleSettingsService {
 
 
   private readonly repository:
     GoogleSettingsRepository;
+
+
+  private readonly provisioner:
+    SpreadsheetProvisioner;
 
 
 
@@ -24,6 +33,12 @@ export class GoogleSettingsService {
     this.repository =
       new GoogleSettingsRepository(
         app.prisma,
+      );
+
+
+    this.provisioner =
+      new SpreadsheetProvisioner(
+        app,
       );
 
   }
@@ -60,7 +75,7 @@ export class GoogleSettingsService {
 
 
     return this.repository
-      .create({
+      .upsert({
 
         workspaceId:
           input.workspaceId,
@@ -83,6 +98,45 @@ export class GoogleSettingsService {
 
 
 
+
+
+
+  async autoCreateSheet(
+    workspaceId:string,
+    title:string,
+  ){
+
+    const spreadsheet =
+      await this.provisioner
+        .create({
+
+          workspaceId,
+
+          title,
+
+        });
+
+
+
+    return this.repository
+      .upsert({
+
+        workspaceId,
+
+        spreadsheetId:
+          spreadsheet.spreadsheetId,
+
+
+        spreadsheetTitle:
+          spreadsheet.title,
+
+
+        mode:
+          "AUTO_CREATED",
+
+      });
+
+  }
 
 
   async updateSheet(

@@ -103,6 +103,86 @@ export class GoogleSettingsRepository {
 
 
 
+  async upsert(
+    input:{
+      workspaceId:string;
+      spreadsheetId:string;
+      spreadsheetTitle?:string;
+      transactionSheet?:string;
+      dashboardSheet?:string;
+      mode:
+        "AUTO_CREATED"
+        |
+        "EXISTING_SHEET";
+    },
+  ){
+
+
+    return this.prisma
+      .workspaceGoogleSetting
+      .upsert({
+
+        where:{
+          workspaceId:
+            input.workspaceId,
+        },
+
+
+        create:{
+
+          workspaceId:
+            input.workspaceId,
+
+          spreadsheetId:
+            input.spreadsheetId,
+
+          spreadsheetTitle:
+            input.spreadsheetTitle,
+
+          transactionSheet:
+            input.transactionSheet
+            ??
+            "Transactions",
+
+          dashboardSheet:
+            input.dashboardSheet,
+
+          mode:
+            input.mode,
+
+        },
+
+
+        update:{
+
+          spreadsheetId:
+            input.spreadsheetId,
+
+          spreadsheetTitle:
+            input.spreadsheetTitle,
+
+          transactionSheet:
+            input.transactionSheet
+            ??
+            "Transactions",
+
+          dashboardSheet:
+            input.dashboardSheet,
+
+          mode:
+            input.mode,
+
+        },
+
+      });
+
+  }
+
+
+
+
+
+
   async update(
     workspaceId:string,
     data:{
