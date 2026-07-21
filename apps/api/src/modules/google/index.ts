@@ -6,6 +6,8 @@ import googleOauthRoutes from "./oauth/google.oauth.routes.js";
 
 import { appsScriptRoutes } from "./apps-script/apps-script.routes.js";
 
+import googleSettingsRoutes from "./settings/google-settings.routes.js";
+
 
 
 const googleModule: FastifyPluginAsync = async (app) => {
@@ -33,6 +35,15 @@ const googleModule: FastifyPluginAsync = async (app) => {
     appsScriptRoutes,
     {
       prefix: "/google/apps-script",
+    },
+  );
+
+
+
+  await app.register(
+    googleSettingsRoutes,
+    {
+      prefix: "/google",
     },
   );
 

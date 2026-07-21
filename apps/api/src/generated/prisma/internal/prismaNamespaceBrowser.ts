@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   Workspace: 'Workspace',
   GoogleAccount: 'GoogleAccount',
+  WorkspaceGoogleSetting: 'WorkspaceGoogleSetting',
   WhatsAppInstance: 'WhatsAppInstance',
   Subscription: 'Subscription',
   WorkspaceMember: 'WorkspaceMember',
@@ -117,6 +118,21 @@ export const GoogleAccountScalarFieldEnum = {
 } as const
 
 export type GoogleAccountScalarFieldEnum = (typeof GoogleAccountScalarFieldEnum)[keyof typeof GoogleAccountScalarFieldEnum]
+
+
+export const WorkspaceGoogleSettingScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  spreadsheetId: 'spreadsheetId',
+  spreadsheetTitle: 'spreadsheetTitle',
+  transactionSheet: 'transactionSheet',
+  dashboardSheet: 'dashboardSheet',
+  mode: 'mode',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceGoogleSettingScalarFieldEnum = (typeof WorkspaceGoogleSettingScalarFieldEnum)[keyof typeof WorkspaceGoogleSettingScalarFieldEnum]
 
 
 export const WhatsAppInstanceScalarFieldEnum = {

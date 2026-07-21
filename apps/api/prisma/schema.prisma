@@ -28,6 +28,7 @@ model Workspace {
   type           WorkspaceType      @default(PERSONAL)
   categories     Category[]
   google         GoogleAccount?
+  googleSetting  WorkspaceGoogleSetting?
   merchants      Merchant[]
   paymentMethods PaymentMethod[]
   transactions   Transaction[]
@@ -49,6 +50,40 @@ model GoogleAccount {
   scopes       String?
   status       String    @default("CONNECTED")
   workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+
+model WorkspaceGoogleSetting {
+
+  id String @id @default(cuid())
+
+  workspaceId String @unique
+
+  spreadsheetId String
+
+  spreadsheetTitle String?
+
+  transactionSheet String @default("Transactions")
+
+  dashboardSheet String?
+
+  mode GoogleSheetMode @default(AUTO_CREATED)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+}
+
+
+enum GoogleSheetMode {
+
+  AUTO_CREATED
+
+  EXISTING_SHEET
+
 }
 
 model WhatsAppInstance {

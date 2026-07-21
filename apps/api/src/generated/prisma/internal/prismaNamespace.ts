@@ -387,6 +387,7 @@ export const ModelName = {
   User: 'User',
   Workspace: 'Workspace',
   GoogleAccount: 'GoogleAccount',
+  WorkspaceGoogleSetting: 'WorkspaceGoogleSetting',
   WhatsAppInstance: 'WhatsAppInstance',
   Subscription: 'Subscription',
   WorkspaceMember: 'WorkspaceMember',
@@ -409,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "workspace" | "googleAccount" | "whatsAppInstance" | "subscription" | "workspaceMember" | "transaction" | "category" | "merchant" | "paymentMethod"
+    modelProps: "user" | "workspace" | "googleAccount" | "workspaceGoogleSetting" | "whatsAppInstance" | "subscription" | "workspaceMember" | "transaction" | "category" | "merchant" | "paymentMethod"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -632,6 +633,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.GoogleAccountCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.GoogleAccountCountAggregateOutputType> | number
+        }
+      }
+    }
+    WorkspaceGoogleSetting: {
+      payload: Prisma.$WorkspaceGoogleSettingPayload<ExtArgs>
+      fields: Prisma.WorkspaceGoogleSettingFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkspaceGoogleSettingFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceGoogleSettingPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkspaceGoogleSettingFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceGoogleSettingPayload>
+        }
+        findFirst: {
+          args: Prisma.WorkspaceGoogleSettingFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceGoogleSettingPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkspaceGoogleSettingFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceGoogleSettingPayload>
+        }
+        findMany: {
+          args: Prisma.WorkspaceGoogleSettingFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceGoogleSettingPayload>[]
+        }
+        create: {
+          args: Prisma.WorkspaceGoogleSettingCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceGoogleSettingPayload>
+        }
+        createMany: {
+          args: Prisma.WorkspaceGoogleSettingCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkspaceGoogleSettingCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceGoogleSettingPayload>[]
+        }
+        delete: {
+          args: Prisma.WorkspaceGoogleSettingDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceGoogleSettingPayload>
+        }
+        update: {
+          args: Prisma.WorkspaceGoogleSettingUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceGoogleSettingPayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkspaceGoogleSettingDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkspaceGoogleSettingUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkspaceGoogleSettingUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceGoogleSettingPayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkspaceGoogleSettingUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceGoogleSettingPayload>
+        }
+        aggregate: {
+          args: Prisma.WorkspaceGoogleSettingAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkspaceGoogleSetting>
+        }
+        groupBy: {
+          args: Prisma.WorkspaceGoogleSettingGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkspaceGoogleSettingGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkspaceGoogleSettingCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkspaceGoogleSettingCountAggregateOutputType> | number
         }
       }
     }
@@ -1232,6 +1307,21 @@ export const GoogleAccountScalarFieldEnum = {
 export type GoogleAccountScalarFieldEnum = (typeof GoogleAccountScalarFieldEnum)[keyof typeof GoogleAccountScalarFieldEnum]
 
 
+export const WorkspaceGoogleSettingScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  spreadsheetId: 'spreadsheetId',
+  spreadsheetTitle: 'spreadsheetTitle',
+  transactionSheet: 'transactionSheet',
+  dashboardSheet: 'dashboardSheet',
+  mode: 'mode',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceGoogleSettingScalarFieldEnum = (typeof WorkspaceGoogleSettingScalarFieldEnum)[keyof typeof WorkspaceGoogleSettingScalarFieldEnum]
+
+
 export const WhatsAppInstanceScalarFieldEnum = {
   id: 'id',
   instanceName: 'instanceName',
@@ -1389,6 +1479,20 @@ export type EnumWorkspaceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'WorkspaceType[]'
  */
 export type ListEnumWorkspaceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkspaceType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'GoogleSheetMode'
+ */
+export type EnumGoogleSheetModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GoogleSheetMode'>
+    
+
+
+/**
+ * Reference to a field of type 'GoogleSheetMode[]'
+ */
+export type ListEnumGoogleSheetModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GoogleSheetMode[]'>
     
 
 
@@ -1574,6 +1678,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   workspace?: Prisma.WorkspaceOmit
   googleAccount?: Prisma.GoogleAccountOmit
+  workspaceGoogleSetting?: Prisma.WorkspaceGoogleSettingOmit
   whatsAppInstance?: Prisma.WhatsAppInstanceOmit
   subscription?: Prisma.SubscriptionOmit
   workspaceMember?: Prisma.WorkspaceMemberOmit

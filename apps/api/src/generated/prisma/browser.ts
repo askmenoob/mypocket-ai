@@ -33,6 +33,11 @@ export type Workspace = Prisma.WorkspaceModel
  */
 export type GoogleAccount = Prisma.GoogleAccountModel
 /**
+ * Model WorkspaceGoogleSetting
+ * 
+ */
+export type WorkspaceGoogleSetting = Prisma.WorkspaceGoogleSettingModel
+/**
  * Model WhatsAppInstance
  * 
  */

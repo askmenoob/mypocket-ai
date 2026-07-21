@@ -152,6 +152,23 @@ export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
 }
 
+export type EnumGoogleSheetModeFilter<$PrismaModel = never> = {
+  equals?: $Enums.GoogleSheetMode | Prisma.EnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  in?: $Enums.GoogleSheetMode[] | Prisma.ListEnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GoogleSheetMode[] | Prisma.ListEnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGoogleSheetModeFilter<$PrismaModel> | $Enums.GoogleSheetMode
+}
+
+export type EnumGoogleSheetModeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.GoogleSheetMode | Prisma.EnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  in?: $Enums.GoogleSheetMode[] | Prisma.ListEnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GoogleSheetMode[] | Prisma.ListEnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGoogleSheetModeWithAggregatesFilter<$PrismaModel> | $Enums.GoogleSheetMode
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumGoogleSheetModeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumGoogleSheetModeFilter<$PrismaModel>
+}
+
 export type EnumWorkspaceRoleFilter<$PrismaModel = never> = {
   equals?: $Enums.WorkspaceRole | Prisma.EnumWorkspaceRoleFieldRefInput<$PrismaModel>
   in?: $Enums.WorkspaceRole[] | Prisma.ListEnumWorkspaceRoleFieldRefInput<$PrismaModel>
@@ -379,6 +396,23 @@ export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumGoogleSheetModeFilter<$PrismaModel = never> = {
+  equals?: $Enums.GoogleSheetMode | Prisma.EnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  in?: $Enums.GoogleSheetMode[] | Prisma.ListEnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GoogleSheetMode[] | Prisma.ListEnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGoogleSheetModeFilter<$PrismaModel> | $Enums.GoogleSheetMode
+}
+
+export type NestedEnumGoogleSheetModeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.GoogleSheetMode | Prisma.EnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  in?: $Enums.GoogleSheetMode[] | Prisma.ListEnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GoogleSheetMode[] | Prisma.ListEnumGoogleSheetModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGoogleSheetModeWithAggregatesFilter<$PrismaModel> | $Enums.GoogleSheetMode
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumGoogleSheetModeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumGoogleSheetModeFilter<$PrismaModel>
 }
 
 export type NestedEnumWorkspaceRoleFilter<$PrismaModel = never> = {
