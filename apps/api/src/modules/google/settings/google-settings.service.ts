@@ -13,6 +13,11 @@ import {
 } from "../provisioner/spreadsheet.provisioner.js";
 
 
+import {
+  SheetInitializerService,
+} from "../initializer/sheet-initializer.service.js";
+
+
 
 export class GoogleSettingsService {
 
@@ -23,6 +28,10 @@ export class GoogleSettingsService {
 
   private readonly provisioner:
     SpreadsheetProvisioner;
+
+
+  private readonly initializer:
+    SheetInitializerService;
 
 
 
@@ -38,6 +47,12 @@ export class GoogleSettingsService {
 
     this.provisioner =
       new SpreadsheetProvisioner(
+        app,
+      );
+
+
+    this.initializer =
+      new SheetInitializerService(
         app,
       );
 
@@ -115,6 +130,21 @@ export class GoogleSettingsService {
           title,
 
         });
+
+
+
+    await this.initializer
+      .initialize({
+
+        workspaceId,
+
+        spreadsheetId:
+          spreadsheet.spreadsheetId,
+
+        workspaceType:
+          "PERSONAL",
+
+      });
 
 
 

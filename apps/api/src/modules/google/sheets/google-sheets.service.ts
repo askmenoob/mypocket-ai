@@ -173,6 +173,56 @@ export class GoogleSheetsService {
 
 
 
+  async updateRange(
+    workspaceId:string,
+    input:{
+      spreadsheetId:string;
+      range:string;
+      values:string[][];
+    },
+  ):Promise<void>{
+
+
+    const sheets =
+      await this.getClient(
+        workspaceId,
+      );
+
+
+
+    await sheets
+      .spreadsheets
+      .values
+      .update({
+
+        spreadsheetId:
+          input.spreadsheetId,
+
+
+        range:
+          input.range,
+
+
+        valueInputOption:
+          "USER_ENTERED",
+
+
+        requestBody:{
+
+          values:
+            input.values,
+
+        },
+
+      });
+
+  }
+
+
+
+
+
+
   async readRange(
     workspaceId:string,
     input:SheetRange,
