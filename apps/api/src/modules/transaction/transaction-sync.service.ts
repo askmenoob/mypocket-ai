@@ -8,6 +8,11 @@ import {
 } from "../google/sheets/google-sheets.service.js";
 
 
+import {
+  GoogleSettingsRepository,
+} from "../google/settings/google-settings.repository.js";
+
+
 import type {
   TransactionSyncPayload,
 } from "./transaction-sync.types.js";
@@ -21,6 +26,10 @@ export class TransactionSyncService {
     GoogleSheetsService;
 
 
+  private readonly settingsRepository:
+    GoogleSettingsRepository;
+
+
 
   constructor(
     app: FastifyInstance,
@@ -29,6 +38,12 @@ export class TransactionSyncService {
     this.sheetsService =
       new GoogleSheetsService(
         app,
+      );
+
+
+    this.settingsRepository =
+      new GoogleSettingsRepository(
+        app.prisma,
       );
 
   }
@@ -43,19 +58,26 @@ export class TransactionSyncService {
   ):Promise<void> {
 
 
-    const spreadsheetId =
-      process.env.GOOGLE_SHEET_ID;
+    const setting =
+      await this.settingsRepository
+        .findByWorkspaceId(
+          payload.workspaceId,
+        );
 
 
-    if(!spreadsheetId){
+    if(!setting){
 
       console.log(
-        "GOOGLE SHEET SYNC SKIPPED: NO CONFIG",
+        "GOOGLE SHEET SYNC SKIPPED: NO SETTINGS",
       );
 
       return;
 
     }
+
+
+    const spreadsheetId =
+      setting.spreadsheetId;
 
 
 
