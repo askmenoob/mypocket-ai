@@ -17,6 +17,10 @@ export const googleConfig = {
     env.GOOGLE_REDIRECT_URI,
 
 
+  reportsFolderId:
+    env.GOOGLE_REPORTS_FOLDER_ID,
+
+
   scopes:[
     "https://www.googleapis.com/auth/spreadsheets",
 

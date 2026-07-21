@@ -13,6 +13,11 @@ import {
 } from "../token/google-token.service.js";
 
 
+import {
+  GoogleDriveService,
+} from "../drive/google-drive.service.js";
+
+
 import type {
   CreateSpreadsheetInput,
   SpreadsheetProvisionResult,
@@ -27,6 +32,10 @@ export class SpreadsheetProvisioner {
     GoogleTokenService;
 
 
+  private readonly driveService:
+    GoogleDriveService;
+
+
 
   constructor(
     app:FastifyInstance,
@@ -34,6 +43,12 @@ export class SpreadsheetProvisioner {
 
     this.tokenService =
       new GoogleTokenService(
+        app,
+      );
+
+
+    this.driveService =
+      new GoogleDriveService(
         app,
       );
 
@@ -129,6 +144,13 @@ export class SpreadsheetProvisioner {
       response.data.spreadsheetId
       ??
       "";
+
+
+    await this.driveService
+      .moveFileToReportsFolder(
+        input.workspaceId,
+        spreadsheetId,
+      );
 
 
 

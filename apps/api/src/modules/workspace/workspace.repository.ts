@@ -48,6 +48,25 @@ export class WorkspaceRepository {
 
 
 
+  async findWorkspaceById(
+    workspaceId: string,
+  ) {
+
+    return this.prisma.workspace.findUnique({
+
+      where: {
+        id:
+          workspaceId,
+      },
+
+    });
+
+  }
+
+
+
+
+
   async createWorkspace(
     userId: string,
     name: string,

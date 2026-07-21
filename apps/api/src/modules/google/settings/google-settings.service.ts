@@ -18,6 +18,11 @@ import {
 } from "../initializer/sheet-initializer.service.js";
 
 
+import {
+  WorkspaceRepository,
+} from "../../workspace/workspace.repository.js";
+
+
 
 export class GoogleSettingsService {
 
@@ -32,6 +37,10 @@ export class GoogleSettingsService {
 
   private readonly initializer:
     SheetInitializerService;
+
+
+  private readonly workspaceRepository:
+    WorkspaceRepository;
 
 
 
@@ -54,6 +63,12 @@ export class GoogleSettingsService {
     this.initializer =
       new SheetInitializerService(
         app,
+      );
+
+
+    this.workspaceRepository =
+      new WorkspaceRepository(
+        app.prisma,
       );
 
   }
@@ -133,6 +148,14 @@ export class GoogleSettingsService {
 
 
 
+    const workspace =
+      await this.workspaceRepository
+        .findWorkspaceById(
+          workspaceId,
+        );
+
+
+
     await this.initializer
       .initialize({
 
@@ -142,6 +165,8 @@ export class GoogleSettingsService {
           spreadsheet.spreadsheetId,
 
         workspaceType:
+          workspace?.type
+          ??
           "PERSONAL",
 
       });

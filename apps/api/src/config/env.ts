@@ -55,6 +55,11 @@ const EnvSchema = z.object({
   GOOGLE_TOKEN_ENCRYPTION_KEY:
     z.string()
       .min(64),
+
+
+  GOOGLE_REPORTS_FOLDER_ID:
+    z.string()
+      .min(1),
 });
 
 export const env = EnvSchema.parse(process.env);
