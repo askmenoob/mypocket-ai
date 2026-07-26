@@ -390,6 +390,14 @@ export class WhatsAppService {
       );
 
 
+    const infoCommand =
+      this.getInfoCommand(
+        normalized.text
+        ??
+        "",
+      );
+
+
     const instance =
       await this.app.prisma.whatsAppInstance
         .findUnique({
@@ -503,6 +511,16 @@ export class WhatsAppService {
 
       return this.handleCategoriesCommand(
         normalized,
+      );
+
+    }
+
+
+    if(infoCommand){
+
+      return this.handleInfoCommand(
+        normalized,
+        infoCommand,
       );
 
     }
@@ -637,6 +655,149 @@ export class WhatsAppService {
         result.transaction,
 
     };
+
+  }
+
+
+
+
+
+  private getInfoCommand(
+    text:string,
+  ):
+    | "methods"
+    | "commands"
+    | null {
+
+    const normalized =
+      text
+        .trim()
+        .toLowerCase();
+
+
+    if(
+      [
+        "methods",
+        "/methods",
+        "payment methods",
+        "payment",
+        "bayaran",
+        "cara bayar",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return "methods";
+
+    }
+
+
+    if(
+      [
+        "commands",
+        "/commands",
+        "command",
+        "menu",
+        "senarai command",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return "commands";
+
+    }
+
+
+    return null;
+
+  }
+
+
+
+
+
+  private async handleInfoCommand(
+    normalized:NormalizedEvolutionMessage,
+
+    command:
+      | "methods"
+      | "commands",
+  ){
+
+    const reply =
+      command === "methods"
+        ?
+        this.buildMethodsReply()
+        :
+        this.buildCommandsReply();
+
+
+    await this.safeSendWebhookReply(
+      normalized,
+      reply,
+    );
+
+
+    return {
+
+      message:
+        "WhatsApp info command sent",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+
+      command,
+
+    };
+
+  }
+
+
+
+
+
+  private buildMethodsReply(){
+
+    return [
+      "💳 Payment method auto MyPocket",
+      "",
+      "• TNG — tng, touch n go",
+      "• Cash — cash, tunai",
+      "• Bank — bank, transfer, fpx",
+      "• Card — card, kad, visa",
+      "• DuitNow — duitnow, qr",
+      "• GrabPay — grabpay",
+    ].join(
+      "\n",
+    );
+
+  }
+
+
+
+
+
+  private buildCommandsReply(){
+
+    return [
+      "📋 Command MyPocket AI",
+      "",
+      "• help — bantuan format",
+      "• today — ringkasan hari ini",
+      "• week / minggu — ringkasan minggu ini",
+      "• month / bulan — ringkasan bulan ini",
+      "• last — transaksi terakhir",
+      "• undo / batal — batalkan transaksi terakhir",
+      "• categories — senarai kategori",
+      "• methods — senarai payment method",
+      "• status — semak sambungan bot",
+    ].join(
+      "\n",
+    );
 
   }
 
@@ -2116,6 +2277,8 @@ export class WhatsAppService {
       "• month — ringkasan bulan ini",
       "• undo — batalkan transaksi terakhir",
       "• categories — senarai kategori auto",
+      "• methods — senarai payment method",
+      "• commands — senarai semua command",
       "• status — semak sambungan bot",
       "• help — bantuan format",
       "",
