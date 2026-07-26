@@ -32,6 +32,8 @@ export interface WhatsAppDevTransactionInput {
 
   currency?:string;
 
+  source?:string;
+
   user:{
     userId:string;
     workspaceId:string;

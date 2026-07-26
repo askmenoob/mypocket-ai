@@ -222,6 +222,11 @@ export class WhatsAppService {
             categoryId:
               category.id,
 
+            source:
+              input.source
+              ??
+              "SYSTEM",
+
           },
         );
 
@@ -351,6 +356,39 @@ export class WhatsAppService {
     }
 
 
+    const duplicate =
+      await this.findDuplicateTransaction(
+        instance.workspaceId,
+        normalized.text!,
+        normalized.timestamp,
+      );
+
+
+    if(duplicate){
+
+      return {
+
+        message:
+          "WhatsApp webhook duplicate ignored",
+
+        source:
+          "EVOLUTION",
+
+        normalized:{
+          ...normalized,
+
+          reason:
+            "WHATSAPP_DUPLICATE_TRANSACTION",
+        },
+
+        transaction:
+          duplicate,
+
+      };
+
+    }
+
+
     const result =
       await this.createDevTransaction({
 
@@ -359,6 +397,9 @@ export class WhatsAppService {
 
         transactionDate:
           normalized.timestamp,
+
+        source:
+          "WHATSAPP",
 
         user:{
           userId:
@@ -391,6 +432,61 @@ export class WhatsAppService {
         result.transaction,
 
     };
+
+  }
+
+
+
+
+
+  private async findDuplicateTransaction(
+    workspaceId:string,
+
+    text:string,
+
+    transactionDate?:string,
+  ){
+
+    const parsed =
+      this.parseTransactionText(
+        text,
+        transactionDate,
+      );
+
+
+    return this.app.prisma.transaction
+      .findFirst({
+        where:{
+          workspaceId,
+
+          amount:
+            parsed.amount,
+
+          description:
+            parsed.description,
+
+          transactionDate:
+            new Date(
+              parsed.transactionDate,
+            ),
+        },
+
+        include:{
+
+          category:true,
+
+          merchant:true,
+
+          paymentMethod:true,
+
+          workspace:{
+            select:{
+              type:true,
+            },
+          },
+
+        },
+      });
 
   }
 

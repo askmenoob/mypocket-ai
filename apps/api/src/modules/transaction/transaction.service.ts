@@ -160,6 +160,12 @@ export class TransactionService {
           transaction.transactionDate,
 
 
+        source:
+          input.source
+          ??
+          "SYSTEM",
+
+
       });
 
 

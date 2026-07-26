@@ -33,6 +33,8 @@ export interface CreateTransactionInput {
 
   receiptUrl?:string;
 
+  source?:string;
+
 }
 
 

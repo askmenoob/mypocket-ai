@@ -35,4 +35,7 @@ export interface TransactionSyncPayload {
   transactionDate:
     Date;
 
+
+  source?:string;
+
 }
