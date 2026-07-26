@@ -358,8 +358,8 @@ export class WhatsAppService {
       );
 
 
-    const isTodaySummary =
-      this.isTodaySummaryCommand(
+    const summaryPeriod =
+      this.getSummaryPeriodCommand(
         normalized.text
         ??
         "",
@@ -454,11 +454,12 @@ export class WhatsAppService {
     }
 
 
-    if(isTodaySummary){
+    if(summaryPeriod){
 
-      return this.handleTodaySummaryCommand(
+      return this.handleSummaryCommand(
         instance.workspaceId,
         normalized,
+        summaryPeriod,
       );
 
     }
@@ -589,9 +590,13 @@ export class WhatsAppService {
 
 
 
-  private isTodaySummaryCommand(
+  private getSummaryPeriodCommand(
     text:string,
-  ){
+  ):
+    | "today"
+    | "week"
+    | "month"
+    | null {
 
     const normalized =
       text
@@ -599,16 +604,61 @@ export class WhatsAppService {
         .toLowerCase();
 
 
-    return [
-      "today",
-      "/today",
-      "summary",
-      "ringkasan",
-      "hari ini",
-      "today summary",
-    ].includes(
-      normalized,
-    );
+    if(
+      [
+        "today",
+        "/today",
+        "summary",
+        "ringkasan",
+        "hari ini",
+        "today summary",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return "today";
+
+    }
+
+
+    if(
+      [
+        "week",
+        "/week",
+        "weekly",
+        "summary week",
+        "ringkasan minggu",
+        "minggu ini",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return "week";
+
+    }
+
+
+    if(
+      [
+        "month",
+        "/month",
+        "monthly",
+        "summary month",
+        "ringkasan bulan",
+        "bulan ini",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return "month";
+
+    }
+
+
+    return null;
 
   }
 
@@ -616,29 +666,35 @@ export class WhatsAppService {
 
 
 
-  private async handleTodaySummaryCommand(
+  private async handleSummaryCommand(
     workspaceId:string,
 
     normalized:NormalizedEvolutionMessage,
+
+    period:
+      | "today"
+      | "week"
+      | "month",
   ){
 
     const now =
       new Date();
 
 
-    const dayRange =
-      this.getTimezoneDayRange(
+    const periodRange =
+      this.getTimezonePeriodRange(
         now,
         env.DEFAULT_TIMEZONE,
+        period,
       );
 
 
     const start =
-      dayRange.start;
+      periodRange.start;
 
 
     const end =
-      dayRange.end;
+      periodRange.end;
 
 
     const transactions =
@@ -675,10 +731,12 @@ export class WhatsAppService {
 
 
     const reply =
-      this.buildTodaySummaryReply(
+      this.buildSummaryReply(
         transactions,
         now,
         env.DEFAULT_TIMEZONE,
+        period,
+        periodRange.label,
       );
 
 
@@ -691,7 +749,7 @@ export class WhatsAppService {
     return {
 
       message:
-        "WhatsApp today summary sent",
+        "WhatsApp summary sent",
 
       source:
         "EVOLUTION",
@@ -699,11 +757,10 @@ export class WhatsAppService {
       normalized,
 
       summary:{
-        date:
-          this.formatDateInTimezone(
-            now,
-            env.DEFAULT_TIMEZONE,
-          ),
+        period,
+
+        label:
+          periodRange.label,
 
         count:
           transactions.length,
@@ -717,7 +774,7 @@ export class WhatsAppService {
 
 
 
-  private buildTodaySummaryReply(
+  private buildSummaryReply(
     transactions:Array<{
       amount:unknown;
       type:string;
@@ -729,6 +786,13 @@ export class WhatsAppService {
     now:Date,
 
     timezone:string,
+
+    period:
+      | "today"
+      | "week"
+      | "month",
+
+    label:string,
   ){
 
     let expense =
@@ -812,12 +876,21 @@ export class WhatsAppService {
         )[0];
 
 
+    const title =
+      period === "today"
+        ?
+        "📊 Ringkasan hari ini"
+        :
+        period === "week"
+          ?
+          "📊 Ringkasan minggu ini"
+          :
+          "📊 Ringkasan bulan ini";
+
+
     return [
-      "📊 Ringkasan hari ini",
-      this.formatDateInTimezone(
-        now,
-        timezone,
-      ),
+      title,
+      label,
       "",
       `Expense: MYR ${expense.toFixed(2)}`,
       `Income: MYR ${income.toFixed(2)}`,
@@ -1146,6 +1219,48 @@ export class WhatsAppService {
 
 
 
+  private getTimezonePeriodRange(
+    date:Date,
+
+    timezone:string,
+
+    period:
+      | "today"
+      | "week"
+      | "month",
+  ){
+
+    if(period === "week"){
+
+      return this.getTimezoneWeekRange(
+        date,
+        timezone,
+      );
+
+    }
+
+
+    if(period === "month"){
+
+      return this.getTimezoneMonthRange(
+        date,
+        timezone,
+      );
+
+    }
+
+
+    return this.getTimezoneDayRange(
+      date,
+      timezone,
+    );
+
+  }
+
+
+
+
+
   private getTimezoneDayRange(
     date:Date,
 
@@ -1176,6 +1291,188 @@ export class WhatsAppService {
     return {
       start,
       end,
+      label:
+        localDate,
+    };
+
+  }
+
+
+
+
+
+  private getTimezoneWeekRange(
+    date:Date,
+
+    timezone:string,
+  ){
+
+    const localDate =
+      this.formatDateInTimezone(
+        date,
+        timezone,
+      );
+
+
+    const [
+      year,
+      month,
+      day,
+    ] =
+      localDate
+        .split(
+          "-",
+        )
+        .map(
+          Number,
+        );
+
+
+    const localUtcNoon =
+      new Date(
+        Date.UTC(
+          year,
+          month - 1,
+          day,
+          12,
+          0,
+          0,
+          0,
+        ),
+      );
+
+
+    const dayOfWeek =
+      localUtcNoon.getUTCDay();
+
+
+    const daysFromMonday =
+      (
+        dayOfWeek
+        +
+        6
+      )
+      %
+      7;
+
+
+    const startLocal =
+      new Date(
+        localUtcNoon.getTime()
+        -
+        daysFromMonday * 24 * 60 * 60 * 1000,
+      );
+
+
+    const endLocal =
+      new Date(
+        startLocal.getTime()
+        +
+        6 * 24 * 60 * 60 * 1000,
+      );
+
+
+    const startDate =
+      startLocal
+        .toISOString()
+        .slice(
+          0,
+          10,
+        );
+
+
+    const endDate =
+      endLocal
+        .toISOString()
+        .slice(
+          0,
+          10,
+        );
+
+
+    return {
+      start:
+        this.zonedDateTimeToUtc(
+          `${startDate}T00:00:00`,
+          timezone,
+        ),
+
+      end:
+        this.zonedDateTimeToUtc(
+          `${endDate}T23:59:59.999`,
+          timezone,
+        ),
+
+      label:
+        `${startDate} to ${endDate}`,
+    };
+
+  }
+
+
+
+
+
+  private getTimezoneMonthRange(
+    date:Date,
+
+    timezone:string,
+  ){
+
+    const localDate =
+      this.formatDateInTimezone(
+        date,
+        timezone,
+      );
+
+
+    const [
+      year,
+      month,
+    ] =
+      localDate
+        .split(
+          "-",
+        )
+        .map(
+          Number,
+        );
+
+
+    const startDate =
+      `${year}-${String(month).padStart(2, "0")}-01`;
+
+
+    const lastDay =
+      new Date(
+        Date.UTC(
+          year,
+          month,
+          0,
+        ),
+      )
+        .getUTCDate();
+
+
+    const endDate =
+      `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+
+
+    return {
+      start:
+        this.zonedDateTimeToUtc(
+          `${startDate}T00:00:00`,
+          timezone,
+        ),
+
+      end:
+        this.zonedDateTimeToUtc(
+          `${endDate}T23:59:59.999`,
+          timezone,
+        ),
+
+      label:
+        `${year}-${String(month).padStart(2, "0")}`,
     };
 
   }
@@ -1435,6 +1732,8 @@ export class WhatsAppService {
       "",
       "Command:",
       "• today — ringkasan hari ini",
+      "• week — ringkasan minggu ini",
+      "• month — ringkasan bulan ini",
       "• undo — batalkan transaksi terakhir",
       "• help — bantuan format",
       "",
