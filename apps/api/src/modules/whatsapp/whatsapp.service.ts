@@ -844,7 +844,7 @@ export class WhatsAppService {
         "• Bills — bill, elektrik, air, internet",
         "• Shopping — belanja, beli, shopee, lazada",
         "• Rent — rent, sewa",
-        "• Income — gaji, bonus, income, terima, refund",
+        "• Salary — gaji, bonus, income, terima, refund",
         "• Others — fallback",
       ].join(
         "\n",
@@ -3191,7 +3191,7 @@ export class WhatsAppService {
 
     if(type === "INCOME"){
 
-      return "Income";
+      return "Salary";
 
     }
 
