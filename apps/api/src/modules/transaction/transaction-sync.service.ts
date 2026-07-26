@@ -80,6 +80,25 @@ export class TransactionSyncService {
       setting.spreadsheetId;
 
 
+    const transactionIso =
+      payload.transactionDate
+        .toISOString();
+
+    const transactionDate =
+      transactionIso
+        .slice(
+          0,
+          10,
+        );
+
+    const transactionTime =
+      transactionIso
+        .slice(
+          11,
+          19,
+        );
+
+
 
     await this.sheetsService
       .appendRow(
@@ -88,28 +107,37 @@ export class TransactionSyncService {
           spreadsheetId,
 
           range:
-            "Transactions!A:H",
+            "Transactions!A:M",
 
-          values:[
+            values:[
 
-            payload.transactionDate
-              .toISOString(),
+              payload.transactionId,
 
-            payload.type,
+              transactionDate,
 
-            payload.category,
+              transactionTime,
 
-            payload.merchant,
+              payload.type,
 
-            payload.description,
+              payload.category,
 
-            payload.amount,
+              payload.merchant,
 
-            payload.currency,
+              payload.description,
 
-            payload.transactionId,
+              payload.amount,
 
-          ],
+              "",
+
+              "SYSTEM",
+
+              "",
+
+              "",
+
+              transactionIso,
+
+            ],
 
         },
       );
