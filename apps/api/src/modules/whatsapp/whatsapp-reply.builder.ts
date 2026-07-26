@@ -256,6 +256,103 @@ export class WhatsAppReplyBuilder {
 
 
 
+  static transactionList(
+    transactions:Array<{
+      amount:unknown;
+      currency:string;
+      type:string;
+      description:string | null;
+      transactionDate:Date;
+      category?:{
+        name:string;
+      } | null;
+      merchant?:{
+        name:string;
+      } | null;
+      paymentMethod?:{
+        name:string;
+      } | null;
+    }>,
+
+    title:string,
+  ){
+
+    if(transactions.length === 0){
+
+      return `${title}\n\nℹ️ Tiada transaksi ditemui.`;
+
+    }
+
+
+    const rows =
+      transactions
+        .slice(
+          0,
+          5,
+        )
+        .map(
+          (
+            transaction,
+            index,
+          ) => {
+
+            const category =
+              transaction.category?.name
+              ??
+              "Others";
+
+            const merchant =
+              transaction.merchant?.name
+                ?
+                ` @ ${transaction.merchant.name}`
+                :
+                "";
+
+            const paymentMethod =
+              transaction.paymentMethod?.name
+                ?
+                ` (${transaction.paymentMethod.name})`
+                :
+                "";
+
+            const date =
+              transaction.transactionDate
+                .toISOString()
+                .slice(
+                  0,
+                  10,
+                );
+
+            return [
+              `${index + 1}. ${date}`,
+              `${transaction.type}: ${category}${merchant}${paymentMethod}`,
+              `${transaction.currency}${transaction.amount}`,
+              transaction.description
+                ??
+                "",
+            ].filter(Boolean)
+              .join(
+                " — ",
+              );
+
+          },
+        );
+
+
+    return [
+      title,
+      "",
+      ...rows,
+    ].join(
+      "\n",
+    );
+
+  }
+
+
+
+
+
   static summary(
     transactions:Array<{
       amount:unknown;

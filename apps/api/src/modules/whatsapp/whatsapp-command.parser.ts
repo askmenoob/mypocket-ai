@@ -5,6 +5,7 @@ export type WhatsAppCommandKind =
   | "last"
   | "status"
   | "summary"
+  | "list"
   | "edit"
   | "undo"
   | "transaction";
@@ -31,6 +32,21 @@ export type WhatsAppEditField =
   | "time"
   | "type"
   | "description";
+
+
+export interface WhatsAppListCommand {
+
+  mode:
+    | "period"
+    | "search";
+
+  period?:
+    | WhatsAppSummaryPeriod;
+
+  keyword?:string;
+
+}
+
 
 
 export interface WhatsAppEditCommand {
@@ -300,6 +316,122 @@ export class WhatsAppCommandParser {
     ){
 
       return "commands";
+
+    }
+
+
+    return null;
+
+  }
+
+
+
+
+
+  static list(
+    text:string,
+  ):
+    | WhatsAppListCommand
+    | null {
+
+    const normalized =
+      this.normalize(
+        text,
+      );
+
+
+    if(
+      [
+        "list",
+        "/list",
+        "senarai",
+        "list today",
+        "senarai hari ini",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return {
+        mode:
+          "period",
+
+        period:
+          "today",
+      };
+
+    }
+
+
+    if(
+      [
+        "list week",
+        "/list week",
+        "senarai minggu",
+        "list minggu",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return {
+        mode:
+          "period",
+
+        period:
+          "week",
+      };
+
+    }
+
+
+    if(
+      [
+        "list month",
+        "/list month",
+        "senarai bulan",
+        "list bulan",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return {
+        mode:
+          "period",
+
+        period:
+          "month",
+      };
+
+    }
+
+
+    const searchMatch =
+      text
+        .trim()
+        .match(
+          /^(?:search|cari|find)\s+(.+)$/i,
+        );
+
+
+    if(searchMatch){
+
+      const keyword =
+        searchMatch[1]
+          .trim();
+
+
+      if(keyword){
+
+        return {
+          mode:
+            "search",
+
+          keyword,
+        };
+
+      }
 
     }
 

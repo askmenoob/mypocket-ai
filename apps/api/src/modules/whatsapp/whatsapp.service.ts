@@ -41,6 +41,7 @@ import {
   WhatsAppCommandParser,
   type WhatsAppCommandKind,
   type WhatsAppEditCommand,
+  type WhatsAppListCommand,
 } from "./whatsapp-command.parser.js";
 
 
@@ -643,6 +644,15 @@ export class WhatsAppService {
         );
 
 
+    const listCommand =
+      WhatsAppCommandParser
+        .list(
+          normalized.text
+          ??
+          "",
+        );
+
+
     const commandKind =
       this.resolveWebhookCommandKind({
         editCommand,
@@ -651,6 +661,7 @@ export class WhatsAppService {
         isLast,
         isCategories,
         infoCommand,
+        listCommand,
         summaryPeriod,
       });
 
@@ -814,6 +825,17 @@ export class WhatsAppService {
       return this.handleInfoCommand(
         normalized,
         infoCommand,
+      );
+
+    }
+
+
+    if(listCommand){
+
+      return this.handleListCommand(
+        instance.workspaceId,
+        normalized,
+        listCommand,
       );
 
     }
@@ -1045,6 +1067,10 @@ export class WhatsAppService {
         | "commands"
         | null;
 
+      listCommand:
+        | WhatsAppListCommand
+        | null;
+
       summaryPeriod:
         | "today"
         | "week"
@@ -1095,6 +1121,13 @@ export class WhatsAppService {
     }
 
 
+    if(input.listCommand){
+
+      return "list";
+
+    }
+
+
     if(input.summaryPeriod){
 
       return "summary";
@@ -1129,6 +1162,7 @@ export class WhatsAppService {
           "last",
           "status",
           "summary",
+          "list",
         ];
 
 
@@ -1506,6 +1540,209 @@ export class WhatsAppService {
           env.DEFAULT_TIMEZONE,
       },
 
+    };
+
+  }
+
+
+
+
+
+  private async handleListCommand(
+    workspaceId:string,
+
+    normalized:NormalizedEvolutionMessage,
+
+    command:WhatsAppListCommand,
+  ){
+
+    const now =
+      new Date();
+
+
+    let title =
+      "📋 Senarai transaksi";
+
+    let transactions;
+
+
+    if(command.mode === "search"){
+
+      const keyword =
+        command.keyword
+        ??
+        "";
+
+
+      title =
+        `🔎 Carian transaksi: ${keyword}`;
+
+
+      transactions =
+        await this.app.prisma.transaction
+          .findMany({
+            where:{
+              workspaceId,
+
+              status:{
+                not:
+                  "CANCELLED",
+              },
+
+              OR:[
+                {
+                  description:{
+                    contains:
+                      keyword,
+
+                    mode:
+                      "insensitive",
+                  },
+                },
+                {
+                  category:{
+                    name:{
+                      contains:
+                        keyword,
+
+                      mode:
+                        "insensitive",
+                    },
+                  },
+                },
+                {
+                  merchant:{
+                    name:{
+                      contains:
+                        keyword,
+
+                      mode:
+                        "insensitive",
+                    },
+                  },
+                },
+                {
+                  paymentMethod:{
+                    name:{
+                      contains:
+                        keyword,
+
+                      mode:
+                        "insensitive",
+                    },
+                  },
+                },
+              ],
+            },
+
+            include:{
+              category:true,
+              merchant:true,
+              paymentMethod:true,
+            },
+
+            orderBy:{
+              transactionDate:
+                "desc",
+            },
+
+            take:
+              5,
+          });
+
+    }else{
+
+      const period =
+        command.period
+        ??
+        "today";
+
+
+      const periodRange =
+        this.getTimezonePeriodRange(
+          now,
+          env.DEFAULT_TIMEZONE,
+          period,
+        );
+
+
+      title =
+        period === "today"
+          ?
+          "📋 Transaksi hari ini"
+          :
+          period === "week"
+            ?
+            "📋 Transaksi minggu ini"
+            :
+            "📋 Transaksi bulan ini";
+
+
+      transactions =
+        await this.app.prisma.transaction
+          .findMany({
+            where:{
+              workspaceId,
+
+              status:{
+                not:
+                  "CANCELLED",
+              },
+
+              transactionDate:{
+                gte:
+                  periodRange.start,
+
+                lte:
+                  periodRange.end,
+              },
+            },
+
+            include:{
+              category:true,
+              merchant:true,
+              paymentMethod:true,
+            },
+
+            orderBy:{
+              transactionDate:
+                "desc",
+            },
+
+            take:
+              5,
+          });
+
+    }
+
+
+    const reply =
+      WhatsAppReplyBuilder
+        .transactionList(
+          transactions,
+          title,
+        );
+
+
+    await this.safeSendWebhookReply(
+      normalized,
+      reply,
+    );
+
+
+    return {
+      message:
+        "WhatsApp list command sent",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+
+      command,
+
+      count:
+        transactions.length,
     };
 
   }
