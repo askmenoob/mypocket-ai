@@ -120,7 +120,24 @@ async function api<T>(
   return json as T;
 }
 
+function isPublicLandingHost(){
+  const host =
+    window.location.hostname;
+
+  return (
+    host === "imai.my"
+    ||
+    host === "www.imai.my"
+  );
+}
+
+
+
 function App(){
+
+  if(isPublicLandingHost()){
+    return <PublicLanding />;
+  }
 
   const [token, setToken] =
     useState(
@@ -1054,6 +1071,253 @@ function Dashboard(
   );
 
 }
+
+
+function PublicLanding(){
+
+  return (
+    <main className="publicPage">
+      <header className="publicHeader">
+        <LogoBlock />
+
+        <nav className="publicNav">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#privacy">Privacy</a>
+          <a href="#pricing">Pricing</a>
+        </nav>
+
+        <div className="publicActions">
+          <a className="secondaryLink" href="https://app.imai.my">
+            Open Dashboard
+          </a>
+          <a className="primaryLinkButton" href="https://app.imai.my">
+            Get Started
+          </a>
+        </div>
+      </header>
+
+      <section className="hero">
+        <div className="heroCopy">
+          <div className="heroTrust">
+            AI-powered · Privacy first · You own your data
+          </div>
+
+          <h1>
+            Record expenses through WhatsApp.
+            <span> Sync to your own Google Sheet.</span>
+          </h1>
+
+          <p>
+            MyPocket AI gives you a WhatsApp finance bot, a beautiful PWA dashboard,
+            and seamless Google Sheet sync. Your workspace stays simple, fast and
+            easy to control.
+          </p>
+
+          <p className="privacyLine">
+            We do not ask for your Google or WhatsApp passwords. We only store
+            minimum operational data needed to run the service securely.
+          </p>
+
+          <div className="heroButtons">
+            <a className="primaryLinkButton" href="https://app.imai.my">
+              Get Started Free →
+            </a>
+
+            <a className="secondaryLink light" href="#how">
+              See How It Works
+            </a>
+          </div>
+
+          <div className="heroTags">
+            <span>WhatsApp bot</span>
+            <span>Google Sheet sync</span>
+            <span>PWA dashboard</span>
+          </div>
+        </div>
+
+        <div className="heroVisual">
+          <div className="phoneMock">
+            <div className="phoneTop">9:41 · MyPocket AI</div>
+            <div className="chat sent">makan nasi rm8 tng</div>
+            <div className="chat reply">
+              ✅ Recorded!<br />
+              Item: Makan nasi<br />
+              Amount: RM8.00<br />
+              Category: Food<br />
+              Payment: TNG
+            </div>
+            <div className="chatInput">Message</div>
+          </div>
+
+          <div className="dashMock">
+            <div className="mockHeader">
+              <strong>Overview</strong>
+              <span>May 2026</span>
+            </div>
+            <div className="mockStats">
+              <div><span>Total Expenses</span><strong>RM 1,268.50</strong></div>
+              <div><span>Transactions</span><strong>42</strong></div>
+              <div><span>Daily Average</span><strong>RM 40.92</strong></div>
+            </div>
+            <div className="donut"></div>
+          </div>
+
+          <div className="sheetMock">
+            <strong>MyPocket AI · Expenses</strong>
+            <table>
+              <tbody>
+                <tr><td>Date</td><td>Category</td><td>Amount</td></tr>
+                <tr><td>24/05</td><td>Food</td><td>RM8.00</td></tr>
+                <tr><td>24/05</td><td>Transport</td><td>RM30.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="how" className="publicSection">
+        <h2>How it works</h2>
+        <p>Get up and running in three simple steps.</p>
+
+        <div className="steps">
+          <PublicCard icon="▦" title="Connect Google" text="Connect your Google account and choose or create your Google Sheet." />
+          <PublicCard icon="☏" title="Pair WhatsApp" text="Scan a QR code to pair your WhatsApp bot securely." />
+          <PublicCard icon="✓" title="Start recording" text="Text your expenses naturally. MyPocket records and syncs automatically." />
+        </div>
+      </section>
+
+      <section id="features" className="publicSection">
+        <h2>Everything you need to manage money, your way</h2>
+
+        <div className="featureGrid">
+          <PublicCard icon="☏" title="WhatsApp Bot" text="Record expenses in seconds with natural language and instant confirmation." />
+          <PublicCard icon="▦" title="Google Sheet Templates" text="Pre-built templates for Personal, Family and Business workspaces." />
+          <PublicCard icon="▣" title="PWA Dashboard" text="Fast, installable dashboard for phone, tablet and desktop." />
+          <PublicCard icon="👥" title="Family & Business Roles" text="Invite members, set roles, and protect commands with permissions." />
+          <PublicCard icon="◔" title="Smart Summaries" text="Daily, weekly and monthly summaries by category and spend." />
+          <PublicCard icon="✎" title="Edit & Undo" text="Fix recent transactions and sync changes back to your sheet." />
+          <PublicCard icon="◆" title="Categories & Tags" text="Organize records with categories, merchants and payment methods." />
+          <PublicCard icon="●" title="Simple Setup Wizard" text="Guided onboarding for terms, Google, WhatsApp and subscription." />
+        </div>
+      </section>
+
+      <section id="privacy" className="publicSection privacyBand">
+        <h2>Trust & privacy is our promise</h2>
+
+        <div className="trustGrid">
+          <PublicCard icon="🛡" title="You own your data" text="Your financial workspace lives in your Google Sheet. You can revoke access anytime." />
+          <PublicCard icon="🔒" title="We don't ask for passwords" text="We never ask for Google or WhatsApp passwords." />
+          <PublicCard icon="▤" title="Minimum data stored" text="We store only what is needed to run automation, sync and access control." />
+          <PublicCard icon="✓" title="Secure by design" text="Connections use platform APIs and follow industry-standard security practices." />
+        </div>
+      </section>
+
+      <section id="pricing" className="publicSection">
+        <h2>Simple pricing, for everyone</h2>
+        <p>Start free. Upgrade when you need more.</p>
+
+        <div className="pricingGrid">
+          <Plan title="Personal" price="RM 0" text="For individuals" features={["1 WhatsApp number", "Google Sheet sync", "PWA dashboard", "Basic summaries"]} />
+          <Plan title="Family" price="RM 19" text="For households" highlight features={["Up to 5 WhatsApp numbers", "Roles & permissions", "Member mapping", "Priority support"]} />
+          <Plan title="Business" price="RM 49" text="For small teams" features={["Up to 10 WhatsApp numbers", "Advanced audit log", "Business templates", "Priority support"]} />
+        </div>
+      </section>
+
+      <section className="faq publicSection">
+        <h2>Frequently asked questions</h2>
+
+        <div className="faqGrid">
+          <details open>
+            <summary>Do you store my Google or WhatsApp passwords?</summary>
+            <p>No. MyPocket AI never asks for those passwords.</p>
+          </details>
+          <details>
+            <summary>Can I use my own Google Sheet?</summary>
+            <p>Yes. Your workspace syncs to your own sheet.</p>
+          </details>
+          <details>
+            <summary>Can I cancel anytime?</summary>
+            <p>Yes. You can disconnect integrations and stop using the service anytime.</p>
+          </details>
+          <details>
+            <summary>Is there a free plan?</summary>
+            <p>Yes. Personal workspace starts free.</p>
+          </details>
+        </div>
+      </section>
+
+      <section className="finalCta">
+        <div>
+          <h2>Ready to take control of your money?</h2>
+          <p>Get started in less than two minutes.</p>
+        </div>
+
+        <div className="heroButtons">
+          <a className="primaryLinkButton" href="https://app.imai.my">
+            Get Started Free
+          </a>
+          <a className="secondaryLink light" href="https://app.imai.my">
+            Open Dashboard
+          </a>
+        </div>
+      </section>
+
+      <footer className="publicFooter">
+        <LogoBlock />
+        <span>© 2026 MyPocket AI. All rights reserved.</span>
+      </footer>
+    </main>
+  );
+
+}
+
+
+
+function PublicCard(
+  props:{
+    icon:string;
+    title:string;
+    text:string;
+  },
+){
+  return (
+    <article className="publicCard">
+      <div className="publicIcon">{props.icon}</div>
+      <h3>{props.title}</h3>
+      <p>{props.text}</p>
+    </article>
+  );
+}
+
+
+
+function Plan(
+  props:{
+    title:string;
+    price:string;
+    text:string;
+    features:string[];
+    highlight?:boolean;
+  },
+){
+  return (
+    <article className={props.highlight ? "plan highlight" : "plan"}>
+      {props.highlight && <span className="popular">Most Popular</span>}
+      <h3>{props.title}</h3>
+      <p>{props.text}</p>
+      <strong>{props.price}<small>/month</small></strong>
+      <ul>
+        {props.features.map((feature) => (
+          <li key={feature}>✓ {feature}</li>
+        ))}
+      </ul>
+      <a href="https://app.imai.my">Get Started</a>
+    </article>
+  );
+}
+
+
 
 function LogoBlock(){
   return (

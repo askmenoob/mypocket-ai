@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 
 import prismaPlugin from "./plugins/prisma.js";
 import jwtPlugin from "./plugins/jwt.js";
@@ -21,6 +22,17 @@ export function buildApp() {
 
 
   app.register(errorHandler);
+
+  app.register(cors, {
+    origin: [
+      "https://app.imai.my",
+      "https://imai.my",
+      "https://api.imai.my",
+      "http://localhost:3001",
+      "http://127.0.0.1:3001",
+    ],
+    credentials: true,
+  });
 
   app.register(prismaPlugin);
 
