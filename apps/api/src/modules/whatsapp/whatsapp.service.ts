@@ -366,6 +366,14 @@ export class WhatsAppService {
       );
 
 
+    const isStatus =
+      this.isStatusCommand(
+        normalized.text
+        ??
+        "",
+      );
+
+
     const instance =
       await this.app.prisma.whatsAppInstance
         .findUnique({
@@ -449,6 +457,17 @@ export class WhatsAppService {
       return this.handleUndoCommand(
         instance.workspaceId,
         normalized,
+      );
+
+    }
+
+
+    if(isStatus){
+
+      return this.handleStatusCommand(
+        instance.workspaceId,
+        normalized,
+        instance.instanceName,
       );
 
     }
@@ -581,6 +600,103 @@ export class WhatsAppService {
 
       transaction:
         result.transaction,
+
+    };
+
+  }
+
+
+
+
+
+  private isStatusCommand(
+    text:string,
+  ){
+
+    const normalized =
+      text
+        .trim()
+        .toLowerCase();
+
+
+    return [
+      "status",
+      "/status",
+      "check",
+      "semak",
+    ].includes(
+      normalized,
+    );
+
+  }
+
+
+
+
+
+  private async handleStatusCommand(
+    workspaceId:string,
+
+    normalized:NormalizedEvolutionMessage,
+
+    instanceName:string,
+  ){
+
+    const setting =
+      await this.app.prisma.workspaceGoogleSetting
+        .findUnique({
+          where:{
+            workspaceId,
+          },
+        });
+
+
+    const workspace =
+      await this.app.prisma.workspace
+        .findUnique({
+          where:{
+            id:
+              workspaceId,
+          },
+        });
+
+
+    const reply =
+      [
+        "✅ MyPocket AI aktif",
+        `WhatsApp: ${instanceName}`,
+        `Workspace: ${workspace?.type ?? "-"}`,
+        `Google Sheet: ${setting ? "connected" : "not connected"}`,
+        `Timezone: ${env.DEFAULT_TIMEZONE}`,
+      ].join(
+        "\n",
+      );
+
+
+    await this.safeSendWebhookReply(
+      normalized,
+      reply,
+    );
+
+
+    return {
+
+      message:
+        "WhatsApp status sent",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+
+      status:{
+        workspaceId,
+        instanceName,
+        googleSheetConnected:
+          Boolean(setting),
+        timezone:
+          env.DEFAULT_TIMEZONE,
+      },
 
     };
 
@@ -1740,6 +1856,7 @@ export class WhatsAppService {
       "• week — ringkasan minggu ini",
       "• month — ringkasan bulan ini",
       "• undo — batalkan transaksi terakhir",
+      "• status — semak sambungan bot",
       "• help — bantuan format",
       "",
       "Kategori, merchant dan payment method akan dikesan automatik.",
