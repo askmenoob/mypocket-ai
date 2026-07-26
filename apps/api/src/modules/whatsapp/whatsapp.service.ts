@@ -39,6 +39,7 @@ import {
 
 import {
   WhatsAppCommandParser,
+  type WhatsAppCommandKind,
   type WhatsAppEditCommand,
 } from "./whatsapp-command.parser.js";
 
@@ -425,6 +426,18 @@ export class WhatsAppService {
         );
 
 
+    const commandKind =
+      this.resolveWebhookCommandKind({
+        editCommand,
+        isUndo,
+        isStatus,
+        isLast,
+        isCategories,
+        infoCommand,
+        summaryPeriod,
+      });
+
+
     const instance =
       await this.app.prisma.whatsAppInstance
         .findUnique({
@@ -497,6 +510,46 @@ export class WhatsAppService {
           reason:
             "WORKSPACE_OWNER_NOT_FOUND",
         },
+
+      };
+
+    }
+
+
+    if(
+      !this.canUseWhatsAppCommand(
+        ownerMember.role,
+        commandKind,
+      )
+    ){
+
+      await this.safeSendWebhookReply(
+        normalized,
+        this.buildCommandNotAllowedReply(
+          commandKind,
+        ),
+      );
+
+
+      return {
+
+        message:
+          "WhatsApp command blocked",
+
+        source:
+          "EVOLUTION",
+
+        normalized:{
+          ...normalized,
+
+          reason:
+            "WHATSAPP_COMMAND_NOT_ALLOWED",
+        },
+
+        commandKind,
+
+        role:
+          ownerMember.role,
 
       };
 
@@ -695,6 +748,186 @@ export class WhatsAppService {
         result.transaction,
 
     };
+
+  }
+
+
+
+
+
+  private resolveWebhookCommandKind(
+    input:{
+      editCommand:
+        | WhatsAppEditCommand
+        | null;
+
+      isUndo:boolean;
+
+      isStatus:boolean;
+
+      isLast:boolean;
+
+      isCategories:boolean;
+
+      infoCommand:
+        | "methods"
+        | "commands"
+        | null;
+
+      summaryPeriod:
+        | "today"
+        | "week"
+        | "month"
+        | null;
+    },
+  ):WhatsAppCommandKind{
+
+    if(input.editCommand){
+
+      return "edit";
+
+    }
+
+
+    if(input.isUndo){
+
+      return "undo";
+
+    }
+
+
+    if(input.isStatus){
+
+      return "status";
+
+    }
+
+
+    if(input.isLast){
+
+      return "last";
+
+    }
+
+
+    if(input.isCategories){
+
+      return "categories";
+
+    }
+
+
+    if(input.infoCommand){
+
+      return "info";
+
+    }
+
+
+    if(input.summaryPeriod){
+
+      return "summary";
+
+    }
+
+
+    return "transaction";
+
+  }
+
+
+
+
+
+  private canUseWhatsAppCommand(
+    role:
+      | "OWNER"
+      | "ADMIN"
+      | "MEMBER"
+      | "VIEWER",
+
+    commandKind:WhatsAppCommandKind,
+  ){
+
+    const readOnlyCommands:
+      WhatsAppCommandKind[] =
+        [
+          "help",
+          "info",
+          "categories",
+          "last",
+          "status",
+          "summary",
+        ];
+
+
+    if(
+      role === "OWNER"
+      ||
+      role === "ADMIN"
+    ){
+
+      return true;
+
+    }
+
+
+    if(role === "MEMBER"){
+
+      return [
+        ...readOnlyCommands,
+        "transaction",
+      ].includes(
+        commandKind,
+      );
+
+    }
+
+
+    return readOnlyCommands
+      .includes(
+        commandKind,
+      );
+
+  }
+
+
+
+
+
+  private buildCommandNotAllowedReply(
+    commandKind:WhatsAppCommandKind,
+  ){
+
+    if(
+      commandKind === "edit"
+      ||
+      commandKind === "undo"
+    ){
+
+      return [
+        "🔒 Command ini hanya untuk Owner/Admin.",
+        "Jika perlu ubah transaksi, sila hubungi admin workspace.",
+      ].join(
+        "\n",
+      );
+
+    }
+
+
+    if(commandKind === "transaction"){
+
+      return [
+        "🔒 Akaun anda belum dibenarkan merekod transaksi.",
+        "Sila hubungi admin workspace.",
+      ].join(
+        "\n",
+      );
+
+    }
+
+
+    return "🔒 Command ini tidak dibenarkan untuk akaun anda.";
 
   }
 

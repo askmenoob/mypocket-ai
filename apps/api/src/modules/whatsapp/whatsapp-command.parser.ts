@@ -1,3 +1,16 @@
+export type WhatsAppCommandKind =
+  | "help"
+  | "info"
+  | "categories"
+  | "last"
+  | "status"
+  | "summary"
+  | "edit"
+  | "undo"
+  | "transaction";
+
+
+
 export type WhatsAppInfoCommand =
   | "methods"
   | "commands";
