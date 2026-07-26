@@ -335,6 +335,14 @@ export class WhatsAppService {
     }
 
 
+    const isUndo =
+      this.isUndoCommand(
+        normalized.text
+        ??
+        "",
+      );
+
+
     const instance =
       await this.app.prisma.whatsAppInstance
         .findUnique({
@@ -409,6 +417,16 @@ export class WhatsAppService {
         },
 
       };
+
+    }
+
+
+    if(isUndo){
+
+      return this.handleUndoCommand(
+        instance.workspaceId,
+        normalized,
+      );
 
     }
 
@@ -503,6 +521,223 @@ export class WhatsAppService {
         result.transaction,
 
     };
+
+  }
+
+
+
+
+
+  private isUndoCommand(
+    text:string,
+  ){
+
+    const normalized =
+      text
+        .trim()
+        .toLowerCase();
+
+
+    return [
+      "undo",
+      "/undo",
+      "cancel",
+      "batal",
+      "delete last",
+      "padam",
+    ].includes(
+      normalized,
+    );
+
+  }
+
+
+
+
+
+  private async handleUndoCommand(
+    workspaceId:string,
+
+    normalized:NormalizedEvolutionMessage,
+  ){
+
+    const since =
+      new Date(
+        Date.now()
+        -
+        15 * 60 * 1000,
+      );
+
+
+    const transaction =
+      await this.app.prisma.transaction
+        .findFirst({
+
+          where:{
+            workspaceId,
+
+            status:{
+              not:
+                "CANCELLED",
+            },
+
+            createdAt:{
+              gte:
+                since,
+            },
+          },
+
+          include:{
+            category:true,
+            merchant:true,
+            paymentMethod:true,
+            workspace:{
+              select:{
+                type:true,
+              },
+            },
+          },
+
+          orderBy:{
+            createdAt:
+              "desc",
+          },
+
+        });
+
+
+    if(!transaction){
+
+      await this.safeSendWebhookReply(
+        normalized,
+        "ℹ️ Tiada transaksi terbaru untuk dibatalkan.",
+      );
+
+
+      return {
+
+        message:
+          "WhatsApp undo ignored",
+
+        source:
+          "EVOLUTION",
+
+        normalized:{
+          ...normalized,
+
+          reason:
+            "NO_RECENT_TRANSACTION_TO_UNDO",
+        },
+
+      };
+
+    }
+
+
+    const cancelled =
+      await this.app.prisma.transaction
+        .update({
+
+          where:{
+            id:
+              transaction.id,
+          },
+
+          data:{
+            status:
+              "CANCELLED",
+          },
+
+          include:{
+            category:true,
+            merchant:true,
+            paymentMethod:true,
+            workspace:{
+              select:{
+                type:true,
+              },
+            },
+          },
+
+        });
+
+
+    await this.safeSendWebhookReply(
+      normalized,
+      this.buildUndoReply(
+        cancelled,
+      ),
+    );
+
+
+    return {
+
+      message:
+        "WhatsApp undo completed",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+
+      transaction:
+        cancelled,
+
+    };
+
+  }
+
+
+
+
+
+  private buildUndoReply(
+    transaction:{
+      amount:unknown;
+      currency:string;
+      description:string | null;
+      category?:{
+        name:string;
+      } | null;
+      merchant?:{
+        name:string;
+      } | null;
+    },
+  ){
+
+    const category =
+      transaction.category?.name
+      ??
+      "Others";
+
+
+    const merchant =
+      transaction.merchant?.name
+        ?
+        ` @ ${transaction.merchant.name}`
+        :
+        "";
+
+
+    const description =
+      transaction.description
+      ??
+      "";
+
+
+    return [
+      "↩️ Transaksi terakhir dibatalkan:",
+      `${category}${merchant}`,
+      `${transaction.currency}${transaction.amount}`,
+      description
+        ?
+        `— ${description}`
+        :
+        "",
+    ].filter(Boolean)
+      .join(
+        " ",
+      );
 
   }
 
