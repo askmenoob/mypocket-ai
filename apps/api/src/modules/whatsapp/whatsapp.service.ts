@@ -293,6 +293,133 @@ export class WhatsAppService {
 
 
 
+  async unlinkWorkspaceMemberPhone(
+    input:{
+      actorUserId:string;
+
+      workspaceId:string;
+
+      memberId:string;
+    },
+  ){
+
+    const actorMember =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            workspaceId:
+              input.workspaceId,
+
+            userId:
+              input.actorUserId,
+          },
+        });
+
+
+    if(
+      !actorMember
+      ||
+      (
+        actorMember.role !== "OWNER"
+        &&
+        actorMember.role !== "ADMIN"
+      )
+    ){
+
+      throw new AppError(
+        "WHATSAPP_MEMBER_UNLINK_FORBIDDEN",
+        "Only Owner/Admin can unlink WhatsApp member phone",
+        403,
+      );
+
+    }
+
+
+    const member =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            id:
+              input.memberId,
+
+            workspaceId:
+              input.workspaceId,
+          },
+
+          include:{
+            user:{
+              select:{
+                id:true,
+                email:true,
+                name:true,
+              },
+            },
+          },
+        });
+
+
+    if(!member){
+
+      throw new AppError(
+        "WHATSAPP_MEMBER_NOT_FOUND",
+        "Workspace member not found",
+        404,
+      );
+
+    }
+
+
+    const updated =
+      await this.app.prisma.workspaceMember
+        .update({
+          where:{
+            id:
+              member.id,
+          },
+
+          data:{
+            whatsappPhoneNumber:
+              null,
+          },
+
+          include:{
+            user:{
+              select:{
+                id:true,
+                email:true,
+                name:true,
+              },
+            },
+          },
+        });
+
+
+    return {
+      memberId:
+        updated.id,
+
+      userId:
+        updated.userId,
+
+      email:
+        updated.user.email,
+
+      name:
+        updated.user.name,
+
+      role:
+        updated.role,
+
+      whatsappPhoneNumber:
+        updated.whatsappPhoneNumber,
+    };
+
+  }
+
+
+
+
+
   async linkWorkspaceMemberPhone(
     input:{
       actorUserId:string;

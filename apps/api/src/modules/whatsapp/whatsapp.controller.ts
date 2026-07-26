@@ -181,6 +181,62 @@ export class WhatsAppController {
 
 
 
+  unlinkMemberPhone =
+  async (
+    request:FastifyRequest,
+    reply:FastifyReply,
+  ) => {
+
+    await request.jwtVerify();
+
+
+    const user =
+      request.user as any;
+
+
+    const params =
+      request.params as {
+        memberId?:string;
+      };
+
+
+    if(!params.memberId){
+
+      throw new AppError(
+        "WHATSAPP_MEMBER_ID_REQUIRED",
+        "WhatsApp member id is required",
+        400,
+      );
+
+    }
+
+
+    const result =
+      await this.service
+        .unlinkWorkspaceMemberPhone({
+          actorUserId:
+            user.userId,
+
+          workspaceId:
+            user.workspaceId,
+
+          memberId:
+            params.memberId,
+        });
+
+
+    return reply
+      .code(200)
+      .send(
+        result,
+      );
+
+  };
+
+
+
+
+
   linkMemberPhone =
   async (
     request:FastifyRequest,

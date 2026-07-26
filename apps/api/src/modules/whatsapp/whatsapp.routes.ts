@@ -37,6 +37,18 @@ export default async function whatsappRoutes(
 
 
 
+  app.delete(
+    "/whatsapp/members/:memberId/phone",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    controller.unlinkMemberPhone,
+  );
+
+
+
   app.post(
     "/whatsapp/members/link",
     {
