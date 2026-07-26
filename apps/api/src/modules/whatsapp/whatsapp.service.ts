@@ -844,7 +844,7 @@ export class WhatsAppService {
         "• Bills — bill, elektrik, air, internet",
         "• Shopping — belanja, beli, shopee, lazada",
         "• Rent — rent, sewa",
-        "• Income — gaji, bonus, income",
+        "• Income — gaji, bonus, income, terima, refund",
         "• Others — fallback",
       ].join(
         "\n",
@@ -2722,10 +2722,14 @@ export class WhatsAppService {
       categoryName,
 
       merchantName:
-        this.guessMerchant(
-          rawText,
-          amountMatch[0],
-        ),
+        type === "INCOME"
+          ?
+          undefined
+          :
+          this.guessMerchant(
+            rawText,
+            amountMatch[0],
+          ),
 
       paymentMethodName:
         this.guessPaymentMethod(
@@ -3159,6 +3163,13 @@ export class WhatsAppService {
       "commission",
       "masuk",
       "upah",
+      "terima",
+      "dapat",
+      "received",
+      "payment received",
+      "bayaran masuk",
+      "refund",
+      "cashback",
     ].some(
       (keyword) =>
         text.includes(
