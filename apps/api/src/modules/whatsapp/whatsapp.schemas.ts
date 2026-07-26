@@ -23,3 +23,18 @@ z.object({
       .optional(),
 
 });
+
+
+
+export const whatsappDevInstanceSchema =
+z.object({
+
+  instanceName:
+    z.string()
+      .min(1),
+
+  phoneNumber:
+    z.string()
+      .optional(),
+
+});

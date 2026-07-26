@@ -33,6 +33,8 @@ const EnvSchema = z.object({
 
   EVOLUTION_API_KEY: z.string().optional(),
 
+  WHATSAPP_WEBHOOK_SECRET: z.string().min(32).optional(),
+
   GROQ_API_KEY: z.string().optional(),
 
   GOOGLE_CLIENT_ID: z.string().optional(),

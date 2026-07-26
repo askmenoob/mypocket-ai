@@ -43,3 +43,39 @@ export interface WhatsAppDevTransactionInput {
   };
 
 }
+
+
+
+export interface WhatsAppDevInstanceInput {
+
+  workspaceId:string;
+
+  instanceName:string;
+
+  phoneNumber?:string;
+
+}
+
+
+
+export interface NormalizedEvolutionMessage {
+
+  accepted:boolean;
+
+  reason?:string;
+
+  event?:string;
+
+  instanceName?:string;
+
+  remoteJid?:string;
+
+  pushName?:string;
+
+  messageId?:string;
+
+  text?:string;
+
+  timestamp?:string;
+
+}

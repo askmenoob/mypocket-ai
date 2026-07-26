@@ -20,6 +20,17 @@ export default async function whatsappRoutes(
 
 
   app.post(
+    "/whatsapp/dev/instance",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    controller.registerDevInstance,
+  );
+
+
+  app.post(
     "/whatsapp/dev/transaction",
     {
       preHandler:[
@@ -27,6 +38,12 @@ export default async function whatsappRoutes(
       ],
     },
     controller.createDevTransaction,
+  );
+
+
+  app.post(
+    "/whatsapp/evolution/webhook",
+    controller.receiveEvolutionWebhook,
   );
 
 }

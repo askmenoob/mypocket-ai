@@ -14,7 +14,9 @@ import {
 
 
 import type {
+  NormalizedEvolutionMessage,
   ParsedWhatsAppTransaction,
+  WhatsAppDevInstanceInput,
   WhatsAppDevTransactionInput,
   WhatsAppTransactionType,
 } from "./whatsapp.types.js";
@@ -37,6 +39,51 @@ export class WhatsAppService {
       new TransactionService(
         app,
       );
+
+  }
+
+
+
+
+
+  async registerDevInstance(
+    input:WhatsAppDevInstanceInput,
+  ){
+
+    return this.app.prisma.whatsAppInstance
+      .upsert({
+
+        where:{
+          instanceName:
+            input.instanceName,
+        },
+
+        create:{
+          instanceName:
+            input.instanceName,
+
+          phoneNumber:
+            input.phoneNumber,
+
+          status:
+            "DEV_CONNECTED",
+
+          workspaceId:
+            input.workspaceId,
+        },
+
+        update:{
+          phoneNumber:
+            input.phoneNumber,
+
+          status:
+            "DEV_CONNECTED",
+
+          workspaceId:
+            input.workspaceId,
+        },
+
+      });
 
   }
 
@@ -110,6 +157,158 @@ export class WhatsAppService {
       parsed,
 
       transaction,
+
+    };
+
+  }
+
+
+
+
+
+  async handleEvolutionWebhook(
+    payload:unknown,
+  ){
+
+    const normalized =
+      this.normalizeEvolutionPayload(
+        payload,
+      );
+
+
+    if(!normalized.accepted){
+
+      return {
+
+        message:
+          "WhatsApp webhook ignored",
+
+        source:
+          "EVOLUTION",
+
+        normalized,
+
+      };
+
+    }
+
+
+    const instance =
+      await this.app.prisma.whatsAppInstance
+        .findUnique({
+          where:{
+            instanceName:
+              normalized.instanceName!,
+          },
+        });
+
+
+    if(!instance){
+
+      return {
+
+        message:
+          "WhatsApp webhook ignored",
+
+        source:
+          "EVOLUTION",
+
+        normalized:{
+          ...normalized,
+
+          reason:
+            "WHATSAPP_INSTANCE_NOT_REGISTERED",
+        },
+
+      };
+
+    }
+
+
+    const ownerMember =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+
+          where:{
+            workspaceId:
+              instance.workspaceId,
+
+            role:{
+              in:[
+                "OWNER",
+                "ADMIN",
+              ],
+            },
+          },
+
+          orderBy:{
+            createdAt:
+              "asc",
+          },
+
+        });
+
+
+    if(!ownerMember){
+
+      return {
+
+        message:
+          "WhatsApp webhook ignored",
+
+        source:
+          "EVOLUTION",
+
+        normalized:{
+          ...normalized,
+
+          reason:
+            "WORKSPACE_OWNER_NOT_FOUND",
+        },
+
+      };
+
+    }
+
+
+    const result =
+      await this.createDevTransaction({
+
+        text:
+          normalized.text!,
+
+        transactionDate:
+          normalized.timestamp,
+
+        user:{
+          userId:
+            ownerMember.userId,
+
+          workspaceId:
+            instance.workspaceId,
+
+          role:
+            ownerMember.role,
+        },
+
+      });
+
+
+    return {
+
+      message:
+        "WhatsApp webhook transaction recorded",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+
+      parsed:
+        result.parsed,
+
+      transaction:
+        result.transaction,
 
     };
 
@@ -224,6 +423,264 @@ export class WhatsAppService {
       rawText,
 
     };
+
+  }
+
+
+
+
+
+  private normalizeEvolutionPayload(
+    payload:unknown,
+  ):NormalizedEvolutionMessage{
+
+    const body =
+      this.asRecord(
+        payload,
+      );
+
+
+    const data =
+      this.asRecord(
+        body.data,
+      );
+
+
+    const event =
+      this.asString(
+        body.event
+        ??
+        data.event,
+      );
+
+
+    if(
+      event
+      &&
+      !event.toLowerCase()
+        .includes(
+          "message",
+        )
+    ){
+
+      return {
+        accepted:false,
+        reason:"EVENT_NOT_MESSAGE",
+        event,
+      };
+
+    }
+
+
+    const instanceName =
+      this.asString(
+        body.instance
+        ??
+        body.instanceName
+        ??
+        data.instance
+        ??
+        data.instanceName,
+      );
+
+
+    if(!instanceName){
+
+      return {
+        accepted:false,
+        reason:"INSTANCE_NAME_MISSING",
+        event,
+      };
+
+    }
+
+
+    const key =
+      this.asRecord(
+        data.key,
+      );
+
+
+    const fromMe =
+      Boolean(
+        key.fromMe
+        ??
+        data.fromMe,
+      );
+
+
+    if(fromMe){
+
+      return {
+        accepted:false,
+        reason:"MESSAGE_FROM_SELF",
+        event,
+        instanceName,
+      };
+
+    }
+
+
+    const message =
+      this.asRecord(
+        data.message
+        ??
+        body.message,
+      );
+
+
+    const text =
+      this.extractMessageText(
+        message,
+      );
+
+
+    if(!text){
+
+      return {
+        accepted:false,
+        reason:"MESSAGE_TEXT_MISSING",
+        event,
+        instanceName,
+      };
+
+    }
+
+
+    return {
+
+      accepted:true,
+
+      event,
+
+      instanceName,
+
+      remoteJid:
+        this.asString(
+          key.remoteJid
+          ??
+          data.remoteJid,
+        ),
+
+      pushName:
+        this.asString(
+          data.pushName
+          ??
+          body.pushName,
+        ),
+
+      messageId:
+        this.asString(
+          key.id
+          ??
+          data.id,
+        ),
+
+      text,
+
+      timestamp:
+        this.normalizeTimestamp(
+          data.messageTimestamp
+          ??
+          body.messageTimestamp,
+        ),
+
+    };
+
+  }
+
+
+
+
+
+  private extractMessageText(
+    message:Record<string, unknown>,
+  ){
+
+    const candidates = [
+      message.conversation,
+      this.asRecord(
+        message.extendedTextMessage,
+      ).text,
+      this.asRecord(
+        message.imageMessage,
+      ).caption,
+      this.asRecord(
+        message.videoMessage,
+      ).caption,
+      this.asRecord(
+        message.documentMessage,
+      ).caption,
+      this.asRecord(
+        message.buttonsResponseMessage,
+      ).selectedDisplayText,
+      this.asRecord(
+        message.listResponseMessage,
+      ).title,
+    ];
+
+
+    const found =
+      candidates.find(
+        (candidate) =>
+          typeof candidate === "string"
+          &&
+          candidate.trim().length > 0,
+      );
+
+
+    return typeof found === "string"
+      ?
+      found.trim()
+      :
+      "";
+
+  }
+
+
+
+
+
+  private normalizeTimestamp(
+    value:unknown,
+  ){
+
+    const numeric =
+      typeof value === "number"
+        ?
+        value
+        :
+        typeof value === "string"
+          ?
+          Number(value)
+          :
+          NaN;
+
+
+    if(
+      Number.isFinite(
+        numeric,
+      )
+    ){
+
+      const milliseconds =
+        numeric > 1000000000000
+          ?
+          numeric
+          :
+          numeric * 1000;
+
+
+      return new Date(
+        milliseconds,
+      )
+        .toISOString();
+
+    }
+
+
+    return new Date()
+      .toISOString();
 
   }
 
@@ -390,6 +847,40 @@ export class WhatsAppService {
           name,
         },
       });
+
+  }
+
+
+
+
+
+  private asRecord(
+    value:unknown,
+  ):Record<string, unknown>{
+
+    return typeof value === "object"
+      &&
+      value !== null
+      ?
+      value as Record<string, unknown>
+      :
+      {};
+
+  }
+
+
+
+
+
+  private asString(
+    value:unknown,
+  ){
+
+    return typeof value === "string"
+      ?
+      value
+      :
+      "";
 
   }
 
