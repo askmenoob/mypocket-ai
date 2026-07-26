@@ -28,6 +28,10 @@ export interface TransactionSyncPayload {
     string;
 
 
+  paymentMethod:
+    string;
+
+
   description:
     string;
 

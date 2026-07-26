@@ -201,6 +201,17 @@ export class WhatsAppService {
         null;
 
 
+    const paymentMethod =
+      parsed.paymentMethodName
+        ?
+        await this.findOrCreatePaymentMethod(
+          input.user.workspaceId,
+          parsed.paymentMethodName,
+        )
+        :
+        null;
+
+
     const transaction =
       await this.transactionService
         .createTransaction(
@@ -235,6 +246,9 @@ export class WhatsAppService {
 
             merchantId:
               merchant?.id,
+
+            paymentMethodId:
+              paymentMethod?.id,
 
             source:
               input.source
@@ -616,9 +630,17 @@ export class WhatsAppService {
         "";
 
 
+    const paymentMethod =
+      parsed.paymentMethodName
+        ?
+        ` (${parsed.paymentMethodName})`
+        :
+        "";
+
+
     return [
       "✅ Direkod",
-      `${label}: ${parsed.categoryName}${merchant}`,
+      `${label}: ${parsed.categoryName}${merchant}${paymentMethod}`,
       `RM${parsed.amount}`,
       `— ${parsed.description}`,
     ].join(
@@ -807,6 +829,11 @@ export class WhatsAppService {
         this.guessMerchant(
           rawText,
           amountMatch[0],
+        ),
+
+      paymentMethodName:
+        this.guessPaymentMethod(
+          lowerText,
         ),
 
       description:
@@ -1086,6 +1113,91 @@ export class WhatsAppService {
 
 
 
+  private guessPaymentMethod(
+    text:string,
+  ){
+
+    const methods:
+      Array<{
+        name:string;
+        keywords:string[];
+      }> =
+      [
+        {
+          name:"TNG",
+          keywords:[
+            "tng",
+            "touch n go",
+            "touchngo",
+            "touch 'n go",
+          ],
+        },
+        {
+          name:"Cash",
+          keywords:[
+            "cash",
+            "tunai",
+          ],
+        },
+        {
+          name:"Bank",
+          keywords:[
+            "bank",
+            "transfer",
+            "ibg",
+            "instant transfer",
+            "fpx",
+          ],
+        },
+        {
+          name:"Card",
+          keywords:[
+            "card",
+            "kad",
+            "credit card",
+            "debit card",
+            "visa",
+            "mastercard",
+          ],
+        },
+        {
+          name:"DuitNow",
+          keywords:[
+            "duitnow",
+            "qr",
+            "duit now",
+          ],
+        },
+        {
+          name:"GrabPay",
+          keywords:[
+            "grabpay",
+            "grab pay",
+          ],
+        },
+      ];
+
+
+    const match =
+      methods.find(
+        (method) =>
+          method.keywords.some(
+            (keyword) =>
+              text.includes(
+                keyword,
+              ),
+          ),
+      );
+
+
+    return match?.name;
+
+  }
+
+
+
+
+
   private guessMerchant(
     rawText:string,
 
@@ -1260,6 +1372,43 @@ export class WhatsAppService {
     return match?.name
       ??
       "Others";
+
+  }
+
+
+
+
+
+  private async findOrCreatePaymentMethod(
+    workspaceId:string,
+
+    name:string,
+  ){
+
+    const existing =
+      await this.app.prisma.paymentMethod
+        .findFirst({
+          where:{
+            workspaceId,
+            name,
+          },
+        });
+
+
+    if(existing){
+
+      return existing;
+
+    }
+
+
+    return this.app.prisma.paymentMethod
+      .create({
+        data:{
+          workspaceId,
+          name,
+        },
+      });
 
   }
 

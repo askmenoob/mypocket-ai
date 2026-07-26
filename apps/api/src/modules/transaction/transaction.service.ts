@@ -150,6 +150,12 @@ export class TransactionService {
           "-",
 
 
+        paymentMethod:
+          transaction.paymentMethod?.name
+          ??
+          "",
+
+
         description:
           transaction.description
           ??

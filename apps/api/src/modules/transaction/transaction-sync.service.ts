@@ -127,6 +127,8 @@ export class TransactionSyncService {
 
               payload.amount,
 
+              payload.paymentMethod
+              ??
               "",
 
               payload.source
