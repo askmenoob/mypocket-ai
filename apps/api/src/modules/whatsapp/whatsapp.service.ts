@@ -382,6 +382,14 @@ export class WhatsAppService {
       );
 
 
+    const editCommand =
+      this.parseEditLastCommand(
+        normalized.text
+        ??
+        "",
+      );
+
+
     const isCategories =
       this.isCategoriesCommand(
         normalized.text
@@ -472,6 +480,19 @@ export class WhatsAppService {
         },
 
       };
+
+    }
+
+
+    if(editCommand){
+
+      return this.handleEditLastCommand(
+        instance.workspaceId,
+        normalized,
+        ownerMember.userId,
+        ownerMember.role,
+        editCommand,
+      );
 
     }
 
@@ -1451,6 +1472,1084 @@ export class WhatsAppService {
 
 
 
+  private parseEditLastCommand(
+    text:string,
+  ):
+    | {
+      field:
+        | "amount"
+        | "category"
+        | "merchant"
+        | "method"
+        | "date"
+        | "time"
+        | "type"
+        | "description";
+
+      value:string;
+    }
+    | null {
+
+    const trimmed =
+      text
+        .trim();
+
+
+    const match =
+      trimmed.match(
+        /^(?:edit|ubah|update)\s+(?:last|latest|terakhir)\s+(amount|jumlah|category|kategori|merchant|kedai|method|payment|bayaran|date|tarikh|time|masa|type|jenis|desc|description|nota)\s+(.+)$/i,
+      );
+
+
+    if(!match){
+
+      return null;
+
+    }
+
+
+    const rawField =
+      match[1]
+        .toLowerCase();
+
+    const value =
+      match[2]
+        .trim();
+
+
+    if(!value){
+
+      return null;
+
+    }
+
+
+    if(
+      rawField === "amount"
+      ||
+      rawField === "jumlah"
+    ){
+
+      return {
+        field:
+          "amount",
+
+        value,
+      };
+
+    }
+
+
+    if(
+      rawField === "category"
+      ||
+      rawField === "kategori"
+    ){
+
+      return {
+        field:
+          "category",
+
+        value,
+      };
+
+    }
+
+
+    if(
+      rawField === "merchant"
+      ||
+      rawField === "kedai"
+    ){
+
+      return {
+        field:
+          "merchant",
+
+        value,
+      };
+
+    }
+
+
+    if(
+      rawField === "method"
+      ||
+      rawField === "payment"
+      ||
+      rawField === "bayaran"
+    ){
+
+      return {
+        field:
+          "method",
+
+        value,
+      };
+
+    }
+
+
+    if(
+      rawField === "date"
+      ||
+      rawField === "tarikh"
+    ){
+
+      return {
+        field:
+          "date",
+
+        value,
+      };
+
+    }
+
+
+    if(
+      rawField === "time"
+      ||
+      rawField === "masa"
+    ){
+
+      return {
+        field:
+          "time",
+
+        value,
+      };
+
+    }
+
+
+    if(
+      rawField === "type"
+      ||
+      rawField === "jenis"
+    ){
+
+      return {
+        field:
+          "type",
+
+        value,
+      };
+
+    }
+
+
+    return {
+      field:
+        "description",
+
+      value,
+    };
+
+  }
+
+
+
+
+
+  private async handleEditLastCommand(
+    workspaceId:string,
+
+    normalized:NormalizedEvolutionMessage,
+
+    userId:string,
+
+    role:
+      | "OWNER"
+      | "ADMIN"
+      | "MEMBER"
+      | "VIEWER",
+
+    edit:{
+      field:
+        | "amount"
+        | "category"
+        | "merchant"
+        | "method"
+        | "date"
+        | "time"
+        | "type"
+        | "description";
+
+      value:string;
+    },
+  ){
+
+    const transaction =
+      await this.app.prisma.transaction
+        .findFirst({
+
+          where:{
+            workspaceId,
+
+            status:{
+              not:
+                "CANCELLED",
+            },
+          },
+
+          include:{
+            category:true,
+            merchant:true,
+            paymentMethod:true,
+            workspace:{
+              select:{
+                type:true,
+              },
+            },
+          },
+
+          orderBy:{
+            createdAt:
+              "desc",
+          },
+
+        });
+
+
+    if(!transaction){
+
+      await this.safeSendWebhookReply(
+        normalized,
+        "ℹ️ Tiada transaksi aktif untuk dikemaskini.",
+      );
+
+
+      return {
+
+        message:
+          "WhatsApp edit ignored",
+
+        source:
+          "EVOLUTION",
+
+        normalized:{
+          ...normalized,
+
+          reason:
+            "NO_TRANSACTION_TO_EDIT",
+        },
+
+      };
+
+    }
+
+
+    const data:
+      Record<string, unknown> =
+        {};
+
+
+    if(edit.field === "date"){
+
+      const dateValue =
+        this.parseEditDate(
+          edit.value,
+        );
+
+
+      if(!dateValue){
+
+        await this.safeSendWebhookReply(
+          normalized,
+          "⚠️ Tarikh tidak sah. Contoh: edit last date today atau edit last date 2026-07-27",
+        );
+
+
+        return {
+
+          message:
+            "WhatsApp edit invalid date",
+
+          source:
+            "EVOLUTION",
+
+          normalized,
+
+          edit,
+
+        };
+
+      }
+
+
+      const currentIso =
+        new Date(
+          transaction.transactionDate,
+        )
+          .toISOString();
+
+
+      data.transactionDate =
+        new Date(
+          `${dateValue}T${currentIso.slice(11, 19)}.000Z`,
+        );
+
+    }
+
+
+    if(edit.field === "time"){
+
+      const timeValue =
+        this.parseEditTime(
+          edit.value,
+        );
+
+
+      if(!timeValue){
+
+        await this.safeSendWebhookReply(
+          normalized,
+          "⚠️ Masa tidak sah. Contoh: edit last time 14:30",
+        );
+
+
+        return {
+
+          message:
+            "WhatsApp edit invalid time",
+
+          source:
+            "EVOLUTION",
+
+          normalized,
+
+          edit,
+
+        };
+
+      }
+
+
+      const currentIso =
+        new Date(
+          transaction.transactionDate,
+        )
+          .toISOString();
+
+
+      data.transactionDate =
+        new Date(
+          `${currentIso.slice(0, 10)}T${timeValue}.000Z`,
+        );
+
+    }
+
+
+    if(edit.field === "type"){
+
+      const transactionType =
+        this.parseEditType(
+          edit.value,
+        );
+
+
+      if(!transactionType){
+
+        await this.safeSendWebhookReply(
+          normalized,
+          "⚠️ Jenis transaksi tidak sah. Contoh: edit last type income atau edit last type expense",
+        );
+
+
+        return {
+
+          message:
+            "WhatsApp edit invalid type",
+
+          source:
+            "EVOLUTION",
+
+          normalized,
+
+          edit,
+
+        };
+
+      }
+
+
+      data.type =
+        transactionType;
+
+
+      if(transactionType === "INCOME"){
+
+        const category =
+          await this.findOrCreateEditCategory(
+            workspaceId,
+            "Salary",
+          );
+
+
+        data.categoryId =
+          category.id;
+
+      }
+
+
+      if(
+        transactionType === "EXPENSE"
+        &&
+        transaction.category?.name?.toLowerCase()
+        ===
+        "salary"
+      ){
+
+        const category =
+          await this.findOrCreateEditCategory(
+            workspaceId,
+            "Others",
+          );
+
+
+        data.categoryId =
+          category.id;
+
+      }
+
+    }
+
+
+    if(edit.field === "amount"){
+
+      const amount =
+        this.parseEditAmount(
+          edit.value,
+        );
+
+
+      if(!amount){
+
+        await this.safeSendWebhookReply(
+          normalized,
+          "⚠️ Amount tidak sah. Contoh: edit last amount rm10",
+        );
+
+
+        return {
+
+          message:
+            "WhatsApp edit invalid amount",
+
+          source:
+            "EVOLUTION",
+
+          normalized,
+
+          edit,
+
+        };
+
+      }
+
+
+      data.amount =
+        amount;
+
+    }
+
+
+    if(edit.field === "description"){
+
+      data.description =
+        edit.value;
+
+    }
+
+
+    if(edit.field === "category"){
+
+      const category =
+        await this.findOrCreateEditCategory(
+          workspaceId,
+          edit.value,
+        );
+
+
+      data.categoryId =
+        category.id;
+
+    }
+
+
+    if(edit.field === "merchant"){
+
+      const merchant =
+        await this.findOrCreateEditMerchant(
+          workspaceId,
+          edit.value,
+        );
+
+
+      data.merchantId =
+        merchant.id;
+
+    }
+
+
+    if(edit.field === "method"){
+
+      const paymentMethod =
+        await this.findOrCreateEditPaymentMethod(
+          workspaceId,
+          edit.value,
+        );
+
+
+      data.paymentMethodId =
+        paymentMethod.id;
+
+    }
+
+
+    await this.transactionService
+      .updateTransaction(
+        role,
+        workspaceId,
+        transaction.id,
+        data,
+      );
+
+
+    const updated =
+      await this.app.prisma.transaction
+        .findFirst({
+          where:{
+            workspaceId,
+
+            id:
+              transaction.id,
+          },
+
+          include:{
+            category:true,
+            merchant:true,
+            paymentMethod:true,
+            workspace:{
+              select:{
+                type:true,
+              },
+            },
+          },
+        });
+
+
+    if(!updated){
+
+      throw new AppError(
+        "TRANSACTION_NOT_FOUND_AFTER_EDIT",
+        "Transaction not found after edit",
+        500,
+      );
+
+    }
+
+
+    await this.safeUpdateGoogleSheetTransactionRow(
+      workspaceId,
+      updated,
+    );
+
+
+    await this.safeSendWebhookReply(
+      normalized,
+      this.buildEditLastReply(
+        updated,
+        edit.field,
+      ),
+    );
+
+
+    return {
+
+      message:
+        "WhatsApp transaction edited",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+
+      edit,
+
+      transaction:
+        updated,
+
+    };
+
+  }
+
+
+
+
+
+  private parseEditDate(
+    value:string,
+  ){
+
+    const normalized =
+      value
+        .trim()
+        .toLowerCase();
+
+
+    if(
+      normalized === "today"
+      ||
+      normalized === "harini"
+      ||
+      normalized === "hari ini"
+    ){
+
+      return this.formatDateInTimezone(
+        new Date(),
+        env.DEFAULT_TIMEZONE,
+      );
+
+    }
+
+
+    if(
+      normalized === "yesterday"
+      ||
+      normalized === "semalam"
+    ){
+
+      const today =
+        this.formatDateInTimezone(
+          new Date(),
+          env.DEFAULT_TIMEZONE,
+        );
+
+
+      const date =
+        new Date(
+          `${today}T00:00:00.000Z`,
+        );
+
+
+      date.setUTCDate(
+        date.getUTCDate()
+        -
+        1,
+      );
+
+
+      return date
+        .toISOString()
+        .slice(
+          0,
+          10,
+        );
+
+    }
+
+
+    const isoMatch =
+      normalized.match(
+        /^\d{4}-\d{2}-\d{2}$/,
+      );
+
+
+    if(isoMatch){
+
+      return normalized;
+
+    }
+
+
+    const slashMatch =
+      normalized.match(
+        /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/,
+      );
+
+
+    if(slashMatch){
+
+      const day =
+        slashMatch[1]
+          .padStart(
+            2,
+            "0",
+          );
+
+      const month =
+        slashMatch[2]
+          .padStart(
+            2,
+            "0",
+          );
+
+      const year =
+        slashMatch[3];
+
+
+      return `${year}-${month}-${day}`;
+
+    }
+
+
+    return null;
+
+  }
+
+
+
+
+
+  private parseEditTime(
+    value:string,
+  ){
+
+    const match =
+      value
+        .trim()
+        .match(
+          /^(\d{1,2})[:.](\d{2})$/,
+        );
+
+
+    if(!match){
+
+      return null;
+
+    }
+
+
+    const hour =
+      Number(
+        match[1],
+      );
+
+    const minute =
+      Number(
+        match[2],
+      );
+
+
+    if(
+      hour < 0
+      ||
+      hour > 23
+      ||
+      minute < 0
+      ||
+      minute > 59
+    ){
+
+      return null;
+
+    }
+
+
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+
+  }
+
+
+
+
+
+  private parseEditType(
+    value:string,
+  ){
+
+    const normalized =
+      value
+        .trim()
+        .toLowerCase();
+
+
+    if(
+      [
+        "income",
+        "in",
+        "pendapatan",
+        "masuk",
+        "gaji",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return "INCOME";
+
+    }
+
+
+    if(
+      [
+        "expense",
+        "out",
+        "belanja",
+        "perbelanjaan",
+        "keluar",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return "EXPENSE";
+
+    }
+
+
+    return null;
+
+  }
+
+
+
+
+
+  private parseEditAmount(
+    value:string,
+  ){
+
+    const match =
+      value.match(
+        /(?:rm|myr|ringgit)?\s*([0-9]+(?:[.,][0-9]{1,2})?)/i,
+      );
+
+
+    if(!match){
+
+      return null;
+
+    }
+
+
+    return match[1]
+      .replace(
+        ",",
+        ".",
+      );
+
+  }
+
+
+
+
+
+  private normalizeEditName(
+    value:string,
+  ){
+
+    return value
+      .trim()
+      .replace(
+        /\s+/g,
+        " ",
+      );
+
+  }
+
+
+
+
+
+  private async findOrCreateEditCategory(
+    workspaceId:string,
+
+    name:string,
+  ){
+
+    const normalized =
+      this.normalizeEditName(
+        name,
+      );
+
+
+    const categories =
+      await this.app.prisma.category
+        .findMany({
+          where:{
+            workspaceId,
+          },
+        });
+
+
+    const existing =
+      categories.find(
+        (category) =>
+          category.name.toLowerCase()
+          ===
+          normalized.toLowerCase(),
+      );
+
+
+    if(existing){
+
+      return existing;
+
+    }
+
+
+    return this.app.prisma.category
+      .create({
+        data:{
+          workspaceId,
+
+          name:
+            normalized,
+        },
+      });
+
+  }
+
+
+
+
+
+  private async findOrCreateEditMerchant(
+    workspaceId:string,
+
+    name:string,
+  ){
+
+    const normalized =
+      this.normalizeEditName(
+        name,
+      );
+
+
+    const merchants =
+      await this.app.prisma.merchant
+        .findMany({
+          where:{
+            workspaceId,
+          },
+        });
+
+
+    const existing =
+      merchants.find(
+        (merchant) =>
+          merchant.name.toLowerCase()
+          ===
+          normalized.toLowerCase(),
+      );
+
+
+    if(existing){
+
+      return existing;
+
+    }
+
+
+    return this.app.prisma.merchant
+      .create({
+        data:{
+          workspaceId,
+
+          name:
+            normalized,
+        },
+      });
+
+  }
+
+
+
+
+
+  private async findOrCreateEditPaymentMethod(
+    workspaceId:string,
+
+    name:string,
+  ){
+
+    const normalized =
+      this.normalizeEditName(
+        name,
+      );
+
+
+    const paymentMethods =
+      await this.app.prisma.paymentMethod
+        .findMany({
+          where:{
+            workspaceId,
+          },
+        });
+
+
+    const existing =
+      paymentMethods.find(
+        (paymentMethod) =>
+          paymentMethod.name.toLowerCase()
+          ===
+          normalized.toLowerCase(),
+      );
+
+
+    if(existing){
+
+      return existing;
+
+    }
+
+
+    return this.app.prisma.paymentMethod
+      .create({
+        data:{
+          workspaceId,
+
+          name:
+            normalized,
+        },
+      });
+
+  }
+
+
+
+
+
+  private buildEditLastReply(
+    transaction:any,
+
+    field:string,
+  ){
+
+    const category =
+      transaction.category?.name
+      ??
+      "-";
+
+    const merchant =
+      transaction.merchant?.name
+        ? ` @ ${transaction.merchant.name}`
+        : "";
+
+    const paymentMethod =
+      transaction.paymentMethod?.name
+        ? ` (${transaction.paymentMethod.name})`
+        : "";
+
+
+    return [
+      "✏️ Transaksi terakhir dikemaskini.",
+      `Field: ${field}`,
+      "",
+      `${transaction.type}: ${category}${merchant}${paymentMethod}`,
+      `MYR ${transaction.amount} — ${transaction.description ?? "-"}`,
+    ].join(
+      "\n",
+    );
+
+  }
+
+
+
+
+
   private isUndoCommand(
     text:string,
   ){
@@ -1613,6 +2712,199 @@ export class WhatsAppService {
         cancelled,
 
     };
+
+  }
+
+
+
+
+
+  private async safeUpdateGoogleSheetTransactionRow(
+    workspaceId:string,
+
+    transaction:any,
+  ):Promise<void>{
+
+    try{
+
+      await this.updateGoogleSheetTransactionRow(
+        workspaceId,
+        transaction,
+      );
+
+    }catch(error){
+
+      console.error(
+        "GOOGLE_SHEET_TRANSACTION_UPDATE_FAILED:",
+        error,
+      );
+
+    }
+
+  }
+
+
+
+
+
+  private async updateGoogleSheetTransactionRow(
+    workspaceId:string,
+
+    transaction:any,
+  ):Promise<void>{
+
+    const setting =
+      await this.app.prisma.workspaceGoogleSetting
+        .findUnique({
+          where:{
+            workspaceId,
+          },
+        });
+
+
+    if(!setting){
+
+      return;
+
+    }
+
+
+    const rows =
+      await this.sheetsService
+        .readRange(
+          workspaceId,
+          {
+            spreadsheetId:
+              setting.spreadsheetId,
+
+            range:
+              "Transactions!A:M",
+          },
+        );
+
+
+    const rowIndex =
+      rows.findIndex(
+        (row) =>
+          String(
+            row[0]
+            ??
+            "",
+          )
+          ===
+          transaction.id,
+      );
+
+
+    if(rowIndex < 1){
+
+      return;
+
+    }
+
+
+    const rowNumber =
+      rowIndex
+      +
+      1;
+
+
+    const transactionIso =
+      new Date(
+        transaction.transactionDate,
+      )
+        .toISOString();
+
+    const createdIso =
+      new Date(
+        transaction.createdAt,
+      )
+        .toISOString();
+
+
+    await this.sheetsService
+      .updateRange(
+        workspaceId,
+        {
+          spreadsheetId:
+            setting.spreadsheetId,
+
+          range:
+            `Transactions!A${rowNumber}:M${rowNumber}`,
+
+          values:[
+            [
+              String(
+                transaction.id
+                ??
+                "",
+              ),
+
+              transactionIso.slice(
+                0,
+                10,
+              ),
+
+              transactionIso.slice(
+                11,
+                19,
+              ),
+
+              String(
+                transaction.type
+                ??
+                "",
+              ),
+
+              String(
+                transaction.category?.name
+                ??
+                "",
+              ),
+
+              String(
+                transaction.merchant?.name
+                ??
+                "-",
+              ),
+
+              String(
+                transaction.description
+                ??
+                "",
+              ),
+
+              String(
+                transaction.amount
+                ??
+                "",
+              ),
+
+              String(
+                transaction.paymentMethod?.name
+                ??
+                "",
+              ),
+
+              String(
+                transaction.source
+                ??
+                "WHATSAPP",
+              ),
+
+              "",
+
+              String(
+                transaction.receiptUrl
+                ??
+                "",
+              ),
+
+              createdIso,
+            ],
+          ],
+        },
+      );
 
   }
 
