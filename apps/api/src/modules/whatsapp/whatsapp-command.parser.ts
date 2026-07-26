@@ -2,6 +2,7 @@ export type WhatsAppCommandKind =
   | "help"
   | "info"
   | "categories"
+  | "members"
   | "last"
   | "status"
   | "summary"
@@ -237,6 +238,33 @@ export class WhatsAppCommandParser {
       "latest",
       "terakhir",
       "transaksi terakhir",
+    ].includes(
+      normalized,
+    );
+
+  }
+
+
+
+
+
+  static isMembers(
+    text:string,
+  ){
+
+    const normalized =
+      this.normalize(
+        text,
+      );
+
+
+    return [
+      "members",
+      "/members",
+      "member",
+      "ahli",
+      "senarai ahli",
+      "whatsapp members",
     ].includes(
       normalized,
     );
