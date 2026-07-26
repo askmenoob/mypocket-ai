@@ -464,6 +464,34 @@ export class WhatsAppService {
     }
 
 
+    const parseCheck =
+      await this.safeParseWebhookTransaction(
+        normalized,
+      );
+
+
+    if(!parseCheck.parsed){
+
+      return {
+
+        message:
+          "WhatsApp webhook parse failed",
+
+        source:
+          "EVOLUTION",
+
+        normalized:{
+          ...normalized,
+
+          reason:
+            parseCheck.reason,
+        },
+
+      };
+
+    }
+
+
     const duplicate =
       await this.findDuplicateTransaction(
         instance.workspaceId,
@@ -1411,6 +1439,90 @@ export class WhatsAppService {
       "• help — bantuan format",
       "",
       "Kategori, merchant dan payment method akan dikesan automatik.",
+    ].join(
+      "\n",
+    );
+
+  }
+
+
+
+
+
+  private async safeParseWebhookTransaction(
+    normalized:NormalizedEvolutionMessage,
+  ){
+
+    try{
+
+      return {
+        parsed:
+          this.parseTransactionText(
+            normalized.text
+            ??
+            "",
+            normalized.timestamp,
+          ),
+      };
+
+    }catch(error){
+
+      const reason =
+        error instanceof AppError
+          ?
+          error.code
+          :
+          "WHATSAPP_PARSE_FAILED";
+
+
+      await this.safeSendWebhookReply(
+        normalized,
+        this.buildParseFailedReply(
+          reason,
+        ),
+      );
+
+
+      return {
+        parsed:
+          null,
+
+        reason,
+      };
+
+    }
+
+  }
+
+
+
+
+
+  private buildParseFailedReply(
+    reason:string,
+  ){
+
+    if(
+      reason === "WHATSAPP_AMOUNT_NOT_FOUND"
+    ){
+
+      return [
+        "⚠️ Saya tak jumpa amount.",
+        "Contoh: makan kedai mamak rm7.80 tng",
+        "",
+        "Taip help untuk lihat format.",
+      ].join(
+        "\n",
+      );
+
+    }
+
+
+    return [
+      "⚠️ Saya tak dapat faham transaksi ini.",
+      "Contoh: petrol shell rm50 cash",
+      "",
+      "Taip help untuk lihat format.",
     ].join(
       "\n",
     );
