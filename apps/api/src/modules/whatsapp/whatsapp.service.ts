@@ -1664,6 +1664,18 @@ export class WhatsAppService {
     }
 
 
+    if(commandKind === "members"){
+
+      return [
+        "🔒 Command members hanya untuk Owner/Admin.",
+        "Sila hubungi admin workspace untuk semak atau link nombor WhatsApp.",
+      ].join(
+        "\n",
+      );
+
+    }
+
+
     if(commandKind === "transaction"){
 
       return [
@@ -1676,7 +1688,12 @@ export class WhatsAppService {
     }
 
 
-    return "🔒 Command ini tidak dibenarkan untuk akaun anda.";
+    return [
+      "🔒 Command ini tidak dibenarkan untuk akaun anda.",
+      `Command: ${commandKind}`,
+    ].join(
+      "\n",
+    );
 
   }
 
