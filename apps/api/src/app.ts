@@ -9,6 +9,7 @@ import authModule from "./modules/auth/index.js";
 import workspaceModule from "./modules/workspace/index.js";
 import memberModule from "./modules/member/index.js";
 import transactionModule from "./modules/transaction/index.js";
+import whatsappModule from "./modules/whatsapp/index.js";
 import googleModule from "./modules/google/index.js";
 
 
@@ -57,6 +58,14 @@ export function buildApp() {
 
   app.register(
     transactionModule,
+    {
+      prefix: "/api/v1",
+    },
+  );
+
+
+  app.register(
+    whatsappModule,
     {
       prefix: "/api/v1",
     },
