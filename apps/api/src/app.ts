@@ -29,6 +29,9 @@ export function buildApp() {
 
   app.register(
     healthRoutes,
+    {
+      prefix: "/api/v1",
+    },
   );
 
 
