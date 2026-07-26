@@ -981,6 +981,15 @@ export class WhatsAppService {
         );
 
 
+    const isWhoami =
+      WhatsAppCommandParser
+        .isWhoami(
+          normalized.text
+          ??
+          "",
+        );
+
+
     const isLast =
       WhatsAppCommandParser
         .isLast(
@@ -1040,6 +1049,7 @@ export class WhatsAppService {
         editCommand,
         isUndo,
         isStatus,
+        isWhoami,
         isLast,
         isCategories,
         isMembers,
@@ -1190,6 +1200,17 @@ export class WhatsAppService {
         instance.workspaceId,
         normalized,
         instance.instanceName,
+      );
+
+    }
+
+
+    if(isWhoami){
+
+      return this.handleWhoamiCommand(
+        instance.workspaceId,
+        normalized,
+        actorMember.userId,
       );
 
     }
@@ -1493,6 +1514,8 @@ export class WhatsAppService {
 
       isStatus:boolean;
 
+      isWhoami:boolean;
+
       isLast:boolean;
 
       isCategories:boolean;
@@ -1533,6 +1556,13 @@ export class WhatsAppService {
     if(input.isStatus){
 
       return "status";
+
+    }
+
+
+    if(input.isWhoami){
+
+      return "whoami";
 
     }
 
@@ -1605,6 +1635,7 @@ export class WhatsAppService {
           "categories",
           "last",
           "status",
+          "whoami",
           "summary",
           "list",
         ];
@@ -2002,6 +2033,103 @@ export class WhatsAppService {
       .join(
         "\n",
       );
+
+  }
+
+
+
+
+
+  private async handleWhoamiCommand(
+    workspaceId:string,
+
+    normalized:NormalizedEvolutionMessage,
+
+    userId:string,
+  ){
+
+    const member =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            workspaceId,
+
+            userId,
+          },
+
+          include:{
+            user:{
+              select:{
+                email:true,
+                name:true,
+              },
+            },
+
+            workspace:{
+              select:{
+                name:true,
+                type:true,
+              },
+            },
+          },
+        });
+
+
+    if(!member){
+
+      await this.safeSendWebhookReply(
+        normalized,
+        "⚠️ Identity WhatsApp tidak dijumpai.",
+      );
+
+
+      return {
+        message:
+          "WhatsApp whoami not found",
+
+        source:
+          "EVOLUTION",
+
+        normalized,
+      };
+
+    }
+
+
+    await this.safeSendWebhookReply(
+      normalized,
+      WhatsAppReplyBuilder
+        .whoami({
+          workspaceName:
+            member.workspace.name,
+
+          workspaceType:
+            member.workspace.type,
+
+          role:
+            member.role,
+
+          name:
+            member.user.name,
+
+          email:
+            member.user.email,
+
+          whatsappPhoneNumber:
+            member.whatsappPhoneNumber,
+        }),
+    );
+
+
+    return {
+      message:
+        "WhatsApp whoami command sent",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+    };
 
   }
 

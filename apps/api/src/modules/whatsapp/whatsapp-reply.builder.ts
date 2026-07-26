@@ -43,6 +43,35 @@ export class WhatsAppReplyBuilder {
       "• categories — senarai kategori\n• members — senarai mapping WhatsApp",
       "• methods — senarai payment method",
       "• status — semak sambungan bot",
+      "• whoami — semak identity WhatsApp",
+    ].join(
+      "\n",
+    );
+
+  }
+
+
+
+
+
+  static whoami(
+    input:{
+      workspaceName:string;
+      workspaceType:string;
+      role:string;
+      name:string | null;
+      email:string;
+      whatsappPhoneNumber:string | null;
+    },
+  ){
+
+    return [
+      "👤 WhatsApp Identity",
+      `Workspace: ${input.workspaceName} (${input.workspaceType})`,
+      `Role: ${input.role}`,
+      `Name: ${input.name ?? "-"}`,
+      `Email: ${input.email}`,
+      `Phone: ${input.whatsappPhoneNumber ?? "not linked"}`,
     ].join(
       "\n",
     );

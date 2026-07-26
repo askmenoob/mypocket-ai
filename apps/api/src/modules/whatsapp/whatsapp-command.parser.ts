@@ -5,6 +5,7 @@ export type WhatsAppCommandKind =
   | "members"
   | "last"
   | "status"
+  | "whoami"
   | "summary"
   | "list"
   | "edit"
@@ -190,6 +191,33 @@ export class WhatsAppCommandParser {
 
 
     return null;
+
+  }
+
+
+
+
+
+  static isWhoami(
+    text:string,
+  ){
+
+    const normalized =
+      this.normalize(
+        text,
+      );
+
+
+    return [
+      "whoami",
+      "/whoami",
+      "me",
+      "siapa saya",
+      "profile",
+      "identity",
+    ].includes(
+      normalized,
+    );
 
   }
 
