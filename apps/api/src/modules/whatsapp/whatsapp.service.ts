@@ -374,6 +374,14 @@ export class WhatsAppService {
       );
 
 
+    const isLast =
+      this.isLastCommand(
+        normalized.text
+        ??
+        "",
+      );
+
+
     const instance =
       await this.app.prisma.whatsAppInstance
         .findUnique({
@@ -468,6 +476,16 @@ export class WhatsAppService {
         instance.workspaceId,
         normalized,
         instance.instanceName,
+      );
+
+    }
+
+
+    if(isLast){
+
+      return this.handleLastCommand(
+        instance.workspaceId,
+        normalized,
       );
 
     }
@@ -602,6 +620,160 @@ export class WhatsAppService {
         result.transaction,
 
     };
+
+  }
+
+
+
+
+
+  private isLastCommand(
+    text:string,
+  ){
+
+    const normalized =
+      text
+        .trim()
+        .toLowerCase();
+
+
+    return [
+      "last",
+      "/last",
+      "latest",
+      "terakhir",
+      "transaksi terakhir",
+    ].includes(
+      normalized,
+    );
+
+  }
+
+
+
+
+
+  private async handleLastCommand(
+    workspaceId:string,
+
+    normalized:NormalizedEvolutionMessage,
+  ){
+
+    const transaction =
+      await this.app.prisma.transaction
+        .findFirst({
+
+          where:{
+            workspaceId,
+
+            status:{
+              not:
+                "CANCELLED",
+            },
+          },
+
+          include:{
+            category:true,
+            merchant:true,
+            paymentMethod:true,
+          },
+
+          orderBy:{
+            createdAt:
+              "desc",
+          },
+
+        });
+
+
+    const reply =
+      transaction
+        ?
+        this.buildLastReply(
+          transaction,
+        )
+        :
+        "ℹ️ Tiada transaksi aktif ditemui.";
+
+
+    await this.safeSendWebhookReply(
+      normalized,
+      reply,
+    );
+
+
+    return {
+
+      message:
+        "WhatsApp last transaction sent",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+
+      transaction,
+
+    };
+
+  }
+
+
+
+
+
+  private buildLastReply(
+    transaction:{
+      amount:unknown;
+      currency:string;
+      type:string;
+      description:string | null;
+      transactionDate:Date;
+      category?:{
+        name:string;
+      } | null;
+      merchant?:{
+        name:string;
+      } | null;
+      paymentMethod?:{
+        name:string;
+      } | null;
+    },
+  ){
+
+    const category =
+      transaction.category?.name
+      ??
+      "Others";
+
+
+    const merchant =
+      transaction.merchant?.name
+        ?
+        ` @ ${transaction.merchant.name}`
+        :
+        "";
+
+
+    const paymentMethod =
+      transaction.paymentMethod?.name
+        ?
+        ` (${transaction.paymentMethod.name})`
+        :
+        "";
+
+
+    return [
+      "🧾 Transaksi terakhir",
+      `${transaction.type}: ${category}${merchant}${paymentMethod}`,
+      `${transaction.currency}${transaction.amount}`,
+      transaction.description
+        ??
+        "",
+    ].filter(Boolean)
+      .join(
+        "\n",
+      );
 
   }
 
