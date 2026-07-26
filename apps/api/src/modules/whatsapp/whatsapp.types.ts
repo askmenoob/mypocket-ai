@@ -14,6 +14,8 @@ export interface ParsedWhatsAppTransaction {
 
   categoryName:string;
 
+  merchantName?:string;
+
   description:string;
 
   transactionDate:string;

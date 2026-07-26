@@ -190,6 +190,17 @@ export class WhatsAppService {
       );
 
 
+    const merchant =
+      parsed.merchantName
+        ?
+        await this.findOrCreateMerchant(
+          input.user.workspaceId,
+          parsed.merchantName,
+        )
+        :
+        null;
+
+
     const transaction =
       await this.transactionService
         .createTransaction(
@@ -221,6 +232,9 @@ export class WhatsAppService {
 
             categoryId:
               category.id,
+
+            merchantId:
+              merchant?.id,
 
             source:
               input.source
@@ -594,9 +608,17 @@ export class WhatsAppService {
         "Perbelanjaan";
 
 
+    const merchant =
+      parsed.merchantName
+        ?
+        ` @ ${parsed.merchantName}`
+        :
+        "";
+
+
     return [
       "✅ Direkod",
-      `${label}: ${parsed.categoryName}`,
+      `${label}: ${parsed.categoryName}${merchant}`,
       `RM${parsed.amount}`,
       `— ${parsed.description}`,
     ].join(
@@ -780,6 +802,12 @@ export class WhatsAppService {
       type,
 
       categoryName,
+
+      merchantName:
+        this.guessMerchant(
+          rawText,
+          amountMatch[0],
+        ),
 
       description:
         rawText,
@@ -1058,6 +1086,58 @@ export class WhatsAppService {
 
 
 
+  private guessMerchant(
+    rawText:string,
+
+    amountToken:string,
+  ){
+
+    const beforeAmount =
+      rawText
+        .slice(
+          0,
+          rawText.toLowerCase()
+            .indexOf(
+              amountToken.toLowerCase(),
+            ),
+        )
+        .trim();
+
+
+    const cleaned =
+      beforeAmount
+        .replace(
+          /^(makan|minum|food|petrol|minyak|grab|taxi|tol|toll|parking|bill|bil|belanja|beli|shopping|gaji|salary|income)\s+/i,
+          "",
+        )
+        .replace(
+          /\s+/g,
+          " ",
+        )
+        .trim();
+
+
+    if(
+      cleaned.length < 2
+    ){
+
+      return undefined;
+
+    }
+
+
+    return cleaned
+      .slice(
+        0,
+        80,
+      );
+
+  }
+
+
+
+
+
   private isIncomeText(
     text:string,
   ){
@@ -1180,6 +1260,43 @@ export class WhatsAppService {
     return match?.name
       ??
       "Others";
+
+  }
+
+
+
+
+
+  private async findOrCreateMerchant(
+    workspaceId:string,
+
+    name:string,
+  ){
+
+    const existing =
+      await this.app.prisma.merchant
+        .findFirst({
+          where:{
+            workspaceId,
+            name,
+          },
+        });
+
+
+    if(existing){
+
+      return existing;
+
+    }
+
+
+    return this.app.prisma.merchant
+      .create({
+        data:{
+          workspaceId,
+          name,
+        },
+      });
 
   }
 
