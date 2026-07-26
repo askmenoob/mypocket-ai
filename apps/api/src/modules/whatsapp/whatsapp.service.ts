@@ -707,6 +707,17 @@ export class WhatsAppService {
 
     if(!actorMember){
 
+      await this.safeSendWebhookReply(
+        normalized,
+        [
+          "🔒 Nombor WhatsApp ini belum dipautkan kepada ahli workspace.",
+          "Hubungi Owner/Admin untuk link nombor dahulu.",
+        ].join(
+          "\n",
+        ),
+      );
+
+
       return {
 
         message:
@@ -719,7 +730,7 @@ export class WhatsAppService {
           ...normalized,
 
           reason:
-            "WORKSPACE_OWNER_NOT_FOUND",
+            "WHATSAPP_MEMBER_PHONE_NOT_LINKED",
         },
 
       };
@@ -983,19 +994,37 @@ export class WhatsAppService {
     remoteJid?:string,
   ){
 
+    const workspace =
+      await this.app.prisma.workspace
+        .findUnique({
+          where:{
+            id:
+              workspaceId,
+          },
+
+          select:{
+            type:
+              true,
+          },
+        });
+
+
     const phoneNumber =
-      remoteJid
-        ?
-        this.extractPhoneNumber(
-          remoteJid,
-        )
-        :
-        "";
+      (
+        remoteJid
+        ??
+        ""
+      )
+        .split("@")[0]
+        .replace(
+          /\D/g,
+          "",
+        );
 
 
     if(phoneNumber){
 
-      const mappedMember =
+      const linkedMember =
         await this.app.prisma.workspaceMember
           .findFirst({
             where:{
@@ -1005,44 +1034,57 @@ export class WhatsAppService {
                 phoneNumber,
             },
 
-            orderBy:{
-              createdAt:
-                "asc",
+            include:{
+              user:
+                true,
             },
           });
 
 
-      if(mappedMember){
+      if(linkedMember){
 
-        return mappedMember;
+        return linkedMember;
 
       }
 
     }
 
 
-    return this.app.prisma.workspaceMember
-      .findFirst({
+    if(
+      workspace?.type === "PERSONAL"
+    ){
 
-        where:{
-          workspaceId,
+      return this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            workspaceId,
 
-          role:{
-            in:[
-              "OWNER",
-              "ADMIN",
-            ],
+            role:{
+              in:[
+                "OWNER",
+                "ADMIN",
+              ],
+            },
           },
-        },
 
-        orderBy:{
-          createdAt:
-            "asc",
-        },
+          orderBy:{
+            createdAt:
+              "asc",
+          },
 
-      });
+          include:{
+            user:
+              true,
+          },
+        });
+
+    }
+
+
+    return null;
 
   }
+
 
 
 
