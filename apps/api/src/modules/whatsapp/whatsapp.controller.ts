@@ -154,6 +154,33 @@ export class WhatsAppController {
 
 
 
+  workspaceStatus =
+  async (
+    request:FastifyRequest,
+  ) => {
+
+    await request.jwtVerify();
+
+
+    const user =
+      request.user as any;
+
+
+    return this.service
+      .getWorkspaceWhatsAppStatus({
+        actorUserId:
+          user.userId,
+
+        workspaceId:
+          user.workspaceId,
+      });
+
+  };
+
+
+
+
+
   listMembers =
   async (
     request:FastifyRequest,

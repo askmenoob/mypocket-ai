@@ -199,6 +199,158 @@ export class WhatsAppService {
 
 
 
+  async getWorkspaceWhatsAppStatus(
+    input:{
+      actorUserId:string;
+
+      workspaceId:string;
+    },
+  ){
+
+    const actorMember =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            workspaceId:
+              input.workspaceId,
+
+            userId:
+              input.actorUserId,
+          },
+        });
+
+
+    if(!actorMember){
+
+      throw new AppError(
+        "WHATSAPP_STATUS_FORBIDDEN",
+        "Only workspace members can view WhatsApp status",
+        403,
+      );
+
+    }
+
+
+    const workspace =
+      await this.app.prisma.workspace
+        .findUnique({
+          where:{
+            id:
+              input.workspaceId,
+          },
+
+          select:{
+            id:true,
+            name:true,
+            type:true,
+          },
+        });
+
+
+    if(!workspace){
+
+      throw new AppError(
+        "WORKSPACE_NOT_FOUND",
+        "Workspace not found",
+        404,
+      );
+
+    }
+
+
+    const instance =
+      await this.app.prisma.whatsAppInstance
+        .findFirst({
+          where:{
+            workspaceId:
+              input.workspaceId,
+          },
+
+          orderBy:{
+            updatedAt:
+              "desc",
+          },
+        });
+
+
+    const members =
+      await this.app.prisma.workspaceMember
+        .findMany({
+          where:{
+            workspaceId:
+              input.workspaceId,
+          },
+
+          select:{
+            whatsappPhoneNumber:true,
+          },
+        });
+
+
+    const total =
+      members.length;
+
+
+    const linked =
+      members
+        .filter(
+          (member) => Boolean(
+            member.whatsappPhoneNumber,
+          ),
+        )
+        .length;
+
+
+    return {
+      workspace:{
+        id:
+          workspace.id,
+
+        name:
+          workspace.name,
+
+        type:
+          workspace.type,
+      },
+
+      instance:
+        instance
+          ?
+          {
+            id:
+              instance.id,
+
+            instanceName:
+              instance.instanceName,
+
+            phoneNumber:
+              instance.phoneNumber,
+
+            status:
+              instance.status,
+
+            updatedAt:
+              instance.updatedAt,
+          }
+          :
+          null,
+
+      memberMapping:{
+        total,
+
+        linked,
+
+        unlinked:
+          total - linked,
+      },
+    };
+
+  }
+
+
+
+
+
   async listWorkspaceWhatsAppMembers(
     input:{
       actorUserId:string;
