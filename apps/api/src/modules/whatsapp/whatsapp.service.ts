@@ -199,6 +199,100 @@ export class WhatsAppService {
 
 
 
+  async listWorkspaceWhatsAppMembers(
+    input:{
+      actorUserId:string;
+
+      workspaceId:string;
+    },
+  ){
+
+    const actorMember =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            workspaceId:
+              input.workspaceId,
+
+            userId:
+              input.actorUserId,
+          },
+        });
+
+
+    if(
+      !actorMember
+      ||
+      (
+        actorMember.role !== "OWNER"
+        &&
+        actorMember.role !== "ADMIN"
+      )
+    ){
+
+      throw new AppError(
+        "WHATSAPP_MEMBER_LIST_FORBIDDEN",
+        "Only Owner/Admin can list WhatsApp member mapping",
+        403,
+      );
+
+    }
+
+
+    const members =
+      await this.app.prisma.workspaceMember
+        .findMany({
+          where:{
+            workspaceId:
+              input.workspaceId,
+          },
+
+          orderBy:{
+            createdAt:
+              "asc",
+          },
+
+          include:{
+            user:{
+              select:{
+                id:true,
+                email:true,
+                name:true,
+              },
+            },
+          },
+        });
+
+
+    return members
+      .map(
+        (member) => ({
+          memberId:
+            member.id,
+
+          userId:
+            member.userId,
+
+          email:
+            member.user.email,
+
+          name:
+            member.user.name,
+
+          role:
+            member.role,
+
+          whatsappPhoneNumber:
+            member.whatsappPhoneNumber,
+        }),
+      );
+
+  }
+
+
+
+
+
   async linkWorkspaceMemberPhone(
     input:{
       actorUserId:string;
