@@ -1405,6 +1405,11 @@ export class WhatsAppService {
       "• bill unifi rm129 bank",
       "• gaji rm3000",
       "",
+      "Command:",
+      "• today — ringkasan hari ini",
+      "• undo — batalkan transaksi terakhir",
+      "• help — bantuan format",
+      "",
       "Kategori, merchant dan payment method akan dikesan automatik.",
     ].join(
       "\n",
