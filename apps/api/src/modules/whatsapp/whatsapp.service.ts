@@ -198,6 +198,223 @@ export class WhatsAppService {
 
 
 
+  async linkWorkspaceMemberPhone(
+    input:{
+      actorUserId:string;
+
+      workspaceId:string;
+
+      email:string;
+
+      phoneNumber:string;
+    },
+  ){
+
+    const actorMember =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            workspaceId:
+              input.workspaceId,
+
+            userId:
+              input.actorUserId,
+          },
+        });
+
+
+    if(
+      !actorMember
+      ||
+      (
+        actorMember.role !== "OWNER"
+        &&
+        actorMember.role !== "ADMIN"
+      )
+    ){
+
+      throw new AppError(
+        "WHATSAPP_MEMBER_LINK_FORBIDDEN",
+        "Only Owner/Admin can link WhatsApp member phone",
+        403,
+      );
+
+    }
+
+
+    const workspace =
+      await this.app.prisma.workspace
+        .findUnique({
+          where:{
+            id:
+              input.workspaceId,
+          },
+        });
+
+
+    if(!workspace){
+
+      throw new AppError(
+        "WORKSPACE_NOT_FOUND",
+        "Workspace not found",
+        404,
+      );
+
+    }
+
+
+    if(workspace.type === "PERSONAL"){
+
+      throw new AppError(
+        "WHATSAPP_MEMBER_LINK_NOT_AVAILABLE_FOR_PERSONAL",
+        "WhatsApp member linking is only available for Family and Business workspaces",
+        400,
+      );
+
+    }
+
+
+    const phoneNumber =
+      this.normalizeWhatsAppPhoneNumber(
+        input.phoneNumber,
+      );
+
+
+    if(phoneNumber.length < 8){
+
+      throw new AppError(
+        "WHATSAPP_PHONE_NUMBER_INVALID",
+        "WhatsApp phone number is invalid",
+        400,
+      );
+
+    }
+
+
+    const user =
+      await this.app.prisma.user
+        .findUnique({
+          where:{
+            email:
+              input.email,
+          },
+        });
+
+
+    if(!user){
+
+      throw new AppError(
+        "WHATSAPP_MEMBER_USER_NOT_FOUND",
+        "User email not found",
+        404,
+      );
+
+    }
+
+
+    const member =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            workspaceId:
+              input.workspaceId,
+
+            userId:
+              user.id,
+          },
+        });
+
+
+    if(!member){
+
+      throw new AppError(
+        "WHATSAPP_MEMBER_NOT_FOUND",
+        "User is not a member of this workspace",
+        404,
+      );
+
+    }
+
+
+    const existingPhoneMember =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            workspaceId:
+              input.workspaceId,
+
+            whatsappPhoneNumber:
+              phoneNumber,
+          },
+        });
+
+
+    if(
+      existingPhoneMember
+      &&
+      existingPhoneMember.id !== member.id
+    ){
+
+      throw new AppError(
+        "WHATSAPP_PHONE_NUMBER_ALREADY_LINKED",
+        "WhatsApp phone number is already linked to another member",
+        409,
+      );
+
+    }
+
+
+    const updated =
+      await this.app.prisma.workspaceMember
+        .update({
+          where:{
+            id:
+              member.id,
+          },
+
+          data:{
+            whatsappPhoneNumber:
+              phoneNumber,
+          },
+
+          include:{
+            user:{
+              select:{
+                id:true,
+                email:true,
+                name:true,
+              },
+            },
+          },
+        });
+
+
+    return {
+      id:
+        updated.id,
+
+      workspaceId:
+        updated.workspaceId,
+
+      userId:
+        updated.userId,
+
+      role:
+        updated.role,
+
+      whatsappPhoneNumber:
+        updated.whatsappPhoneNumber,
+
+      user:
+        updated.user,
+    };
+
+  }
+
+
+
+
+
   async createDevTransaction(
     input:WhatsAppDevTransactionInput,
   ){
@@ -3108,6 +3325,22 @@ export class WhatsAppService {
     return WhatsAppReplyBuilder
       .transaction(
         parsed,
+      );
+
+  }
+
+
+
+
+
+  private normalizeWhatsAppPhoneNumber(
+    value:string,
+  ){
+
+    return value
+      .replace(
+        /\D/g,
+        "",
       );
 
   }

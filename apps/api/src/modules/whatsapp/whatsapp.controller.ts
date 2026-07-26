@@ -23,6 +23,7 @@ import {
 import {
   whatsappDevInstanceSchema,
   whatsappDevTransactionSchema,
+  whatsappMemberLinkSchema,
 } from "./whatsapp.schemas.js";
 
 
@@ -143,6 +144,55 @@ export class WhatsAppController {
 
     return reply
       .code(201)
+      .send(
+        result,
+      );
+
+  };
+
+
+
+
+
+  linkMemberPhone =
+  async (
+    request:FastifyRequest,
+    reply:FastifyReply,
+  ) => {
+
+    await request.jwtVerify();
+
+
+    const user =
+      request.user as any;
+
+
+    const body =
+      whatsappMemberLinkSchema
+        .parse(
+          request.body,
+        );
+
+
+    const result =
+      await this.service
+        .linkWorkspaceMemberPhone({
+          actorUserId:
+            user.userId,
+
+          workspaceId:
+            user.workspaceId,
+
+          email:
+            body.email,
+
+          phoneNumber:
+            body.phoneNumber,
+        });
+
+
+    return reply
+      .code(200)
       .send(
         result,
       );

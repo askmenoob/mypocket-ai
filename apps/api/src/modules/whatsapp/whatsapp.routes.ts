@@ -26,6 +26,17 @@ export default async function whatsappRoutes(
 
 
   app.post(
+    "/whatsapp/members/link",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    controller.linkMemberPhone,
+  );
+
+
+  app.post(
     "/whatsapp/dev/instance",
     {
       preHandler:[

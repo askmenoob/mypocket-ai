@@ -38,3 +38,18 @@ z.object({
       .optional(),
 
 });
+
+
+
+export const whatsappMemberLinkSchema =
+z.object({
+
+  email:
+    z.string()
+      .email(),
+
+  phoneNumber:
+    z.string()
+      .min(6),
+
+});
