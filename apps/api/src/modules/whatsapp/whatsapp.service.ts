@@ -306,6 +306,35 @@ export class WhatsAppService {
     }
 
 
+    if(
+      this.isHelpCommand(
+        normalized.text
+        ??
+        "",
+      )
+    ){
+
+      await this.safeSendWebhookReply(
+        normalized,
+        this.buildHelpReply(),
+      );
+
+
+      return {
+
+        message:
+          "WhatsApp help sent",
+
+        source:
+          "EVOLUTION",
+
+        normalized,
+
+      };
+
+    }
+
+
     const instance =
       await this.app.prisma.whatsAppInstance
         .findUnique({
@@ -474,6 +503,55 @@ export class WhatsAppService {
         result.transaction,
 
     };
+
+  }
+
+
+
+
+
+  private isHelpCommand(
+    text:string,
+  ){
+
+    const normalized =
+      text
+        .trim()
+        .toLowerCase();
+
+
+    return [
+      "help",
+      "/help",
+      "bantuan",
+      "format",
+      "cara guna",
+      "macam mana",
+    ].includes(
+      normalized,
+    );
+
+  }
+
+
+
+
+
+  private buildHelpReply(){
+
+    return [
+      "👋 MyPocket AI",
+      "",
+      "Hantar transaksi dalam format ringkas:",
+      "• makan kedai mamak rm7.80 tng",
+      "• petrol shell rm50 cash",
+      "• bill unifi rm129 bank",
+      "• gaji rm3000",
+      "",
+      "Kategori, merchant dan payment method akan dikesan automatik.",
+    ].join(
+      "\n",
+    );
 
   }
 
