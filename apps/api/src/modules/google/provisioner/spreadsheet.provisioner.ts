@@ -146,11 +146,19 @@ export class SpreadsheetProvisioner {
       "";
 
 
-    await this.driveService
-      .moveFileToReportsFolder(
-        input.workspaceId,
-        spreadsheetId,
-      );
+    const folders =
+        await this.driveService
+          .createWorkspaceFolderStructure(
+            input.workspaceId,
+          );
+
+
+      await this.driveService
+        .moveFileToReportsFolder(
+          input.workspaceId,
+          spreadsheetId,
+          folders.reportsFolderId,
+        );
 
 
 

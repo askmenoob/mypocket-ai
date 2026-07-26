@@ -63,6 +63,22 @@ model WorkspaceGoogleSetting {
 
   spreadsheetTitle String?
 
+
+  templateType String?
+
+
+  rootFolderId String?
+
+
+  reportsFolderId String?
+
+
+  receiptsFolderId String?
+
+
+  exportsFolderId String?
+
+
   transactionSheet String @default("Transactions")
 
   dashboardSheet String?
@@ -85,6 +101,38 @@ enum GoogleSheetMode {
   EXISTING_SHEET
 
 }
+
+model GoogleTemplate {
+
+  id String @id @default(cuid())
+
+
+  type WorkspaceType
+
+
+  name String
+
+
+  spreadsheetId String
+
+
+  version String @default("1.0")
+
+
+  active Boolean @default(true)
+
+
+  createdAt DateTime @default(now())
+
+
+  updatedAt DateTime @updatedAt
+
+
+  @@unique([type, version])
+
+}
+
+
 
 model WhatsAppInstance {
   id           String    @id @default(cuid())

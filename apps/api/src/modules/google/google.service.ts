@@ -116,8 +116,9 @@ export class GoogleService {
       return this.repository
         .updateTokens(
           workspaceId,
+          email,
           accessToken,
-          refreshToken,
+          refreshToken ?? existing.refreshToken ?? null,
           expiresAt,
         );
 

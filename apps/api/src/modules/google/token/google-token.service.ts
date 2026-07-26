@@ -207,6 +207,8 @@ export class GoogleTokenService {
       .updateTokens(
         workspaceId,
 
+        account.email,
+
         this.encryption
           .encrypt(
             newAccessToken,

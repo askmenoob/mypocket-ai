@@ -108,6 +108,59 @@ export class GoogleOAuthService {
 
 
 
+  private async fetchAccountEmail(
+    accessToken:string,
+  ){
+
+    const response =
+      await fetch(
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        {
+
+          headers:{
+            Authorization:
+              `Bearer ${accessToken}`,
+          },
+
+        },
+      );
+
+
+    if(!response.ok){
+
+      throw new AppError(
+        "GOOGLE_PROFILE_FETCH_FAILED",
+        "Unable to fetch Google profile information",
+        400,
+      );
+
+    }
+
+
+    const data =
+      await response.json() as {
+        email?:string;
+      };
+
+
+    if(!data.email){
+
+      throw new AppError(
+        "GOOGLE_PROFILE_MISSING_EMAIL",
+        "Google profile did not return an email address",
+        400,
+      );
+
+    }
+
+
+    return data.email.toLowerCase();
+
+  }
+
+
+
+
   async exchangeCodeForToken(
     code:string,
   ){
@@ -180,6 +233,11 @@ export class GoogleOAuthService {
       await response.json();
 
 
+    const email =
+      await this.fetchAccountEmail(
+        data.access_token,
+      );
+
 
     return {
 
@@ -193,6 +251,9 @@ export class GoogleOAuthService {
 
       expiresIn:
         data.expires_in,
+
+
+      email,
 
     };
 
@@ -215,6 +276,29 @@ export class GoogleOAuthService {
         code,
       );
 
+
+    if(
+      token.email !== "pillo0404@gmail.com"
+    ){
+
+      throw new AppError(
+        "GOOGLE_ACCOUNT_MISMATCH",
+        "Only the pillo0404@gmail.com Google account can be used for workspace provisioning",
+        403,
+      );
+
+    }
+
+
+    if(!token.refreshToken){
+
+      throw new AppError(
+        "GOOGLE_REFRESH_TOKEN_MISSING",
+        "Google OAuth did not return a refresh token. Please reconnect and grant offline access.",
+        400,
+      );
+
+    }
 
 
     const expiresAt =
@@ -251,7 +335,7 @@ export class GoogleOAuthService {
 
         workspaceId,
 
-        "google-account",
+        token.email,
 
         encryptedAccessToken,
 

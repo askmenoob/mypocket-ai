@@ -8,14 +8,13 @@ import {
 } from "./google-settings.repository.js";
 
 
-import {
-  SpreadsheetProvisioner,
-} from "../provisioner/spreadsheet.provisioner.js";
 
 
 import {
-  SheetInitializerService,
-} from "../initializer/sheet-initializer.service.js";
+  TemplateProvisioner,
+} from "../provisioner/template.provisioner.js";
+
+
 
 
 import {
@@ -31,12 +30,12 @@ export class GoogleSettingsService {
     GoogleSettingsRepository;
 
 
-  private readonly provisioner:
-    SpreadsheetProvisioner;
 
 
-  private readonly initializer:
-    SheetInitializerService;
+  private readonly templateProvisioner:
+    TemplateProvisioner;
+
+
 
 
   private readonly workspaceRepository:
@@ -54,16 +53,14 @@ export class GoogleSettingsService {
       );
 
 
-    this.provisioner =
-      new SpreadsheetProvisioner(
+
+
+    this.templateProvisioner =
+      new TemplateProvisioner(
         app,
       );
 
 
-    this.initializer =
-      new SheetInitializerService(
-        app,
-      );
 
 
     this.workspaceRepository =
@@ -136,18 +133,6 @@ export class GoogleSettingsService {
     title:string,
   ){
 
-    const spreadsheet =
-      await this.provisioner
-        .create({
-
-          workspaceId,
-
-          title,
-
-        });
-
-
-
     const workspace =
       await this.workspaceRepository
         .findWorkspaceById(
@@ -156,20 +141,18 @@ export class GoogleSettingsService {
 
 
 
-    await this.initializer
-      .initialize({
+    const provision =
+      await this.templateProvisioner
+        .provision({
 
-        workspaceId,
+          workspaceId,
 
-        spreadsheetId:
-          spreadsheet.spreadsheetId,
+          workspaceType:
+            workspace?.type
+            ??
+            "PERSONAL",
 
-        workspaceType:
-          workspace?.type
-          ??
-          "PERSONAL",
-
-      });
+        });
 
 
 
@@ -179,11 +162,33 @@ export class GoogleSettingsService {
         workspaceId,
 
         spreadsheetId:
-          spreadsheet.spreadsheetId,
+          provision.spreadsheetId,
 
 
         spreadsheetTitle:
-          spreadsheet.title,
+          provision.spreadsheetTitle,
+
+
+        templateType:
+          workspace?.type
+          ??
+          "PERSONAL",
+
+
+        rootFolderId:
+          provision.rootFolderId,
+
+
+        reportsFolderId:
+          provision.reportsFolderId,
+
+
+        receiptsFolderId:
+          provision.receiptsFolderId,
+
+
+        exportsFolderId:
+          provision.exportsFolderId,
 
 
         mode:
@@ -192,6 +197,7 @@ export class GoogleSettingsService {
       });
 
   }
+
 
 
   async updateSheet(

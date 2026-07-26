@@ -19,6 +19,29 @@ import {
 
 
 
+export interface WorkspaceFolderStructure {
+
+  rootFolderId:
+    string;
+
+
+  reportsFolderId:
+    string;
+
+
+  receiptsFolderId:
+    string;
+
+
+  exportsFolderId:
+    string;
+
+}
+
+
+
+
+
 export class GoogleDriveService {
 
 
@@ -42,9 +65,11 @@ export class GoogleDriveService {
 
 
 
+
   private async getClient(
     workspaceId:string,
   ){
+
 
     const accessToken =
       await this.tokenService
@@ -53,8 +78,10 @@ export class GoogleDriveService {
         );
 
 
+
     const auth =
       new google.auth.OAuth2();
+
 
 
     auth.setCredentials({
@@ -75,7 +102,229 @@ export class GoogleDriveService {
 
     });
 
+
   }
+
+
+
+
+
+
+
+
+
+  async createFolder(
+    workspaceId:string,
+
+    name:string,
+
+    parentId?:string,
+
+  ):Promise<string>{
+
+
+    const drive =
+      await this.getClient(
+        workspaceId,
+      );
+
+
+
+    const response =
+      await drive.files.create({
+
+        requestBody:{
+
+          name,
+
+          mimeType:
+            "application/vnd.google-apps.folder",
+
+
+          parents:
+            parentId
+              ?
+              [parentId]
+              :
+              undefined,
+
+        },
+
+
+        fields:
+          "id",
+
+      });
+
+
+
+    return response.data.id
+      ??
+      "";
+
+  }
+
+
+
+
+
+
+
+
+
+  async copyFile(
+    workspaceId:string,
+
+    fileId:string,
+
+    name?:string,
+
+    parentId?:string,
+
+  ){
+
+
+    const drive =
+      await this.getClient(
+        workspaceId,
+      );
+
+
+
+    const response =
+      await drive.files.copy({
+
+        fileId,
+
+
+        requestBody:{
+
+
+          name,
+
+
+          parents:
+            parentId
+              ?
+              [parentId]
+              :
+              undefined,
+
+
+        },
+
+
+        fields:
+          "id,name,webViewLink",
+
+      });
+
+
+
+    return {
+
+      id:
+        response.data.id
+        ??
+        "",
+
+
+      name:
+        response.data.name
+        ??
+        "",
+
+
+      url:
+        response.data.webViewLink
+        ??
+        "",
+
+    };
+
+  }
+
+
+
+
+
+
+
+
+
+  async createWorkspaceFolderStructure(
+    workspaceId:string,
+  ):Promise<WorkspaceFolderStructure>{
+
+
+
+    const rootFolderId =
+      await this.createFolder(
+
+        workspaceId,
+
+        "MyPocket AI",
+
+      );
+
+
+
+    const reportsFolderId =
+      await this.createFolder(
+
+        workspaceId,
+
+        "Reports",
+
+        rootFolderId,
+
+      );
+
+
+
+    const receiptsFolderId =
+      await this.createFolder(
+
+        workspaceId,
+
+        "Receipts",
+
+        rootFolderId,
+
+      );
+
+
+
+    const exportsFolderId =
+      await this.createFolder(
+
+        workspaceId,
+
+        "Exports",
+
+        rootFolderId,
+
+      );
+
+
+
+    return {
+
+      rootFolderId,
+
+      reportsFolderId,
+
+      receiptsFolderId,
+
+      exportsFolderId,
+
+    };
+
+  }
+
+
+
+
 
 
 
@@ -83,7 +332,12 @@ export class GoogleDriveService {
 
   async moveFileToReportsFolder(
     workspaceId:string,
+
     fileId:string,
+
+
+    reportsFolderId:string,
+
   ):Promise<void>{
 
 
@@ -93,13 +347,14 @@ export class GoogleDriveService {
       );
 
 
+
     await drive.files.update({
 
       fileId,
 
 
       addParents:
-        googleConfig.reportsFolderId,
+        reportsFolderId,
 
 
       fields:
@@ -108,6 +363,8 @@ export class GoogleDriveService {
     });
 
   }
+
+
 
 
 }

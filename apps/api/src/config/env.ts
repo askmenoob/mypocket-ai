@@ -60,6 +60,11 @@ const EnvSchema = z.object({
   GOOGLE_REPORTS_FOLDER_ID:
     z.string()
       .min(1),
+
+
+  GOOGLE_TEMPLATE_ROOT_FOLDER_ID:
+    z.string()
+      .optional(),
 });
 
 export const env = EnvSchema.parse(process.env);

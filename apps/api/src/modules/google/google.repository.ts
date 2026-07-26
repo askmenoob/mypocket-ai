@@ -70,6 +70,7 @@ export class GoogleRepository {
 
   async updateTokens(
     workspaceId:string,
+    email:string,
     accessToken:string,
     refreshToken:string|null,
     expiresAt:Date|null,
@@ -82,6 +83,8 @@ export class GoogleRepository {
       },
 
       data:{
+
+        email,
 
         accessToken,
 

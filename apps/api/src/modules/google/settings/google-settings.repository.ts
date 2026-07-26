@@ -57,6 +57,17 @@ export class GoogleSettingsRepository {
       workspaceId:string;
       spreadsheetId:string;
       spreadsheetTitle?:string;
+
+      templateType?:string;
+
+      rootFolderId?:string;
+
+      reportsFolderId?:string;
+
+      receiptsFolderId?:string;
+
+      exportsFolderId?:string;
+
       transactionSheet?:string;
       dashboardSheet?:string;
       mode:
@@ -108,6 +119,17 @@ export class GoogleSettingsRepository {
       workspaceId:string;
       spreadsheetId:string;
       spreadsheetTitle?:string;
+
+      templateType?:string;
+
+      rootFolderId?:string;
+
+      reportsFolderId?:string;
+
+      receiptsFolderId?:string;
+
+      exportsFolderId?:string;
+
       transactionSheet?:string;
       dashboardSheet?:string;
       mode:
@@ -139,6 +161,21 @@ export class GoogleSettingsRepository {
           spreadsheetTitle:
             input.spreadsheetTitle,
 
+            templateType:
+              input.templateType,
+
+            rootFolderId:
+              input.rootFolderId,
+
+            reportsFolderId:
+              input.reportsFolderId,
+
+            receiptsFolderId:
+              input.receiptsFolderId,
+
+            exportsFolderId:
+              input.exportsFolderId,
+
           transactionSheet:
             input.transactionSheet
             ??
@@ -160,6 +197,21 @@ export class GoogleSettingsRepository {
 
           spreadsheetTitle:
             input.spreadsheetTitle,
+
+            templateType:
+              input.templateType,
+
+            rootFolderId:
+              input.rootFolderId,
+
+            reportsFolderId:
+              input.reportsFolderId,
+
+            receiptsFolderId:
+              input.receiptsFolderId,
+
+            exportsFolderId:
+              input.exportsFolderId,
 
           transactionSheet:
             input.transactionSheet
