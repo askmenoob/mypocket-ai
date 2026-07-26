@@ -358,6 +358,14 @@ export class WhatsAppService {
       );
 
 
+    const isTodaySummary =
+      this.isTodaySummaryCommand(
+        normalized.text
+        ??
+        "",
+      );
+
+
     const instance =
       await this.app.prisma.whatsAppInstance
         .findUnique({
@@ -439,6 +447,16 @@ export class WhatsAppService {
     if(isUndo){
 
       return this.handleUndoCommand(
+        instance.workspaceId,
+        normalized,
+      );
+
+    }
+
+
+    if(isTodaySummary){
+
+      return this.handleTodaySummaryCommand(
         instance.workspaceId,
         normalized,
       );
@@ -536,6 +554,266 @@ export class WhatsAppService {
         result.transaction,
 
     };
+
+  }
+
+
+
+
+
+  private isTodaySummaryCommand(
+    text:string,
+  ){
+
+    const normalized =
+      text
+        .trim()
+        .toLowerCase();
+
+
+    return [
+      "today",
+      "/today",
+      "summary",
+      "ringkasan",
+      "hari ini",
+      "today summary",
+    ].includes(
+      normalized,
+    );
+
+  }
+
+
+
+
+
+  private async handleTodaySummaryCommand(
+    workspaceId:string,
+
+    normalized:NormalizedEvolutionMessage,
+  ){
+
+    const now =
+      new Date();
+
+
+    const start =
+      new Date(
+        now,
+      );
+
+
+    start.setHours(
+      0,
+      0,
+      0,
+      0,
+    );
+
+
+    const end =
+      new Date(
+        now,
+      );
+
+
+    end.setHours(
+      23,
+      59,
+      59,
+      999,
+    );
+
+
+    const transactions =
+      await this.app.prisma.transaction
+        .findMany({
+
+          where:{
+            workspaceId,
+
+            status:{
+              not:
+                "CANCELLED",
+            },
+
+            transactionDate:{
+              gte:
+                start,
+
+              lte:
+                end,
+            },
+          },
+
+          include:{
+            category:true,
+          },
+
+          orderBy:{
+            transactionDate:
+              "asc",
+          },
+
+        });
+
+
+    const reply =
+      this.buildTodaySummaryReply(
+        transactions,
+        now,
+      );
+
+
+    await this.safeSendWebhookReply(
+      normalized,
+      reply,
+    );
+
+
+    return {
+
+      message:
+        "WhatsApp today summary sent",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+
+      summary:{
+        date:
+          now.toISOString()
+            .slice(
+              0,
+              10,
+            ),
+
+        count:
+          transactions.length,
+      },
+
+    };
+
+  }
+
+
+
+
+
+  private buildTodaySummaryReply(
+    transactions:Array<{
+      amount:unknown;
+      type:string;
+      category?:{
+        name:string;
+      } | null;
+    }>,
+
+    now:Date,
+  ){
+
+    let expense =
+      0;
+
+
+    let income =
+      0;
+
+
+    const categoryTotals =
+      new Map<string, number>();
+
+
+    for(
+      const transaction of transactions
+    ){
+
+      const amount =
+        Number(
+          transaction.amount,
+        );
+
+
+      if(
+        !Number.isFinite(
+          amount,
+        )
+      ){
+
+        continue;
+
+      }
+
+
+      if(
+        transaction.type === "INCOME"
+      ){
+
+        income += amount;
+
+      }else{
+
+        expense += amount;
+
+
+        const category =
+          transaction.category?.name
+          ??
+          "Others";
+
+
+        categoryTotals.set(
+          category,
+          (
+            categoryTotals.get(
+              category,
+            )
+            ??
+            0
+          )
+          +
+          amount,
+        );
+
+      }
+
+    }
+
+
+    const topCategory =
+      [...categoryTotals.entries()]
+        .sort(
+          (
+            first,
+            second,
+          ) =>
+            second[1]
+            -
+            first[1],
+        )[0];
+
+
+    return [
+      "📊 Ringkasan hari ini",
+      now.toISOString()
+        .slice(
+          0,
+          10,
+        ),
+      "",
+      `Expense: MYR ${expense.toFixed(2)}`,
+      `Income: MYR ${income.toFixed(2)}`,
+      `Transaksi: ${transactions.length}`,
+      topCategory
+        ?
+        `Top category: ${topCategory[0]} MYR ${topCategory[1].toFixed(2)}`
+        :
+        "Top category: -",
+    ].join(
+      "\n",
+    );
 
   }
 
