@@ -611,6 +611,8 @@ export class WhatsAppService {
         "summary",
         "ringkasan",
         "hari ini",
+        "hariini",
+        "harini",
         "today summary",
       ].includes(
         normalized,
@@ -630,6 +632,7 @@ export class WhatsAppService {
         "summary week",
         "ringkasan minggu",
         "minggu ini",
+        "minggu",
       ].includes(
         normalized,
       )
@@ -648,6 +651,7 @@ export class WhatsAppService {
         "summary month",
         "ringkasan bulan",
         "bulan ini",
+        "bulan",
       ].includes(
         normalized,
       )
@@ -894,6 +898,7 @@ export class WhatsAppService {
       "",
       `Expense: MYR ${expense.toFixed(2)}`,
       `Income: MYR ${income.toFixed(2)}`,
+      `Net: MYR ${(income - expense).toFixed(2)}`,
       `Transaksi: ${transactions.length}`,
       topCategory
         ?
