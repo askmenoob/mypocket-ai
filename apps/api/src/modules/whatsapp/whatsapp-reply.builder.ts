@@ -40,9 +40,68 @@ export class WhatsAppReplyBuilder {
       "• month / bulan — ringkasan bulan ini",
       "• last — transaksi terakhir",
       "• undo / batal — batalkan transaksi terakhir",
-      "• categories — senarai kategori",
+      "• categories — senarai kategori\n• members — senarai mapping WhatsApp",
       "• methods — senarai payment method",
       "• status — semak sambungan bot",
+    ].join(
+      "\n",
+    );
+
+  }
+
+
+
+
+
+  static members(
+    members:Array<{
+      name:string | null;
+      email:string;
+      role:string;
+      whatsappPhoneNumber:string | null;
+    }>,
+  ){
+
+    const total =
+      members.length;
+
+
+    const linked =
+      members
+        .filter(
+          (member) => Boolean(
+            member.whatsappPhoneNumber,
+          ),
+        )
+        .length;
+
+
+    const lines =
+      members
+        .map(
+          (member) => {
+            const label =
+              member.name
+              ??
+              member.email;
+
+            const phone =
+              member.whatsappPhoneNumber
+                ?
+                `✅ ${member.whatsappPhoneNumber}`
+                :
+                "⚠️ belum linked";
+
+            return `${member.role} ${label} — ${phone}`;
+          },
+        );
+
+
+    return [
+      "👥 WhatsApp Members",
+      `Linked: ${linked}/${total}`,
+      "",
+      ...lines,
     ].join(
       "\n",
     );
@@ -69,7 +128,7 @@ export class WhatsAppReplyBuilder {
       "• week — ringkasan minggu ini",
       "• month — ringkasan bulan ini",
       "• undo — batalkan transaksi terakhir",
-      "• categories — senarai kategori auto",
+      "• categories — senarai kategori auto\n• members — senarai ahli WhatsApp",
       "• methods — senarai payment method",
       "• commands — senarai semua command",
       "• status — semak sambungan bot",

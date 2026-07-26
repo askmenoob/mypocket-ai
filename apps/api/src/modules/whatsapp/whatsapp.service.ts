@@ -1008,6 +1008,15 @@ export class WhatsAppService {
         );
 
 
+    const isMembers =
+      WhatsAppCommandParser
+        .isMembers(
+          normalized.text
+          ??
+          "",
+        );
+
+
     const infoCommand =
       WhatsAppCommandParser
         .info(
@@ -1033,6 +1042,7 @@ export class WhatsAppService {
         isStatus,
         isLast,
         isCategories,
+        isMembers,
         infoCommand,
         listCommand,
         summaryPeriod,
@@ -1198,6 +1208,16 @@ export class WhatsAppService {
     if(isCategories){
 
       return this.handleCategoriesCommand(
+        normalized,
+      );
+
+    }
+
+
+    if(isMembers){
+
+      return this.handleMembersCommand(
+        instance.workspaceId,
         normalized,
       );
 
@@ -1477,6 +1497,8 @@ export class WhatsAppService {
 
       isCategories:boolean;
 
+      isMembers:boolean;
+
       infoCommand:
         | "methods"
         | "commands"
@@ -1525,6 +1547,13 @@ export class WhatsAppService {
     if(input.isCategories){
 
       return "categories";
+
+    }
+
+
+    if(input.isMembers){
+
+      return "members";
 
     }
 
@@ -1712,6 +1741,78 @@ export class WhatsAppService {
 
     return WhatsAppReplyBuilder
       .commands();
+
+  }
+
+
+
+
+
+  private async handleMembersCommand(
+    workspaceId:string,
+
+    normalized:NormalizedEvolutionMessage,
+  ){
+
+    const members =
+      await this.app.prisma.workspaceMember
+        .findMany({
+          where:{
+            workspaceId,
+          },
+
+          orderBy:{
+            createdAt:
+              "asc",
+          },
+
+          include:{
+            user:{
+              select:{
+                email:true,
+                name:true,
+              },
+            },
+          },
+        });
+
+
+    await this.safeSendWebhookReply(
+      normalized,
+      WhatsAppReplyBuilder
+        .members(
+          members
+            .map(
+              (member) => ({
+                name:
+                  member.user.name,
+
+                email:
+                  member.user.email,
+
+                role:
+                  member.role,
+
+                whatsappPhoneNumber:
+                  member.whatsappPhoneNumber,
+              }),
+            ),
+        ),
+    );
+
+
+    return {
+      message:
+        "WhatsApp members command sent",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+
+      members:
+        members.length,
+    };
 
   }
 
