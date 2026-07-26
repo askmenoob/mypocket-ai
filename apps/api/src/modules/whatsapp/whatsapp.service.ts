@@ -9,6 +9,11 @@ import {
 
 
 import {
+  GoogleSheetsService,
+} from "../google/sheets/google-sheets.service.js";
+
+
+import {
   TransactionService,
 } from "../transaction/transaction.service.js";
 
@@ -35,6 +40,10 @@ export class WhatsAppService {
     TransactionService;
 
 
+  private readonly sheetsService:
+    GoogleSheetsService;
+
+
 
   constructor(
     private readonly app:FastifyInstance,
@@ -42,6 +51,12 @@ export class WhatsAppService {
 
     this.transactionService =
       new TransactionService(
+        app,
+      );
+
+
+    this.sheetsService =
+      new GoogleSheetsService(
         app,
       );
 
@@ -662,6 +677,12 @@ export class WhatsAppService {
         });
 
 
+    await this.safeMarkGoogleSheetCancelled(
+      workspaceId,
+      cancelled.id,
+    );
+
+
     await this.safeSendWebhookReply(
       normalized,
       this.buildUndoReply(
@@ -684,6 +705,146 @@ export class WhatsAppService {
         cancelled,
 
     };
+
+  }
+
+
+
+
+
+  private async safeMarkGoogleSheetCancelled(
+    workspaceId:string,
+
+    transactionId:string,
+  ):Promise<void>{
+
+    try{
+
+      await this.markGoogleSheetTransactionCancelled(
+        workspaceId,
+        transactionId,
+      );
+
+    }catch(error){
+
+      console.error(
+        "GOOGLE_SHEET_UNDO_MARK_FAILED:",
+        error,
+      );
+
+    }
+
+  }
+
+
+
+
+
+  private async markGoogleSheetTransactionCancelled(
+    workspaceId:string,
+
+    transactionId:string,
+  ):Promise<void>{
+
+    const setting =
+      await this.app.prisma.workspaceGoogleSetting
+        .findUnique({
+          where:{
+            workspaceId,
+          },
+        });
+
+
+    if(!setting){
+
+      return;
+
+    }
+
+
+    const rows =
+      await this.sheetsService
+        .readRange(
+          workspaceId,
+          {
+            spreadsheetId:
+              setting.spreadsheetId,
+
+            range:
+              "Transactions!A:M",
+          },
+        );
+
+
+    const rowIndex =
+      rows.findIndex(
+        (row) =>
+          String(
+            row[0]
+            ??
+            "",
+          )
+          ===
+          transactionId,
+      );
+
+
+    if(rowIndex < 1){
+
+      return;
+
+    }
+
+
+    const rowNumber =
+      rowIndex
+      +
+      1;
+
+
+    const row =
+      rows[rowIndex]
+      ??
+      [];
+
+
+    const description =
+      String(
+        row[6]
+        ??
+        "",
+      );
+
+
+    if(
+      description.startsWith(
+        "[CANCELLED]",
+      )
+    ){
+
+      return;
+
+    }
+
+
+    await this.sheetsService
+      .updateRange(
+        workspaceId,
+        {
+          spreadsheetId:
+            setting.spreadsheetId,
+
+          range:
+            `Transactions!G${rowNumber}:G${rowNumber}`,
+
+          values:[
+            [
+              `[CANCELLED] ${description}`
+                .trim(),
+            ],
+          ],
+        },
+      );
 
   }
 
