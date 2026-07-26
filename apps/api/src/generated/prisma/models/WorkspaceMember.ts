@@ -29,6 +29,7 @@ export type WorkspaceMemberMinAggregateOutputType = {
   userId: string | null
   workspaceId: string | null
   role: $Enums.WorkspaceRole | null
+  whatsappPhoneNumber: string | null
   createdAt: Date | null
 }
 
@@ -37,6 +38,7 @@ export type WorkspaceMemberMaxAggregateOutputType = {
   userId: string | null
   workspaceId: string | null
   role: $Enums.WorkspaceRole | null
+  whatsappPhoneNumber: string | null
   createdAt: Date | null
 }
 
@@ -45,6 +47,7 @@ export type WorkspaceMemberCountAggregateOutputType = {
   userId: number
   workspaceId: number
   role: number
+  whatsappPhoneNumber: number
   createdAt: number
   _all: number
 }
@@ -55,6 +58,7 @@ export type WorkspaceMemberMinAggregateInputType = {
   userId?: true
   workspaceId?: true
   role?: true
+  whatsappPhoneNumber?: true
   createdAt?: true
 }
 
@@ -63,6 +67,7 @@ export type WorkspaceMemberMaxAggregateInputType = {
   userId?: true
   workspaceId?: true
   role?: true
+  whatsappPhoneNumber?: true
   createdAt?: true
 }
 
@@ -71,6 +76,7 @@ export type WorkspaceMemberCountAggregateInputType = {
   userId?: true
   workspaceId?: true
   role?: true
+  whatsappPhoneNumber?: true
   createdAt?: true
   _all?: true
 }
@@ -152,6 +158,7 @@ export type WorkspaceMemberGroupByOutputType = {
   userId: string
   workspaceId: string
   role: $Enums.WorkspaceRole
+  whatsappPhoneNumber: string | null
   createdAt: Date
   _count: WorkspaceMemberCountAggregateOutputType | null
   _min: WorkspaceMemberMinAggregateOutputType | null
@@ -181,6 +188,7 @@ export type WorkspaceMemberWhereInput = {
   userId?: Prisma.StringFilter<"WorkspaceMember"> | string
   workspaceId?: Prisma.StringFilter<"WorkspaceMember"> | string
   role?: Prisma.EnumWorkspaceRoleFilter<"WorkspaceMember"> | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.StringNullableFilter<"WorkspaceMember"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkspaceMember"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   workspace?: Prisma.XOR<Prisma.WorkspaceScalarRelationFilter, Prisma.WorkspaceWhereInput>
@@ -191,6 +199,7 @@ export type WorkspaceMemberOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  whatsappPhoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   workspace?: Prisma.WorkspaceOrderByWithRelationInput
@@ -199,22 +208,25 @@ export type WorkspaceMemberOrderByWithRelationInput = {
 export type WorkspaceMemberWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   userId_workspaceId?: Prisma.WorkspaceMemberUserIdWorkspaceIdCompoundUniqueInput
+  workspaceId_whatsappPhoneNumber?: Prisma.WorkspaceMemberWorkspaceIdWhatsappPhoneNumberCompoundUniqueInput
   AND?: Prisma.WorkspaceMemberWhereInput | Prisma.WorkspaceMemberWhereInput[]
   OR?: Prisma.WorkspaceMemberWhereInput[]
   NOT?: Prisma.WorkspaceMemberWhereInput | Prisma.WorkspaceMemberWhereInput[]
   userId?: Prisma.StringFilter<"WorkspaceMember"> | string
   workspaceId?: Prisma.StringFilter<"WorkspaceMember"> | string
   role?: Prisma.EnumWorkspaceRoleFilter<"WorkspaceMember"> | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.StringNullableFilter<"WorkspaceMember"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkspaceMember"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   workspace?: Prisma.XOR<Prisma.WorkspaceScalarRelationFilter, Prisma.WorkspaceWhereInput>
-}, "id" | "userId_workspaceId">
+}, "id" | "userId_workspaceId" | "workspaceId_whatsappPhoneNumber">
 
 export type WorkspaceMemberOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  whatsappPhoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.WorkspaceMemberCountOrderByAggregateInput
   _max?: Prisma.WorkspaceMemberMaxOrderByAggregateInput
@@ -229,12 +241,14 @@ export type WorkspaceMemberScalarWhereWithAggregatesInput = {
   userId?: Prisma.StringWithAggregatesFilter<"WorkspaceMember"> | string
   workspaceId?: Prisma.StringWithAggregatesFilter<"WorkspaceMember"> | string
   role?: Prisma.EnumWorkspaceRoleWithAggregatesFilter<"WorkspaceMember"> | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.StringNullableWithAggregatesFilter<"WorkspaceMember"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkspaceMember"> | Date | string
 }
 
 export type WorkspaceMemberCreateInput = {
   id?: string
   role?: $Enums.WorkspaceRole
+  whatsappPhoneNumber?: string | null
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutMembershipsInput
   workspace: Prisma.WorkspaceCreateNestedOneWithoutMembersInput
@@ -245,12 +259,14 @@ export type WorkspaceMemberUncheckedCreateInput = {
   userId: string
   workspaceId: string
   role?: $Enums.WorkspaceRole
+  whatsappPhoneNumber?: string | null
   createdAt?: Date | string
 }
 
 export type WorkspaceMemberUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumWorkspaceRoleFieldUpdateOperationsInput | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutMembershipsNestedInput
   workspace?: Prisma.WorkspaceUpdateOneRequiredWithoutMembersNestedInput
@@ -261,6 +277,7 @@ export type WorkspaceMemberUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumWorkspaceRoleFieldUpdateOperationsInput | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -269,12 +286,14 @@ export type WorkspaceMemberCreateManyInput = {
   userId: string
   workspaceId: string
   role?: $Enums.WorkspaceRole
+  whatsappPhoneNumber?: string | null
   createdAt?: Date | string
 }
 
 export type WorkspaceMemberUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumWorkspaceRoleFieldUpdateOperationsInput | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -283,6 +302,7 @@ export type WorkspaceMemberUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumWorkspaceRoleFieldUpdateOperationsInput | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -301,11 +321,17 @@ export type WorkspaceMemberUserIdWorkspaceIdCompoundUniqueInput = {
   workspaceId: string
 }
 
+export type WorkspaceMemberWorkspaceIdWhatsappPhoneNumberCompoundUniqueInput = {
+  workspaceId: string
+  whatsappPhoneNumber: string
+}
+
 export type WorkspaceMemberCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  whatsappPhoneNumber?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -314,6 +340,7 @@ export type WorkspaceMemberMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  whatsappPhoneNumber?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -322,6 +349,7 @@ export type WorkspaceMemberMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  whatsappPhoneNumber?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -416,6 +444,7 @@ export type EnumWorkspaceRoleFieldUpdateOperationsInput = {
 export type WorkspaceMemberCreateWithoutUserInput = {
   id?: string
   role?: $Enums.WorkspaceRole
+  whatsappPhoneNumber?: string | null
   createdAt?: Date | string
   workspace: Prisma.WorkspaceCreateNestedOneWithoutMembersInput
 }
@@ -424,6 +453,7 @@ export type WorkspaceMemberUncheckedCreateWithoutUserInput = {
   id?: string
   workspaceId: string
   role?: $Enums.WorkspaceRole
+  whatsappPhoneNumber?: string | null
   createdAt?: Date | string
 }
 
@@ -461,12 +491,14 @@ export type WorkspaceMemberScalarWhereInput = {
   userId?: Prisma.StringFilter<"WorkspaceMember"> | string
   workspaceId?: Prisma.StringFilter<"WorkspaceMember"> | string
   role?: Prisma.EnumWorkspaceRoleFilter<"WorkspaceMember"> | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.StringNullableFilter<"WorkspaceMember"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkspaceMember"> | Date | string
 }
 
 export type WorkspaceMemberCreateWithoutWorkspaceInput = {
   id?: string
   role?: $Enums.WorkspaceRole
+  whatsappPhoneNumber?: string | null
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutMembershipsInput
 }
@@ -475,6 +507,7 @@ export type WorkspaceMemberUncheckedCreateWithoutWorkspaceInput = {
   id?: string
   userId: string
   role?: $Enums.WorkspaceRole
+  whatsappPhoneNumber?: string | null
   createdAt?: Date | string
 }
 
@@ -508,12 +541,14 @@ export type WorkspaceMemberCreateManyUserInput = {
   id?: string
   workspaceId: string
   role?: $Enums.WorkspaceRole
+  whatsappPhoneNumber?: string | null
   createdAt?: Date | string
 }
 
 export type WorkspaceMemberUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumWorkspaceRoleFieldUpdateOperationsInput | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspace?: Prisma.WorkspaceUpdateOneRequiredWithoutMembersNestedInput
 }
@@ -522,6 +557,7 @@ export type WorkspaceMemberUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumWorkspaceRoleFieldUpdateOperationsInput | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -529,6 +565,7 @@ export type WorkspaceMemberUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumWorkspaceRoleFieldUpdateOperationsInput | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -536,12 +573,14 @@ export type WorkspaceMemberCreateManyWorkspaceInput = {
   id?: string
   userId: string
   role?: $Enums.WorkspaceRole
+  whatsappPhoneNumber?: string | null
   createdAt?: Date | string
 }
 
 export type WorkspaceMemberUpdateWithoutWorkspaceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumWorkspaceRoleFieldUpdateOperationsInput | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutMembershipsNestedInput
 }
@@ -550,6 +589,7 @@ export type WorkspaceMemberUncheckedUpdateWithoutWorkspaceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumWorkspaceRoleFieldUpdateOperationsInput | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -557,6 +597,7 @@ export type WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumWorkspaceRoleFieldUpdateOperationsInput | $Enums.WorkspaceRole
+  whatsappPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -567,6 +608,7 @@ export type WorkspaceMemberSelect<ExtArgs extends runtime.Types.Extensions.Inter
   userId?: boolean
   workspaceId?: boolean
   role?: boolean
+  whatsappPhoneNumber?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   workspace?: boolean | Prisma.WorkspaceDefaultArgs<ExtArgs>
@@ -577,6 +619,7 @@ export type WorkspaceMemberSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   userId?: boolean
   workspaceId?: boolean
   role?: boolean
+  whatsappPhoneNumber?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   workspace?: boolean | Prisma.WorkspaceDefaultArgs<ExtArgs>
@@ -587,6 +630,7 @@ export type WorkspaceMemberSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   userId?: boolean
   workspaceId?: boolean
   role?: boolean
+  whatsappPhoneNumber?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   workspace?: boolean | Prisma.WorkspaceDefaultArgs<ExtArgs>
@@ -597,10 +641,11 @@ export type WorkspaceMemberSelectScalar = {
   userId?: boolean
   workspaceId?: boolean
   role?: boolean
+  whatsappPhoneNumber?: boolean
   createdAt?: boolean
 }
 
-export type WorkspaceMemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "workspaceId" | "role" | "createdAt", ExtArgs["result"]["workspaceMember"]>
+export type WorkspaceMemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "workspaceId" | "role" | "whatsappPhoneNumber" | "createdAt", ExtArgs["result"]["workspaceMember"]>
 export type WorkspaceMemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   workspace?: boolean | Prisma.WorkspaceDefaultArgs<ExtArgs>
@@ -625,6 +670,7 @@ export type $WorkspaceMemberPayload<ExtArgs extends runtime.Types.Extensions.Int
     userId: string
     workspaceId: string
     role: $Enums.WorkspaceRole
+    whatsappPhoneNumber: string | null
     createdAt: Date
   }, ExtArgs["result"]["workspaceMember"]>
   composites: {}
@@ -1055,6 +1101,7 @@ export interface WorkspaceMemberFieldRefs {
   readonly userId: Prisma.FieldRef<"WorkspaceMember", 'String'>
   readonly workspaceId: Prisma.FieldRef<"WorkspaceMember", 'String'>
   readonly role: Prisma.FieldRef<"WorkspaceMember", 'WorkspaceRole'>
+  readonly whatsappPhoneNumber: Prisma.FieldRef<"WorkspaceMember", 'String'>
   readonly createdAt: Prisma.FieldRef<"WorkspaceMember", 'DateTime'>
 }
     

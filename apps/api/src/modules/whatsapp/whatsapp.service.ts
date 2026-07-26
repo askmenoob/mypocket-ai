@@ -470,31 +470,14 @@ export class WhatsAppService {
     }
 
 
-    const ownerMember =
-      await this.app.prisma.workspaceMember
-        .findFirst({
-
-          where:{
-            workspaceId:
-              instance.workspaceId,
-
-            role:{
-              in:[
-                "OWNER",
-                "ADMIN",
-              ],
-            },
-          },
-
-          orderBy:{
-            createdAt:
-              "asc",
-          },
-
-        });
+    const actorMember =
+      await this.findWebhookActorMember(
+        instance.workspaceId,
+        normalized.remoteJid,
+      );
 
 
-    if(!ownerMember){
+    if(!actorMember){
 
       return {
 
@@ -518,7 +501,7 @@ export class WhatsAppService {
 
     if(
       !this.canUseWhatsAppCommand(
-        ownerMember.role,
+        actorMember.role,
         commandKind,
       )
     ){
@@ -549,7 +532,7 @@ export class WhatsAppService {
         commandKind,
 
         role:
-          ownerMember.role,
+          actorMember.role,
 
       };
 
@@ -561,8 +544,8 @@ export class WhatsAppService {
       return this.handleEditLastCommand(
         instance.workspaceId,
         normalized,
-        ownerMember.userId,
-        ownerMember.role,
+        actorMember.userId,
+        actorMember.role,
         editCommand,
       );
 
@@ -711,13 +694,13 @@ export class WhatsAppService {
 
         user:{
           userId:
-            ownerMember.userId,
+            actorMember.userId,
 
           workspaceId:
             instance.workspaceId,
 
           role:
-            ownerMember.role,
+            actorMember.role,
         },
 
       });
@@ -748,6 +731,77 @@ export class WhatsAppService {
         result.transaction,
 
     };
+
+  }
+
+
+
+
+
+  private async findWebhookActorMember(
+    workspaceId:string,
+
+    remoteJid?:string,
+  ){
+
+    const phoneNumber =
+      remoteJid
+        ?
+        this.extractPhoneNumber(
+          remoteJid,
+        )
+        :
+        "";
+
+
+    if(phoneNumber){
+
+      const mappedMember =
+        await this.app.prisma.workspaceMember
+          .findFirst({
+            where:{
+              workspaceId,
+
+              whatsappPhoneNumber:
+                phoneNumber,
+            },
+
+            orderBy:{
+              createdAt:
+                "asc",
+            },
+          });
+
+
+      if(mappedMember){
+
+        return mappedMember;
+
+      }
+
+    }
+
+
+    return this.app.prisma.workspaceMember
+      .findFirst({
+
+        where:{
+          workspaceId,
+
+          role:{
+            in:[
+              "OWNER",
+              "ADMIN",
+            ],
+          },
+        },
+
+        orderBy:{
+          createdAt:
+            "asc",
+        },
+
+      });
 
   }
 

@@ -186,6 +186,7 @@ export const WorkspaceMemberScalarFieldEnum = {
   userId: 'userId',
   workspaceId: 'workspaceId',
   role: 'role',
+  whatsappPhoneNumber: 'whatsappPhoneNumber',
   createdAt: 'createdAt'
 } as const
 
