@@ -382,6 +382,14 @@ export class WhatsAppService {
       );
 
 
+    const isCategories =
+      this.isCategoriesCommand(
+        normalized.text
+        ??
+        "",
+      );
+
+
     const instance =
       await this.app.prisma.whatsAppInstance
         .findUnique({
@@ -485,6 +493,15 @@ export class WhatsAppService {
 
       return this.handleLastCommand(
         instance.workspaceId,
+        normalized,
+      );
+
+    }
+
+
+    if(isCategories){
+
+      return this.handleCategoriesCommand(
         normalized,
       );
 
@@ -618,6 +635,76 @@ export class WhatsAppService {
 
       transaction:
         result.transaction,
+
+    };
+
+  }
+
+
+
+
+
+  private isCategoriesCommand(
+    text:string,
+  ){
+
+    const normalized =
+      text
+        .trim()
+        .toLowerCase();
+
+
+    return [
+      "categories",
+      "/categories",
+      "category",
+      "kategori",
+      "senarai kategori",
+    ].includes(
+      normalized,
+    );
+
+  }
+
+
+
+
+
+  private async handleCategoriesCommand(
+    normalized:NormalizedEvolutionMessage,
+  ){
+
+    const reply =
+      [
+        "🏷️ Kategori auto MyPocket",
+        "",
+        "• Food — makan, minum, kopi, nasi",
+        "• Transport — petrol, grab, tol, parking",
+        "• Bills — bill, elektrik, air, internet",
+        "• Shopping — belanja, beli, shopee, lazada",
+        "• Rent — rent, sewa",
+        "• Income — gaji, bonus, income",
+        "• Others — fallback",
+      ].join(
+        "\n",
+      );
+
+
+    await this.safeSendWebhookReply(
+      normalized,
+      reply,
+    );
+
+
+    return {
+
+      message:
+        "WhatsApp categories sent",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
 
     };
 
@@ -2028,6 +2115,7 @@ export class WhatsAppService {
       "• week — ringkasan minggu ini",
       "• month — ringkasan bulan ini",
       "• undo — batalkan transaksi terakhir",
+      "• categories — senarai kategori auto",
       "• status — semak sambungan bot",
       "• help — bantuan format",
       "",
