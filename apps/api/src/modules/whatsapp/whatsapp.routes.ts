@@ -19,6 +19,12 @@ export default async function whatsappRoutes(
     );
 
 
+  app.get(
+    "/whatsapp/dev/qr",
+    controller.showDevQr,
+  );
+
+
   app.post(
     "/whatsapp/dev/instance",
     {

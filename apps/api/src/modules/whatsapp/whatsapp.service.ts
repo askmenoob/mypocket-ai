@@ -4,6 +4,11 @@ import type {
 
 
 import {
+  env,
+} from "../../config/env.js";
+
+
+import {
   TransactionService,
 } from "../transaction/transaction.service.js";
 
@@ -39,6 +44,81 @@ export class WhatsAppService {
       new TransactionService(
         app,
       );
+
+  }
+
+
+
+
+
+  async getEvolutionQrBase64(
+    instanceName:string,
+  ){
+
+    if(
+      !env.EVOLUTION_API_KEY
+    ){
+
+      throw new AppError(
+        "EVOLUTION_API_KEY_MISSING",
+        "Evolution API key is not configured",
+        500,
+      );
+
+    }
+
+
+    const response =
+      await fetch(
+        `${env.EVOLUTION_API_URL}/instance/connect/${encodeURIComponent(instanceName)}`,
+        {
+          headers:{
+            apikey:
+              env.EVOLUTION_API_KEY,
+          },
+        },
+      );
+
+
+    if(!response.ok){
+
+      throw new AppError(
+        "EVOLUTION_QR_FETCH_FAILED",
+        "Cannot fetch Evolution QR",
+        response.status,
+      );
+
+    }
+
+
+    const data =
+      await response.json() as Record<string, unknown>;
+
+
+    const base64 =
+      this.asString(
+        data.base64,
+      )
+      ||
+      this.asString(
+        this.asRecord(
+          data.qrcode,
+        ).base64,
+      );
+
+
+    if(!base64){
+
+      throw new AppError(
+        "EVOLUTION_QR_NOT_FOUND",
+        "Evolution QR not found",
+        404,
+      );
+
+    }
+
+
+    return base64;
 
   }
 

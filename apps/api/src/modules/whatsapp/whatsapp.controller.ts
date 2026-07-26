@@ -153,6 +153,121 @@ export class WhatsAppController {
 
 
 
+  showDevQr =
+  async (
+    request:FastifyRequest,
+    reply:FastifyReply,
+  ) => {
+
+    const query =
+      request.query as {
+        instanceName?:string;
+        secret?:string;
+      };
+
+
+    if(
+      !env.WHATSAPP_WEBHOOK_SECRET
+    ){
+
+      throw new AppError(
+        "WHATSAPP_WEBHOOK_SECRET_MISSING",
+        "WhatsApp webhook secret is not configured",
+        500,
+      );
+
+    }
+
+
+    if(
+      query.secret !== env.WHATSAPP_WEBHOOK_SECRET
+    ){
+
+      throw new AppError(
+        "WHATSAPP_QR_UNAUTHORIZED",
+        "Invalid WhatsApp QR secret",
+        401,
+      );
+
+    }
+
+
+    const instanceName =
+      query.instanceName
+      ??
+      "imai-dev";
+
+
+    const base64 =
+      await this.service
+        .getEvolutionQrBase64(
+          instanceName,
+        );
+
+
+    return reply
+      .type(
+        "text/html",
+      )
+      .send(
+        `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>MyPocket WhatsApp QR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      margin: 0;
+    }
+    main {
+      background: #111827;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 28px;
+      text-align: center;
+      max-width: 520px;
+      box-shadow: 0 20px 80px rgba(0,0,0,.35);
+    }
+    img {
+      width: min(360px, 80vw);
+      height: auto;
+      background: white;
+      padding: 16px;
+      border-radius: 16px;
+    }
+    p {
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+    code {
+      color: #93c5fd;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>MyPocket WhatsApp QR</h1>
+    <p>Instance: <code>${this.escapeHtml(instanceName)}</code></p>
+    <img src="${base64}" alt="WhatsApp QR Code" />
+    <p>WhatsApp → Linked devices → Link a device → scan QR ini.</p>
+  </main>
+</body>
+</html>`,
+      );
+
+  };
+
+
+
+
+
   receiveEvolutionWebhook =
   async (
     request:FastifyRequest,
@@ -242,6 +357,38 @@ export class WhatsAppController {
       );
 
     }
+
+  }
+
+
+
+
+
+  private escapeHtml(
+    value:string,
+  ){
+
+    return value
+      .replaceAll(
+        "&",
+        "&amp;",
+      )
+      .replaceAll(
+        "<",
+        "&lt;",
+      )
+      .replaceAll(
+        ">",
+        "&gt;",
+      )
+      .replaceAll(
+        '"',
+        "&quot;",
+      )
+      .replaceAll(
+        "'",
+        "&#039;",
+      );
 
   }
 
