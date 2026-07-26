@@ -366,6 +366,12 @@ export class WhatsAppService {
 
     if(duplicate){
 
+      await this.safeSendWebhookReply(
+        normalized,
+        "ℹ️ Transaksi ini sudah direkod sebelum ini.",
+      );
+
+
       return {
 
         message:
@@ -415,6 +421,14 @@ export class WhatsAppService {
       });
 
 
+    await this.safeSendWebhookReply(
+      normalized,
+      this.buildTransactionReply(
+        result.parsed,
+      ),
+    );
+
+
     return {
 
       message:
@@ -432,6 +446,186 @@ export class WhatsAppService {
         result.transaction,
 
     };
+
+  }
+
+
+
+
+
+  private async safeSendWebhookReply(
+    normalized:NormalizedEvolutionMessage,
+
+    text:string,
+  ):Promise<void>{
+
+    try{
+
+      await this.sendWhatsAppText(
+        normalized.instanceName
+        ??
+        "",
+
+        normalized.remoteJid
+        ??
+        "",
+
+        text,
+      );
+
+    }catch(error){
+
+      console.error(
+        "WHATSAPP_REPLY_FAILED:",
+        error,
+      );
+
+    }
+
+  }
+
+
+
+
+
+  private async sendWhatsAppText(
+    instanceName:string,
+
+    remoteJid:string,
+
+    text:string,
+  ):Promise<void>{
+
+    if(
+      !instanceName
+      ||
+      !remoteJid
+    ){
+
+      return;
+
+    }
+
+
+    if(
+      !env.EVOLUTION_API_KEY
+    ){
+
+      throw new AppError(
+        "EVOLUTION_API_KEY_MISSING",
+        "Evolution API key is not configured",
+        500,
+      );
+
+    }
+
+
+    const number =
+      this.extractPhoneNumber(
+        remoteJid,
+      );
+
+
+    if(!number){
+
+      return;
+
+    }
+
+
+    const response =
+      await fetch(
+        `${env.EVOLUTION_API_URL}/message/sendText/${encodeURIComponent(instanceName)}`,
+        {
+
+          method:
+            "POST",
+
+          headers:{
+            apikey:
+              env.EVOLUTION_API_KEY,
+
+            "Content-Type":
+              "application/json",
+          },
+
+          body:
+            JSON.stringify({
+              number,
+
+              text,
+            }),
+
+        },
+      );
+
+
+    if(!response.ok){
+
+      const body =
+        await response.text();
+
+
+      throw new AppError(
+        "EVOLUTION_SEND_TEXT_FAILED",
+        body
+        ||
+        "Cannot send WhatsApp reply",
+        response.status,
+      );
+
+    }
+
+  }
+
+
+
+
+
+  private buildTransactionReply(
+    parsed:ParsedWhatsAppTransaction,
+  ){
+
+    const label =
+      parsed.type === "INCOME"
+        ?
+        "Pendapatan"
+        :
+        "Perbelanjaan";
+
+
+    return [
+      "✅ Direkod",
+      `${label}: ${parsed.categoryName}`,
+      `RM${parsed.amount}`,
+      `— ${parsed.description}`,
+    ].join(
+      " ",
+    );
+
+  }
+
+
+
+
+
+  private extractPhoneNumber(
+    remoteJid:string,
+  ){
+
+    const beforeAt =
+      remoteJid.split(
+        "@",
+      )[0]
+      ??
+      remoteJid;
+
+
+    return beforeAt
+      .replace(
+        /\D/g,
+        "",
+      );
 
   }
 
