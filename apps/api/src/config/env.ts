@@ -23,6 +23,8 @@ const EnvSchema = z.object({
 
   LOG_LEVEL: z.string().default("info"),
 
+  DEFAULT_TIMEZONE: z.string().default("Asia/Kuala_Lumpur"),
+
   JWT_SECRET: z.string().min(32),
 
   DATABASE_URL: z.string(),

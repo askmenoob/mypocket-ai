@@ -598,32 +598,19 @@ export class WhatsAppService {
       new Date();
 
 
-    const start =
-      new Date(
+    const dayRange =
+      this.getTimezoneDayRange(
         now,
+        env.DEFAULT_TIMEZONE,
       );
 
 
-    start.setHours(
-      0,
-      0,
-      0,
-      0,
-    );
+    const start =
+      dayRange.start;
 
 
     const end =
-      new Date(
-        now,
-      );
-
-
-    end.setHours(
-      23,
-      59,
-      59,
-      999,
-    );
+      dayRange.end;
 
 
     const transactions =
@@ -663,6 +650,7 @@ export class WhatsAppService {
       this.buildTodaySummaryReply(
         transactions,
         now,
+        env.DEFAULT_TIMEZONE,
       );
 
 
@@ -684,11 +672,10 @@ export class WhatsAppService {
 
       summary:{
         date:
-          now.toISOString()
-            .slice(
-              0,
-              10,
-            ),
+          this.formatDateInTimezone(
+            now,
+            env.DEFAULT_TIMEZONE,
+          ),
 
         count:
           transactions.length,
@@ -712,6 +699,8 @@ export class WhatsAppService {
     }>,
 
     now:Date,
+
+    timezone:string,
   ){
 
     let expense =
@@ -797,11 +786,10 @@ export class WhatsAppService {
 
     return [
       "📊 Ringkasan hari ini",
-      now.toISOString()
-        .slice(
-          0,
-          10,
-        ),
+      this.formatDateInTimezone(
+        now,
+        timezone,
+      ),
       "",
       `Expense: MYR ${expense.toFixed(2)}`,
       `Income: MYR ${income.toFixed(2)}`,
@@ -1123,6 +1111,201 @@ export class WhatsAppService {
           ],
         },
       );
+
+  }
+
+
+
+
+
+  private getTimezoneDayRange(
+    date:Date,
+
+    timezone:string,
+  ){
+
+    const localDate =
+      this.formatDateInTimezone(
+        date,
+        timezone,
+      );
+
+
+    const start =
+      this.zonedDateTimeToUtc(
+        `${localDate}T00:00:00`,
+        timezone,
+      );
+
+
+    const end =
+      this.zonedDateTimeToUtc(
+        `${localDate}T23:59:59.999`,
+        timezone,
+      );
+
+
+    return {
+      start,
+      end,
+    };
+
+  }
+
+
+
+
+
+  private zonedDateTimeToUtc(
+    localDateTime:string,
+
+    timezone:string,
+  ){
+
+    let utcGuess =
+      new Date(
+        `${localDateTime}Z`,
+      );
+
+
+    for(
+      let index = 0;
+      index < 3;
+      index += 1
+    ){
+
+      const parts =
+        this.getDateTimePartsInTimezone(
+          utcGuess,
+          timezone,
+        );
+
+
+      const asIfUtc =
+        new Date(
+          `${parts.date}T${parts.time}Z`,
+        );
+
+
+      const target =
+        new Date(
+          `${localDateTime}Z`,
+        );
+
+
+      const diff =
+        asIfUtc.getTime()
+        -
+        target.getTime();
+
+
+      utcGuess =
+        new Date(
+          utcGuess.getTime()
+          -
+          diff,
+        );
+
+    }
+
+
+    return utcGuess;
+
+  }
+
+
+
+
+
+  private formatDateInTimezone(
+    date:Date,
+
+    timezone:string,
+  ){
+
+    return new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:
+          timezone,
+
+        year:
+          "numeric",
+
+        month:
+          "2-digit",
+
+        day:
+          "2-digit",
+      },
+    )
+      .format(
+        date,
+      );
+
+  }
+
+
+
+
+
+  private getDateTimePartsInTimezone(
+    date:Date,
+
+    timezone:string,
+  ){
+
+    const parts =
+      new Intl.DateTimeFormat(
+        "en-CA",
+        {
+          timeZone:
+            timezone,
+
+          year:
+            "numeric",
+
+          month:
+            "2-digit",
+
+          day:
+            "2-digit",
+
+          hour:
+            "2-digit",
+
+          minute:
+            "2-digit",
+
+          second:
+            "2-digit",
+
+          hour12:
+            false,
+        } as Intl.DateTimeFormatOptions,
+      )
+        .formatToParts(
+          date,
+        );
+
+
+    const value =
+      (type:string) =>
+        parts.find(
+          (part) =>
+            part.type === type,
+        )?.value
+        ??
+        "00";
+
+
+    return {
+      date:
+        `${value("year")}-${value("month")}-${value("day")}`,
+
+      time:
+        `${value("hour")}:${value("minute")}:${value("second")}`,
+    };
 
   }
 
