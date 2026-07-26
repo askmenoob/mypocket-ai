@@ -37,6 +37,12 @@ import {
 } from "./whatsapp-sheet-sync.service.js";
 
 
+import {
+  WhatsAppCommandParser,
+  type WhatsAppEditCommand,
+} from "./whatsapp-command.parser.js";
+
+
 
 export class WhatsAppService {
 
@@ -327,11 +333,12 @@ export class WhatsAppService {
 
 
     if(
-      this.isHelpCommand(
-        normalized.text
-        ??
-        "",
-      )
+      WhatsAppCommandParser
+        .isHelp(
+          normalized.text
+          ??
+          "",
+        )
     ){
 
       await this.safeSendWebhookReply(
@@ -356,59 +363,66 @@ export class WhatsAppService {
 
 
     const isUndo =
-      this.isUndoCommand(
-        normalized.text
-        ??
-        "",
-      );
+      WhatsAppCommandParser
+        .isUndo(
+          normalized.text
+          ??
+          "",
+        );
 
 
     const summaryPeriod =
-      this.getSummaryPeriodCommand(
-        normalized.text
-        ??
-        "",
-      );
+      WhatsAppCommandParser
+        .summaryPeriod(
+          normalized.text
+          ??
+          "",
+        );
 
 
     const isStatus =
-      this.isStatusCommand(
-        normalized.text
-        ??
-        "",
-      );
+      WhatsAppCommandParser
+        .isStatus(
+          normalized.text
+          ??
+          "",
+        );
 
 
     const isLast =
-      this.isLastCommand(
-        normalized.text
-        ??
-        "",
-      );
+      WhatsAppCommandParser
+        .isLast(
+          normalized.text
+          ??
+          "",
+        );
 
 
     const editCommand =
-      this.parseEditLastCommand(
-        normalized.text
-        ??
-        "",
-      );
+      WhatsAppCommandParser
+        .editLast(
+          normalized.text
+          ??
+          "",
+        );
 
 
     const isCategories =
-      this.isCategoriesCommand(
-        normalized.text
-        ??
-        "",
-      );
+      WhatsAppCommandParser
+        .isCategories(
+          normalized.text
+          ??
+          "",
+        );
 
 
     const infoCommand =
-      this.getInfoCommand(
-        normalized.text
-        ??
-        "",
-      );
+      WhatsAppCommandParser
+        .info(
+          normalized.text
+          ??
+          "",
+        );
 
 
     const instance =
@@ -688,62 +702,6 @@ export class WhatsAppService {
 
 
 
-  private getInfoCommand(
-    text:string,
-  ):
-    | "methods"
-    | "commands"
-    | null {
-
-    const normalized =
-      text
-        .trim()
-        .toLowerCase();
-
-
-    if(
-      [
-        "methods",
-        "/methods",
-        "payment methods",
-        "payment",
-        "bayaran",
-        "cara bayar",
-      ].includes(
-        normalized,
-      )
-    ){
-
-      return "methods";
-
-    }
-
-
-    if(
-      [
-        "commands",
-        "/commands",
-        "command",
-        "menu",
-        "senarai command",
-      ].includes(
-        normalized,
-      )
-    ){
-
-      return "commands";
-
-    }
-
-
-    return null;
-
-  }
-
-
-
-
-
   private async handleInfoCommand(
     normalized:NormalizedEvolutionMessage,
 
@@ -808,32 +766,6 @@ export class WhatsAppService {
 
 
 
-  private isCategoriesCommand(
-    text:string,
-  ){
-
-    const normalized =
-      text
-        .trim()
-        .toLowerCase();
-
-
-    return [
-      "categories",
-      "/categories",
-      "category",
-      "kategori",
-      "senarai kategori",
-    ].includes(
-      normalized,
-    );
-
-  }
-
-
-
-
-
   private async handleCategoriesCommand(
     normalized:NormalizedEvolutionMessage,
   ){
@@ -871,32 +803,6 @@ export class WhatsAppService {
       normalized,
 
     };
-
-  }
-
-
-
-
-
-  private isLastCommand(
-    text:string,
-  ){
-
-    const normalized =
-      text
-        .trim()
-        .toLowerCase();
-
-
-    return [
-      "last",
-      "/last",
-      "latest",
-      "terakhir",
-      "transaksi terakhir",
-    ].includes(
-      normalized,
-    );
 
   }
 
@@ -1032,31 +938,6 @@ export class WhatsAppService {
 
 
 
-  private isStatusCommand(
-    text:string,
-  ){
-
-    const normalized =
-      text
-        .trim()
-        .toLowerCase();
-
-
-    return [
-      "status",
-      "/status",
-      "check",
-      "semak",
-    ].includes(
-      normalized,
-    );
-
-  }
-
-
-
-
-
   private async handleStatusCommand(
     workspaceId:string,
 
@@ -1122,86 +1003,6 @@ export class WhatsAppService {
       },
 
     };
-
-  }
-
-
-
-
-
-  private getSummaryPeriodCommand(
-    text:string,
-  ):
-    | "today"
-    | "week"
-    | "month"
-    | null {
-
-    const normalized =
-      text
-        .trim()
-        .toLowerCase();
-
-
-    if(
-      [
-        "today",
-        "/today",
-        "summary",
-        "ringkasan",
-        "hari ini",
-        "hariini",
-        "harini",
-        "today summary",
-      ].includes(
-        normalized,
-      )
-    ){
-
-      return "today";
-
-    }
-
-
-    if(
-      [
-        "week",
-        "/week",
-        "weekly",
-        "summary week",
-        "ringkasan minggu",
-        "minggu ini",
-        "minggu",
-      ].includes(
-        normalized,
-      )
-    ){
-
-      return "week";
-
-    }
-
-
-    if(
-      [
-        "month",
-        "/month",
-        "monthly",
-        "summary month",
-        "ringkasan bulan",
-        "bulan ini",
-        "bulan",
-      ].includes(
-        normalized,
-      )
-    ){
-
-      return "month";
-
-    }
-
-
-    return null;
 
   }
 
@@ -1354,185 +1155,6 @@ export class WhatsAppService {
 
 
 
-  private parseEditLastCommand(
-    text:string,
-  ):
-    | {
-      field:
-        | "amount"
-        | "category"
-        | "merchant"
-        | "method"
-        | "date"
-        | "time"
-        | "type"
-        | "description";
-
-      value:string;
-    }
-    | null {
-
-    const trimmed =
-      text
-        .trim();
-
-
-    const match =
-      trimmed.match(
-        /^(?:edit|ubah|update)\s+(?:last|latest|terakhir)\s+(amount|jumlah|category|kategori|merchant|kedai|method|payment|bayaran|date|tarikh|time|masa|type|jenis|desc|description|nota)\s+(.+)$/i,
-      );
-
-
-    if(!match){
-
-      return null;
-
-    }
-
-
-    const rawField =
-      match[1]
-        .toLowerCase();
-
-    const value =
-      match[2]
-        .trim();
-
-
-    if(!value){
-
-      return null;
-
-    }
-
-
-    if(
-      rawField === "amount"
-      ||
-      rawField === "jumlah"
-    ){
-
-      return {
-        field:
-          "amount",
-
-        value,
-      };
-
-    }
-
-
-    if(
-      rawField === "category"
-      ||
-      rawField === "kategori"
-    ){
-
-      return {
-        field:
-          "category",
-
-        value,
-      };
-
-    }
-
-
-    if(
-      rawField === "merchant"
-      ||
-      rawField === "kedai"
-    ){
-
-      return {
-        field:
-          "merchant",
-
-        value,
-      };
-
-    }
-
-
-    if(
-      rawField === "method"
-      ||
-      rawField === "payment"
-      ||
-      rawField === "bayaran"
-    ){
-
-      return {
-        field:
-          "method",
-
-        value,
-      };
-
-    }
-
-
-    if(
-      rawField === "date"
-      ||
-      rawField === "tarikh"
-    ){
-
-      return {
-        field:
-          "date",
-
-        value,
-      };
-
-    }
-
-
-    if(
-      rawField === "time"
-      ||
-      rawField === "masa"
-    ){
-
-      return {
-        field:
-          "time",
-
-        value,
-      };
-
-    }
-
-
-    if(
-      rawField === "type"
-      ||
-      rawField === "jenis"
-    ){
-
-      return {
-        field:
-          "type",
-
-        value,
-      };
-
-    }
-
-
-    return {
-      field:
-        "description",
-
-      value,
-    };
-
-  }
-
-
-
-
-
   private async handleEditLastCommand(
     workspaceId:string,
 
@@ -1546,19 +1168,7 @@ export class WhatsAppService {
       | "MEMBER"
       | "VIEWER",
 
-    edit:{
-      field:
-        | "amount"
-        | "category"
-        | "merchant"
-        | "method"
-        | "date"
-        | "time"
-        | "type"
-        | "description";
-
-      value:string;
-    },
+    edit:WhatsAppEditCommand,
   ){
 
     const transaction =
@@ -2413,33 +2023,6 @@ export class WhatsAppService {
 
 
 
-  private isUndoCommand(
-    text:string,
-  ){
-
-    const normalized =
-      text
-        .trim()
-        .toLowerCase();
-
-
-    return [
-      "undo",
-      "/undo",
-      "cancel",
-      "batal",
-      "delete last",
-      "padam",
-    ].includes(
-      normalized,
-    );
-
-  }
-
-
-
-
-
   private async handleUndoCommand(
     workspaceId:string,
 
@@ -3020,33 +2603,6 @@ export class WhatsAppService {
       .undo(
         transaction,
       );
-
-  }
-
-
-
-
-
-  private isHelpCommand(
-    text:string,
-  ){
-
-    const normalized =
-      text
-        .trim()
-        .toLowerCase();
-
-
-    return [
-      "help",
-      "/help",
-      "bantuan",
-      "format",
-      "cara guna",
-      "macam mana",
-    ].includes(
-      normalized,
-    );
 
   }
 
