@@ -9,11 +9,6 @@ import {
 
 
 import {
-  GoogleSheetsService,
-} from "../google/sheets/google-sheets.service.js";
-
-
-import {
   TransactionService,
 } from "../transaction/transaction.service.js";
 
@@ -37,6 +32,11 @@ import {
 } from "./whatsapp-reply.builder.js";
 
 
+import {
+  WhatsAppSheetSyncService,
+} from "./whatsapp-sheet-sync.service.js";
+
+
 
 export class WhatsAppService {
 
@@ -45,8 +45,8 @@ export class WhatsAppService {
     TransactionService;
 
 
-  private readonly sheetsService:
-    GoogleSheetsService;
+  private readonly sheetSyncService:
+    WhatsAppSheetSyncService;
 
 
 
@@ -60,8 +60,8 @@ export class WhatsAppService {
       );
 
 
-    this.sheetsService =
-      new GoogleSheetsService(
+    this.sheetSyncService =
+      new WhatsAppSheetSyncService(
         app,
       );
 
@@ -930,7 +930,7 @@ export class WhatsAppService {
           },
 
           orderBy:{
-            createdAt:
+            updatedAt:
               "desc",
           },
 
@@ -1932,10 +1932,11 @@ export class WhatsAppService {
     }
 
 
-    await this.safeUpdateGoogleSheetTransactionRow(
-      workspaceId,
-      updated,
-    );
+    await this.sheetSyncService
+      .safeUpdateTransactionRow(
+        workspaceId,
+        updated,
+      );
 
 
     await this.safeSendWebhookReply(
@@ -2465,7 +2466,7 @@ export class WhatsAppService {
                 "CANCELLED",
             },
 
-            createdAt:{
+            updatedAt:{
               gte:
                 since,
             },
@@ -2546,10 +2547,11 @@ export class WhatsAppService {
         });
 
 
-    await this.safeMarkGoogleSheetCancelled(
-      workspaceId,
-      cancelled.id,
-    );
+    await this.sheetSyncService
+      .safeMarkCancelled(
+        workspaceId,
+        cancelled.id,
+      );
 
 
     await this.safeSendWebhookReply(
@@ -2574,339 +2576,6 @@ export class WhatsAppService {
         cancelled,
 
     };
-
-  }
-
-
-
-
-
-  private async safeUpdateGoogleSheetTransactionRow(
-    workspaceId:string,
-
-    transaction:any,
-  ):Promise<void>{
-
-    try{
-
-      await this.updateGoogleSheetTransactionRow(
-        workspaceId,
-        transaction,
-      );
-
-    }catch(error){
-
-      console.error(
-        "GOOGLE_SHEET_TRANSACTION_UPDATE_FAILED:",
-        error,
-      );
-
-    }
-
-  }
-
-
-
-
-
-  private async updateGoogleSheetTransactionRow(
-    workspaceId:string,
-
-    transaction:any,
-  ):Promise<void>{
-
-    const setting =
-      await this.app.prisma.workspaceGoogleSetting
-        .findUnique({
-          where:{
-            workspaceId,
-          },
-        });
-
-
-    if(!setting){
-
-      return;
-
-    }
-
-
-    const rows =
-      await this.sheetsService
-        .readRange(
-          workspaceId,
-          {
-            spreadsheetId:
-              setting.spreadsheetId,
-
-            range:
-              "Transactions!A:M",
-          },
-        );
-
-
-    const rowIndex =
-      rows.findIndex(
-        (row) =>
-          String(
-            row[0]
-            ??
-            "",
-          )
-          ===
-          transaction.id,
-      );
-
-
-    if(rowIndex < 1){
-
-      return;
-
-    }
-
-
-    const rowNumber =
-      rowIndex
-      +
-      1;
-
-
-    const transactionIso =
-      new Date(
-        transaction.transactionDate,
-      )
-        .toISOString();
-
-    const createdIso =
-      new Date(
-        transaction.createdAt,
-      )
-        .toISOString();
-
-
-    await this.sheetsService
-      .updateRange(
-        workspaceId,
-        {
-          spreadsheetId:
-            setting.spreadsheetId,
-
-          range:
-            `Transactions!A${rowNumber}:M${rowNumber}`,
-
-          values:[
-            [
-              String(
-                transaction.id
-                ??
-                "",
-              ),
-
-              transactionIso.slice(
-                0,
-                10,
-              ),
-
-              transactionIso.slice(
-                11,
-                19,
-              ),
-
-              String(
-                transaction.type
-                ??
-                "",
-              ),
-
-              String(
-                transaction.category?.name
-                ??
-                "",
-              ),
-
-              String(
-                transaction.merchant?.name
-                ??
-                "-",
-              ),
-
-              String(
-                transaction.description
-                ??
-                "",
-              ),
-
-              String(
-                transaction.amount
-                ??
-                "",
-              ),
-
-              String(
-                transaction.paymentMethod?.name
-                ??
-                "",
-              ),
-
-              String(
-                transaction.source
-                ??
-                "WHATSAPP",
-              ),
-
-              "",
-
-              String(
-                transaction.receiptUrl
-                ??
-                "",
-              ),
-
-              createdIso,
-            ],
-          ],
-        },
-      );
-
-  }
-
-
-
-
-
-  private async safeMarkGoogleSheetCancelled(
-    workspaceId:string,
-
-    transactionId:string,
-  ):Promise<void>{
-
-    try{
-
-      await this.markGoogleSheetTransactionCancelled(
-        workspaceId,
-        transactionId,
-      );
-
-    }catch(error){
-
-      console.error(
-        "GOOGLE_SHEET_UNDO_MARK_FAILED:",
-        error,
-      );
-
-    }
-
-  }
-
-
-
-
-
-  private async markGoogleSheetTransactionCancelled(
-    workspaceId:string,
-
-    transactionId:string,
-  ):Promise<void>{
-
-    const setting =
-      await this.app.prisma.workspaceGoogleSetting
-        .findUnique({
-          where:{
-            workspaceId,
-          },
-        });
-
-
-    if(!setting){
-
-      return;
-
-    }
-
-
-    const rows =
-      await this.sheetsService
-        .readRange(
-          workspaceId,
-          {
-            spreadsheetId:
-              setting.spreadsheetId,
-
-            range:
-              "Transactions!A:M",
-          },
-        );
-
-
-    const rowIndex =
-      rows.findIndex(
-        (row) =>
-          String(
-            row[0]
-            ??
-            "",
-          )
-          ===
-          transactionId,
-      );
-
-
-    if(rowIndex < 1){
-
-      return;
-
-    }
-
-
-    const rowNumber =
-      rowIndex
-      +
-      1;
-
-
-    const row =
-      rows[rowIndex]
-      ??
-      [];
-
-
-    const description =
-      String(
-        row[6]
-        ??
-        "",
-      );
-
-
-    if(
-      description.startsWith(
-        "[CANCELLED]",
-      )
-    ){
-
-      return;
-
-    }
-
-
-    await this.sheetsService
-      .updateRange(
-        workspaceId,
-        {
-          spreadsheetId:
-            setting.spreadsheetId,
-
-          range:
-            `Transactions!G${rowNumber}:G${rowNumber}`,
-
-          values:[
-            [
-              `[CANCELLED] ${description}`
-                .trim(),
-            ],
-          ],
-        },
-      );
 
   }
 
