@@ -437,6 +437,16 @@ export class WhatsAppController {
           instanceName,
         );
 
+    const imageSrc =
+      base64
+        .startsWith(
+          "data:",
+        )
+        ?
+        base64
+        :
+        `data:image/png;base64,${base64}`;
+
 
     return reply
       .type(
@@ -488,7 +498,7 @@ export class WhatsAppController {
   <main>
     <h1>MyPocket WhatsApp QR</h1>
     <p>Instance: <code>${this.escapeHtml(instanceName)}</code></p>
-    <img src="${base64}" alt="WhatsApp QR Code" />
+    <img src="${this.escapeHtml(imageSrc)}" alt="WhatsApp QR Code" />
     <p>WhatsApp → Linked devices → Link a device → scan QR ini.</p>
   </main>
 </body>

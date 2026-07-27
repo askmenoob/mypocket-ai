@@ -801,10 +801,25 @@ function SetupWizard(
       props.data.google?.spreadsheetId,
     );
 
-  const hasWhatsApp =
-    Boolean(
-      props.data.whatsapp?.instance?.instanceName,
+  const whatsappStatus =
+    String(
+      props.data.whatsapp?.instance?.status
+      ??
+      "",
     );
+
+  const isWhatsAppConnected =
+    [
+      "OPEN",
+      "CONNECTED",
+      "DEV_CONNECTED",
+    ].includes(
+      whatsappStatus
+        .toUpperCase(),
+    );
+
+  const hasWhatsApp =
+    isWhatsAppConnected;
 
   const setupReady =
     props.termsAccepted
@@ -981,15 +996,25 @@ function SetupWizard(
           {current === "WhatsApp" && (
             <WizardCard
               title="WhatsApp bot pairing"
-              text="Semak status Evolution instance dan webhook."
+              text={
+                isWhatsAppConnected
+                  ? "WhatsApp bot sudah paired. QR tidak diperlukan lagi untuk setup ini."
+                  : "Scan QR untuk pair nombor WhatsApp yang akan menjadi bot MyPocket."
+              }
             >
               <StatusGrid
                 rows={[
                   ["Instance", props.data.whatsapp?.instance?.instanceName || "imai-dev"],
-                  ["Status", props.data.whatsapp?.instance?.status || "-"],
+                  ["Status", isWhatsAppConnected ? "Connected" : props.data.whatsapp?.instance?.status || "Not paired"],
                   ["Members linked", `${linked}/${props.data.members.length}`],
                 ]}
               />
+
+              <p className="hint">
+                {isWhatsAppConnected
+                  ? "Bot sudah aktif. Jika mahu tukar nombor bot, disconnect/restart instance dahulu sebelum buka QR baru."
+                  : "Buka QR, kemudian di WhatsApp pergi ke Linked devices → Link a device → scan QR."}
+              </p>
 
               <button
                 className="secondary"
@@ -998,12 +1023,14 @@ function SetupWizard(
                 Recheck status
               </button>
 
-              <button
-                className="primary"
-                onClick={props.openWhatsAppQr}
-              >
-                Open WhatsApp QR
-              </button>
+              {!isWhatsAppConnected && (
+                <button
+                  className="primary"
+                  onClick={props.openWhatsAppQr}
+                >
+                  Open WhatsApp QR
+                </button>
+              )}
             </WizardCard>
           )}
 

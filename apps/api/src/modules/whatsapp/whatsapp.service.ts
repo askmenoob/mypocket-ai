@@ -17,6 +17,8 @@ import {
   AppError,
 } from "../../shared/errors/index.js";
 
+import QRCode from "qrcode";
+
 
 import type {
   NormalizedEvolutionMessage,
@@ -134,19 +136,47 @@ export class WhatsAppService {
         ).base64,
       );
 
+    if(base64){
 
-    if(!base64){
-
-      throw new AppError(
-        "EVOLUTION_QR_NOT_FOUND",
-        "Evolution QR not found",
-        404,
-      );
+      return base64;
 
     }
 
 
-    return base64;
+    const code =
+      this.asString(
+        data.code,
+      )
+      ||
+      this.asString(
+        this.asRecord(
+          data.qrcode,
+        ).code,
+      );
+
+
+    if(code){
+
+      return QRCode
+        .toDataURL(
+          code,
+          {
+            margin:
+              2,
+
+            width:
+              320,
+          },
+        );
+
+    }
+
+
+    throw new AppError(
+      "EVOLUTION_QR_NOT_FOUND",
+      "Evolution QR not found",
+      404,
+    );
 
   }
 
