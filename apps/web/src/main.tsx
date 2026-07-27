@@ -214,6 +214,31 @@ function App(){
       hash.get("token");
 
 
+    const googleError =
+      hash.get("google") === "error"
+        ?
+        hash.get("message")
+        :
+        "";
+
+
+    if(googleError){
+
+      setNotice(
+        googleError,
+      );
+
+      window.history.replaceState(
+        null,
+        document.title,
+        window.location.pathname + window.location.search,
+      );
+
+      return;
+
+    }
+
+
     if(
       hash.get("auth") === "google"
       &&

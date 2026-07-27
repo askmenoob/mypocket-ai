@@ -14,7 +14,8 @@ z.object({
 
   state:
     z.string()
-      .min(1),
+      .min(1)
+      .optional(),
 
 });
 

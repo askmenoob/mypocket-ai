@@ -11,6 +11,11 @@ import {
 
 
 import {
+  env,
+} from "../../../config/index.js";
+
+
+import {
   googleOAuthCallbackSchema,
 } from "./google.oauth.schemas.js";
 
@@ -82,6 +87,19 @@ export class GoogleOAuthController {
         );
 
 
+    if(!query.state){
+
+      return this.redirectToAppWithError(
+        reply,
+        "GOOGLE_OAUTH_STATE_MISSING",
+        "Google setup perlu dimulakan dari dashboard MyPocket.",
+      );
+
+    }
+
+
+    try{
+
     const account =
       await this.service
         .connectWorkspaceGoogleAccount(
@@ -109,7 +127,65 @@ export class GoogleOAuthController {
 
     });
 
+    }catch(error){
+
+      const err =
+        error as {
+          name?:string;
+          message?:string;
+        };
+
+
+      return this.redirectToAppWithError(
+        reply,
+        err.name
+        ??
+        "GOOGLE_WORKSPACE_CONNECT_FAILED",
+        err.message
+        ??
+        "Google Workspace connection failed.",
+      );
+
+    }
+
   };
+
+
+
+  private redirectToAppWithError(
+    reply:FastifyReply,
+    code:string,
+    message:string,
+  ){
+
+    const appUrl =
+      env.APP_URL
+      ??
+      "https://app.imai.my";
+
+
+    const redirectUrl =
+      new URL(
+        appUrl,
+      );
+
+
+    redirectUrl.hash =
+      new URLSearchParams({
+        google:
+          "error",
+
+        code,
+
+        message,
+      }).toString();
+
+
+    return reply.redirect(
+      redirectUrl.toString(),
+    );
+
+  }
 
 
 }
