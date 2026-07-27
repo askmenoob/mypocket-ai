@@ -108,24 +108,25 @@ export class GoogleOAuthController {
         );
 
 
-    return reply.send({
+    return this.redirectToApp(
+      reply,
+      {
+        google:
+          "connected",
 
-      message:
-        "Google Workspace connected successfully",
+        workspaceId:
+          query.state,
 
+        googleAccountId:
+          account.id,
 
-      workspaceId:
-        query.state,
+        status:
+          account.status,
 
-
-      googleAccountId:
-        account.id,
-
-
-      status:
-        account.status,
-
-    });
+        message:
+          "Google Workspace connected successfully.",
+      },
+    );
 
     }catch(error){
 
@@ -136,14 +137,22 @@ export class GoogleOAuthController {
         };
 
 
-      return this.redirectToAppWithError(
+      return this.redirectToApp(
         reply,
-        err.name
-        ??
-        "GOOGLE_WORKSPACE_CONNECT_FAILED",
-        err.message
-        ??
-        "Google Workspace connection failed.",
+        {
+          google:
+            "error",
+
+          code:
+            err.name
+            ??
+            "GOOGLE_WORKSPACE_CONNECT_FAILED",
+
+          message:
+            err.message
+            ??
+            "Google Workspace connection failed.",
+        },
       );
 
     }
@@ -156,6 +165,27 @@ export class GoogleOAuthController {
     reply:FastifyReply,
     code:string,
     message:string,
+  ){
+
+    return this.redirectToApp(
+      reply,
+      {
+        google:
+          "error",
+
+        code,
+
+        message,
+      },
+    );
+
+  }
+
+
+
+  private redirectToApp(
+    reply:FastifyReply,
+    params:Record<string, string>,
   ){
 
     const appUrl =
@@ -171,14 +201,9 @@ export class GoogleOAuthController {
 
 
     redirectUrl.hash =
-      new URLSearchParams({
-        google:
-          "error",
-
-        code,
-
-        message,
-      }).toString();
+      new URLSearchParams(
+        params,
+      ).toString();
 
 
     return reply.redirect(

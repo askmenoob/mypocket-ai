@@ -239,6 +239,27 @@ function App(){
     }
 
 
+    if(hash.get("google") === "connected"){
+
+      setNotice(
+        hash.get("message")
+        ??
+        "Google Workspace connected successfully.",
+      );
+
+      window.history.replaceState(
+        null,
+        document.title,
+        window.location.pathname + window.location.search,
+      );
+
+      loadAll();
+
+      return;
+
+    }
+
+
     if(
       hash.get("auth") === "google"
       &&

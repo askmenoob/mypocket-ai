@@ -41,22 +41,9 @@ export function buildApp() {
 
   app.get(
     "/",
-    async () => ({
-      status:
-        "ok",
-
-      service:
-        "imai-api",
-
-      message:
-        "MyPocket API is running",
-
-      health:
-        "/api/v1/health",
-
-      app:
-        "https://app.imai.my",
-    }),
+    async (_request, reply) => reply.redirect(
+      "https://app.imai.my",
+    ),
   );
 
 
