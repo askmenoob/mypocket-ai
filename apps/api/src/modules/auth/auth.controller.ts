@@ -4,6 +4,7 @@ import type {
   FastifyReply,
 } from "fastify";
 
+import { env } from "../../config/index.js";
 import { AuthService } from "./auth.service.js";
 import { GoogleService } from "./google.service.js";
 
@@ -47,8 +48,10 @@ export class AuthController {
     request: FastifyRequest<{
       Querystring: {
         code?: string;
+        mode?: string;
       };
     }>,
+    reply: FastifyReply,
   ) => {
 
 
@@ -80,8 +83,39 @@ export class AuthController {
 
 
 
-    return this.service.loginWithGoogle(
+    const session =
+      await this.service.loginWithGoogle(
       profile,
+    );
+
+
+    if(request.query.mode === "json"){
+      return session;
+    }
+
+
+    const appUrl =
+      env.APP_URL
+      ??
+      "https://app.imai.my";
+
+    const redirectUrl =
+      new URL(
+        appUrl,
+      );
+
+    redirectUrl.hash =
+      new URLSearchParams({
+        auth:
+          "google",
+
+        token:
+          session.token,
+      }).toString();
+
+
+    return reply.redirect(
+      redirectUrl.toString(),
     );
 
   };

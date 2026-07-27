@@ -12,6 +12,10 @@ const STORAGE = {
   onboarding: "imai_onboarding_completed"
 };
 
+function googleLoginUrl(){
+  return `${API_BASE}/auth/google`;
+}
+
 type Member = {
   memberId:string;
   userId:string;
@@ -178,6 +182,42 @@ function App(){
   const [notice, setNotice] =
     useState("");
 
+  useEffect(() => {
+
+    const hash =
+      new URLSearchParams(
+        window.location.hash.replace(/^#/, ""),
+      );
+
+    const authToken =
+      hash.get("token");
+
+
+    if(
+      hash.get("auth") === "google"
+      &&
+      authToken
+    ){
+
+      localStorage.setItem(
+        STORAGE.token,
+        authToken,
+      );
+
+      setToken(authToken);
+      setDraftToken(authToken);
+      setNotice("Google login successful. Welcome back.");
+
+      window.history.replaceState(
+        null,
+        document.title,
+        window.location.pathname + window.location.search,
+      );
+
+    }
+
+  }, []);
+
   const [installPrompt, setInstallPrompt] =
     useState<any>(null);
 
@@ -303,6 +343,18 @@ function App(){
     setNotice("Login token saved.");
   }
 
+  function signOut(){
+
+    localStorage.removeItem(
+      STORAGE.token,
+    );
+
+    setToken("");
+    setDraftToken("");
+    setNotice("Signed out.");
+
+  }
+
   function acceptTerms(){
 
     localStorage.setItem(
@@ -394,6 +446,7 @@ function App(){
       refresh={() => loadAll()}
       resetWizard={resetWizard}
       installApp={installApp}
+      signOut={signOut}
     />
   );
 
@@ -417,9 +470,21 @@ function TokenGate(
 
         <h1>MyPocket AI Dashboard</h1>
         <p>
-          Masukkan token login untuk membuka dashboard workspace.
-          Selepas Google Auth sebenar siap, halaman ini akan auto-login dari session user.
+          Login menggunakan Google untuk membuka workspace, setup wizard,
+          WhatsApp bot dan Google Sheet anda. Tidak perlu paste token manual lagi.
         </p>
+
+        <a
+          className="googleButton"
+          href={googleLoginUrl()}
+        >
+          <span>G</span>
+          Continue with Google
+        </a>
+
+        <div className="divider">
+          Developer fallback
+        </div>
 
         <label className="field">
           Dashboard token
@@ -767,6 +832,7 @@ function Dashboard(
     refresh:() => void;
     resetWizard:() => void;
     installApp:() => void;
+    signOut:() => void;
   },
 ){
 
@@ -908,6 +974,12 @@ function Dashboard(
               onClick={props.resetWizard}
             >
               Setup
+            </button>
+            <button
+              className="ghost"
+              onClick={props.signOut}
+            >
+              Logout
             </button>
           </div>
         </header>
