@@ -20,6 +20,8 @@ export interface AuthSession {
   workspace: {
     id: string;
     name: string;
+    type?: string;
+    onboardingCompletedAt?: Date | string | null;
     role:
       | "OWNER"
       | "ADMIN"

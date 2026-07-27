@@ -23,6 +23,17 @@ const authRoutes: FastifyPluginAsync = async (app) => {
     "/me",
     controller.me,
   );
+
+
+  app.post(
+    "/onboarding/complete",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    controller.completeOnboarding,
+  );
 };
 
 

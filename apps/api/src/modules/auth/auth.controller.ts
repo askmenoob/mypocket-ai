@@ -337,4 +337,21 @@ export class AuthController {
 
   };
 
+
+
+  completeOnboarding = async (
+    request:FastifyRequest,
+  ) => {
+
+    await request.jwtVerify();
+
+
+    return this.service
+      .completeOnboarding(
+        request.user.userId,
+        request.user.workspaceId,
+      );
+
+  };
+
 }

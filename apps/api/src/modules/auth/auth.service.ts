@@ -10,6 +10,9 @@ import type {
 import {
   TokenService,
 } from "../../shared/auth/index.js";
+import {
+  AppError,
+} from "../../shared/errors/index.js";
 
 export class AuthService {
 
@@ -114,6 +117,10 @@ export class AuthService {
       workspace: {
         id: workspace.id,
         name: workspace.name,
+        type:
+          workspace.type,
+        onboardingCompletedAt:
+          workspace.onboardingCompletedAt,
         role:
           membership?.role
           ??
@@ -190,10 +197,87 @@ export class AuthService {
 
         name: workspace.name,
 
+        type: workspace.type,
+
+        onboardingCompletedAt:
+          workspace.onboardingCompletedAt,
+
         role: membership.role,
 
       },
 
+    };
+
+  }
+
+
+
+
+  async completeOnboarding(
+    userId:string,
+    workspaceId:string,
+  ){
+
+    const member =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            userId,
+            workspaceId,
+          },
+        });
+
+
+    if(!member){
+
+      throw new AppError(
+        "WORKSPACE_MEMBERSHIP_NOT_FOUND",
+        "Workspace membership not found",
+        404,
+      );
+
+    }
+
+
+    if(
+      member.role !== "OWNER"
+      &&
+      member.role !== "ADMIN"
+    ){
+
+      throw new AppError(
+        "ONBOARDING_COMPLETE_FORBIDDEN",
+        "Only Owner/Admin can complete workspace setup",
+        403,
+      );
+
+    }
+
+
+    const workspace =
+      await this.app.prisma.workspace
+        .update({
+          where:{
+            id:
+              workspaceId,
+          },
+
+          data:{
+            onboardingCompletedAt:
+              new Date(),
+          },
+
+          select:{
+            id:true,
+            name:true,
+            type:true,
+            onboardingCompletedAt:true,
+          },
+        });
+
+
+    return {
+      workspace,
     };
 
   }

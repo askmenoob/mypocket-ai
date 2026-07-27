@@ -24,6 +24,7 @@ model Workspace {
   name           String
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
+  onboardingCompletedAt DateTime?
   ownerId        String
   type           WorkspaceType      @default(PERSONAL)
   categories     Category[]

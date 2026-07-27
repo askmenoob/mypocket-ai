@@ -233,6 +233,27 @@ function isPublicLandingHost(){
 }
 
 
+function getWorkspaceOnboardingCompletedAt(
+  data:DashboardData,
+){
+
+  return data.me?.workspace?.onboardingCompletedAt
+    ?? null;
+
+}
+
+
+function hasConnectedGoogleSheet(
+  data:DashboardData,
+){
+
+  return Boolean(
+    data.google?.spreadsheetId,
+  );
+
+}
+
+
 
 function App(){
 
@@ -312,6 +333,32 @@ function App(){
 
     }
 
+    const serverCompleted =
+      Boolean(
+        getWorkspaceOnboardingCompletedAt(
+          data,
+        ),
+      );
+
+
+    if(serverCompleted){
+
+      localStorage.setItem(
+        onboardingStorage.terms,
+        "true",
+      );
+
+      localStorage.setItem(
+        onboardingStorage.onboarding,
+        "true",
+      );
+
+      setTermsAccepted(true);
+      setOnboardingCompleted(true);
+      return;
+
+    }
+
     setTermsAccepted(
       isStoredTrue(
         onboardingStorage.terms,
@@ -326,6 +373,9 @@ function App(){
 
   }, [
     onboardingStorage,
+    getWorkspaceOnboardingCompletedAt(
+      data,
+    ),
   ]);
 
   useEffect(() => {
@@ -599,7 +649,7 @@ function App(){
     setNotice("Terms accepted.");
   }
 
-  function finishOnboarding(){
+  async function finishOnboarding(){
 
     if(!onboardingStorage){
 
@@ -608,17 +658,76 @@ function App(){
 
     }
 
-    localStorage.setItem(
-      onboardingStorage.onboarding,
-      "true",
-    );
+    try{
 
-    localStorage.removeItem(
-      STORAGE.wizardStep,
-    );
+      setState({
+        loading:true,
+        error:null,
+      });
 
-    setOnboardingCompleted(true);
-    setNotice("Setup completed. Dashboard is ready.");
+
+      const result =
+        await api<any>(
+          "/auth/onboarding/complete",
+          token,
+          {
+            method:"POST",
+          },
+        );
+
+
+      setData((current) => ({
+        ...current,
+        me:
+          current.me
+            ? {
+              ...current.me,
+              workspace:{
+                ...current.me.workspace,
+                onboardingCompletedAt:
+                  result.workspace?.onboardingCompletedAt
+                  ??
+                  new Date()
+                    .toISOString(),
+              },
+            }
+            : current.me,
+      }));
+
+
+      localStorage.setItem(
+        onboardingStorage.terms,
+        "true",
+      );
+
+      localStorage.setItem(
+        onboardingStorage.onboarding,
+        "true",
+      );
+
+      localStorage.removeItem(
+        STORAGE.wizardStep,
+      );
+
+      setTermsAccepted(true);
+      setOnboardingCompleted(true);
+      setNotice("Setup completed. Dashboard is ready.");
+      setState({
+        loading:false,
+        error:null,
+      });
+
+    }catch(error){
+
+      setState({
+        loading:false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Setup completion failed",
+      });
+
+    }
   }
 
   function resetWizard(){
@@ -722,11 +831,46 @@ function App(){
   const needsWizard =
     Boolean(token)
     &&
+    Boolean(data.me?.workspace?.id)
+    &&
+    !(
+      Boolean(
+        getWorkspaceOnboardingCompletedAt(
+          data,
+        ),
+      )
+      &&
+      hasConnectedGoogleSheet(
+        data,
+      )
+    )
+    &&
     (
       !termsAccepted
       ||
       !onboardingCompleted
     );
+
+  if(
+    token
+    &&
+    state.loading
+    &&
+    !data.me
+  ){
+
+    return (
+      <main className="loginScreen">
+        <section className="loginCard">
+          <LogoBlock />
+
+          <h1>Loading workspace...</h1>
+          <p>Sedang semak status setup workspace anda.</p>
+        </section>
+      </main>
+    );
+
+  }
 
   if(!token){
 
@@ -827,7 +971,7 @@ function SetupWizard(
     preferredStep:string;
     termsAccepted:boolean;
     acceptTerms:() => void;
-    finishOnboarding:() => void;
+    finishOnboarding:() => void | Promise<void>;
     refresh:() => void;
     notice:string;
     installApp:() => void;

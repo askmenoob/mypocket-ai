@@ -476,10 +476,6 @@ export type GoogleAccountUncheckedUpdateOneWithoutWorkspaceNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.GoogleAccountUpdateToOneWithWhereWithoutWorkspaceInput, Prisma.GoogleAccountUpdateWithoutWorkspaceInput>, Prisma.GoogleAccountUncheckedUpdateWithoutWorkspaceInput>
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type GoogleAccountCreateWithoutWorkspaceInput = {
   id?: string
   email: string
