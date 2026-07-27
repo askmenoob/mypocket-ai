@@ -124,6 +124,37 @@ async function api<T>(
   return json as T;
 }
 
+async function apiText(
+  path:string,
+  token?:string,
+):Promise<string>{
+
+  const response =
+    await fetch(
+      `${API_BASE}${path}`,
+      {
+        headers:{
+          ...(token ? { Authorization:`Bearer ${token}` } : {}),
+        },
+      },
+    );
+
+
+  const text =
+    await response.text();
+
+
+  if(!response.ok){
+    throw new Error(
+      text ||
+      `HTTP ${response.status}`,
+    );
+  }
+
+
+  return text;
+}
+
 async function optionalApi<T>(
   path:string,
   token:string,
@@ -171,12 +202,12 @@ function App(){
 
   const [termsAccepted, setTermsAccepted] =
     useState(
-      isStoredTrue(STORAGE.terms),
+      false,
     );
 
   const [onboardingCompleted, setOnboardingCompleted] =
     useState(
-      isStoredTrue(STORAGE.onboarding),
+      false,
     );
 
   const [state, setState] =
@@ -197,6 +228,55 @@ function App(){
 
   const [notice, setNotice] =
     useState("");
+
+  const workspaceId =
+    data.me?.workspace?.id
+    ?? "";
+
+  const onboardingStorage =
+    useMemo(
+      () =>
+        workspaceId
+          ?
+          {
+            terms:
+              `${STORAGE.terms}:${workspaceId}`,
+
+            onboarding:
+              `${STORAGE.onboarding}:${workspaceId}`,
+          }
+          :
+          null,
+      [
+        workspaceId,
+      ],
+    );
+
+  useEffect(() => {
+
+    if(!onboardingStorage){
+
+      setTermsAccepted(false);
+      setOnboardingCompleted(false);
+      return;
+
+    }
+
+    setTermsAccepted(
+      isStoredTrue(
+        onboardingStorage.terms,
+      ),
+    );
+
+    setOnboardingCompleted(
+      isStoredTrue(
+        onboardingStorage.onboarding,
+      ),
+    );
+
+  }, [
+    onboardingStorage,
+  ]);
 
   useEffect(() => {
 
@@ -403,8 +483,15 @@ function App(){
 
   function acceptTerms(){
 
+    if(!onboardingStorage){
+
+      setNotice("Workspace sedang dimuat. Sila cuba sebentar lagi.");
+      return;
+
+    }
+
     localStorage.setItem(
-      STORAGE.terms,
+      onboardingStorage.terms,
       "true",
     );
 
@@ -414,8 +501,15 @@ function App(){
 
   function finishOnboarding(){
 
+    if(!onboardingStorage){
+
+      setNotice("Workspace sedang dimuat. Sila cuba sebentar lagi.");
+      return;
+
+    }
+
     localStorage.setItem(
-      STORAGE.onboarding,
+      onboardingStorage.onboarding,
       "true",
     );
 
@@ -425,9 +519,13 @@ function App(){
 
   function resetWizard(){
 
-    localStorage.removeItem(
-      STORAGE.onboarding,
-    );
+    if(onboardingStorage){
+
+      localStorage.removeItem(
+        onboardingStorage.onboarding,
+      );
+
+    }
 
     setOnboardingCompleted(false);
   }
@@ -441,6 +539,81 @@ function App(){
 
     await installPrompt.prompt();
     setInstallPrompt(null);
+  }
+
+  async function connectGoogleSheet(){
+
+    try{
+
+      setState({
+        loading:true,
+        error:null,
+      });
+
+      const result =
+        await api<{
+          url:string;
+        }>(
+          "/google/oauth/google/oauth/url",
+          token,
+        );
+
+      window.location.href =
+        result.url;
+
+    }catch(error){
+
+      setState({
+        loading:false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Google Sheet setup failed",
+      });
+
+    }
+
+  }
+
+  async function openWhatsAppQr(){
+
+    try{
+
+      const html =
+        await apiText(
+          "/whatsapp/qr",
+          token,
+        );
+
+      const url =
+        URL.createObjectURL(
+          new Blob(
+            [
+              html,
+            ],
+            {
+              type:
+                "text/html",
+            },
+          ),
+        );
+
+      window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer",
+      );
+
+    }catch(error){
+
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "WhatsApp QR could not be opened.",
+      );
+
+    }
+
   }
 
   const needsWizard =
@@ -476,6 +649,8 @@ function App(){
         refresh={() => loadAll()}
         notice={notice}
         installApp={installApp}
+        connectGoogleSheet={connectGoogleSheet}
+        openWhatsAppQr={openWhatsAppQr}
       />
     );
 
@@ -489,6 +664,7 @@ function App(){
       refresh={() => loadAll()}
       resetWizard={resetWizard}
       installApp={installApp}
+      openWhatsAppQr={openWhatsAppQr}
       signOut={signOut}
     />
   );
@@ -550,6 +726,8 @@ function SetupWizard(
     refresh:() => void;
     notice:string;
     installApp:() => void;
+    connectGoogleSheet:() => void;
+    openWhatsAppQr:() => void;
   },
 ){
 
@@ -573,6 +751,23 @@ function SetupWizard(
         ),
       )
       .length;
+
+  const hasGoogleSheet =
+    Boolean(
+      props.data.google?.spreadsheetId,
+    );
+
+  const hasWhatsApp =
+    Boolean(
+      props.data.whatsapp?.instance?.instanceName,
+    );
+
+  const setupReady =
+    props.termsAccepted
+    &&
+    hasGoogleSheet
+    &&
+    hasWhatsApp;
 
   const steps =
     [
@@ -708,6 +903,15 @@ function SetupWizard(
                   Open Google Sheet
                 </a>
               )}
+
+              {!props.data.google?.spreadsheetId && (
+                <button
+                  className="primary"
+                  onClick={props.connectGoogleSheet}
+                >
+                  Connect Google Sheet
+                </button>
+              )}
             </WizardCard>
           )}
 
@@ -748,6 +952,13 @@ function SetupWizard(
                 onClick={props.refresh}
               >
                 Recheck status
+              </button>
+
+              <button
+                className="primary"
+                onClick={props.openWhatsAppQr}
+              >
+                Open WhatsApp QR
               </button>
             </WizardCard>
           )}
@@ -796,13 +1007,28 @@ function SetupWizard(
           {current === "Finish" && (
             <WizardCard
               title="Setup completed"
-              text="Dashboard sedia digunakan. Anda boleh install sebagai PWA di phone."
+              text="Selesaikan item wajib sebelum membuka dashboard."
             >
+              <Checklist
+                items={[
+                  props.termsAccepted
+                    ? "Terms accepted"
+                    : "Accept terms first",
+                  hasGoogleSheet
+                    ? "Google Sheet connected"
+                    : "Connect Google Sheet",
+                  hasWhatsApp
+                    ? "WhatsApp instance ready"
+                    : "Open WhatsApp QR and pair bot",
+                ]}
+              />
+
               <button
                 className="primary"
                 onClick={props.finishOnboarding}
+                disabled={!setupReady}
               >
-                Open Dashboard
+                {setupReady ? "Open Dashboard" : "Complete setup first"}
               </button>
 
               <button
@@ -852,6 +1078,7 @@ function Dashboard(
     refresh:() => void;
     resetWizard:() => void;
     installApp:() => void;
+    openWhatsAppQr:() => void;
     signOut:() => void;
   },
 ){
@@ -1112,7 +1339,7 @@ function Dashboard(
           <Panel title="Quick Actions" wide>
             <div className="actions">
               <Action title="Add Transaction" desc="Use WhatsApp message command." icon="+" />
-              <Action title="Open WhatsApp QR" desc="Reconnect bot pairing." icon="☏" />
+              <Action title="Open WhatsApp QR" desc="Reconnect bot pairing." icon="☏" onClick={props.openWhatsAppQr} />
               <Action title="Setup Wizard" desc="Review onboarding steps." icon="⚙" onClick={props.resetWizard} />
             </div>
           </Panel>

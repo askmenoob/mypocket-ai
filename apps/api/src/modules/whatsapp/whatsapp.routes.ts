@@ -26,6 +26,17 @@ export default async function whatsappRoutes(
 
 
   app.get(
+    "/whatsapp/qr",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    controller.showWorkspaceQr,
+  );
+
+
+  app.get(
     "/whatsapp/status",
     {
       preHandler:[

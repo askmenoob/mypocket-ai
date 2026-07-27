@@ -313,6 +313,62 @@ export class WhatsAppController {
 
 
 
+  showWorkspaceQr =
+  async (
+    request:FastifyRequest,
+    reply:FastifyReply,
+  ) => {
+
+    await request.jwtVerify();
+
+
+    const user =
+      request.user as any;
+
+
+    if(
+      user.role !== "OWNER"
+      &&
+      user.role !== "ADMIN"
+    ){
+
+      throw new AppError(
+        "WHATSAPP_QR_FORBIDDEN",
+        "Only Owner/Admin can open WhatsApp QR pairing",
+        403,
+      );
+
+    }
+
+
+    const status =
+      await this.service
+        .getWorkspaceWhatsAppStatus({
+          actorUserId:
+            user.userId,
+
+          workspaceId:
+            user.workspaceId,
+        });
+
+
+    const instanceName =
+      status.instance?.instanceName
+      ??
+      "imai-dev";
+
+
+    return this.renderQr(
+      reply,
+      instanceName,
+    );
+
+  };
+
+
+
+
+
   showDevQr =
   async (
     request:FastifyRequest,
@@ -357,6 +413,23 @@ export class WhatsAppController {
       ??
       "imai-dev";
 
+
+    return this.renderQr(
+      reply,
+      instanceName,
+    );
+
+  };
+
+
+
+
+
+  private async renderQr(
+    reply:FastifyReply,
+
+    instanceName:string,
+  ){
 
     const base64 =
       await this.service
@@ -422,7 +495,7 @@ export class WhatsAppController {
 </html>`,
       );
 
-  };
+  }
 
 
 
