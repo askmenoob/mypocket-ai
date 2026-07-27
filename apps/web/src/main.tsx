@@ -869,6 +869,131 @@ function SetupWizard(
     );
   }
 
+  function finishActionLabel(){
+
+    if(!props.termsAccepted){
+
+      return "Accept terms first";
+
+    }
+
+
+    if(!hasGoogleSheet){
+
+      return "Connect Google Sheet";
+
+    }
+
+
+    if(
+      whatsappRequired
+      &&
+      !hasWhatsApp
+    ){
+
+      return "Pair WhatsApp bot";
+
+    }
+
+
+    return "Open Dashboard";
+
+  }
+
+  function handleFinishAction(){
+
+    if(!props.termsAccepted){
+
+      setStep(
+        steps.indexOf(
+          "Terms",
+        ),
+      );
+
+      return;
+
+    }
+
+
+    if(!hasGoogleSheet){
+
+      props.connectGoogleSheet();
+      return;
+
+    }
+
+
+    if(
+      whatsappRequired
+      &&
+      !hasWhatsApp
+    ){
+
+      setStep(
+        steps.indexOf(
+          "WhatsApp",
+        ),
+      );
+
+      return;
+
+    }
+
+
+    props.finishOnboarding();
+
+  }
+
+  function handlePrimaryAction(){
+
+    if(
+      current === "Google"
+      &&
+      !hasGoogleSheet
+    ){
+
+      props.connectGoogleSheet();
+      return;
+
+    }
+
+
+    if(current === "Finish"){
+
+      handleFinishAction();
+      return;
+
+    }
+
+
+    next();
+
+  }
+
+  function primaryActionLabel(){
+
+    if(
+      current === "Google"
+      &&
+      !hasGoogleSheet
+    ){
+
+      return "Connect Google Sheet";
+
+    }
+
+
+    if(current === "Finish"){
+
+      return finishActionLabel();
+
+    }
+
+
+    return "Next";
+
+  }
+
   return (
     <main className="wizardShell">
       <section className="wizardPanel">
@@ -1130,10 +1255,9 @@ function SetupWizard(
 
               <button
                 className="primary"
-                onClick={props.finishOnboarding}
-                disabled={!setupReady}
+                onClick={handleFinishAction}
               >
-                {setupReady ? "Open Dashboard" : "Complete setup first"}
+                {finishActionLabel()}
               </button>
 
               <button
@@ -1156,22 +1280,9 @@ function SetupWizard(
 
             <button
               className="primary"
-              onClick={
-                step === steps.length - 1
-                  ? props.finishOnboarding
-                  : next
-              }
-              disabled={
-                step === steps.length - 1
-                &&
-                !setupReady
-              }
+              onClick={handlePrimaryAction}
             >
-              {step === steps.length - 1
-                ? setupReady
-                  ? "Open Dashboard"
-                  : "Complete setup first"
-                : "Next"}
+              {primaryActionLabel()}
             </button>
           </div>
 
