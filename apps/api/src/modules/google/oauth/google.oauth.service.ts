@@ -37,7 +37,7 @@ export class GoogleOAuthService {
 
 
   constructor(
-    app:FastifyInstance,
+    private readonly app:FastifyInstance,
   ){
 
     this.googleService =
@@ -277,13 +277,50 @@ export class GoogleOAuthService {
       );
 
 
+    const workspace =
+      await this.app.prisma.workspace
+        .findUnique({
+
+          where:{
+            id:
+              workspaceId,
+          },
+
+          include:{
+            owner:{
+              select:{
+                email:
+                  true,
+              },
+            },
+          },
+
+        });
+
+
+    if(!workspace){
+
+      throw new AppError(
+        "WORKSPACE_NOT_FOUND",
+        "Workspace not found for Google connection",
+        404,
+      );
+
+    }
+
+
+    const ownerEmail =
+      workspace.owner.email
+        .toLowerCase();
+
+
     if(
-      token.email !== "pillo0404@gmail.com"
+      token.email !== ownerEmail
     ){
 
       throw new AppError(
         "GOOGLE_ACCOUNT_MISMATCH",
-        "Only the pillo0404@gmail.com Google account can be used for workspace provisioning",
+        `Please connect Google using the workspace owner email: ${ownerEmail}`,
         403,
       );
 
