@@ -124,6 +124,27 @@ async function api<T>(
   return json as T;
 }
 
+async function optionalApi<T>(
+  path:string,
+  token:string,
+  fallback:T,
+):Promise<T>{
+
+  try{
+
+    return await api<T>(
+      path,
+      token,
+    );
+
+  }catch{
+
+    return fallback;
+
+  }
+
+}
+
 function isPublicLandingHost(){
   const host =
     window.location.hostname;
@@ -289,10 +310,10 @@ function App(){
       ] =
         await Promise.all([
           api<any>("/auth/me", activeToken),
-          api<any>("/google/settings", activeToken),
-          api<any>("/whatsapp/status", activeToken),
-          api<Member[]>("/whatsapp/members", activeToken),
-          api<any>("/transactions?limit=12", activeToken),
+          optionalApi<any | null>("/google/settings", activeToken, null),
+          optionalApi<any | null>("/whatsapp/status", activeToken, null),
+          optionalApi<Member[]>("/whatsapp/members", activeToken, []),
+          optionalApi<any>("/transactions?limit=12", activeToken, []),
         ]);
 
       setData({
