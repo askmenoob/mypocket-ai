@@ -45,6 +45,8 @@ const EnvSchema = z.object({
 
   GOOGLE_REDIRECT_URI: z.string().optional(),
 
+  GOOGLE_AUTH_REDIRECT_URI: z.string().optional(),
+
   GOOGLE_APPS_SCRIPT_URL:
     z.string()
      .url()

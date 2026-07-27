@@ -13,7 +13,43 @@ interface GoogleTokenResponse {
 export class GoogleService {
 
 
+  private getAuthRedirectUri() {
+
+    if (env.GOOGLE_AUTH_REDIRECT_URI) {
+
+      return env.GOOGLE_AUTH_REDIRECT_URI;
+
+    }
+
+
+    const redirectUri =
+      env.GOOGLE_REDIRECT_URI
+      ?? "";
+
+
+    if (
+      redirectUri.includes(
+        "/google/oauth/",
+      )
+    ) {
+
+      return redirectUri.replace(
+        /\/google\/oauth\/.*$/,
+        "/auth/google/callback",
+      );
+
+    }
+
+
+    return redirectUri;
+
+  }
+
+
   getAuthorizationUrl() {
+
+    const redirectUri =
+      this.getAuthRedirectUri();
 
     const params = new URLSearchParams({
 
@@ -21,7 +57,7 @@ export class GoogleService {
         env.GOOGLE_CLIENT_ID ?? "",
 
       redirect_uri:
-        env.GOOGLE_REDIRECT_URI ?? "",
+        redirectUri,
 
       response_type:
         "code",
@@ -81,7 +117,7 @@ export class GoogleService {
                 "authorization_code",
 
               redirect_uri:
-                env.GOOGLE_REDIRECT_URI ?? "",
+                this.getAuthRedirectUri(),
 
             }),
         },
