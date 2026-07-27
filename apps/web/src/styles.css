@@ -849,26 +849,6 @@ dd{
   font-weight:1000;
 }
 
-.divider{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  color:var(--muted);
-  font-size:12px;
-  font-weight:900;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  margin:8px 0 14px;
-}
-
-.divider:before,
-.divider:after{
-  content:"";
-  height:1px;
-  background:var(--border);
-  flex:1;
-}
-
 .primaryLinkButton{
   background:linear-gradient(135deg,#13c99a,#079a78);
   color:white;

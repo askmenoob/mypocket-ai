@@ -169,11 +169,6 @@ function App(){
       stored(STORAGE.token),
     );
 
-  const [draftToken, setDraftToken] =
-    useState(
-      stored(STORAGE.token),
-    );
-
   const [termsAccepted, setTermsAccepted] =
     useState(
       isStoredTrue(STORAGE.terms),
@@ -272,7 +267,6 @@ function App(){
       );
 
       setToken(authToken);
-      setDraftToken(authToken);
       setNotice("Google login successful. Welcome back.");
 
       window.history.replaceState(
@@ -396,20 +390,6 @@ function App(){
     loadAll();
   }, [token]);
 
-  function saveToken(){
-
-    const clean =
-      draftToken.trim();
-
-    localStorage.setItem(
-      STORAGE.token,
-      clean,
-    );
-
-    setToken(clean);
-    setNotice("Login token saved.");
-  }
-
   function signOut(){
 
     localStorage.removeItem(
@@ -417,7 +397,6 @@ function App(){
     );
 
     setToken("");
-    setDraftToken("");
     setNotice("Signed out.");
 
   }
@@ -477,9 +456,6 @@ function App(){
 
     return (
       <TokenGate
-        draftToken={draftToken}
-        setDraftToken={setDraftToken}
-        saveToken={saveToken}
         health={data.health}
         error={state.error}
         installApp={installApp}
@@ -521,9 +497,6 @@ function App(){
 
 function TokenGate(
   props:{
-    draftToken:string;
-    setDraftToken:(value:string) => void;
-    saveToken:() => void;
     health:any | null;
     error:string | null;
     installApp:() => void;
@@ -538,7 +511,7 @@ function TokenGate(
         <h1>MyPocket AI Dashboard</h1>
         <p>
           Login menggunakan Google untuk membuka workspace, setup wizard,
-          WhatsApp bot dan Google Sheet anda. Tidak perlu paste token manual lagi.
+          WhatsApp bot dan Google Sheet anda.
         </p>
 
         <a
@@ -548,26 +521,6 @@ function TokenGate(
           <span>G</span>
           Continue with Google
         </a>
-
-        <div className="divider">
-          Developer fallback
-        </div>
-
-        <label className="field">
-          Dashboard token
-          <textarea
-            value={props.draftToken}
-            onChange={(event) => props.setDraftToken(event.target.value)}
-            placeholder="Paste JWT token di sini"
-          />
-        </label>
-
-        <button
-          className="primary"
-          onClick={props.saveToken}
-        >
-          Continue
-        </button>
 
         <button
           className="secondary"
