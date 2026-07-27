@@ -599,6 +599,32 @@ dd{
   font-weight:800;
 }
 
+.setupChecklist li{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.setupChecklist li span{
+  display:grid;
+  place-items:center;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  background:#ddfbf4;
+  color:#087965;
+  flex:0 0 auto;
+}
+
+.setupChecklist li.pending{
+  color:#647784;
+}
+
+.setupChecklist li.pending span{
+  background:#edf2f4;
+  color:#7a8b94;
+}
+
 .planBox{
   border:1px solid #b9eadf;
   background:#effffd;

@@ -821,12 +821,20 @@ function SetupWizard(
   const hasWhatsApp =
     isWhatsAppConnected;
 
+  const whatsappRequired =
+    isShared;
+
+  const whatsappReady =
+    hasWhatsApp
+    ||
+    !whatsappRequired;
+
   const setupReady =
     props.termsAccepted
     &&
     hasGoogleSheet
     &&
-    hasWhatsApp;
+    whatsappReady;
 
   const steps =
     [
@@ -1077,20 +1085,46 @@ function SetupWizard(
 
           {current === "Finish" && (
             <WizardCard
-              title="Setup completed"
-              text="Selesaikan item wajib sebelum membuka dashboard."
+              title={setupReady ? "Setup ready" : "Complete setup"}
+              text={
+                setupReady
+                  ? "Semua item wajib sudah selesai. Anda boleh buka dashboard sekarang."
+                  : "Selesaikan item wajib sebelum membuka dashboard."
+              }
             >
-              <Checklist
+              <SetupChecklist
                 items={[
-                  props.termsAccepted
-                    ? "Terms accepted"
-                    : "Accept terms first",
-                  hasGoogleSheet
-                    ? "Google Sheet connected"
-                    : "Connect Google Sheet",
-                  hasWhatsApp
-                    ? "WhatsApp instance ready"
-                    : "Open WhatsApp QR and pair bot",
+                  {
+                    done:
+                      props.termsAccepted,
+
+                    text:
+                      props.termsAccepted
+                        ? "Terms accepted"
+                        : "Accept terms first",
+                  },
+
+                  {
+                    done:
+                      hasGoogleSheet,
+
+                    text:
+                      hasGoogleSheet
+                        ? "Google Sheet connected"
+                        : "Connect Google Sheet",
+                  },
+
+                  {
+                    done:
+                      whatsappReady,
+
+                    text:
+                      hasWhatsApp
+                        ? "WhatsApp bot connected"
+                        : whatsappRequired
+                          ? "Open WhatsApp QR and pair bot"
+                          : "WhatsApp pairing can be completed later",
+                  },
                 ]}
               />
 
@@ -1122,10 +1156,22 @@ function SetupWizard(
 
             <button
               className="primary"
-              onClick={next}
-              disabled={step === steps.length - 1}
+              onClick={
+                step === steps.length - 1
+                  ? props.finishOnboarding
+                  : next
+              }
+              disabled={
+                step === steps.length - 1
+                &&
+                !setupReady
+              }
             >
-              Next
+              {step === steps.length - 1
+                ? setupReady
+                  ? "Open Dashboard"
+                  : "Complete setup first"
+                : "Next"}
             </button>
           </div>
 
@@ -1743,6 +1789,29 @@ function Checklist(
     <ul className="checklist">
       {props.items.map((item) => (
         <li key={item}>✓ {item}</li>
+      ))}
+    </ul>
+  );
+}
+
+function SetupChecklist(
+  props:{
+    items:Array<{
+      done:boolean;
+      text:string;
+    }>;
+  },
+){
+  return (
+    <ul className="checklist setupChecklist">
+      {props.items.map((item) => (
+        <li
+          key={item.text}
+          className={item.done ? "done" : "pending"}
+        >
+          <span>{item.done ? "✓" : "•"}</span>
+          {item.text}
+        </li>
       ))}
     </ul>
   );
