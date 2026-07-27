@@ -185,6 +185,12 @@ a{color:inherit}
   gap:12px;
 }
 
+.topIdentity{
+  display:flex;
+  align-items:center;
+  min-width:0;
+}
+
 .notice,
 .errorBox{
   margin:22px 32px 0;
@@ -675,20 +681,48 @@ dd{
 
   .topbar{
     height:auto;
-    padding:16px;
+    min-height:unset;
+    padding:16px 16px 18px;
     align-items:flex-start;
-    gap:12px;
+    gap:10px;
     flex-direction:column;
   }
 
   .topActions{
+    width:auto;
+    overflow:visible;
+    gap:0;
+  }
+
+  .topActions .ghost{
+    display:none;
+  }
+
+  .menu{
+    display:none;
+  }
+
+  .topIdentity{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:8px;
     width:100%;
-    overflow-x:auto;
   }
 
   .workspace{
     display:block;
-    margin:12px 0;
+    margin:0;
+    max-width:100%;
+    font-size:17px;
+    line-height:1.25;
+    letter-spacing:-.02em;
+    text-transform:capitalize;
+  }
+
+  .pill,
+  .status{
+    padding:7px 12px;
+    font-size:12px;
   }
 
   .kpis,

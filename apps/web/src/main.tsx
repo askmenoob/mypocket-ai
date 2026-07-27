@@ -1196,7 +1196,7 @@ function Dashboard(
 
       <main className="main">
         <header className="topbar">
-          <div>
+          <div className="topIdentity">
             <button className="menu">☰</button>
             <span className="workspace">
               {props.data.me?.workspace?.name || "MyPocket Workspace"}
