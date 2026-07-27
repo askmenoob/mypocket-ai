@@ -146,13 +146,57 @@ async function apiText(
 
   if(!response.ok){
     throw new Error(
-      text ||
-      `HTTP ${response.status}`,
+      getApiTextErrorMessage(
+        text,
+        response.status,
+      ),
     );
   }
 
 
   return text;
+}
+
+function getApiTextErrorMessage(
+  text:string,
+  status:number,
+){
+
+  try{
+
+    const json =
+      text
+        ? JSON.parse(
+          text,
+        )
+        : null;
+
+    const code =
+      json?.error?.code;
+
+    if(code === "EVOLUTION_QR_NOT_FOUND"){
+
+      return [
+        "QR WhatsApp belum tersedia sekarang.",
+        "Jika bot sudah connected, tekan Recheck status dan teruskan setup.",
+        "Jika belum connected, restart/pair semula instance WhatsApp kemudian cuba buka QR lagi.",
+      ].join(
+        "\n",
+      );
+
+    }
+
+    return json?.error?.message ||
+      json?.message ||
+      `HTTP ${status}`;
+
+  }catch{
+
+    return text ||
+      `HTTP ${status}`;
+
+  }
+
 }
 
 async function optionalApi<T>(

@@ -197,6 +197,7 @@ a{color:inherit}
   padding:14px 18px;
   border-radius:14px;
   font-weight:800;
+  white-space:pre-line;
 }
 
 .notice{
