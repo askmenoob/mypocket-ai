@@ -39,6 +39,27 @@ export function buildApp() {
   app.register(jwtPlugin);
 
 
+  app.get(
+    "/",
+    async () => ({
+      status:
+        "ok",
+
+      service:
+        "imai-api",
+
+      message:
+        "MyPocket API is running",
+
+      health:
+        "/api/v1/health",
+
+      app:
+        "https://app.imai.my",
+    }),
+  );
+
+
   app.register(
     healthRoutes,
     {
