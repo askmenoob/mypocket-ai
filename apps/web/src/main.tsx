@@ -9,7 +9,8 @@ const API_BASE =
 const STORAGE = {
   token: "imai_dashboard_token",
   terms: "imai_terms_accepted",
-  onboarding: "imai_onboarding_completed"
+  onboarding: "imai_onboarding_completed",
+  wizardStep: "imai_setup_wizard_step",
 };
 
 function googleLoginUrl(){
@@ -273,6 +274,11 @@ function App(){
   const [notice, setNotice] =
     useState("");
 
+  const [preferredWizardStep, setPreferredWizardStep] =
+    useState(
+      stored(STORAGE.wizardStep),
+    );
+
   const workspaceId =
     data.me?.workspace?.id
     ?? "";
@@ -340,8 +346,32 @@ function App(){
         :
         "";
 
+    const isGoogleLogin =
+      hash.get("auth") === "google"
+      &&
+      authToken;
+
+
+    if(isGoogleLogin){
+
+      localStorage.setItem(
+        STORAGE.token,
+        authToken,
+      );
+
+      setToken(authToken);
+
+    }
+
 
     if(googleError){
+
+      localStorage.setItem(
+        STORAGE.wizardStep,
+        "google",
+      );
+
+      setPreferredWizardStep("google");
 
       setNotice(
         googleError,
@@ -352,6 +382,10 @@ function App(){
         document.title,
         window.location.pathname + window.location.search,
       );
+
+      if(isGoogleLogin){
+        loadAll(authToken);
+      }
 
       return;
 
@@ -366,31 +400,53 @@ function App(){
         "Google Workspace connected successfully.",
       );
 
+      const nextStep =
+        hash.get("next")
+        ??
+        "whatsapp";
+
+      localStorage.setItem(
+        STORAGE.wizardStep,
+        nextStep,
+      );
+
+      setPreferredWizardStep(
+        nextStep,
+      );
+
+      if(isGoogleLogin){
+        setNotice(
+          hash.get("message")
+          ??
+          "Google login successful. Google Sheet connected.",
+        );
+      }
+
       window.history.replaceState(
         null,
         document.title,
         window.location.pathname + window.location.search,
       );
 
-      loadAll();
+      loadAll(
+        authToken
+        ??
+        token,
+      );
 
       return;
 
     }
 
 
-    if(
-      hash.get("auth") === "google"
-      &&
-      authToken
-    ){
+    if(isGoogleLogin){
 
       localStorage.setItem(
-        STORAGE.token,
-        authToken,
+        STORAGE.wizardStep,
+        "welcome",
       );
 
-      setToken(authToken);
+      setPreferredWizardStep("welcome");
       setNotice("Google login successful. Welcome back.");
 
       window.history.replaceState(
@@ -557,6 +613,10 @@ function App(){
       "true",
     );
 
+    localStorage.removeItem(
+      STORAGE.wizardStep,
+    );
+
     setOnboardingCompleted(true);
     setNotice("Setup completed. Dashboard is ready.");
   }
@@ -589,21 +649,20 @@ function App(){
 
     try{
 
+      localStorage.setItem(
+        STORAGE.wizardStep,
+        "google",
+      );
+
+      setPreferredWizardStep("google");
+
       setState({
         loading:true,
         error:null,
       });
 
-      const result =
-        await api<{
-          url:string;
-        }>(
-          "/google/oauth/google/oauth/url",
-          token,
-        );
-
       window.location.href =
-        result.url;
+        googleLoginUrl();
 
     }catch(error){
 
@@ -687,6 +746,7 @@ function App(){
       <SetupWizard
         data={data}
         state={state}
+        preferredStep={preferredWizardStep}
         termsAccepted={termsAccepted}
         acceptTerms={acceptTerms}
         finishOnboarding={finishOnboarding}
@@ -764,6 +824,7 @@ function SetupWizard(
   props:{
     data:DashboardData;
     state:LoadState;
+    preferredStep:string;
     termsAccepted:boolean;
     acceptTerms:() => void;
     finishOnboarding:() => void;
@@ -847,6 +908,35 @@ function SetupWizard(
       "Subscription",
       "Finish",
     ];
+
+  useEffect(() => {
+
+    const target =
+      (
+        props.preferredStep
+        ||
+        stored(STORAGE.wizardStep)
+      )
+        .trim()
+        .toLowerCase();
+
+    if(!target){
+      return;
+    }
+
+    const index =
+      steps.findIndex(
+        (item) => item.toLowerCase() === target,
+      );
+
+    if(index >= 0){
+      setStep(index);
+    }
+
+  }, [
+    props.preferredStep,
+    steps.join("|"),
+  ]);
 
   const current =
     steps[step];

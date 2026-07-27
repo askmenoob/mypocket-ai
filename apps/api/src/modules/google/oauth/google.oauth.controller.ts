@@ -16,6 +16,11 @@ import {
 
 
 import {
+  GoogleSettingsService,
+} from "../settings/google-settings.service.js";
+
+
+import {
   googleOAuthCallbackSchema,
 } from "./google.oauth.schemas.js";
 
@@ -28,6 +33,10 @@ export class GoogleOAuthController {
     GoogleOAuthService;
 
 
+  private readonly settingsService:
+    GoogleSettingsService;
+
+
 
   constructor(
     app:FastifyInstance,
@@ -35,6 +44,12 @@ export class GoogleOAuthController {
 
     this.service =
       new GoogleOAuthService(
+        app,
+      );
+
+
+    this.settingsService =
+      new GoogleSettingsService(
         app,
       );
 
@@ -107,6 +122,22 @@ export class GoogleOAuthController {
           query.code,
         );
 
+    const existingSettings =
+      await this.settingsService
+        .getSettings(
+          query.state,
+        );
+
+
+    const settings =
+      existingSettings
+      ??
+      await this.settingsService
+        .autoCreateSheet(
+          query.state,
+          "MyPocket Workspace Template",
+        );
+
 
     return this.redirectToApp(
       reply,
@@ -114,17 +145,28 @@ export class GoogleOAuthController {
         google:
           "connected",
 
+        setup:
+          "google",
+
+        next:
+          "whatsapp",
+
         workspaceId:
           query.state,
 
         googleAccountId:
           account.id,
 
+        spreadsheetId:
+          settings.spreadsheetId,
+
         status:
           account.status,
 
         message:
-          "Google Workspace connected successfully.",
+          existingSettings
+            ? "Google Workspace connected successfully."
+            : "Google Sheet connected and template created successfully.",
       },
     );
 

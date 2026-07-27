@@ -1,4 +1,7 @@
 import { env } from "../../config/index.js";
+import {
+  googleConfig,
+} from "../../config/google.js";
 import type { GoogleProfile } from "./auth.types.js";
 
 
@@ -63,7 +66,9 @@ export class GoogleService {
         "code",
 
       scope:
-        "openid email profile",
+        googleConfig.scopes.join(
+          " ",
+        ),
 
       access_type:
         "offline",

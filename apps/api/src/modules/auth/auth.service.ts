@@ -114,6 +114,10 @@ export class AuthService {
       workspace: {
         id: workspace.id,
         name: workspace.name,
+        role:
+          membership?.role
+          ??
+          "OWNER",
       },
     };
   }

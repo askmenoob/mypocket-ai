@@ -20,5 +20,10 @@ export interface AuthSession {
   workspace: {
     id: string;
     name: string;
+    role:
+      | "OWNER"
+      | "ADMIN"
+      | "MEMBER"
+      | "VIEWER";
   };
 }
