@@ -63,3 +63,19 @@ export type CreateWorkspaceInput =
     typeof CreateWorkspaceSchema
   >;
 
+
+
+export const UpdateUserPackageSchema =
+  z.object({
+
+    package:
+      WorkspaceTypeSchema,
+
+  });
+
+
+export type UpdateUserPackageInput =
+  z.infer<
+    typeof UpdateUserPackageSchema
+  >;
+

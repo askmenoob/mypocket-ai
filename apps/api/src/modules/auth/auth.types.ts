@@ -17,6 +17,7 @@ export interface AuthSession {
     email: string;
     name?: string | null;
   };
+  isSuperAdmin?: boolean;
   workspace: {
     id: string;
     name: string;

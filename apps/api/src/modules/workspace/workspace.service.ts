@@ -10,12 +10,19 @@ import {
 
 import type {
   WorkspaceContext,
+  WorkspaceType,
 } from "./workspace.types.js";
 
 
 import {
   TokenService,
+  isSuperAdminEmail,
 } from "../../shared/auth/index.js";
+
+
+import {
+  AppError,
+} from "../../shared/errors/index.js";
 
 
 export class WorkspaceService {
@@ -240,6 +247,222 @@ export class WorkspaceService {
 
     };
 
+
+  }
+
+
+
+  async listAdminUsers(
+    actorEmail:string,
+  ){
+
+    this.assertSuperAdmin(
+      actorEmail,
+    );
+
+
+    const users =
+      await this.repository
+        .findAdminUsers();
+
+
+    return users
+      .map(
+        (user) =>
+          this.toAdminUserPackage(
+            user,
+          ),
+      );
+
+  }
+
+
+
+  async updateUserPackage(
+    actorEmail:string,
+    userId:string,
+    workspaceType:WorkspaceType,
+  ){
+
+    this.assertSuperAdmin(
+      actorEmail,
+    );
+
+
+    const user =
+      await this.repository
+        .findAdminUserById(
+          userId,
+        );
+
+
+    if(!user){
+
+      throw new AppError(
+        "ADMIN_USER_NOT_FOUND",
+        "User not found",
+        404,
+      );
+
+    }
+
+
+    const workspace =
+      user.workspaces[0]
+      ??
+      user.memberships[0]?.workspace;
+
+
+    if(!workspace){
+
+      throw new AppError(
+        "ADMIN_USER_WORKSPACE_NOT_FOUND",
+        "User workspace not found",
+        404,
+      );
+
+    }
+
+
+    await this.repository
+      .updateWorkspaceType(
+        workspace.id,
+        workspaceType,
+      );
+
+
+    await this.repository
+      .upsertSubscriptionPlan(
+        user.id,
+        workspaceType,
+      );
+
+
+    const updated =
+      await this.repository
+        .findAdminUserById(
+          userId,
+        );
+
+
+    return this.toAdminUserPackage(
+      updated!,
+    );
+
+  }
+
+
+
+  private assertSuperAdmin(
+    email:string,
+  ){
+
+    if(
+      !isSuperAdminEmail(
+        email,
+      )
+    ){
+
+      throw new AppError(
+        "SUPER_ADMIN_REQUIRED",
+        "Only super admin can manage user packages",
+        403,
+      );
+
+    }
+
+  }
+
+
+
+  private toAdminUserPackage(
+    user:{
+      id:string;
+      email:string;
+      name:string | null;
+      createdAt:Date;
+      updatedAt:Date;
+      subscription?:{
+        plan:string;
+        status:string;
+      } | null;
+      workspaces:Array<any>;
+      memberships:Array<{
+        workspace:any;
+      }>;
+    },
+  ){
+
+    const workspace =
+      user.workspaces[0]
+      ??
+      user.memberships[0]?.workspace
+      ??
+      null;
+
+
+    return {
+
+      userId:
+        user.id,
+
+      email:
+        user.email,
+
+      name:
+        user.name,
+
+      package:
+        workspace?.type
+        ??
+        "PERSONAL",
+
+      subscriptionPlan:
+        user.subscription?.plan
+        ??
+        "FREE",
+
+      subscriptionStatus:
+        user.subscription?.status
+        ??
+        "ACTIVE",
+
+      workspace:
+        workspace
+          ? {
+            id:
+              workspace.id,
+
+            name:
+              workspace.name,
+
+            type:
+              workspace.type,
+
+            memberCount:
+              workspace.members?.length
+              ??
+              0,
+
+            googleConnected:
+              Boolean(
+                workspace.googleSetting,
+              ),
+
+            whatsappCount:
+              workspace.whatsapp?.length
+              ??
+              0,
+          }
+          : null,
+
+      createdAt:
+        user.createdAt,
+
+      updatedAt:
+        user.updatedAt,
+
+    };
 
   }
 

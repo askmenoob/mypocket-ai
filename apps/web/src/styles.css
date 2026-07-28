@@ -493,6 +493,45 @@ dd{
   align-items:center;
 }
 
+.packageRow{
+  grid-template-columns:minmax(260px,1fr) minmax(260px,360px);
+}
+
+.packageControls{
+  display:grid;
+  gap:10px;
+  align-items:center;
+}
+
+.packageControls label{
+  display:grid;
+  gap:6px;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:800;
+}
+
+.packageControls select{
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  padding:12px 14px;
+  color:var(--text);
+  font-weight:900;
+}
+
+.packageBadge{
+  display:inline-flex;
+  width:max-content;
+  border-radius:999px;
+  background:#e7fbf5;
+  color:#007a67;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:900;
+}
+
 .memberControls select,
 .memberCreate select,
 .field select{
@@ -785,7 +824,8 @@ button.primaryLink{
 
   .memberCreate,
   .memberRow,
-  .memberControls{
+  .memberControls,
+  .packageRow{
     grid-template-columns:1fr;
   }
 

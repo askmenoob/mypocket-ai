@@ -32,6 +32,30 @@ type MemberRole =
   | "MEMBER"
   | "VIEWER";
 
+type WorkspaceType =
+  | "PERSONAL"
+  | "FAMILY"
+  | "BUSINESS";
+
+type AdminUser = {
+  userId:string;
+  email:string;
+  name:string | null;
+  package:WorkspaceType;
+  subscriptionPlan:string;
+  subscriptionStatus:string;
+  workspace:{
+    id:string;
+    name:string;
+    type:WorkspaceType;
+    memberCount:number;
+    googleConnected:boolean;
+    whatsappCount:number;
+  } | null;
+  createdAt:string;
+  updatedAt:string;
+};
+
 type Transaction = {
   id:string;
   amount:string;
@@ -56,6 +80,7 @@ type DashboardData = {
   google:any | null;
   whatsapp:any | null;
   members:Member[];
+  adminUsers:AdminUser[];
   transactions:Transaction[];
 };
 
@@ -367,6 +392,7 @@ function App(){
       google:null,
       whatsapp:null,
       members:[],
+      adminUsers:[],
       transactions:[],
     });
 
@@ -674,6 +700,15 @@ function App(){
           optionalApi<any>("/transactions?limit=12", activeToken, []),
         ]);
 
+      const adminUsers =
+        me?.isSuperAdmin
+          ? await optionalApi<AdminUser[]>(
+            "/admin/users",
+            activeToken,
+            [],
+          )
+          : [];
+
       setData({
         health,
         me,
@@ -681,6 +716,8 @@ function App(){
         whatsapp,
         members:
           listFrom<Member>(members),
+        adminUsers:
+          listFrom<AdminUser>(adminUsers),
         transactions:
           listFrom<Transaction>(transactions),
       });
@@ -1897,6 +1934,9 @@ function Dashboard(
   const [newMemberRole, setNewMemberRole] =
     useState<MemberRole>("MEMBER");
 
+  const [packageBusyUserId, setPackageBusyUserId] =
+    useState("");
+
   const actorRole =
     (
       props.data.me?.workspace?.role ||
@@ -1906,6 +1946,15 @@ function Dashboard(
   const canManageMembers =
     actorRole === "OWNER" ||
     actorRole === "ADMIN";
+
+  const isSuperAdmin =
+    Boolean(
+      props.data.me?.isSuperAdmin,
+    );
+
+  const canUseAdmin =
+    canManageMembers ||
+    isSuperAdmin;
 
   const workspaceType =
     props.data.me?.workspace?.type ||
@@ -1978,7 +2027,7 @@ function Dashboard(
         label:"Google Sheet",
         view:"google",
       },
-      ...(canManageMembers
+      ...(canUseAdmin
         ? [
           {
             icon:"👥",
@@ -2101,6 +2150,47 @@ function Dashboard(
 
     setActionMessage("Member role updated.");
     props.refresh();
+  }
+
+
+  async function updateUserPackage(
+    userId:string,
+    packageType:WorkspaceType,
+  ){
+
+    const token =
+      stored(STORAGE.token);
+
+    setPackageBusyUserId(
+      userId,
+    );
+
+    try{
+
+      await api(
+        `/admin/users/${userId}/package`,
+        token,
+        {
+          method:"PATCH",
+          body:JSON.stringify({
+            package:
+              packageType,
+          }),
+        },
+      );
+
+      setActionMessage(
+        "User package updated.",
+      );
+
+      props.refresh();
+
+    }finally{
+
+      setPackageBusyUserId("");
+
+    }
+
   }
 
   async function removeMember(
@@ -2392,6 +2482,62 @@ function Dashboard(
               <Action title="Reset WhatsApp QR" desc="Generate a fresh pairing instance." icon="↻" onClick={() => props.resetWhatsAppInstance()} />
               <Action title="Setup Wizard" desc="Review onboarding steps." icon="⚙" onClick={props.resetWizard} />
             </div>
+            </Panel>
+          )}
+
+          {isSuperAdmin && activeView === "admin" && (
+            <Panel title="Super Admin Package Control" wide>
+              <p className="helperText">
+                Hanya pillo0404@gmail.com boleh set pakej user secara manual.
+                Pilihan ini akan update workspace type dan subscription plan user.
+              </p>
+
+              <div className="memberTable">
+                {props.data.adminUsers.map((user) => (
+                  <div className="memberRow packageRow" key={user.userId}>
+                    <div className="memberMain">
+                      <strong>{user.name || user.email}</strong>
+                      <span>{user.email}</span>
+                      <span>
+                        {user.workspace?.name || "Workspace belum tersedia"}
+                      </span>
+                      <span>
+                        {user.workspace
+                          ? `${user.workspace.memberCount} member · Google ${user.workspace.googleConnected ? "connected" : "not connected"} · ${user.workspace.whatsappCount} WhatsApp instance`
+                          : "No workspace"}
+                      </span>
+                    </div>
+
+                    <div className="packageControls">
+                      <label>
+                        Package
+                        <select
+                          value={user.package}
+                          disabled={packageBusyUserId === user.userId}
+                          onChange={(event) => updateUserPackage(
+                            user.userId,
+                            event.target.value as WorkspaceType,
+                          )}
+                        >
+                          <option value="PERSONAL">PERSONAL</option>
+                          <option value="FAMILY">FAMILY</option>
+                          <option value="BUSINESS">BUSINESS</option>
+                        </select>
+                      </label>
+
+                      <span className="packageBadge">
+                        {user.subscriptionPlan} · {user.subscriptionStatus}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+                {props.data.adminUsers.length === 0 && (
+                  <p className="helperText">
+                    Tiada user untuk dipaparkan.
+                  </p>
+                )}
+              </div>
             </Panel>
           )}
 

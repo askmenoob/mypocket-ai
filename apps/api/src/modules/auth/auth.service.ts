@@ -9,6 +9,7 @@ import type {
 
 import {
   TokenService,
+  isSuperAdminEmail,
 } from "../../shared/auth/index.js";
 import {
   AppError,
@@ -114,6 +115,11 @@ export class AuthService {
         name: user.name,
       },
 
+      isSuperAdmin:
+        isSuperAdminEmail(
+          user.email,
+        ),
+
       workspace: {
         id: workspace.id,
         name: workspace.name,
@@ -189,6 +195,12 @@ export class AuthService {
         name: user.name,
 
       },
+
+
+      isSuperAdmin:
+        isSuperAdminEmail(
+          user.email,
+        ),
 
 
       workspace: {

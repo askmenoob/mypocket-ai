@@ -31,6 +31,18 @@ const workspaceRoutes:
     );
 
 
+    app.get(
+      "/admin/users",
+      controller.adminListUsers,
+    );
+
+
+    app.patch(
+      "/admin/users/:userId/package",
+      controller.adminUpdateUserPackage,
+    );
+
+
     app.post(
       "/",
       controller.create,
