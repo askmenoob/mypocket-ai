@@ -32,6 +32,18 @@ export default async function transactionRoutes(
 
 
 
+  app.get(
+    "/transactions/sheet",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    controller.getSheetTransactions,
+  );
+
+
+
   app.post(
     "/transactions",
     {

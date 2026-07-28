@@ -708,8 +708,18 @@ function App(){
           optionalApi<any | null>("/google/settings", activeToken, null),
           optionalApi<any | null>("/whatsapp/status", activeToken, null),
           optionalApi<Member[]>("/whatsapp/members", activeToken, []),
-          optionalApi<any>("/transactions?limit=12", activeToken, []),
+          optionalApi<any>("/transactions/sheet", activeToken, null),
         ]);
+
+      const fallbackTransactions =
+        transactions === null
+          ? await optionalApi<any>(
+            "/transactions?limit=12",
+            activeToken,
+            [],
+          )
+          : transactions;
+
 
       const adminUsers =
         me?.isSuperAdmin
@@ -730,7 +740,7 @@ function App(){
         adminUsers:
           listFrom<AdminUser>(adminUsers),
         transactions:
-          listFrom<Transaction>(transactions),
+          listFrom<Transaction>(fallbackTransactions),
       });
 
       setState({

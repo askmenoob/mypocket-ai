@@ -14,6 +14,16 @@ import {
 
 
 import {
+  GoogleSheetsService,
+} from "../google/sheets/google-sheets.service.js";
+
+
+import {
+  GoogleSettingsRepository,
+} from "../google/settings/google-settings.repository.js";
+
+
+import {
   AppError,
 } from "../../shared/errors/index.js";
 
@@ -36,6 +46,14 @@ export class TransactionService {
     TransactionSyncService;
 
 
+  private readonly sheetsService:
+    GoogleSheetsService;
+
+
+  private readonly googleSettingsRepository:
+    GoogleSettingsRepository;
+
+
 
   constructor(
     app:FastifyInstance,
@@ -56,6 +74,20 @@ export class TransactionService {
       );
 
 
+    this.sheetsService =
+
+      new GoogleSheetsService(
+        app,
+      );
+
+
+    this.googleSettingsRepository =
+
+      new GoogleSettingsRepository(
+        app.prisma,
+      );
+
+
   }
 
 
@@ -69,6 +101,58 @@ export class TransactionService {
     return this.repository
       .findTransactions(
         workspaceId,
+      );
+
+  }
+
+
+
+
+  async getSheetTransactions(
+    workspaceId:string,
+  ){
+
+    const setting =
+      await this.googleSettingsRepository
+        .findByWorkspaceId(
+          workspaceId,
+        );
+
+
+    if(!setting?.spreadsheetId){
+
+      return [];
+
+    }
+
+
+    const rows =
+      await this.sheetsService
+        .readRange(
+          workspaceId,
+          {
+            spreadsheetId:
+              setting.spreadsheetId,
+
+            range:
+              "Transactions!A:M",
+          },
+        );
+
+
+    return rows
+      .slice(
+        1,
+      )
+      .map(
+        (row) => this.parseSheetTransactionRow(
+          row,
+        ),
+      )
+      .filter(
+        (transaction) => Boolean(
+          transaction,
+        ),
       );
 
   }
@@ -341,6 +425,196 @@ export class TransactionService {
         id,
       );
 
+
+  }
+
+
+
+
+  private parseSheetTransactionRow(
+    row:unknown[],
+  ){
+
+    const valueAt =
+      (index:number) =>
+        String(
+          row[index]
+          ??
+          "",
+        )
+          .trim();
+
+
+    const id =
+      valueAt(
+        0,
+      );
+
+
+    const description =
+      valueAt(
+        6,
+      );
+
+
+    if(
+      !id.startsWith(
+        "cm",
+      )
+      ||
+      description.startsWith(
+        "[CANCELLED]",
+      )
+    ){
+
+      return null;
+
+    }
+
+
+    const type =
+      valueAt(
+        3,
+      ) === "INCOME"
+        ? "INCOME"
+        : "EXPENSE";
+
+
+    const transactionDate =
+      this.resolveSheetTransactionDate(
+        valueAt(
+          1,
+        ),
+        valueAt(
+          2,
+        ),
+        valueAt(
+          12,
+        ),
+      );
+
+
+    const categoryName =
+      valueAt(
+        4,
+      );
+
+
+    const merchantName =
+      valueAt(
+        5,
+      );
+
+
+    const paymentMethodName =
+      valueAt(
+        8,
+      );
+
+
+    return {
+
+      id,
+
+      amount:
+        valueAt(
+          7,
+        )
+        ||
+        "0",
+
+      currency:
+        "MYR",
+
+      type,
+
+      description:
+        description
+        ||
+        null,
+
+      transactionDate,
+
+      source:
+        valueAt(
+          9,
+        )
+        ||
+        "GOOGLE_SHEET",
+
+      category:
+        categoryName
+          ? {
+            name:
+              categoryName,
+          }
+          : null,
+
+      merchant:
+        merchantName
+        &&
+        merchantName !== "-"
+          ? {
+            name:
+              merchantName,
+          }
+          : null,
+
+      paymentMethod:
+        paymentMethodName
+          ? {
+            name:
+              paymentMethodName,
+          }
+          : null,
+
+    };
+
+  }
+
+
+
+
+  private resolveSheetTransactionDate(
+    date:string,
+    time:string,
+    createdAt:string,
+  ){
+
+    const createdDate =
+      new Date(
+        createdAt,
+      );
+
+
+    if(!Number.isNaN(
+      createdDate.getTime(),
+    )){
+
+      return createdDate
+        .toISOString();
+
+    }
+
+
+    const combinedDate =
+      new Date(
+        `${date}T${time || "00:00:00"}.000Z`,
+      );
+
+
+    if(!Number.isNaN(
+      combinedDate.getTime(),
+    )){
+
+      return combinedDate
+        .toISOString();
+
+    }
+
+
+    return new Date()
+      .toISOString();
 
   }
 

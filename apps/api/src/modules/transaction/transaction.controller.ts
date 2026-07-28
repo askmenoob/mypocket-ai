@@ -73,6 +73,34 @@ export class TransactionController {
 
 
 
+  getSheetTransactions =
+  async (
+    request:FastifyRequest,
+    reply:FastifyReply,
+  ) => {
+
+
+    const user =
+      request.user as any;
+
+
+    const result =
+      await this.service
+        .getSheetTransactions(
+          user.workspaceId,
+        );
+
+
+    return reply.send(
+      result,
+    );
+
+  }
+
+
+
+
+
   createTransaction =
   async (
     request:FastifyRequest,
