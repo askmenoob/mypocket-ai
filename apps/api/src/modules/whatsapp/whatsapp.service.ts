@@ -249,7 +249,45 @@ export class WhatsAppService {
 
 
 
-  async resetWorkspaceWhatsAppInstance(
+  async getWorkspaceWhatsAppInstanceForPairing(
+    workspaceId:string,
+  ){
+
+    const instance =
+      await this.getOrCreateWorkspaceWhatsAppInstance(
+        workspaceId,
+      );
+
+
+    const refreshedInstance =
+      await this.refreshWorkspaceInstanceStatus(
+        instance,
+      );
+
+
+    if(
+      this.isConnectedWhatsAppStatus(
+        refreshedInstance.status,
+      )
+    ){
+
+      throw new AppError(
+        "WHATSAPP_INSTANCE_ALREADY_CONNECTED",
+        "WhatsApp bot is already connected. Disconnect it before opening a new QR.",
+        409,
+      );
+
+    }
+
+
+    return refreshedInstance;
+
+  }
+
+
+
+
+  async disconnectWorkspaceWhatsAppInstance(
     input:{
       actorUserId:string;
 
@@ -281,8 +319,8 @@ export class WhatsAppService {
     ){
 
       throw new AppError(
-        "WHATSAPP_INSTANCE_RESET_FORBIDDEN",
-        "Only Owner/Admin can reset WhatsApp pairing",
+        "WHATSAPP_INSTANCE_DISCONNECT_FORBIDDEN",
+        "Only Owner/Admin can disconnect WhatsApp bot",
         403,
       );
 
@@ -322,21 +360,30 @@ export class WhatsAppService {
     }
 
 
-    const instance =
-      await this.getOrCreateWorkspaceWhatsAppInstance(
-        input.workspaceId,
-      );
-
-
     return {
       message:
-        "WhatsApp instance reset. Open QR again to pair.",
+        "WhatsApp bot disconnected. Open QR again only when you want to pair a new bot device.",
 
-      instance,
-
-      qrExpiresInSeconds:
-        60,
+      disconnected:
+        true,
     };
+
+  }
+
+
+
+
+  async resetWorkspaceWhatsAppInstance(
+    input:{
+      actorUserId:string;
+
+      workspaceId:string;
+    },
+  ){
+
+    return this.disconnectWorkspaceWhatsAppInstance(
+      input,
+    );
 
   }
 
@@ -945,6 +992,25 @@ export class WhatsAppService {
 
   }
 
+
+
+
+
+  private isConnectedWhatsAppStatus(
+    status:string,
+  ){
+
+    return [
+      "OPEN",
+      "CONNECTED",
+      "DEV_CONNECTED",
+    ].includes(
+      status
+        .trim()
+        .toUpperCase(),
+    );
+
+  }
 
 
 

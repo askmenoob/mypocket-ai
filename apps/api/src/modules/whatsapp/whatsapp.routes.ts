@@ -48,6 +48,17 @@ export default async function whatsappRoutes(
 
 
   app.post(
+    "/whatsapp/instance/disconnect",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    controller.resetWorkspaceInstance,
+  );
+
+
+  app.post(
     "/whatsapp/instance/reset",
     {
       preHandler:[

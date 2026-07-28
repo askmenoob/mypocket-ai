@@ -193,7 +193,7 @@ export class WhatsAppController {
 
     const result =
       await this.service
-        .resetWorkspaceWhatsAppInstance({
+        .disconnectWorkspaceWhatsAppInstance({
           actorUserId:
             user.userId,
 
@@ -376,7 +376,7 @@ export class WhatsAppController {
 
     const instance =
       await this.service
-        .getOrCreateWorkspaceWhatsAppInstance(
+        .getWorkspaceWhatsAppInstanceForPairing(
           user.workspaceId,
         );
 

@@ -231,8 +231,19 @@ function getApiTextErrorMessage(
 
       return [
         "QR WhatsApp belum tersedia sekarang.",
-        "Jika bot sudah connected, tekan Recheck status dan teruskan setup.",
-        "Jika belum connected, restart/pair semula instance WhatsApp kemudian cuba buka QR lagi.",
+        "Jika bot sudah connected, QR tidak akan dibuka untuk device lain.",
+        "Disconnect WhatsApp dahulu jika mahu pair semula.",
+      ].join(
+        "\n",
+      );
+
+    }
+
+    if(code === "WHATSAPP_INSTANCE_ALREADY_CONNECTED"){
+
+      return [
+        "WhatsApp bot sudah connected.",
+        "QR pairing hanya boleh dibuka selepas Disconnect WhatsApp.",
       ].join(
         "\n",
       );
@@ -1034,7 +1045,7 @@ function App(){
       if(!imageSrc){
 
         throw new Error(
-          "QR WhatsApp belum tersedia sekarang. Tekan Reset expired QR untuk generate QR baru.",
+          "QR WhatsApp belum tersedia sekarang. Jika bot sudah connected, disconnect dahulu sebelum pair semula.",
         );
 
       }
@@ -1103,7 +1114,7 @@ function App(){
     try{
 
       await api(
-        "/whatsapp/instance/reset",
+        "/whatsapp/instance/disconnect",
         token,
         {
           method:"POST",
@@ -1112,7 +1123,7 @@ function App(){
       );
 
       setNotice(
-        "WhatsApp QR telah direset. Buka QR semula dan scan dalam masa lebih kurang 1 minit.",
+        "WhatsApp bot telah disconnected. Buka QR hanya jika mahu pair semula.",
       );
 
       setWhatsAppQr(
@@ -1134,7 +1145,7 @@ function App(){
       setNotice(
         error instanceof Error
           ? error.message
-          : "WhatsApp QR reset failed.",
+          : "WhatsApp disconnect failed.",
       );
 
     }
@@ -1747,7 +1758,7 @@ function SetupWizard(
                   className="secondary"
                   onClick={() => props.resetWhatsAppInstance()}
                 >
-                  Reset expired QR
+                  Generate fresh QR
                 </button>
               )}
 
@@ -2019,6 +2030,11 @@ function Dashboard(
         ),
       )
       .length;
+
+  const isWhatsAppConnected =
+    isWhatsAppInstanceConnected(
+      props.data.whatsapp?.instance?.status,
+    );
 
   const navItems:Array<{
     icon:string;
@@ -2435,16 +2451,27 @@ function Dashboard(
                       Unlink
                     </button>
                   )}
-                </div>
-              ))}
+              </div>
+            ))}
             </div>
               <div className="panelActions">
-                <button
-                  className="primary"
-                  onClick={() => props.openWhatsAppQr("dashboard")}
-                >
-                  Open WhatsApp QR
-                </button>
+                {!isWhatsAppConnected && (
+                  <button
+                    className="primary"
+                    onClick={() => props.openWhatsAppQr("dashboard")}
+                  >
+                    Open WhatsApp QR
+                  </button>
+                )}
+
+                {isWhatsAppConnected && (
+                  <button
+                    className="ghost danger"
+                    onClick={() => props.resetWhatsAppInstance()}
+                  >
+                    Disconnect WhatsApp
+                  </button>
+                )}
 
                 <button
                   className="ghost"
@@ -2520,8 +2547,23 @@ function Dashboard(
                   "transactions",
                 )}
               />
-              <Action title="Open WhatsApp QR" desc="Reconnect bot pairing." icon="☏" onClick={() => props.openWhatsAppQr("dashboard")} />
-              <Action title="Reset WhatsApp QR" desc="Generate a fresh pairing instance." icon="↻" onClick={() => props.resetWhatsAppInstance()} />
+              {isWhatsAppConnected
+                ? (
+                  <Action
+                    title="Disconnect WhatsApp"
+                    desc="Putuskan bot semasa sebelum pair semula."
+                    icon="⏻"
+                    onClick={() => props.resetWhatsAppInstance()}
+                  />
+                )
+                : (
+                  <Action
+                    title="Open WhatsApp QR"
+                    desc="Pair bot sekali dengan nombor WhatsApp anda."
+                    icon="☏"
+                    onClick={() => props.openWhatsAppQr("dashboard")}
+                  />
+                )}
               <Action title="Setup Wizard" desc="Review onboarding steps." icon="⚙" onClick={props.resetWizard} />
             </div>
             </Panel>
@@ -2902,12 +2944,12 @@ function WhatsAppQrPanel(
             className="primary"
             onClick={props.resetQr}
           >
-            Generate new QR
+            Generate fresh QR
           </button>
         </div>
 
         <p className="hint">
-          QR akan ditutup automatik selepas bot berjaya paired.
+          Selepas bot connected, QR ini tidak boleh digunakan untuk pair device lain.
         </p>
       </section>
     );
