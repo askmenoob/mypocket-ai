@@ -64,6 +64,10 @@ model WorkspaceGoogleSetting {
 
   spreadsheetTitle String?
 
+  backupSpreadsheetId String?
+
+  backupSpreadsheetTitle String?
+
 
   templateType String?
 

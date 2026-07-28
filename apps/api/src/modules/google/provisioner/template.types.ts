@@ -20,6 +20,14 @@ export interface TemplateProvisionInput {
 
 export interface TemplateProvisionResult {
 
+  templateType:
+    WorkspaceTemplateType;
+
+
+  templateName:
+    string;
+
+
   spreadsheetId:
     string;
 
@@ -29,6 +37,18 @@ export interface TemplateProvisionResult {
 
 
   spreadsheetUrl:
+    string;
+
+
+  backupSpreadsheetId:
+    string;
+
+
+  backupSpreadsheetTitle:
+    string;
+
+
+  backupSpreadsheetUrl:
     string;
 
 

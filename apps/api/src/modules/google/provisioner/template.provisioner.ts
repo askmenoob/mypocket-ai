@@ -67,6 +67,15 @@ export class TemplateProvisioner {
         );
 
 
+    if(template.type !== input.workspaceType){
+
+      throw new Error(
+        `Google template type mismatch: expected ${input.workspaceType}, got ${template.type}`,
+      );
+
+    }
+
+
 
     const folders =
       await this.driveService
@@ -91,8 +100,31 @@ export class TemplateProvisioner {
         );
 
 
+    const backup =
+      await this.driveService
+        .copyFile(
+
+          input.workspaceId,
+
+          template.spreadsheetId,
+
+          `${template.name} Backup - DO NOT DELETE`,
+
+          folders.exportsFolderId,
+
+        );
+
+
 
     return {
+
+      templateType:
+        template.type,
+
+
+      templateName:
+        template.name,
+
 
       spreadsheetId:
         copied.id,
@@ -104,6 +136,18 @@ export class TemplateProvisioner {
 
       spreadsheetUrl:
         copied.url,
+
+
+      backupSpreadsheetId:
+        backup.id,
+
+
+      backupSpreadsheetTitle:
+        backup.name,
+
+
+      backupSpreadsheetUrl:
+        backup.url,
 
 
       rootFolderId:

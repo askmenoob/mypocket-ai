@@ -448,6 +448,15 @@ dd{
   overflow-wrap:anywhere;
 }
 
+.backupSheetUrlBox{
+  background:#fffaf0;
+  border-color:#ffd2a8;
+}
+
+.backupSheetUrlBox a{
+  color:#9a4b00;
+}
+
 .memberList{
   display:grid;
   gap:10px;

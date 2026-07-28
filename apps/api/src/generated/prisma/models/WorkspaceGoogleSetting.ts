@@ -29,6 +29,8 @@ export type WorkspaceGoogleSettingMinAggregateOutputType = {
   workspaceId: string | null
   spreadsheetId: string | null
   spreadsheetTitle: string | null
+  backupSpreadsheetId: string | null
+  backupSpreadsheetTitle: string | null
   templateType: string | null
   rootFolderId: string | null
   reportsFolderId: string | null
@@ -46,6 +48,8 @@ export type WorkspaceGoogleSettingMaxAggregateOutputType = {
   workspaceId: string | null
   spreadsheetId: string | null
   spreadsheetTitle: string | null
+  backupSpreadsheetId: string | null
+  backupSpreadsheetTitle: string | null
   templateType: string | null
   rootFolderId: string | null
   reportsFolderId: string | null
@@ -63,6 +67,8 @@ export type WorkspaceGoogleSettingCountAggregateOutputType = {
   workspaceId: number
   spreadsheetId: number
   spreadsheetTitle: number
+  backupSpreadsheetId: number
+  backupSpreadsheetTitle: number
   templateType: number
   rootFolderId: number
   reportsFolderId: number
@@ -82,6 +88,8 @@ export type WorkspaceGoogleSettingMinAggregateInputType = {
   workspaceId?: true
   spreadsheetId?: true
   spreadsheetTitle?: true
+  backupSpreadsheetId?: true
+  backupSpreadsheetTitle?: true
   templateType?: true
   rootFolderId?: true
   reportsFolderId?: true
@@ -99,6 +107,8 @@ export type WorkspaceGoogleSettingMaxAggregateInputType = {
   workspaceId?: true
   spreadsheetId?: true
   spreadsheetTitle?: true
+  backupSpreadsheetId?: true
+  backupSpreadsheetTitle?: true
   templateType?: true
   rootFolderId?: true
   reportsFolderId?: true
@@ -116,6 +126,8 @@ export type WorkspaceGoogleSettingCountAggregateInputType = {
   workspaceId?: true
   spreadsheetId?: true
   spreadsheetTitle?: true
+  backupSpreadsheetId?: true
+  backupSpreadsheetTitle?: true
   templateType?: true
   rootFolderId?: true
   reportsFolderId?: true
@@ -206,6 +218,8 @@ export type WorkspaceGoogleSettingGroupByOutputType = {
   workspaceId: string
   spreadsheetId: string
   spreadsheetTitle: string | null
+  backupSpreadsheetId: string | null
+  backupSpreadsheetTitle: string | null
   templateType: string | null
   rootFolderId: string | null
   reportsFolderId: string | null
@@ -244,6 +258,8 @@ export type WorkspaceGoogleSettingWhereInput = {
   workspaceId?: Prisma.StringFilter<"WorkspaceGoogleSetting"> | string
   spreadsheetId?: Prisma.StringFilter<"WorkspaceGoogleSetting"> | string
   spreadsheetTitle?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
+  backupSpreadsheetId?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
+  backupSpreadsheetTitle?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
   templateType?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
   rootFolderId?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
   reportsFolderId?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
@@ -262,6 +278,8 @@ export type WorkspaceGoogleSettingOrderByWithRelationInput = {
   workspaceId?: Prisma.SortOrder
   spreadsheetId?: Prisma.SortOrder
   spreadsheetTitle?: Prisma.SortOrderInput | Prisma.SortOrder
+  backupSpreadsheetId?: Prisma.SortOrderInput | Prisma.SortOrder
+  backupSpreadsheetTitle?: Prisma.SortOrderInput | Prisma.SortOrder
   templateType?: Prisma.SortOrderInput | Prisma.SortOrder
   rootFolderId?: Prisma.SortOrderInput | Prisma.SortOrder
   reportsFolderId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -283,6 +301,8 @@ export type WorkspaceGoogleSettingWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.WorkspaceGoogleSettingWhereInput | Prisma.WorkspaceGoogleSettingWhereInput[]
   spreadsheetId?: Prisma.StringFilter<"WorkspaceGoogleSetting"> | string
   spreadsheetTitle?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
+  backupSpreadsheetId?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
+  backupSpreadsheetTitle?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
   templateType?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
   rootFolderId?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
   reportsFolderId?: Prisma.StringNullableFilter<"WorkspaceGoogleSetting"> | string | null
@@ -301,6 +321,8 @@ export type WorkspaceGoogleSettingOrderByWithAggregationInput = {
   workspaceId?: Prisma.SortOrder
   spreadsheetId?: Prisma.SortOrder
   spreadsheetTitle?: Prisma.SortOrderInput | Prisma.SortOrder
+  backupSpreadsheetId?: Prisma.SortOrderInput | Prisma.SortOrder
+  backupSpreadsheetTitle?: Prisma.SortOrderInput | Prisma.SortOrder
   templateType?: Prisma.SortOrderInput | Prisma.SortOrder
   rootFolderId?: Prisma.SortOrderInput | Prisma.SortOrder
   reportsFolderId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -324,6 +346,8 @@ export type WorkspaceGoogleSettingScalarWhereWithAggregatesInput = {
   workspaceId?: Prisma.StringWithAggregatesFilter<"WorkspaceGoogleSetting"> | string
   spreadsheetId?: Prisma.StringWithAggregatesFilter<"WorkspaceGoogleSetting"> | string
   spreadsheetTitle?: Prisma.StringNullableWithAggregatesFilter<"WorkspaceGoogleSetting"> | string | null
+  backupSpreadsheetId?: Prisma.StringNullableWithAggregatesFilter<"WorkspaceGoogleSetting"> | string | null
+  backupSpreadsheetTitle?: Prisma.StringNullableWithAggregatesFilter<"WorkspaceGoogleSetting"> | string | null
   templateType?: Prisma.StringNullableWithAggregatesFilter<"WorkspaceGoogleSetting"> | string | null
   rootFolderId?: Prisma.StringNullableWithAggregatesFilter<"WorkspaceGoogleSetting"> | string | null
   reportsFolderId?: Prisma.StringNullableWithAggregatesFilter<"WorkspaceGoogleSetting"> | string | null
@@ -340,6 +364,8 @@ export type WorkspaceGoogleSettingCreateInput = {
   id?: string
   spreadsheetId: string
   spreadsheetTitle?: string | null
+  backupSpreadsheetId?: string | null
+  backupSpreadsheetTitle?: string | null
   templateType?: string | null
   rootFolderId?: string | null
   reportsFolderId?: string | null
@@ -358,6 +384,8 @@ export type WorkspaceGoogleSettingUncheckedCreateInput = {
   workspaceId: string
   spreadsheetId: string
   spreadsheetTitle?: string | null
+  backupSpreadsheetId?: string | null
+  backupSpreadsheetTitle?: string | null
   templateType?: string | null
   rootFolderId?: string | null
   reportsFolderId?: string | null
@@ -374,6 +402,8 @@ export type WorkspaceGoogleSettingUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   templateType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rootFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reportsFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -392,6 +422,8 @@ export type WorkspaceGoogleSettingUncheckedUpdateInput = {
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   templateType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rootFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reportsFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -409,6 +441,8 @@ export type WorkspaceGoogleSettingCreateManyInput = {
   workspaceId: string
   spreadsheetId: string
   spreadsheetTitle?: string | null
+  backupSpreadsheetId?: string | null
+  backupSpreadsheetTitle?: string | null
   templateType?: string | null
   rootFolderId?: string | null
   reportsFolderId?: string | null
@@ -425,6 +459,8 @@ export type WorkspaceGoogleSettingUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   templateType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rootFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reportsFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -442,6 +478,8 @@ export type WorkspaceGoogleSettingUncheckedUpdateManyInput = {
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   templateType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rootFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reportsFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -464,6 +502,8 @@ export type WorkspaceGoogleSettingCountOrderByAggregateInput = {
   workspaceId?: Prisma.SortOrder
   spreadsheetId?: Prisma.SortOrder
   spreadsheetTitle?: Prisma.SortOrder
+  backupSpreadsheetId?: Prisma.SortOrder
+  backupSpreadsheetTitle?: Prisma.SortOrder
   templateType?: Prisma.SortOrder
   rootFolderId?: Prisma.SortOrder
   reportsFolderId?: Prisma.SortOrder
@@ -481,6 +521,8 @@ export type WorkspaceGoogleSettingMaxOrderByAggregateInput = {
   workspaceId?: Prisma.SortOrder
   spreadsheetId?: Prisma.SortOrder
   spreadsheetTitle?: Prisma.SortOrder
+  backupSpreadsheetId?: Prisma.SortOrder
+  backupSpreadsheetTitle?: Prisma.SortOrder
   templateType?: Prisma.SortOrder
   rootFolderId?: Prisma.SortOrder
   reportsFolderId?: Prisma.SortOrder
@@ -498,6 +540,8 @@ export type WorkspaceGoogleSettingMinOrderByAggregateInput = {
   workspaceId?: Prisma.SortOrder
   spreadsheetId?: Prisma.SortOrder
   spreadsheetTitle?: Prisma.SortOrder
+  backupSpreadsheetId?: Prisma.SortOrder
+  backupSpreadsheetTitle?: Prisma.SortOrder
   templateType?: Prisma.SortOrder
   rootFolderId?: Prisma.SortOrder
   reportsFolderId?: Prisma.SortOrder
@@ -550,6 +594,8 @@ export type WorkspaceGoogleSettingCreateWithoutWorkspaceInput = {
   id?: string
   spreadsheetId: string
   spreadsheetTitle?: string | null
+  backupSpreadsheetId?: string | null
+  backupSpreadsheetTitle?: string | null
   templateType?: string | null
   rootFolderId?: string | null
   reportsFolderId?: string | null
@@ -566,6 +612,8 @@ export type WorkspaceGoogleSettingUncheckedCreateWithoutWorkspaceInput = {
   id?: string
   spreadsheetId: string
   spreadsheetTitle?: string | null
+  backupSpreadsheetId?: string | null
+  backupSpreadsheetTitle?: string | null
   templateType?: string | null
   rootFolderId?: string | null
   reportsFolderId?: string | null
@@ -598,6 +646,8 @@ export type WorkspaceGoogleSettingUpdateWithoutWorkspaceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   templateType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rootFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reportsFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -614,6 +664,8 @@ export type WorkspaceGoogleSettingUncheckedUpdateWithoutWorkspaceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backupSpreadsheetTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   templateType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rootFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reportsFolderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -633,6 +685,8 @@ export type WorkspaceGoogleSettingSelect<ExtArgs extends runtime.Types.Extension
   workspaceId?: boolean
   spreadsheetId?: boolean
   spreadsheetTitle?: boolean
+  backupSpreadsheetId?: boolean
+  backupSpreadsheetTitle?: boolean
   templateType?: boolean
   rootFolderId?: boolean
   reportsFolderId?: boolean
@@ -651,6 +705,8 @@ export type WorkspaceGoogleSettingSelectCreateManyAndReturn<ExtArgs extends runt
   workspaceId?: boolean
   spreadsheetId?: boolean
   spreadsheetTitle?: boolean
+  backupSpreadsheetId?: boolean
+  backupSpreadsheetTitle?: boolean
   templateType?: boolean
   rootFolderId?: boolean
   reportsFolderId?: boolean
@@ -669,6 +725,8 @@ export type WorkspaceGoogleSettingSelectUpdateManyAndReturn<ExtArgs extends runt
   workspaceId?: boolean
   spreadsheetId?: boolean
   spreadsheetTitle?: boolean
+  backupSpreadsheetId?: boolean
+  backupSpreadsheetTitle?: boolean
   templateType?: boolean
   rootFolderId?: boolean
   reportsFolderId?: boolean
@@ -687,6 +745,8 @@ export type WorkspaceGoogleSettingSelectScalar = {
   workspaceId?: boolean
   spreadsheetId?: boolean
   spreadsheetTitle?: boolean
+  backupSpreadsheetId?: boolean
+  backupSpreadsheetTitle?: boolean
   templateType?: boolean
   rootFolderId?: boolean
   reportsFolderId?: boolean
@@ -699,7 +759,7 @@ export type WorkspaceGoogleSettingSelectScalar = {
   updatedAt?: boolean
 }
 
-export type WorkspaceGoogleSettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workspaceId" | "spreadsheetId" | "spreadsheetTitle" | "templateType" | "rootFolderId" | "reportsFolderId" | "receiptsFolderId" | "exportsFolderId" | "transactionSheet" | "dashboardSheet" | "mode" | "createdAt" | "updatedAt", ExtArgs["result"]["workspaceGoogleSetting"]>
+export type WorkspaceGoogleSettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workspaceId" | "spreadsheetId" | "spreadsheetTitle" | "backupSpreadsheetId" | "backupSpreadsheetTitle" | "templateType" | "rootFolderId" | "reportsFolderId" | "receiptsFolderId" | "exportsFolderId" | "transactionSheet" | "dashboardSheet" | "mode" | "createdAt" | "updatedAt", ExtArgs["result"]["workspaceGoogleSetting"]>
 export type WorkspaceGoogleSettingInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   workspace?: boolean | Prisma.WorkspaceDefaultArgs<ExtArgs>
 }
@@ -720,6 +780,8 @@ export type $WorkspaceGoogleSettingPayload<ExtArgs extends runtime.Types.Extensi
     workspaceId: string
     spreadsheetId: string
     spreadsheetTitle: string | null
+    backupSpreadsheetId: string | null
+    backupSpreadsheetTitle: string | null
     templateType: string | null
     rootFolderId: string | null
     reportsFolderId: string | null
@@ -1158,6 +1220,8 @@ export interface WorkspaceGoogleSettingFieldRefs {
   readonly workspaceId: Prisma.FieldRef<"WorkspaceGoogleSetting", 'String'>
   readonly spreadsheetId: Prisma.FieldRef<"WorkspaceGoogleSetting", 'String'>
   readonly spreadsheetTitle: Prisma.FieldRef<"WorkspaceGoogleSetting", 'String'>
+  readonly backupSpreadsheetId: Prisma.FieldRef<"WorkspaceGoogleSetting", 'String'>
+  readonly backupSpreadsheetTitle: Prisma.FieldRef<"WorkspaceGoogleSetting", 'String'>
   readonly templateType: Prisma.FieldRef<"WorkspaceGoogleSetting", 'String'>
   readonly rootFolderId: Prisma.FieldRef<"WorkspaceGoogleSetting", 'String'>
   readonly reportsFolderId: Prisma.FieldRef<"WorkspaceGoogleSetting", 'String'>

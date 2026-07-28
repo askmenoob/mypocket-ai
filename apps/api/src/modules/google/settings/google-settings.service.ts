@@ -8,6 +8,11 @@ import {
 } from "./google-settings.repository.js";
 
 
+import {
+  GoogleSheetsService,
+} from "../sheets/google-sheets.service.js";
+
+
 
 
 import {
@@ -22,12 +27,21 @@ import {
 } from "../../workspace/workspace.repository.js";
 
 
+import type {
+  WorkspaceTemplateType,
+} from "../provisioner/template.types.js";
+
+
 
 export class GoogleSettingsService {
 
 
   private readonly repository:
     GoogleSettingsRepository;
+
+
+  private readonly sheetsService:
+    GoogleSheetsService;
 
 
 
@@ -44,12 +58,18 @@ export class GoogleSettingsService {
 
 
   constructor(
-    app:FastifyInstance,
+    private readonly app:FastifyInstance,
   ){
 
     this.repository =
       new GoogleSettingsRepository(
         app.prisma,
+      );
+
+
+    this.sheetsService =
+      new GoogleSheetsService(
+        app,
       );
 
 
@@ -133,11 +153,21 @@ export class GoogleSettingsService {
     title:string,
   ){
 
+    void title;
+
+
     const workspace =
       await this.workspaceRepository
         .findWorkspaceById(
           workspaceId,
         );
+
+
+    const workspaceType:
+      WorkspaceTemplateType =
+        workspace?.type
+        ??
+        "PERSONAL";
 
 
 
@@ -148,53 +178,86 @@ export class GoogleSettingsService {
           workspaceId,
 
           workspaceType:
-            workspace?.type
-            ??
-            "PERSONAL",
+            workspaceType,
 
         });
 
 
+    if(provision.templateType !== workspaceType){
 
-    return this.repository
-      .upsert({
+      throw new Error(
+        `Google template type mismatch: workspace is ${workspaceType}, provisioned ${provision.templateType}`,
+      );
 
+    }
+
+
+
+    const setting =
+      await this.repository
+        .upsert({
+
+          workspaceId,
+
+          spreadsheetId:
+            provision.spreadsheetId,
+
+
+          spreadsheetTitle:
+            provision.spreadsheetTitle,
+
+
+          backupSpreadsheetId:
+            provision.backupSpreadsheetId,
+
+
+          backupSpreadsheetTitle:
+            provision.backupSpreadsheetTitle,
+
+
+          templateType:
+            provision.templateType,
+
+
+          rootFolderId:
+            provision.rootFolderId,
+
+
+          reportsFolderId:
+            provision.reportsFolderId,
+
+
+          receiptsFolderId:
+            provision.receiptsFolderId,
+
+
+          exportsFolderId:
+            provision.exportsFolderId,
+
+
+          mode:
+            "AUTO_CREATED",
+
+        });
+
+
+    const backfill =
+      await this.backfillTransactionsToSheet(
         workspaceId,
+        [
+          setting.spreadsheetId,
 
-        spreadsheetId:
-          provision.spreadsheetId,
-
-
-        spreadsheetTitle:
-          provision.spreadsheetTitle,
-
-
-        templateType:
-          workspace?.type
-          ??
-          "PERSONAL",
+          setting.backupSpreadsheetId,
+        ],
+      );
 
 
-        rootFolderId:
-          provision.rootFolderId,
+    return {
+      ...setting,
 
-
-        reportsFolderId:
-          provision.reportsFolderId,
-
-
-        receiptsFolderId:
-          provision.receiptsFolderId,
-
-
-        exportsFolderId:
-          provision.exportsFolderId,
-
-
-        mode:
-          "AUTO_CREATED",
-
-      });
+      backfilledTransactions:
+        backfill.count,
+    };
 
   }
 
@@ -236,6 +299,141 @@ export class GoogleSettingsService {
       .delete(
         workspaceId,
       );
+
+  }
+
+
+
+
+  private async backfillTransactionsToSheet(
+    workspaceId:string,
+    spreadsheetIds:Array<string | null>,
+  ){
+
+    const transactions =
+      await this.app.prisma.transaction
+        .findMany({
+
+          where:{
+            workspaceId,
+
+            status:{
+              not:
+                "CANCELLED",
+            },
+          },
+
+          include:{
+            category:true,
+
+            merchant:true,
+
+            paymentMethod:true,
+          },
+
+          orderBy:{
+            transactionDate:
+              "asc",
+          },
+
+        });
+
+
+    for(const transaction of transactions){
+
+      const transactionIso =
+        transaction.transactionDate
+          .toISOString();
+
+      const transactionDate =
+        transactionIso
+          .slice(
+            0,
+            10,
+          );
+
+      const transactionTime =
+        transactionIso
+          .slice(
+            11,
+            19,
+          );
+
+
+      const values = [
+
+        transaction.id,
+
+        transactionDate,
+
+        transactionTime,
+
+        transaction.type,
+
+        transaction.category?.name
+        ??
+        "Others",
+
+        transaction.merchant?.name
+        ??
+        "-",
+
+        transaction.description
+        ??
+        "",
+
+        transaction.amount
+          .toString(),
+
+        transaction.paymentMethod?.name
+        ??
+        "",
+
+        "SYSTEM",
+
+        "",
+
+        transaction.receiptUrl
+        ??
+        "",
+
+        transactionIso,
+
+      ];
+
+
+      for(const spreadsheetId of spreadsheetIds){
+
+        if(!spreadsheetId){
+
+          continue;
+
+        }
+
+
+        await this.sheetsService
+          .appendRow(
+            workspaceId,
+            {
+              spreadsheetId,
+
+              range:
+                "Transactions!A:M",
+
+              values,
+
+            },
+          );
+
+      }
+
+    }
+
+
+    return {
+      count:
+        transactions.length,
+    };
 
   }
 

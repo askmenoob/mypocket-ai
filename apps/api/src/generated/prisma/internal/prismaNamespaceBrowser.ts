@@ -127,6 +127,8 @@ export const WorkspaceGoogleSettingScalarFieldEnum = {
   workspaceId: 'workspaceId',
   spreadsheetId: 'spreadsheetId',
   spreadsheetTitle: 'spreadsheetTitle',
+  backupSpreadsheetId: 'backupSpreadsheetId',
+  backupSpreadsheetTitle: 'backupSpreadsheetTitle',
   templateType: 'templateType',
   rootFolderId: 'rootFolderId',
   reportsFolderId: 'reportsFolderId',

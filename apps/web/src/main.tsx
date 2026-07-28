@@ -1023,7 +1023,7 @@ function App(){
 
     const confirmed =
       window.confirm(
-        "Recreate Google Sheet akan hasilkan sheet baru dan gunakan template mengikut package workspace semasa. Teruskan?",
+        `Recreate Google Sheet akan hasilkan sheet baru menggunakan template ${workspaceType}. Relink hanya reconnect permission; recreate sahaja yang tukar template. Teruskan?`,
       );
 
 
@@ -2040,6 +2040,13 @@ function Dashboard(
       :
       "";
 
+  const backupGoogleSheetUrl =
+    props.data.google?.backupSpreadsheetId
+      ?
+      `https://docs.google.com/spreadsheets/d/${props.data.google.backupSpreadsheetId}`
+      :
+      "";
+
   const googleTemplateType =
     props.data.google?.templateType
     ||
@@ -2551,9 +2558,18 @@ function Dashboard(
                   ["Workspace package", workspaceType],
                   ["Template", googleTemplateType || workspaceType],
                   ["Title", props.data.google?.spreadsheetTitle || "-"],
+                  ["Backup", props.data.google?.backupSpreadsheetTitle || "-"],
                   ["Mode", props.data.google?.mode || "-"],
                 ]}
               />
+
+              {backupGoogleSheetUrl && (
+                <div className="sheetWarning">
+                  Backup Sheet dibuat dalam Google Drive anda untuk restore dan
+                  redundancy. Jangan delete atau edit fail backup ini kecuali
+                  anda memang mahu reset backup.
+                </div>
+              )}
 
               {hasGoogleTemplateMismatch && (
                 <div className="sheetWarning">
@@ -2566,13 +2582,26 @@ function Dashboard(
 
               {googleSheetUrl && (
                 <div className="sheetUrlBox">
-                  <span>Google Sheet URL</span>
+                  <span>Working Google Sheet URL</span>
                   <a
                     href={googleSheetUrl}
                     target="_blank"
                     rel="noreferrer"
                   >
                     {googleSheetUrl}
+                  </a>
+                </div>
+              )}
+
+              {backupGoogleSheetUrl && (
+                <div className="sheetUrlBox backupSheetUrlBox">
+                  <span>Backup Google Sheet URL — do not delete</span>
+                  <a
+                    href={backupGoogleSheetUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {backupGoogleSheetUrl}
                   </a>
                 </div>
               )}

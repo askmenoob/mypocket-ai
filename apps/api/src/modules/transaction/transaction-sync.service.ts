@@ -79,6 +79,16 @@ export class TransactionSyncService {
     const spreadsheetId =
       setting.spreadsheetId;
 
+    const spreadsheetIds =
+      [
+        spreadsheetId,
+
+        setting.backupSpreadsheetId,
+      ]
+        .filter(
+          Boolean,
+        ) as string[];
+
 
     const transactionIso =
       payload.transactionDate
@@ -100,51 +110,58 @@ export class TransactionSyncService {
 
 
 
-    await this.sheetsService
-      .appendRow(
-        payload.workspaceId,
-        {
-          spreadsheetId,
+    const values = [
 
-          range:
-            "Transactions!A:M",
+      payload.transactionId,
 
-            values:[
+      transactionDate,
 
-              payload.transactionId,
+      transactionTime,
 
-              transactionDate,
+      payload.type,
 
-              transactionTime,
+      payload.category,
 
-              payload.type,
+      payload.merchant,
 
-              payload.category,
+      payload.description,
 
-              payload.merchant,
+      payload.amount,
 
-              payload.description,
+      payload.paymentMethod
+      ??
+      "",
 
-              payload.amount,
+      payload.source
+      ??
+      "SYSTEM",
 
-              payload.paymentMethod
-              ??
-              "",
+      "",
 
-              payload.source
-              ??
-              "SYSTEM",
+      "",
 
-              "",
+      transactionIso,
 
-              "",
+    ];
 
-              transactionIso,
 
-            ],
+    for(const spreadsheetId of spreadsheetIds){
 
-        },
-      );
+      await this.sheetsService
+        .appendRow(
+          payload.workspaceId,
+          {
+            spreadsheetId,
+
+            range:
+              "Transactions!A:M",
+
+            values,
+
+          },
+        );
+
+    }
 
   }
 
