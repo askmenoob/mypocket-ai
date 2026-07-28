@@ -555,11 +555,11 @@ export class WhatsAppService {
 
 
     const payloads:Array<Record<string, unknown>> = [
-      basePayload,
       {
         webhook:
           basePayload,
       },
+      basePayload,
       {
         url:
           webhookUrl,
