@@ -341,26 +341,16 @@ export class WhatsAppController {
     }
 
 
-    const status =
+    const instance =
       await this.service
-        .getWorkspaceWhatsAppStatus({
-          actorUserId:
-            user.userId,
-
-          workspaceId:
-            user.workspaceId,
-        });
-
-
-    const instanceName =
-      status.instance?.instanceName
-      ??
-      "imai-dev";
+        .getOrCreateWorkspaceWhatsAppInstance(
+          user.workspaceId,
+        );
 
 
     return this.renderQr(
       reply,
-      instanceName,
+      instance.instanceName,
     );
 
   };

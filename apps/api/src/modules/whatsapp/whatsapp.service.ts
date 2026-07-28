@@ -98,6 +98,11 @@ export class WhatsAppService {
     }
 
 
+    await this.ensureEvolutionInstance(
+      instanceName,
+    );
+
+
     const response =
       await fetch(
         `${env.EVOLUTION_API_URL}/instance/connect/${encodeURIComponent(instanceName)}`,
@@ -180,6 +185,283 @@ export class WhatsAppService {
 
   }
 
+
+
+
+
+  async getOrCreateWorkspaceWhatsAppInstance(
+    workspaceId:string,
+  ){
+
+    const existing =
+      await this.app.prisma.whatsAppInstance
+        .findFirst({
+          where:{
+            workspaceId,
+          },
+
+          orderBy:{
+            updatedAt:
+              "desc",
+          },
+        });
+
+
+    if(existing){
+
+      return existing;
+
+    }
+
+
+    const instanceName =
+      this.buildWorkspaceInstanceName(
+        workspaceId,
+      );
+
+
+    const instance =
+      await this.app.prisma.whatsAppInstance
+        .create({
+          data:{
+            instanceName,
+
+            phoneNumber:
+              null,
+
+            status:
+              "PENDING_PAIRING",
+
+            workspaceId,
+          },
+        });
+
+
+    await this.ensureEvolutionInstance(
+      instanceName,
+    );
+
+
+    return instance;
+
+  }
+
+
+
+
+  private buildWorkspaceInstanceName(
+    workspaceId:string,
+  ){
+
+    return `imai-${workspaceId}`
+      .toLowerCase()
+      .replace(
+        /[^a-z0-9-]/g,
+        "-",
+      );
+
+  }
+
+
+
+
+  private async ensureEvolutionInstance(
+    instanceName:string,
+  ){
+
+    if(
+      !env.EVOLUTION_API_KEY
+    ){
+
+      return;
+
+    }
+
+
+    try{
+
+      const response =
+        await fetch(
+          `${env.EVOLUTION_API_URL}/instance/create`,
+          {
+            method:
+              "POST",
+
+            headers:{
+              apikey:
+                env.EVOLUTION_API_KEY,
+
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                instanceName,
+
+                integration:
+                  "WHATSAPP-BAILEYS",
+
+                qrcode:
+                  true,
+              }),
+          },
+        );
+
+
+      if(
+        !response.ok
+        &&
+        response.status !== 400
+        &&
+        response.status !== 409
+      ){
+
+        console.error(
+          "EVOLUTION_INSTANCE_CREATE_FAILED:",
+          response.status,
+          await response.text(),
+        );
+
+      }
+
+    }catch(error){
+
+      console.error(
+        "EVOLUTION_INSTANCE_CREATE_FAILED:",
+        error,
+      );
+
+    }
+
+
+    await this.ensureEvolutionWebhook(
+      instanceName,
+    );
+
+  }
+
+
+
+
+  private async ensureEvolutionWebhook(
+    instanceName:string,
+  ){
+
+    if(
+      !env.EVOLUTION_API_KEY
+      ||
+      !env.WHATSAPP_WEBHOOK_SECRET
+    ){
+
+      return;
+
+    }
+
+
+    const publicApiUrl =
+      this.getPublicApiUrl();
+
+
+    if(!publicApiUrl){
+
+      return;
+
+    }
+
+
+    try{
+
+      const response =
+        await fetch(
+          `${env.EVOLUTION_API_URL}/webhook/set/${encodeURIComponent(instanceName)}`,
+          {
+            method:
+              "POST",
+
+            headers:{
+              apikey:
+                env.EVOLUTION_API_KEY,
+
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                url:
+                  `${publicApiUrl}/api/v1/whatsapp/evolution/webhook`,
+
+                enabled:
+                  true,
+
+                events:[
+                  "MESSAGES_UPSERT",
+                ],
+
+                webhookByEvents:
+                  false,
+
+                webhookBase64:
+                  false,
+
+                headers:{
+                  "X-MyPocket-Webhook-Secret":
+                    env.WHATSAPP_WEBHOOK_SECRET,
+                },
+              }),
+          },
+        );
+
+
+      if(
+        !response.ok
+      ){
+
+        console.error(
+          "EVOLUTION_WEBHOOK_SET_FAILED:",
+          response.status,
+          await response.text(),
+        );
+
+      }
+
+    }catch(error){
+
+      console.error(
+        "EVOLUTION_WEBHOOK_SET_FAILED:",
+        error,
+      );
+
+    }
+
+  }
+
+
+
+
+  private getPublicApiUrl(){
+
+    if(env.GOOGLE_AUTH_REDIRECT_URI){
+
+      try{
+
+        return new URL(
+          env.GOOGLE_AUTH_REDIRECT_URI,
+        ).origin;
+
+      }catch{
+
+        return null;
+
+      }
+
+    }
+
+
+    return null;
+
+  }
 
 
 
@@ -288,19 +570,31 @@ export class WhatsAppService {
     }
 
 
-    const instance =
-      await this.app.prisma.whatsAppInstance
-        .findFirst({
-          where:{
-            workspaceId:
-              input.workspaceId,
-          },
+    const canManageInstance =
+      actorMember.role === "OWNER"
+      ||
+      actorMember.role === "ADMIN";
 
-          orderBy:{
-            updatedAt:
-              "desc",
-          },
-        });
+
+    const instance =
+      canManageInstance
+        ?
+        await this.getOrCreateWorkspaceWhatsAppInstance(
+          input.workspaceId,
+        )
+        :
+        await this.app.prisma.whatsAppInstance
+          .findFirst({
+            where:{
+              workspaceId:
+                input.workspaceId,
+            },
+
+            orderBy:{
+              updatedAt:
+                "desc",
+            },
+          });
 
 
     const members =
