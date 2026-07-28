@@ -17,8 +17,13 @@
 
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text)}
-button,input,textarea{font:inherit}
+button,input,textarea,select{font:inherit}
 button{cursor:pointer}
+button:disabled,
+select:disabled{
+  cursor:not-allowed;
+  opacity:.55;
+}
 a{color:inherit}
 
 .loginScreen,
@@ -423,6 +428,70 @@ dd{
   margin-top:4px;
 }
 
+.helperText{
+  color:var(--muted);
+  line-height:1.6;
+  margin:0 0 16px;
+}
+
+.memberCreate{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) 180px 180px;
+  gap:14px;
+  align-items:end;
+  margin-bottom:16px;
+}
+
+.memberTable{
+  display:grid;
+  gap:10px;
+}
+
+.memberRow{
+  display:grid;
+  grid-template-columns:minmax(240px,1fr) minmax(360px,auto);
+  gap:14px;
+  align-items:center;
+  border:1px solid var(--border);
+  background:linear-gradient(135deg,#f8fffd,#fff);
+  border-radius:14px;
+  padding:14px;
+}
+
+.memberMain{
+  display:grid;
+  gap:4px;
+}
+
+.memberMain strong{
+  font-size:15px;
+}
+
+.memberMain span,
+.mutedSmall{
+  color:var(--muted);
+  font-size:13px;
+}
+
+.memberControls{
+  display:grid;
+  grid-template-columns:140px 110px 100px;
+  gap:10px;
+  align-items:center;
+}
+
+.memberControls select,
+.memberCreate select,
+.field select{
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:white;
+  color:var(--text);
+  padding:12px 14px;
+  font-weight:800;
+}
+
 .primaryLink{
   display:block;
   text-align:center;
@@ -673,6 +742,12 @@ dd{
   }
 
   .actions{
+    grid-template-columns:1fr;
+  }
+
+  .memberCreate,
+  .memberRow,
+  .memberControls{
     grid-template-columns:1fr;
   }
 

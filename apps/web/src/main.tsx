@@ -22,9 +22,15 @@ type Member = {
   userId:string;
   email:string;
   name:string | null;
-  role:string;
+  role:MemberRole;
   whatsappPhoneNumber:string | null;
 };
+
+type MemberRole =
+  | "OWNER"
+  | "ADMIN"
+  | "MEMBER"
+  | "VIEWER";
 
 type Transaction = {
   id:string;
@@ -1551,6 +1557,31 @@ function Dashboard(
   const [linkPhone, setLinkPhone] =
     useState("");
 
+  const [newMemberEmail, setNewMemberEmail] =
+    useState("");
+
+  const [newMemberRole, setNewMemberRole] =
+    useState<MemberRole>("MEMBER");
+
+  const actorRole =
+    (
+      props.data.me?.workspace?.role ||
+      "VIEWER"
+    ) as MemberRole;
+
+  const canManageMembers =
+    actorRole === "OWNER" ||
+    actorRole === "ADMIN";
+
+  const workspaceType =
+    props.data.me?.workspace?.type ||
+    props.data.google?.templateType ||
+    "PERSONAL";
+
+  const isSharedWorkspace =
+    workspaceType === "FAMILY" ||
+    workspaceType === "BUSINESS";
+
   const today =
     new Date()
       .toISOString()
@@ -1609,6 +1640,77 @@ function Dashboard(
     props.refresh();
   }
 
+  async function addMember(){
+
+    const token =
+      stored(STORAGE.token);
+
+    await api(
+      "/members",
+      token,
+      {
+        method:"POST",
+        body:JSON.stringify({
+          email:newMemberEmail,
+          role:newMemberRole,
+        }),
+      },
+    );
+
+    setNewMemberEmail("");
+    setNewMemberRole("MEMBER");
+    props.refresh();
+  }
+
+  async function updateMemberRole(
+    memberId:string,
+    role:MemberRole,
+  ){
+
+    const token =
+      stored(STORAGE.token);
+
+    await api(
+      `/members/${memberId}/role`,
+      token,
+      {
+        method:"PATCH",
+        body:JSON.stringify({
+          role,
+        }),
+      },
+    );
+
+    props.refresh();
+  }
+
+  async function removeMember(
+    memberId:string,
+  ){
+
+    const confirmed =
+      window.confirm(
+        "Remove this member from workspace?",
+      );
+
+    if(!confirmed){
+      return;
+    }
+
+    const token =
+      stored(STORAGE.token);
+
+    await api(
+      `/members/${memberId}`,
+      token,
+      {
+        method:"DELETE",
+      },
+    );
+
+    props.refresh();
+  }
+
   async function unlinkMember(
     memberId:string,
   ){
@@ -1637,6 +1739,7 @@ function Dashboard(
             ["▤", "Transactions"],
             ["☏", "WhatsApp"],
             ["▦", "Google Sheet"],
+            ...(canManageMembers ? [["👥", "Admin"]] : []),
             ["⚙", "Settings"],
           ].map(([icon, label], index) => (
             <a
@@ -1806,7 +1909,116 @@ function Dashboard(
             </div>
           </Panel>
 
-          <Panel title="Member Link">
+          {canManageMembers && (
+            <Panel title="User Role Management" wide>
+              <p className="helperText">
+                Owner/Admin boleh tambah user, tukar role, remove member dan pautkan nombor WhatsApp.
+                {isSharedWorkspace
+                  ? " Family/Business workspace wajib mapping nombor WhatsApp untuk permission command."
+                  : " Personal workspace boleh guna terus, tetapi role tetap boleh disediakan untuk upgrade nanti."}
+              </p>
+
+              <div className="memberCreate">
+                <label className="field">
+                  User email
+                  <input
+                    value={newMemberEmail}
+                    onChange={(event) => setNewMemberEmail(event.target.value)}
+                    placeholder="member@example.com"
+                  />
+                </label>
+
+                <label className="field">
+                  Role
+                  <select
+                    value={newMemberRole}
+                    onChange={(event) => setNewMemberRole(event.target.value as MemberRole)}
+                  >
+                    <option value="ADMIN">ADMIN</option>
+                    <option value="MEMBER">MEMBER</option>
+                    <option value="VIEWER">VIEWER</option>
+                  </select>
+                </label>
+
+                <button
+                  className="primary"
+                  onClick={addMember}
+                >
+                  Add member
+                </button>
+              </div>
+
+              <div className="memberTable">
+                {props.data.members.map((member) => {
+                  const isOwner =
+                    member.role === "OWNER";
+
+                  const adminCannotEdit =
+                    actorRole === "ADMIN" &&
+                    (
+                      member.role === "OWNER" ||
+                      member.role === "ADMIN"
+                    );
+
+                  const canEditMember =
+                    canManageMembers &&
+                    !isOwner &&
+                    !adminCannotEdit;
+
+                  return (
+                    <div className="memberRow" key={member.memberId}>
+                      <div className="memberMain">
+                        <strong>{member.name || member.email}</strong>
+                        <span>{member.email}</span>
+                        <span>{member.whatsappPhoneNumber || "WhatsApp belum linked"}</span>
+                      </div>
+
+                      <div className="memberControls">
+                        <select
+                          value={member.role}
+                          disabled={!canEditMember}
+                          onChange={(event) => updateMemberRole(
+                            member.memberId,
+                            event.target.value as MemberRole,
+                          )}
+                        >
+                          <option value="OWNER">OWNER</option>
+                          <option value="ADMIN">ADMIN</option>
+                          <option value="MEMBER">MEMBER</option>
+                          <option value="VIEWER">VIEWER</option>
+                        </select>
+
+                        {member.whatsappPhoneNumber ? (
+                          <button
+                            className="ghost"
+                            onClick={() => unlinkMember(member.memberId)}
+                            disabled={!canEditMember}
+                          >
+                            Unlink WA
+                          </button>
+                        ) : (
+                          <span className="mutedSmall">
+                            Link below
+                          </span>
+                        )}
+
+                        <button
+                          className="ghost danger"
+                          onClick={() => removeMember(member.memberId)}
+                          disabled={!canEditMember}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Panel>
+          )}
+
+          {canManageMembers && (
+            <Panel title="Member WhatsApp Link">
             <label className="field">
               Member email
               <input
@@ -1831,7 +2043,8 @@ function Dashboard(
             >
               Link member
             </button>
-          </Panel>
+            </Panel>
+          )}
         </section>
 
         <button
