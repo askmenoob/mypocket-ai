@@ -214,6 +214,95 @@ function getApiTextErrorMessage(
 
 }
 
+function escapeHtml(
+  value:string,
+){
+
+  return value
+    .replace(
+      /&/g,
+      "&amp;",
+    )
+    .replace(
+      /</g,
+      "&lt;",
+    )
+    .replace(
+      />/g,
+      "&gt;",
+    )
+    .replace(
+      /"/g,
+      "&quot;",
+    )
+    .replace(
+      /'/g,
+      "&#039;",
+    );
+
+}
+
+function buildQrPopupPage(
+  title:string,
+  message:string,
+){
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>${escapeHtml(
+      title,
+    )}</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #ecfdf8, #ffffff);
+        color: #082326;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: min(92vw, 420px);
+        padding: 28px;
+        border: 1px solid #b8eee4;
+        border-radius: 24px;
+        background: #ffffff;
+        box-shadow: 0 24px 70px rgba(4, 47, 46, 0.12);
+        text-align: center;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: 24px;
+      }
+
+      p {
+        margin: 0;
+        color: #587076;
+        line-height: 1.6;
+        white-space: pre-line;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>${escapeHtml(
+        title,
+      )}</h1>
+      <p>${escapeHtml(
+        message,
+      )}</p>
+    </main>
+  </body>
+</html>`;
+
+}
+
 async function optionalApi<T>(
   path:string,
   token:string,
@@ -803,6 +892,25 @@ function App(){
 
   async function openWhatsAppQr(){
 
+    const qrWindow =
+      window.open(
+        "",
+        "mypocket-whatsapp-qr",
+      );
+
+    qrWindow
+      ?.document
+      .write(
+        buildQrPopupPage(
+          "Loading WhatsApp QR",
+          "Sedang dapatkan QR pairing daripada server...",
+        ),
+      );
+
+    qrWindow
+      ?.document
+      .close();
+
     try{
 
       const html =
@@ -811,31 +919,71 @@ function App(){
           token,
         );
 
-      const url =
-        URL.createObjectURL(
-          new Blob(
-            [
-              html,
-            ],
-            {
-              type:
-                "text/html",
-            },
-          ),
-        );
+      if(
+        qrWindow
+        &&
+        !qrWindow.closed
+      ){
 
-      window.open(
-        url,
-        "_blank",
-        "noopener,noreferrer",
+        qrWindow
+          .document
+          .open();
+
+        qrWindow
+          .document
+          .write(
+            html,
+          );
+
+        qrWindow
+          .document
+          .close();
+
+        qrWindow
+          .focus();
+
+        return;
+
+      }
+
+      setNotice(
+        "Browser block popup QR. Benarkan popup untuk app.imai.my kemudian tekan Open WhatsApp QR semula.",
       );
 
     }catch(error){
 
-      setNotice(
+      const message =
         error instanceof Error
           ? error.message
-          : "WhatsApp QR could not be opened.",
+          : "WhatsApp QR could not be opened.";
+
+      if(
+        qrWindow
+        &&
+        !qrWindow.closed
+      ){
+
+        qrWindow
+          .document
+          .open();
+
+        qrWindow
+          .document
+          .write(
+            buildQrPopupPage(
+              "WhatsApp QR belum tersedia",
+              message,
+            ),
+          );
+
+        qrWindow
+          .document
+          .close();
+
+      }
+
+      setNotice(
+        message,
       );
 
     }
