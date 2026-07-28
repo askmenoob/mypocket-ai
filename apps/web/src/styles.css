@@ -414,6 +414,40 @@ dd{
   font-weight:900;
 }
 
+.sheetWarning{
+  border:1px solid #ffd2a8;
+  background:#fff8ef;
+  color:#a45100;
+  border-radius:14px;
+  padding:12px 14px;
+  font-weight:800;
+  line-height:1.45;
+  margin:0 0 14px;
+}
+
+.sheetUrlBox{
+  border:1px solid #aee9dc;
+  background:#f0fffb;
+  border-radius:14px;
+  padding:12px 14px;
+  display:grid;
+  gap:6px;
+  margin:0 0 14px;
+}
+
+.sheetUrlBox span{
+  color:var(--muted);
+  font-size:13px;
+  font-weight:900;
+}
+
+.sheetUrlBox a{
+  color:#007f70;
+  font-weight:900;
+  text-decoration:none;
+  overflow-wrap:anywhere;
+}
+
 .memberList{
   display:grid;
   gap:10px;

@@ -1961,6 +1961,25 @@ function Dashboard(
     props.data.google?.templateType ||
     "PERSONAL";
 
+  const googleSheetUrl =
+    props.data.google?.spreadsheetId
+      ?
+      `https://docs.google.com/spreadsheets/d/${props.data.google.spreadsheetId}`
+      :
+      "";
+
+  const googleTemplateType =
+    props.data.google?.templateType
+    ||
+    "";
+
+  const hasGoogleTemplateMismatch =
+    Boolean(
+      googleTemplateType
+      &&
+      googleTemplateType !== workspaceType,
+    );
+
   const isSharedWorkspace =
     workspaceType === "FAMILY" ||
     workspaceType === "BUSINESS";
@@ -2439,13 +2458,36 @@ function Dashboard(
 
           {(activeView === "dashboard" || activeView === "google") && (
             <Panel title="Google Sheet">
-            <StatusGrid
-              rows={[
-                ["Template", props.data.google?.templateType || "PERSONAL"],
-                ["Title", props.data.google?.spreadsheetTitle || "-"],
-                ["Mode", props.data.google?.mode || "-"],
-              ]}
-            />
+              <StatusGrid
+                rows={[
+                  ["Workspace package", workspaceType],
+                  ["Template", googleTemplateType || workspaceType],
+                  ["Title", props.data.google?.spreadsheetTitle || "-"],
+                  ["Mode", props.data.google?.mode || "-"],
+                ]}
+              />
+
+              {hasGoogleTemplateMismatch && (
+                <div className="sheetWarning">
+                  Workspace sekarang ialah {workspaceType}, tetapi Google Sheet
+                  yang tersambung masih menggunakan template {googleTemplateType}.
+                  Jika mahu sheet ikut package semasa, recreate atau connect
+                  semula Google Sheet.
+                </div>
+              )}
+
+              {googleSheetUrl && (
+                <div className="sheetUrlBox">
+                  <span>Google Sheet URL</span>
+                  <a
+                    href={googleSheetUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {googleSheetUrl}
+                  </a>
+                </div>
+              )}
 
             {props.data.google?.spreadsheetId && (
               <button
