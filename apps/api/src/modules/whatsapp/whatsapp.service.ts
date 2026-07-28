@@ -3402,36 +3402,17 @@ export class WhatsAppService {
     edit:WhatsAppEditCommand,
   ){
 
+    void userId;
+    void role;
+
     const transaction =
-      await this.app.prisma.transaction
-        .findFirst({
-
-          where:{
-            workspaceId,
-
-            status:{
-              not:
-                "CANCELLED",
-            },
-          },
-
-          include:{
-            category:true,
-            merchant:true,
-            paymentMethod:true,
-            workspace:{
-              select:{
-                type:true,
-              },
-            },
-          },
-
-          orderBy:{
-            createdAt:
-              "desc",
-          },
-
-        });
+      (
+        await this.getWorkspaceSheetTransactions(
+          workspaceId,
+        )
+      )[0]
+      ??
+      null;
 
 
     if(!transaction){
@@ -3465,6 +3446,11 @@ export class WhatsAppService {
     const data:
       Record<string, unknown> =
         {};
+
+    const updated:any =
+      {
+        ...transaction,
+      };
 
 
     if(edit.field === "date"){
@@ -3511,6 +3497,9 @@ export class WhatsAppService {
         new Date(
           `${dateValue}T${currentIso.slice(11, 19)}.000Z`,
         );
+
+      updated.transactionDate =
+        data.transactionDate;
 
     }
 
@@ -3560,6 +3549,9 @@ export class WhatsAppService {
           `${currentIso.slice(0, 10)}T${timeValue}.000Z`,
         );
 
+      updated.transactionDate =
+        data.transactionDate;
+
     }
 
 
@@ -3599,6 +3591,9 @@ export class WhatsAppService {
       data.type =
         transactionType;
 
+      updated.type =
+        transactionType;
+
 
       if(transactionType === "INCOME"){
 
@@ -3611,6 +3606,12 @@ export class WhatsAppService {
 
         data.categoryId =
           category.id;
+
+        updated.category =
+          {
+            name:
+              category.name,
+          };
 
       }
 
@@ -3632,6 +3633,12 @@ export class WhatsAppService {
 
         data.categoryId =
           category.id;
+
+        updated.category =
+          {
+            name:
+              category.name,
+          };
 
       }
 
@@ -3674,12 +3681,18 @@ export class WhatsAppService {
       data.amount =
         amount;
 
+      updated.amount =
+        amount;
+
     }
 
 
     if(edit.field === "description"){
 
       data.description =
+        edit.value;
+
+      updated.description =
         edit.value;
 
     }
@@ -3697,6 +3710,12 @@ export class WhatsAppService {
       data.categoryId =
         category.id;
 
+      updated.category =
+        {
+          name:
+            category.name,
+        };
+
     }
 
 
@@ -3711,6 +3730,12 @@ export class WhatsAppService {
 
       data.merchantId =
         merchant.id;
+
+      updated.merchant =
+        {
+          name:
+            merchant.name,
+        };
 
     }
 
@@ -3727,48 +3752,11 @@ export class WhatsAppService {
       data.paymentMethodId =
         paymentMethod.id;
 
-    }
-
-
-    await this.transactionService
-      .updateTransaction(
-        role,
-        workspaceId,
-        transaction.id,
-        data,
-      );
-
-
-    const updated =
-      await this.app.prisma.transaction
-        .findFirst({
-          where:{
-            workspaceId,
-
-            id:
-              transaction.id,
-          },
-
-          include:{
-            category:true,
-            merchant:true,
-            paymentMethod:true,
-            workspace:{
-              select:{
-                type:true,
-              },
-            },
-          },
-        });
-
-
-    if(!updated){
-
-      throw new AppError(
-        "TRANSACTION_NOT_FOUND_AFTER_EDIT",
-        "Transaction not found after edit",
-        500,
-      );
+      updated.paymentMethod =
+        {
+          name:
+            paymentMethod.name,
+        };
 
     }
 
@@ -4269,40 +4257,21 @@ export class WhatsAppService {
 
 
     const transaction =
-      await this.app.prisma.transaction
-        .findFirst({
-
-          where:{
-            workspaceId,
-
-            status:{
-              not:
-                "CANCELLED",
-            },
-
-            updatedAt:{
-              gte:
-                since,
-            },
-          },
-
-          include:{
-            category:true,
-            merchant:true,
-            paymentMethod:true,
-            workspace:{
-              select:{
-                type:true,
-              },
-            },
-          },
-
-          orderBy:{
-            createdAt:
-              "desc",
-          },
-
-        });
+      (
+        await this.getWorkspaceSheetTransactions(
+          workspaceId,
+        )
+      )
+        .find(
+          (item) =>
+            this.getSheetTransactionTime(
+              item,
+            )
+            >=
+            since.getTime(),
+        )
+      ??
+      null;
 
 
     if(!transaction){
@@ -4334,31 +4303,7 @@ export class WhatsAppService {
 
 
     const cancelled =
-      await this.app.prisma.transaction
-        .update({
-
-          where:{
-            id:
-              transaction.id,
-          },
-
-          data:{
-            status:
-              "CANCELLED",
-          },
-
-          include:{
-            category:true,
-            merchant:true,
-            paymentMethod:true,
-            workspace:{
-              select:{
-                type:true,
-              },
-            },
-          },
-
-        });
+      transaction;
 
 
     await this.sheetSyncService
