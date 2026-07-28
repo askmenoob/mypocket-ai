@@ -37,11 +37,15 @@ type WorkspaceType =
   | "FAMILY"
   | "BUSINESS";
 
+type WorkspacePackage =
+  | WorkspaceType
+  | "PERSONAL_PRO";
+
 type AdminUser = {
   userId:string;
   email:string;
   name:string | null;
-  package:WorkspaceType;
+  package:WorkspacePackage;
   subscriptionPlan:string;
   subscriptionStatus:string;
   workspace:{
@@ -1028,12 +1032,20 @@ function App(){
       data.me?.workspace?.type ||
       "PERSONAL";
 
+    const templateType =
+      workspaceType === "FAMILY" ||
+      workspaceType === "BUSINESS"
+        ?
+        workspaceType
+        :
+        "PERSONAL";
+
     const title =
-      `MyPocket ${workspaceType[0]}${workspaceType.slice(1).toLowerCase()} Template`;
+      `MyPocket ${templateType[0]}${templateType.slice(1).toLowerCase()} Template`;
 
     const confirmed =
       window.confirm(
-        `Recreate Google Sheet akan hasilkan sheet baru menggunakan template ${workspaceType}. Relink hanya reconnect permission; recreate sahaja yang tukar template. Teruskan?`,
+        `Recreate Google Sheet akan hasilkan sheet baru menggunakan template ${templateType} untuk workspace ${workspaceType}. Relink hanya reconnect permission; recreate sahaja yang tukar template. Teruskan?`,
       );
 
 
@@ -2268,7 +2280,7 @@ function Dashboard(
 
   async function updateUserPackage(
     userId:string,
-    packageType:WorkspaceType,
+    packageType:WorkspacePackage,
   ){
 
     const token =
@@ -2725,10 +2737,11 @@ function Dashboard(
                           disabled={packageBusyUserId === user.userId}
                           onChange={(event) => updateUserPackage(
                             user.userId,
-                            event.target.value as WorkspaceType,
+                            event.target.value as WorkspacePackage,
                           )}
                         >
                           <option value="PERSONAL">PERSONAL</option>
+                          <option value="PERSONAL_PRO">PERSONAL PRO</option>
                           <option value="FAMILY">FAMILY</option>
                           <option value="BUSINESS">BUSINESS</option>
                         </select>
@@ -3242,7 +3255,8 @@ function PublicLanding(){
 
         <div className="pricingGrid">
           <Plan title="Personal" price="RM 0" text="For individuals" features={["1 WhatsApp number", "Google Sheet sync", "PWA dashboard", "Basic summaries"]} />
-          <Plan title="Family" price="RM 19" text="For households" highlight features={["Up to 5 WhatsApp numbers", "Roles & permissions", "Member mapping", "Priority support"]} />
+          <Plan title="Personal Pro" price="RM 9" text="For power users" highlight features={["Personal template", "Backup Google Sheet", "Advanced WhatsApp commands", "Priority improvements"]} />
+          <Plan title="Family" price="RM 19" text="For households" features={["Up to 5 WhatsApp numbers", "Roles & permissions", "Member mapping", "Priority support"]} />
           <Plan title="Business" price="RM 49" text="For small teams" features={["Up to 10 WhatsApp numbers", "Advanced audit log", "Business templates", "Priority support"]} />
         </div>
       </section>

@@ -10,6 +10,7 @@ import {
 
 import type {
   WorkspaceContext,
+  WorkspacePackage,
   WorkspaceType,
 } from "./workspace.types.js";
 
@@ -281,7 +282,7 @@ export class WorkspaceService {
   async updateUserPackage(
     actorEmail:string,
     userId:string,
-    workspaceType:WorkspaceType,
+    packageType:WorkspacePackage,
   ){
 
     this.assertSuperAdmin(
@@ -324,6 +325,12 @@ export class WorkspaceService {
     }
 
 
+    const workspaceType =
+      this.packageToWorkspaceType(
+        packageType,
+      );
+
+
     await this.repository
       .updateWorkspaceType(
         workspace.id,
@@ -334,7 +341,7 @@ export class WorkspaceService {
     await this.repository
       .upsertSubscriptionPlan(
         user.id,
-        workspaceType,
+        packageType,
       );
 
 
@@ -348,6 +355,56 @@ export class WorkspaceService {
     return this.toAdminUserPackage(
       updated!,
     );
+
+  }
+
+
+
+  private packageToWorkspaceType(
+    packageType:WorkspacePackage,
+  ):WorkspaceType{
+
+    if(packageType === "PERSONAL_PRO"){
+
+      return "PERSONAL";
+
+    }
+
+
+    return packageType;
+
+  }
+
+
+
+  private resolveUserPackage(
+    workspaceType:WorkspaceType | null | undefined,
+    subscriptionPlan:string | null | undefined,
+  ):WorkspacePackage{
+
+    if(
+      workspaceType === "PERSONAL"
+      &&
+      subscriptionPlan === "PERSONAL_PRO"
+    ){
+
+      return "PERSONAL_PRO";
+
+    }
+
+
+    if(
+      workspaceType === "FAMILY"
+      ||
+      workspaceType === "BUSINESS"
+    ){
+
+      return workspaceType;
+
+    }
+
+
+    return "PERSONAL";
 
   }
 
@@ -400,6 +457,14 @@ export class WorkspaceService {
       ??
       null;
 
+    const workspaceType =
+      workspace?.type as WorkspaceType | undefined;
+
+    const subscriptionPlan =
+      user.subscription?.plan
+      ??
+      "FREE";
+
 
     return {
 
@@ -413,14 +478,13 @@ export class WorkspaceService {
         user.name,
 
       package:
-        workspace?.type
-        ??
-        "PERSONAL",
+        this.resolveUserPackage(
+          workspaceType,
+          subscriptionPlan,
+        ),
 
       subscriptionPlan:
-        user.subscription?.plan
-        ??
-        "FREE",
+        subscriptionPlan,
 
       subscriptionStatus:
         user.subscription?.status

@@ -97,6 +97,73 @@ const templates = [
 
 
 
+const missingTemplates =
+  templates
+    .filter(
+      (template) => !template.spreadsheetId,
+    );
+
+
+if(missingTemplates.length > 0){
+
+  throw new Error(
+    `MISSING_GOOGLE_TEMPLATE_IDS: ${missingTemplates
+      .map(
+        (template) => `${template.type}_TEMPLATE_ID`,
+      )
+      .join(", ")}`,
+  );
+
+}
+
+
+const spreadsheetIdCounts =
+  new Map<string, string[]>();
+
+
+for(const template of templates){
+
+  const existing =
+    spreadsheetIdCounts.get(
+      template.spreadsheetId,
+    )
+    ??
+    [];
+
+  existing.push(
+    template.type,
+  );
+
+  spreadsheetIdCounts.set(
+    template.spreadsheetId,
+    existing,
+  );
+
+}
+
+
+const duplicateSpreadsheetIds =
+  [...spreadsheetIdCounts.entries()]
+    .filter(
+      ([, types]) => types.length > 1,
+    );
+
+
+if(duplicateSpreadsheetIds.length > 0){
+
+  throw new Error(
+    `DUPLICATE_GOOGLE_TEMPLATE_IDS: ${duplicateSpreadsheetIds
+      .map(
+        ([spreadsheetId, types]) =>
+          `${spreadsheetId} used by ${types.join("/")}`,
+      )
+      .join("; ")}`,
+  );
+
+}
+
+
+
 for (const template of templates) {
 
 

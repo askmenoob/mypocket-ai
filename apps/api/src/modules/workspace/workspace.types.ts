@@ -4,6 +4,11 @@ export type WorkspaceType =
   | "BUSINESS";
 
 
+export type WorkspacePackage =
+  | WorkspaceType
+  | "PERSONAL_PRO";
+
+
 export type WorkspaceRole =
   | "OWNER"
   | "ADMIN"

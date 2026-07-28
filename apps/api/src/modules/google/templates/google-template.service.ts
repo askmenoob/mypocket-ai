@@ -57,6 +57,26 @@ export class GoogleTemplateService {
     }
 
 
+    const expectedName =
+      type
+        .toLowerCase();
+
+
+    if(
+      !template.name
+        .toLowerCase()
+        .includes(
+          expectedName,
+        )
+    ){
+
+      throw new Error(
+        `Google template mismatch: expected ${type}, got ${template.name}`,
+      );
+
+    }
+
+
 
     return template;
 

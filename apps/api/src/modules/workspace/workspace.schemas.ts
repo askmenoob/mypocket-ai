@@ -9,6 +9,15 @@ export const WorkspaceTypeSchema =
   ]);
 
 
+export const WorkspacePackageSchema =
+  z.enum([
+    "PERSONAL",
+    "PERSONAL_PRO",
+    "FAMILY",
+    "BUSINESS",
+  ]);
+
+
 export const WorkspaceRoleSchema =
   z.enum([
     "OWNER",
@@ -69,7 +78,7 @@ export const UpdateUserPackageSchema =
   z.object({
 
     package:
-      WorkspaceTypeSchema,
+      WorkspacePackageSchema,
 
   });
 

@@ -238,6 +238,7 @@ export class WorkspaceRepository {
 
     plan:
       "PERSONAL"
+      | "PERSONAL_PRO"
       | "FAMILY"
       | "BUSINESS",
   ){
