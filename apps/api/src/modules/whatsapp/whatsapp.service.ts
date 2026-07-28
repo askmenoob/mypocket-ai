@@ -745,6 +745,15 @@ export class WhatsAppService {
             },
           });
 
+    const refreshedInstance =
+      instance
+        ?
+        await this.refreshWorkspaceInstanceStatus(
+          instance,
+        )
+        :
+        null;
+
 
     const members =
       await this.app.prisma.workspaceMember
@@ -787,23 +796,23 @@ export class WhatsAppService {
       },
 
       instance:
-        instance
+        refreshedInstance
           ?
           {
             id:
-              instance.id,
+              refreshedInstance.id,
 
             instanceName:
-              instance.instanceName,
+              refreshedInstance.instanceName,
 
             phoneNumber:
-              instance.phoneNumber,
+              refreshedInstance.phoneNumber,
 
             status:
-              instance.status,
+              refreshedInstance.status,
 
             updatedAt:
-              instance.updatedAt,
+              refreshedInstance.updatedAt,
           }
           :
           null,
@@ -817,6 +826,127 @@ export class WhatsAppService {
           total - linked,
       },
     };
+
+  }
+
+
+
+
+
+  private async refreshWorkspaceInstanceStatus(
+    instance:{
+      id:string;
+      instanceName:string;
+      phoneNumber:string | null;
+      status:string;
+      updatedAt:Date;
+    },
+  ){
+
+    const evolutionState =
+      await this.getEvolutionConnectionState(
+        instance.instanceName,
+      );
+
+
+    if(!evolutionState){
+
+      return instance;
+
+    }
+
+
+    const status =
+      evolutionState
+        .toUpperCase();
+
+
+    if(status === instance.status){
+
+      return instance;
+
+    }
+
+
+    return this.app.prisma.whatsAppInstance
+      .update({
+        where:{
+          id:
+            instance.id,
+        },
+
+        data:{
+          status,
+        },
+      });
+
+  }
+
+
+
+
+
+  private async getEvolutionConnectionState(
+    instanceName:string,
+  ){
+
+    if(!env.EVOLUTION_API_KEY){
+
+      return "";
+
+    }
+
+
+    try{
+
+      const response =
+        await fetch(
+          `${env.EVOLUTION_API_URL}/instance/connectionState/${encodeURIComponent(instanceName)}`,
+          {
+            headers:{
+              apikey:
+                env.EVOLUTION_API_KEY,
+            },
+          },
+        );
+
+
+      if(!response.ok){
+
+        return "";
+
+      }
+
+
+      const data =
+        await response.json() as Record<string, unknown>;
+
+      return (
+        this.asString(
+          this.asRecord(
+            data.instance,
+          ).state,
+        )
+        ||
+        this.asString(
+          data.state,
+        )
+        ||
+        this.asString(
+          data.status,
+        )
+      );
+
+    }catch(error){
+
+      console.error(
+        "EVOLUTION_CONNECTION_STATE_FAILED:",
+        error,
+      );
+
+      return "";
+
+    }
 
   }
 
