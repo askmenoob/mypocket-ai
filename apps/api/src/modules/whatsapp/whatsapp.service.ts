@@ -2724,6 +2724,16 @@ export class WhatsAppService {
       transactions as Array<any>
     )
       .filter(Boolean)
+      .map(
+        (transaction) => ({
+          ...transaction,
+
+          transactionDate:
+            new Date(
+              transaction.transactionDate,
+            ),
+        }),
+      )
       .sort(
         (first, second) => this.getSheetTransactionTime(
           second,
