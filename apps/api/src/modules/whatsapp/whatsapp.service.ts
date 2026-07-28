@@ -857,8 +857,18 @@ export class WhatsAppService {
 
 
     const status =
-      evolutionState
-        .toUpperCase();
+      this.normalizeEvolutionConnectionStatus(
+        evolutionState,
+      );
+
+
+    if(status === "CONNECTED"){
+
+      await this.ensureEvolutionWebhook(
+        instance.instanceName,
+      );
+
+    }
 
 
     if(status === instance.status){
@@ -882,6 +892,71 @@ export class WhatsAppService {
 
   }
 
+
+
+
+
+  private normalizeEvolutionConnectionStatus(
+    state:string,
+  ){
+
+    const normalized =
+      state
+        .trim()
+        .toLowerCase();
+
+
+    if(
+      [
+        "open",
+        "connected",
+        "connection_open",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return "CONNECTED";
+
+    }
+
+
+    if(
+      [
+        "connecting",
+        "qr",
+        "qrcode",
+        "pairing",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return "PENDING_PAIRING";
+
+    }
+
+
+    if(
+      [
+        "close",
+        "closed",
+        "disconnected",
+        "offline",
+      ].includes(
+        normalized,
+      )
+    ){
+
+      return "OFFLINE";
+
+    }
+
+
+    return state
+      .toUpperCase();
+
+  }
 
 
 
