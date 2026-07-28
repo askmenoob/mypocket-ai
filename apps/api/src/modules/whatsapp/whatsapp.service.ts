@@ -519,53 +519,106 @@ export class WhatsAppService {
     }
 
 
+    const webhookUrl =
+      `${publicApiUrl}/api/v1/whatsapp/evolution/webhook`;
+
+
+    const webhookHeaders = {
+      "X-MyPocket-Webhook-Secret":
+        env.WHATSAPP_WEBHOOK_SECRET,
+    };
+
+
+    const basePayload = {
+      url:
+        webhookUrl,
+
+      enabled:
+        true,
+
+      events:[
+        "MESSAGES_UPSERT",
+      ],
+
+      webhookByEvents:
+        false,
+
+      webhookBase64:
+        false,
+
+      base64:
+        false,
+
+      headers:
+        webhookHeaders,
+    };
+
+
+    const payloads:Array<Record<string, unknown>> = [
+      basePayload,
+      {
+        webhook:
+          basePayload,
+      },
+      {
+        url:
+          webhookUrl,
+
+        enabled:
+          true,
+
+        events:[
+          "MESSAGES_UPSERT",
+        ],
+
+        webhook_by_events:
+          false,
+
+        webhook_base64:
+          false,
+
+        base64:
+          false,
+
+        headers:
+          webhookHeaders,
+      },
+    ];
+
+
     try{
 
-      const response =
-        await fetch(
-          `${env.EVOLUTION_API_URL}/webhook/set/${encodeURIComponent(instanceName)}`,
-          {
-            method:
-              "POST",
+      for(const payload of payloads){
 
-            headers:{
-              apikey:
-                env.EVOLUTION_API_KEY,
+        const response =
+          await fetch(
+            `${env.EVOLUTION_API_URL}/webhook/set/${encodeURIComponent(instanceName)}`,
+            {
+              method:
+                "POST",
 
-              "Content-Type":
-                "application/json",
+              headers:{
+                apikey:
+                  env.EVOLUTION_API_KEY,
+
+                "Content-Type":
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify(
+                  payload,
+                ),
             },
-
-            body:
-              JSON.stringify({
-                url:
-                  `${publicApiUrl}/api/v1/whatsapp/evolution/webhook`,
-
-                enabled:
-                  true,
-
-                events:[
-                  "MESSAGES_UPSERT",
-                ],
-
-                webhookByEvents:
-                  false,
-
-                webhookBase64:
-                  false,
-
-                headers:{
-                  "X-MyPocket-Webhook-Secret":
-                    env.WHATSAPP_WEBHOOK_SECRET,
-                },
-              }),
-          },
-        );
+          );
 
 
-      if(
-        !response.ok
-      ){
+        if(response.ok){
+
+          return;
+
+        }
+
 
         console.error(
           "EVOLUTION_WEBHOOK_SET_FAILED:",
