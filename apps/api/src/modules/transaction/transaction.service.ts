@@ -4,6 +4,11 @@ import type {
 
 
 import {
+  randomUUID,
+} from "node:crypto";
+
+
+import {
   TransactionRepository,
 } from "./transaction.repository.js";
 
@@ -42,6 +47,10 @@ export class TransactionService {
     TransactionRepository;
 
 
+  private readonly app:
+    FastifyInstance;
+
+
   private readonly syncService:
     TransactionSyncService;
 
@@ -58,6 +67,10 @@ export class TransactionService {
   constructor(
     app:FastifyInstance,
   ){
+
+
+    this.app =
+      app;
 
 
     this.repository =
@@ -187,91 +200,75 @@ export class TransactionService {
 
 
     const transaction =
-
-      await this.repository
-        .createTransaction(
-          input,
-        );
-
-
-
+      await this.buildSheetOnlyTransaction(
+        input,
+      );
 
 
     try{
 
+      await this.syncService
+        .sync({
 
-      await this.syncService.sync({
+          workspaceId:
+            transaction.workspaceId,
 
-        workspaceId:
-          transaction.workspaceId,
+          transactionId:
+            transaction.id,
 
+          amount:
+            transaction.amount,
 
-        transactionId:
-          transaction.id,
+          currency:
+            transaction.currency,
 
+          type:
+            transaction.type,
 
-        amount:
-          transaction.amount.toString(),
+          category:
+            transaction.category?.name
+            ??
+            "Others",
 
+          merchant:
+            transaction.merchant?.name
+            ??
+            "-",
 
-        currency:
-          transaction.currency,
+          paymentMethod:
+            transaction.paymentMethod?.name
+            ??
+            "",
 
+          description:
+            transaction.description
+            ??
+            "",
 
-        type:
-          transaction.type,
+          transactionDate:
+            transaction.transactionDate,
 
+          source:
+            input.source
+            ??
+            "SYSTEM",
 
-        category:
-          transaction.category?.name
-          ??
-          "Others",
-
-
-        merchant:
-          transaction.merchant?.name
-          ??
-          "-",
-
-
-        paymentMethod:
-          transaction.paymentMethod?.name
-          ??
-          "",
-
-
-        description:
-          transaction.description
-          ??
-          "",
-
-
-        transactionDate:
-          transaction.transactionDate,
-
-
-        source:
-          input.source
-          ??
-          "SYSTEM",
-
-
-      });
-
+        });
 
     }catch(error){
 
-
       console.error(
-        "GOOGLE SHEET SYNC FAILED:",
+        "GOOGLE SHEET WRITE FAILED:",
         error,
       );
 
+      throw new AppError(
+        "GOOGLE_SHEET_WRITE_FAILED",
+        "Transaction could not be saved to Google Sheet",
+        502,
+      );
 
     }
-
-
-
 
 
     return transaction;
@@ -425,6 +422,159 @@ export class TransactionService {
         id,
       );
 
+
+  }
+
+
+
+
+  private async buildSheetOnlyTransaction(
+    input:CreateTransactionInput,
+  ){
+
+    const [
+      category,
+      merchant,
+      paymentMethod,
+      workspace,
+    ] =
+      await Promise.all([
+        input.categoryId
+          ? this.app.prisma.category
+            .findFirst({
+              where:{
+                id:
+                  input.categoryId,
+
+                workspaceId:
+                  input.workspaceId,
+              },
+              select:{
+                id:true,
+                name:true,
+              },
+            })
+          : null,
+
+        input.merchantId
+          ? this.app.prisma.merchant
+            .findFirst({
+              where:{
+                id:
+                  input.merchantId,
+
+                workspaceId:
+                  input.workspaceId,
+              },
+              select:{
+                id:true,
+                name:true,
+              },
+            })
+          : null,
+
+        input.paymentMethodId
+          ? this.app.prisma.paymentMethod
+            .findFirst({
+              where:{
+                id:
+                  input.paymentMethodId,
+
+                workspaceId:
+                  input.workspaceId,
+              },
+              select:{
+                id:true,
+                name:true,
+              },
+            })
+          : null,
+
+        this.app.prisma.workspace
+          .findUnique({
+            where:{
+              id:
+                input.workspaceId,
+            },
+            select:{
+              type:true,
+            },
+          }),
+      ]);
+
+
+    const now =
+      new Date();
+
+
+    return {
+
+      id:
+        `cm${randomUUID().replaceAll("-", "")}`,
+
+      workspaceId:
+        input.workspaceId,
+
+      createdById:
+        input.createdById,
+
+      amount:
+        input.amount,
+
+      currency:
+        input.currency
+        ??
+        "MYR",
+
+      type:
+        input.type,
+
+      status:
+        "PENDING" as const,
+
+      description:
+        input.description
+        ??
+        null,
+
+      transactionDate:
+        input.transactionDate,
+
+      categoryId:
+        input.categoryId
+        ??
+        null,
+
+      merchantId:
+        input.merchantId
+        ??
+        null,
+
+      paymentMethodId:
+        input.paymentMethodId
+        ??
+        null,
+
+      receiptUrl:
+        input.receiptUrl
+        ??
+        null,
+
+      createdAt:
+        now,
+
+      updatedAt:
+        now,
+
+      category,
+
+      merchant,
+
+      paymentMethod,
+
+      workspace,
+
+    };
 
   }
 
