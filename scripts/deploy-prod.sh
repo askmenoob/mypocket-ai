@@ -10,7 +10,7 @@ wait_for_url() {
   local delay_seconds="${4:-1}"
 
   for attempt in $(seq 1 "$attempts"); do
-    if curl -fsS "$url" >/dev/null; then
+    if curl -fsS "$url" >/dev/null 2>&1; then
       echo "$name is ready."
       return 0
     fi
