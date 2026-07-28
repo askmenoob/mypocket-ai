@@ -249,16 +249,165 @@ export class WhatsAppService {
 
 
 
+  async resetWorkspaceWhatsAppInstance(
+    input:{
+      actorUserId:string;
+
+      workspaceId:string;
+    },
+  ){
+
+    const actorMember =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            workspaceId:
+              input.workspaceId,
+
+            userId:
+              input.actorUserId,
+          },
+        });
+
+
+    if(
+      !actorMember
+      ||
+      (
+        actorMember.role !== "OWNER"
+        &&
+        actorMember.role !== "ADMIN"
+      )
+    ){
+
+      throw new AppError(
+        "WHATSAPP_INSTANCE_RESET_FORBIDDEN",
+        "Only Owner/Admin can reset WhatsApp pairing",
+        403,
+      );
+
+    }
+
+
+    const existing =
+      await this.app.prisma.whatsAppInstance
+        .findFirst({
+          where:{
+            workspaceId:
+              input.workspaceId,
+          },
+
+          orderBy:{
+            updatedAt:
+              "desc",
+          },
+        });
+
+
+    if(existing){
+
+      await this.destroyEvolutionInstance(
+        existing.instanceName,
+      );
+
+
+      await this.app.prisma.whatsAppInstance
+        .delete({
+          where:{
+            id:
+              existing.id,
+          },
+        });
+
+    }
+
+
+    const instance =
+      await this.getOrCreateWorkspaceWhatsAppInstance(
+        input.workspaceId,
+      );
+
+
+    return {
+      message:
+        "WhatsApp instance reset. Open QR again to pair.",
+
+      instance,
+
+      qrExpiresInSeconds:
+        60,
+    };
+
+  }
+
+
+
+
   private buildWorkspaceInstanceName(
     workspaceId:string,
   ){
 
-    return `imai-${workspaceId}`
+    const suffix =
+      Date.now()
+        .toString(36);
+
+
+    return `imai-${workspaceId}-${suffix}`
       .toLowerCase()
       .replace(
         /[^a-z0-9-]/g,
         "-",
       );
+
+  }
+
+
+
+
+  private async destroyEvolutionInstance(
+    instanceName:string,
+  ){
+
+    if(
+      !env.EVOLUTION_API_KEY
+    ){
+
+      return;
+
+    }
+
+
+    for(const endpoint of [
+      `/instance/logout/${encodeURIComponent(instanceName)}`,
+      `/instance/delete/${encodeURIComponent(instanceName)}`,
+    ]){
+
+      try{
+
+        await fetch(
+          `${env.EVOLUTION_API_URL}${endpoint}`,
+          {
+            method:
+              "DELETE",
+
+            headers:{
+              apikey:
+                env.EVOLUTION_API_KEY,
+            },
+          },
+        );
+
+      }catch(error){
+
+        console.error(
+          "EVOLUTION_INSTANCE_DESTROY_FAILED:",
+          endpoint,
+          error,
+        );
+
+      }
+
+    }
 
   }
 

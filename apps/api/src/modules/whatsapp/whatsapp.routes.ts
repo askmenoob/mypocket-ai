@@ -47,6 +47,17 @@ export default async function whatsappRoutes(
   );
 
 
+  app.post(
+    "/whatsapp/instance/reset",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    controller.resetWorkspaceInstance,
+  );
+
+
 
   app.get(
     "/whatsapp/members",

@@ -178,6 +178,39 @@ export class WhatsAppController {
   };
 
 
+  resetWorkspaceInstance =
+  async (
+    request:FastifyRequest,
+    reply:FastifyReply,
+  ) => {
+
+    await request.jwtVerify();
+
+
+    const user =
+      request.user as any;
+
+
+    const result =
+      await this.service
+        .resetWorkspaceWhatsAppInstance({
+          actorUserId:
+            user.userId,
+
+          workspaceId:
+            user.workspaceId,
+        });
+
+
+    return reply
+      .code(200)
+      .send(
+        result,
+      );
+
+  };
+
+
 
 
 

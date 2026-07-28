@@ -991,6 +991,39 @@ function App(){
 
   }
 
+
+  async function resetWhatsAppInstance(){
+
+    try{
+
+      await api(
+        "/whatsapp/instance/reset",
+        token,
+        {
+          method:"POST",
+          body:JSON.stringify({}),
+        },
+      );
+
+      setNotice(
+        "WhatsApp QR telah direset. Buka QR semula dan scan dalam masa lebih kurang 1 minit.",
+      );
+
+      await loadAll();
+
+    }catch(error){
+
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "WhatsApp QR reset failed.",
+      );
+
+    }
+
+  }
+
+
   const needsWizard =
     Boolean(token)
     &&
@@ -1062,6 +1095,7 @@ function App(){
         installApp={installApp}
         connectGoogleSheet={connectGoogleSheet}
         openWhatsAppQr={openWhatsAppQr}
+        resetWhatsAppInstance={resetWhatsAppInstance}
       />
     );
 
@@ -1077,6 +1111,7 @@ function App(){
       installApp={installApp}
       connectGoogleSheet={connectGoogleSheet}
       openWhatsAppQr={openWhatsAppQr}
+      resetWhatsAppInstance={resetWhatsAppInstance}
       signOut={signOut}
     />
   );
@@ -1141,6 +1176,7 @@ function SetupWizard(
     installApp:() => void;
     connectGoogleSheet:() => void;
     openWhatsAppQr:() => void;
+    resetWhatsAppInstance:() => void;
   },
 ){
 
@@ -1562,6 +1598,15 @@ function SetupWizard(
                   Open WhatsApp QR
                 </button>
               )}
+
+              {!isWhatsAppConnected && (
+                <button
+                  className="secondary"
+                  onClick={props.resetWhatsAppInstance}
+                >
+                  Reset expired QR
+                </button>
+              )}
             </WizardCard>
           )}
 
@@ -1706,6 +1751,7 @@ function Dashboard(
     installApp:() => void;
     connectGoogleSheet:() => void;
     openWhatsAppQr:() => void;
+    resetWhatsAppInstance:() => void;
     signOut:() => void;
   },
 ){
@@ -2223,6 +2269,7 @@ function Dashboard(
                 )}
               />
               <Action title="Open WhatsApp QR" desc="Reconnect bot pairing." icon="☏" onClick={props.openWhatsAppQr} />
+              <Action title="Reset WhatsApp QR" desc="Generate a fresh pairing instance." icon="↻" onClick={props.resetWhatsAppInstance} />
               <Action title="Setup Wizard" desc="Review onboarding steps." icon="⚙" onClick={props.resetWizard} />
             </div>
             </Panel>
