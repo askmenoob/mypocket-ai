@@ -775,6 +775,7 @@ function App(){
           token,
           {
             method:"POST",
+            body:JSON.stringify({}),
           },
         );
 
