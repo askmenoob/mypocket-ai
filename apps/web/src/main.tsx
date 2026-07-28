@@ -59,6 +59,14 @@ type DashboardData = {
   transactions:Transaction[];
 };
 
+type DashboardView =
+  | "dashboard"
+  | "transactions"
+  | "whatsapp"
+  | "google"
+  | "admin"
+  | "settings";
+
 function stored(key:string){
   return localStorage.getItem(key) || "";
 }
@@ -918,6 +926,7 @@ function App(){
       refresh={() => loadAll()}
       resetWizard={resetWizard}
       installApp={installApp}
+      connectGoogleSheet={connectGoogleSheet}
       openWhatsAppQr={openWhatsAppQr}
       signOut={signOut}
     />
@@ -1546,10 +1555,20 @@ function Dashboard(
     refresh:() => void;
     resetWizard:() => void;
     installApp:() => void;
+    connectGoogleSheet:() => void;
     openWhatsAppQr:() => void;
     signOut:() => void;
   },
 ){
+
+  const [activeView, setActiveView] =
+    useState<DashboardView>("dashboard");
+
+  const [sidebarOpen, setSidebarOpen] =
+    useState(true);
+
+  const [actionMessage, setActionMessage] =
+    useState("");
 
   const [linkEmail, setLinkEmail] =
     useState("");
@@ -1618,6 +1637,88 @@ function Dashboard(
       )
       .length;
 
+  const navItems:Array<{
+    icon:string;
+    label:string;
+    view:DashboardView;
+  }> =
+    [
+      {
+        icon:"⌂",
+        label:"Dashboard",
+        view:"dashboard",
+      },
+      {
+        icon:"▤",
+        label:"Transactions",
+        view:"transactions",
+      },
+      {
+        icon:"☏",
+        label:"WhatsApp",
+        view:"whatsapp",
+      },
+      {
+        icon:"▦",
+        label:"Google Sheet",
+        view:"google",
+      },
+      ...(canManageMembers
+        ? [
+          {
+            icon:"👥",
+            label:"Admin",
+            view:"admin" as DashboardView,
+          },
+        ]
+        : []),
+      {
+        icon:"⚙",
+        label:"Settings",
+        view:"settings",
+      },
+    ];
+
+  function goToView(
+    view:DashboardView,
+  ){
+
+    setActiveView(view);
+    setActionMessage("");
+
+  }
+
+  function showActionMessage(
+    message:string,
+    view?:DashboardView,
+  ){
+
+    if(view){
+      setActiveView(view);
+    }
+
+    setActionMessage(message);
+
+  }
+
+  function openGoogleSheet(){
+
+    if(props.data.google?.spreadsheetId){
+
+      window.open(
+        `https://docs.google.com/spreadsheets/d/${props.data.google.spreadsheetId}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+
+      return;
+
+    }
+
+    props.connectGoogleSheet();
+
+  }
+
   async function linkMember(){
 
     const token =
@@ -1637,6 +1738,7 @@ function Dashboard(
 
     setLinkEmail("");
     setLinkPhone("");
+    setActionMessage("WhatsApp number linked.");
     props.refresh();
   }
 
@@ -1659,6 +1761,7 @@ function Dashboard(
 
     setNewMemberEmail("");
     setNewMemberRole("MEMBER");
+    setActionMessage("Member added.");
     props.refresh();
   }
 
@@ -1681,6 +1784,7 @@ function Dashboard(
       },
     );
 
+    setActionMessage("Member role updated.");
     props.refresh();
   }
 
@@ -1708,6 +1812,7 @@ function Dashboard(
       },
     );
 
+    setActionMessage("Member removed.");
     props.refresh();
   }
 
@@ -1726,30 +1831,24 @@ function Dashboard(
       },
     );
 
+    setActionMessage("WhatsApp number unlinked.");
     props.refresh();
   }
 
   return (
-    <div className="appShell">
+    <div className={sidebarOpen ? "appShell" : "appShell sidebarCollapsed"}>
       <aside className="sidebar">
         <LogoBlock />
         <nav className="nav">
-          {[
-            ["⌂", "Dashboard"],
-            ["▤", "Transactions"],
-            ["☏", "WhatsApp"],
-            ["▦", "Google Sheet"],
-            ...(canManageMembers ? [["👥", "Admin"]] : []),
-            ["⚙", "Settings"],
-          ].map(([icon, label], index) => (
-            <a
-              className={index === 0 ? "active" : ""}
-              href={`#${label}`}
-              key={label}
+          {navItems.map((item) => (
+            <button
+              className={activeView === item.view ? "active" : ""}
+              onClick={() => goToView(item.view)}
+              key={item.view}
             >
-              <span>{icon}</span>
-              {label}
-            </a>
+              <span>{item.icon}</span>
+              {item.label}
+            </button>
           ))}
         </nav>
 
@@ -1762,7 +1861,13 @@ function Dashboard(
       <main className="main">
         <header className="topbar">
           <div className="topIdentity">
-            <button className="menu">☰</button>
+            <button
+              className="menu"
+              onClick={() => setSidebarOpen((current) => !current)}
+              aria-label="Toggle menu"
+            >
+              ☰
+            </button>
             <span className="workspace">
               {props.data.me?.workspace?.name || "MyPocket Workspace"}
             </span>
@@ -1802,21 +1907,30 @@ function Dashboard(
           </div>
         )}
 
+        {actionMessage && (
+          <div className="notice">
+            {actionMessage}
+          </div>
+        )}
+
         {props.state.error && (
           <div className="errorBox">
             {props.state.error}
           </div>
         )}
 
-        <section className="kpis">
+        {activeView === "dashboard" && (
+          <section className="kpis">
           <Kpi icon="▣" label="Today Expense" value={money(todayExpense)} sub="From latest transactions" />
           <Kpi icon="▤" label="Recent Expense" value={money(monthExpense)} sub="Latest dashboard sample" />
           <Kpi icon="☏" label="WhatsApp" value={props.data.whatsapp?.instance?.status || "Checking"} sub={`${linked}/${props.data.members.length} members linked`} />
           <Kpi icon="▦" label="Google Sheet" value={props.data.google?.spreadsheetId ? "Connected" : "Checking"} sub={props.data.google?.spreadsheetTitle || "Workspace sheet"} />
-        </section>
+          </section>
+        )}
 
         <section className="grid">
-          <Panel title="Recent Transactions" wide>
+          {(activeView === "dashboard" || activeView === "transactions") && (
+            <Panel title={activeView === "transactions" ? "Transactions" : "Recent Transactions"} wide>
             <div className="tableWrap">
               <table>
                 <thead>
@@ -1849,9 +1963,30 @@ function Dashboard(
                 </tbody>
               </table>
             </div>
-          </Panel>
+              {activeView === "transactions" && (
+                <div className="panelActions">
+                  <button
+                    className="primary"
+                    onClick={() => showActionMessage(
+                      "Untuk tambah transaksi sekarang, hantar mesej ke WhatsApp bot seperti: makan nasi rm8 tng. Form transaksi manual web akan dibuat dalam batch seterusnya.",
+                    )}
+                  >
+                    Add Transaction
+                  </button>
 
-          <Panel title="WhatsApp">
+                  <button
+                    className="ghost"
+                    onClick={props.refresh}
+                  >
+                    Refresh transactions
+                  </button>
+                </div>
+              )}
+            </Panel>
+          )}
+
+          {(activeView === "dashboard" || activeView === "whatsapp") && (
+            <Panel title="WhatsApp">
             <StatusGrid
               rows={[
                 ["Instance", props.data.whatsapp?.instance?.instanceName || "imai-dev"],
@@ -1879,9 +2014,26 @@ function Dashboard(
                 </div>
               ))}
             </div>
-          </Panel>
+              <div className="panelActions">
+                <button
+                  className="primary"
+                  onClick={props.openWhatsAppQr}
+                >
+                  Open WhatsApp QR
+                </button>
 
-          <Panel title="Google Sheet">
+                <button
+                  className="ghost"
+                  onClick={props.refresh}
+                >
+                  Recheck status
+                </button>
+              </div>
+            </Panel>
+          )}
+
+          {(activeView === "dashboard" || activeView === "google") && (
+            <Panel title="Google Sheet">
             <StatusGrid
               rows={[
                 ["Template", props.data.google?.templateType || "PERSONAL"],
@@ -1891,25 +2043,43 @@ function Dashboard(
             />
 
             {props.data.google?.spreadsheetId && (
-              <a
+              <button
                 className="primaryLink"
-                href={`https://docs.google.com/spreadsheets/d/${props.data.google.spreadsheetId}`}
-                target="_blank"
+                onClick={openGoogleSheet}
               >
                 Open Google Sheet
-              </a>
+              </button>
             )}
-          </Panel>
+              {!props.data.google?.spreadsheetId && (
+                <button
+                  className="primary"
+                  onClick={props.connectGoogleSheet}
+                >
+                  Connect Google Sheet
+                </button>
+              )}
+            </Panel>
+          )}
 
-          <Panel title="Quick Actions" wide>
+          {activeView === "dashboard" && (
+            <Panel title="Quick Actions" wide>
             <div className="actions">
-              <Action title="Add Transaction" desc="Use WhatsApp message command." icon="+" />
+              <Action
+                title="Add Transaction"
+                desc="Use WhatsApp message command."
+                icon="+"
+                onClick={() => showActionMessage(
+                  "Hantar transaksi ke WhatsApp bot. Contoh: makan kedai mamak rm7.80 tng",
+                  "transactions",
+                )}
+              />
               <Action title="Open WhatsApp QR" desc="Reconnect bot pairing." icon="☏" onClick={props.openWhatsAppQr} />
               <Action title="Setup Wizard" desc="Review onboarding steps." icon="⚙" onClick={props.resetWizard} />
             </div>
-          </Panel>
+            </Panel>
+          )}
 
-          {canManageMembers && (
+          {canManageMembers && activeView === "admin" && (
             <Panel title="User Role Management" wide>
               <p className="helperText">
                 Owner/Admin boleh tambah user, tukar role, remove member dan pautkan nombor WhatsApp.
@@ -1998,7 +2168,16 @@ function Dashboard(
                           </button>
                         ) : (
                           <span className="mutedSmall">
-                            Link below
+                            <button
+                              className="inlineButton"
+                              onClick={() => {
+                                setLinkEmail(member.email);
+                                setActiveView("admin");
+                                setActionMessage("Masukkan nombor WhatsApp untuk member ini di panel link.");
+                              }}
+                            >
+                              Link below
+                            </button>
                           </span>
                         )}
 
@@ -2017,7 +2196,7 @@ function Dashboard(
             </Panel>
           )}
 
-          {canManageMembers && (
+          {canManageMembers && activeView === "admin" && (
             <Panel title="Member WhatsApp Link">
             <label className="field">
               Member email
@@ -2045,6 +2224,40 @@ function Dashboard(
             </button>
             </Panel>
           )}
+
+          {activeView === "settings" && (
+            <Panel title="Settings" wide>
+              <StatusGrid
+                rows={[
+                  ["Workspace", props.data.me?.workspace?.name || "-"],
+                  ["Workspace type", props.data.me?.workspace?.type || "PERSONAL"],
+                  ["Your role", actorRole],
+                  ["Email", props.data.me?.user?.email || "-"],
+                  ["API", props.data.health ? "Healthy" : "Checking"],
+                  ["Google Sheet", props.data.google?.spreadsheetId ? "Connected" : "Not connected"],
+                  ["WhatsApp", props.data.whatsapp?.instance?.status || "-"],
+                ]}
+              />
+
+              <div className="panelActions">
+                <button className="primary" onClick={props.installApp}>
+                  Install app
+                </button>
+
+                <button className="ghost" onClick={props.resetWizard}>
+                  Open setup wizard
+                </button>
+
+                <button className="ghost" onClick={props.refresh}>
+                  Refresh dashboard
+                </button>
+
+                <button className="ghost danger" onClick={props.signOut}>
+                  Logout
+                </button>
+              </div>
+            </Panel>
+          )}
         </section>
 
         <button
@@ -2055,10 +2268,30 @@ function Dashboard(
         </button>
 
         <nav className="mobileNav">
-          <button>⌂<span>Home</span></button>
-          <button>▤<span>Tx</span></button>
-          <button>☏<span>WA</span></button>
-          <button>⚙<span>Setup</span></button>
+          <button
+            className={activeView === "dashboard" ? "active" : ""}
+            onClick={() => goToView("dashboard")}
+          >
+            ⌂<span>Home</span>
+          </button>
+          <button
+            className={activeView === "transactions" ? "active" : ""}
+            onClick={() => goToView("transactions")}
+          >
+            ▤<span>Tx</span>
+          </button>
+          <button
+            className={activeView === "whatsapp" ? "active" : ""}
+            onClick={() => goToView("whatsapp")}
+          >
+            ☏<span>WA</span>
+          </button>
+          <button
+            className={activeView === "settings" ? "active" : ""}
+            onClick={() => goToView("settings")}
+          >
+            ⚙<span>Setup</span>
+          </button>
         </nav>
       </main>
     </div>

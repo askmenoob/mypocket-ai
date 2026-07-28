@@ -109,21 +109,34 @@ a{color:inherit}
   gap:10px;
 }
 
-.nav a{
+.nav button{
   color:#d8eeee;
-  text-decoration:none;
+  border:none;
+  background:transparent;
   display:flex;
   align-items:center;
   gap:14px;
   padding:16px 18px;
   border-radius:12px;
   font-weight:800;
+  text-align:left;
 }
 
-.nav a.active,
-.nav a:hover{
+.nav button.active,
+.nav button:hover{
   background:rgba(0,181,162,.36);
   color:white;
+}
+
+.sidebarCollapsed{
+  grid-template-columns:0 1fr;
+}
+
+.sidebarCollapsed .sidebar{
+  width:0;
+  padding-left:0;
+  padding-right:0;
+  overflow:hidden;
 }
 
 .sideCard{
@@ -502,6 +515,31 @@ dd{
   padding:12px;
   text-decoration:none;
   font-weight:900;
+}
+
+button.primaryLink{
+  width:100%;
+  cursor:pointer;
+}
+
+.panelActions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:16px;
+}
+
+.panelActions .primary,
+.panelActions .ghost{
+  width:auto;
+}
+
+.inlineButton{
+  border:none;
+  background:transparent;
+  color:#00806f;
+  font-weight:900;
+  padding:0;
 }
 
 .actions{
@@ -894,11 +932,26 @@ dd{
     gap:3px;
     place-items:center;
     font-weight:900;
+    border-radius:16px;
+    padding:8px 4px;
+  }
+
+  .mobileNav button.active{
+    background:rgba(0,181,162,.42);
   }
 
   .mobileNav span{
     font-size:11px;
     color:#bce8e1;
+  }
+
+  .panelActions{
+    display:grid;
+  }
+
+  .panelActions .primary,
+  .panelActions .ghost{
+    width:100%;
   }
 }
 
