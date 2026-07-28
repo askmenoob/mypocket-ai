@@ -1011,6 +1011,65 @@ function App(){
 
   }
 
+
+  async function recreateGoogleSheet(){
+
+    const workspaceType =
+      data.me?.workspace?.type ||
+      "PERSONAL";
+
+    const title =
+      `MyPocket ${workspaceType[0]}${workspaceType.slice(1).toLowerCase()} Template`;
+
+    const confirmed =
+      window.confirm(
+        "Recreate Google Sheet akan hasilkan sheet baru dan gunakan template mengikut package workspace semasa. Teruskan?",
+      );
+
+
+    if(!confirmed){
+
+      return;
+
+    }
+
+
+    try{
+
+      setNotice(
+        "Sedang recreate Google Sheet...",
+      );
+
+      await api(
+        "/google/settings/auto-create",
+        token,
+        {
+          method:"POST",
+          body:JSON.stringify({
+            title,
+          }),
+        },
+      );
+
+      setNotice(
+        "Google Sheet baru telah dibuat dan disambungkan kepada workspace.",
+      );
+
+      await loadAll();
+
+    }catch(error){
+
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Google Sheet recreate failed.",
+      );
+
+    }
+
+  }
+
+
   async function openWhatsAppQr(
     mode:WhatsAppQrMode = "dashboard",
   ){
@@ -1258,6 +1317,7 @@ function App(){
       resetWizard={resetWizard}
       installApp={installApp}
       connectGoogleSheet={connectGoogleSheet}
+      recreateGoogleSheet={recreateGoogleSheet}
       openWhatsAppQr={openWhatsAppQr}
       resetWhatsAppInstance={resetWhatsAppInstance}
       whatsAppQr={whatsAppQr}
@@ -1915,6 +1975,7 @@ function Dashboard(
     resetWizard:() => void;
     installApp:() => void;
     connectGoogleSheet:() => void;
+    recreateGoogleSheet:() => void;
     openWhatsAppQr:(mode?:WhatsAppQrMode) => void;
     resetWhatsAppInstance:(mode?:WhatsAppQrMode) => void;
     whatsAppQr:WhatsAppQrState;
@@ -2517,20 +2578,45 @@ function Dashboard(
               )}
 
             {props.data.google?.spreadsheetId && (
-              <button
-                className="primaryLink"
-                onClick={openGoogleSheet}
-              >
-                Open Google Sheet
-              </button>
-            )}
-              {!props.data.google?.spreadsheetId && (
+              <div className="panelActions sheetActions">
                 <button
                   className="primary"
+                  onClick={openGoogleSheet}
+                >
+                  Open Google Sheet
+                </button>
+
+                <button
+                  className="ghost"
                   onClick={props.connectGoogleSheet}
                 >
-                  Connect Google Sheet
+                  Relink Google Access
                 </button>
+
+                <button
+                  className={hasGoogleTemplateMismatch ? "primary" : "ghost"}
+                  onClick={props.recreateGoogleSheet}
+                >
+                  Recreate Google Sheet
+                </button>
+              </div>
+            )}
+              {!props.data.google?.spreadsheetId && (
+                <div className="panelActions sheetActions">
+                  <button
+                    className="primary"
+                    onClick={props.connectGoogleSheet}
+                  >
+                    Connect Google Sheet
+                  </button>
+
+                  <button
+                    className="ghost"
+                    onClick={props.recreateGoogleSheet}
+                  >
+                    Recreate Google Sheet
+                  </button>
+                </div>
               )}
             </Panel>
           )}
