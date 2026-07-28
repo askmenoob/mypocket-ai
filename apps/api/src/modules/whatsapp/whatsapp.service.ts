@@ -2709,6 +2709,131 @@ export class WhatsAppService {
 
 
 
+  private async getWorkspaceSheetTransactions(
+    workspaceId:string,
+  ){
+
+    const transactions =
+      await this.transactionService
+        .getSheetTransactions(
+          workspaceId,
+        );
+
+
+    return (
+      transactions as Array<any>
+    )
+      .filter(Boolean)
+      .sort(
+        (first, second) => this.getSheetTransactionTime(
+          second,
+        )
+        -
+        this.getSheetTransactionTime(
+          first,
+        ),
+      );
+
+  }
+
+
+
+
+
+  private getSheetTransactionTime(
+    transaction:any,
+  ){
+
+    const timestamp =
+      new Date(
+        transaction.transactionDate,
+      )
+        .getTime();
+
+
+    return Number.isFinite(
+      timestamp,
+    )
+      ? timestamp
+      : 0;
+
+  }
+
+
+
+
+
+  private isSheetTransactionInRange(
+    transaction:any,
+
+    start:Date,
+
+    end:Date,
+  ){
+
+    const timestamp =
+      this.getSheetTransactionTime(
+        transaction,
+      );
+
+
+    return (
+      timestamp >= start.getTime()
+      &&
+      timestamp <= end.getTime()
+    );
+
+  }
+
+
+
+
+
+  private sheetTransactionMatchesKeyword(
+    transaction:any,
+
+    keyword:string,
+  ){
+
+    const needle =
+      keyword
+        .trim()
+        .toLowerCase();
+
+
+    if(!needle){
+
+      return true;
+
+    }
+
+
+    return [
+      transaction.description,
+      transaction.category?.name,
+      transaction.merchant?.name,
+      transaction.paymentMethod?.name,
+      transaction.source,
+      transaction.type,
+      transaction.amount,
+    ]
+      .filter(Boolean)
+      .some(
+        (value) => String(
+          value,
+        )
+          .toLowerCase()
+          .includes(
+            needle,
+          ),
+      );
+
+  }
+
+
+
+
+
   private async handleLastCommand(
     workspaceId:string,
 
@@ -2716,30 +2841,13 @@ export class WhatsAppService {
   ){
 
     const transaction =
-      await this.app.prisma.transaction
-        .findFirst({
-
-          where:{
-            workspaceId,
-
-            status:{
-              not:
-                "CANCELLED",
-            },
-          },
-
-          include:{
-            category:true,
-            merchant:true,
-            paymentMethod:true,
-          },
-
-          orderBy:{
-            updatedAt:
-              "desc",
-          },
-
-        });
+      (
+        await this.getWorkspaceSheetTransactions(
+          workspaceId,
+        )
+      )[0]
+      ??
+      null;
 
 
     const reply =
@@ -3021,7 +3129,10 @@ export class WhatsAppService {
     let title =
       "📋 Senarai transaksi";
 
-    let transactions;
+    let transactions =
+      await this.getWorkspaceSheetTransactions(
+        workspaceId,
+      );
 
 
     if(command.mode === "search"){
@@ -3037,76 +3148,17 @@ export class WhatsAppService {
 
 
       transactions =
-        await this.app.prisma.transaction
-          .findMany({
-            where:{
-              workspaceId,
-
-              status:{
-                not:
-                  "CANCELLED",
-              },
-
-              OR:[
-                {
-                  description:{
-                    contains:
-                      keyword,
-
-                    mode:
-                      "insensitive",
-                  },
-                },
-                {
-                  category:{
-                    name:{
-                      contains:
-                        keyword,
-
-                      mode:
-                        "insensitive",
-                    },
-                  },
-                },
-                {
-                  merchant:{
-                    name:{
-                      contains:
-                        keyword,
-
-                      mode:
-                        "insensitive",
-                    },
-                  },
-                },
-                {
-                  paymentMethod:{
-                    name:{
-                      contains:
-                        keyword,
-
-                      mode:
-                        "insensitive",
-                    },
-                  },
-                },
-              ],
-            },
-
-            include:{
-              category:true,
-              merchant:true,
-              paymentMethod:true,
-            },
-
-            orderBy:{
-              transactionDate:
-                "desc",
-            },
-
-            take:
-              5,
-          });
+        transactions
+          .filter(
+            (transaction) => this.sheetTransactionMatchesKeyword(
+              transaction,
+              keyword,
+            ),
+          )
+          .slice(
+            0,
+            5,
+          );
 
     }else{
 
@@ -3137,39 +3189,18 @@ export class WhatsAppService {
 
 
       transactions =
-        await this.app.prisma.transaction
-          .findMany({
-            where:{
-              workspaceId,
-
-              status:{
-                not:
-                  "CANCELLED",
-              },
-
-              transactionDate:{
-                gte:
-                  periodRange.start,
-
-                lte:
-                  periodRange.end,
-              },
-            },
-
-            include:{
-              category:true,
-              merchant:true,
-              paymentMethod:true,
-            },
-
-            orderBy:{
-              transactionDate:
-                "desc",
-            },
-
-            take:
-              5,
-          });
+        transactions
+          .filter(
+            (transaction) => this.isSheetTransactionInRange(
+              transaction,
+              periodRange.start,
+              periodRange.end,
+            ),
+          )
+          .slice(
+            0,
+            5,
+          );
 
     }
 
@@ -3241,36 +3272,27 @@ export class WhatsAppService {
 
 
     const transactions =
-      await this.app.prisma.transaction
-        .findMany({
-
-          where:{
-            workspaceId,
-
-            status:{
-              not:
-                "CANCELLED",
-            },
-
-            transactionDate:{
-              gte:
-                start,
-
-              lte:
-                end,
-            },
-          },
-
-          include:{
-            category:true,
-          },
-
-          orderBy:{
-            transactionDate:
-              "asc",
-          },
-
-        });
+      (
+        await this.getWorkspaceSheetTransactions(
+          workspaceId,
+        )
+      )
+        .filter(
+          (transaction) => this.isSheetTransactionInRange(
+            transaction,
+            start,
+            end,
+          ),
+        )
+        .sort(
+          (first, second) => this.getSheetTransactionTime(
+            first,
+          )
+          -
+          this.getSheetTransactionTime(
+            second,
+          ),
+        );
 
 
     const reply =
@@ -5083,39 +5105,45 @@ export class WhatsAppService {
       );
 
 
-    return this.app.prisma.transaction
-      .findFirst({
-        where:{
-          workspaceId,
+    const parsedDate =
+      new Date(
+        parsed.transactionDate,
+      )
+        .getTime();
 
-          amount:
-            parsed.amount,
 
-          description:
-            parsed.description,
+    const transactions =
+      await this.getWorkspaceSheetTransactions(
+        workspaceId,
+      );
 
-          transactionDate:
-            new Date(
-              parsed.transactionDate,
-            ),
-        },
 
-        include:{
-
-          category:true,
-
-          merchant:true,
-
-          paymentMethod:true,
-
-          workspace:{
-            select:{
-              type:true,
-            },
-          },
-
-        },
-      });
+    return transactions
+      .find(
+        (transaction) => (
+          String(
+            transaction.amount,
+          )
+          ===
+          parsed.amount
+          &&
+          (
+            transaction.description
+            ??
+            ""
+          )
+          ===
+          parsed.description
+          &&
+          this.getSheetTransactionTime(
+            transaction,
+          )
+          ===
+          parsedDate
+        ),
+      )
+      ??
+      null;
 
   }
 
