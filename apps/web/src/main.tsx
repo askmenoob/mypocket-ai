@@ -67,6 +67,19 @@ type DashboardView =
   | "admin"
   | "settings";
 
+type WhatsAppQrMode =
+  | "wizard"
+  | "dashboard";
+
+type WhatsAppQrState = {
+  open:boolean;
+  mode:WhatsAppQrMode;
+  imageSrc:string;
+  loading:boolean;
+  error:string;
+  expiresAt:number | null;
+};
+
 function stored(key:string){
   return localStorage.getItem(key) || "";
 }
@@ -214,92 +227,54 @@ function getApiTextErrorMessage(
 
 }
 
-function escapeHtml(
-  value:string,
+function emptyWhatsAppQrState():WhatsAppQrState{
+  return {
+    open:false,
+    mode:"dashboard",
+    imageSrc:"",
+    loading:false,
+    error:"",
+    expiresAt:null,
+  };
+}
+
+function extractQrImageSrc(
+  html:string,
 ){
 
-  return value
-    .replace(
-      /&/g,
-      "&amp;",
-    )
-    .replace(
-      /</g,
-      "&lt;",
-    )
-    .replace(
-      />/g,
-      "&gt;",
-    )
-    .replace(
-      /"/g,
-      "&quot;",
-    )
-    .replace(
-      /'/g,
-      "&#039;",
+  const match =
+    html.match(
+      /<img\s+[^>]*src=["']([^"']+)["']/i,
     );
+
+  return (
+    match?.[1]
+      ?.replace(
+        /&amp;/g,
+        "&",
+      )
+    ??
+    ""
+  );
 
 }
 
-function buildQrPopupPage(
-  title:string,
-  message:string,
+function isWhatsAppInstanceConnected(
+  status:unknown,
 ){
 
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>${escapeHtml(
-      title,
-    )}</title>
-    <style>
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: linear-gradient(135deg, #ecfdf8, #ffffff);
-        color: #082326;
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      }
-
-      main {
-        width: min(92vw, 420px);
-        padding: 28px;
-        border: 1px solid #b8eee4;
-        border-radius: 24px;
-        background: #ffffff;
-        box-shadow: 0 24px 70px rgba(4, 47, 46, 0.12);
-        text-align: center;
-      }
-
-      h1 {
-        margin: 0 0 12px;
-        font-size: 24px;
-      }
-
-      p {
-        margin: 0;
-        color: #587076;
-        line-height: 1.6;
-        white-space: pre-line;
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>${escapeHtml(
-        title,
-      )}</h1>
-      <p>${escapeHtml(
-        message,
-      )}</p>
-    </main>
-  </body>
-</html>`;
+  return [
+    "OPEN",
+    "CONNECTED",
+    "DEV_CONNECTED",
+  ].includes(
+    String(
+      status
+      ??
+      "",
+    )
+      .toUpperCase(),
+  );
 
 }
 
@@ -401,6 +376,16 @@ function App(){
   const [preferredWizardStep, setPreferredWizardStep] =
     useState(
       stored(STORAGE.wizardStep),
+    );
+
+  const [whatsAppQr, setWhatsAppQr] =
+    useState<WhatsAppQrState>(
+      emptyWhatsAppQrState,
+    );
+
+  const [qrNow, setQrNow] =
+    useState(
+      Date.now(),
     );
 
   const workspaceId =
@@ -723,6 +708,93 @@ function App(){
     loadAll();
   }, [token]);
 
+  useEffect(() => {
+
+    if(
+      !whatsAppQr.open
+      ||
+      !whatsAppQr.expiresAt
+    ){
+
+      return;
+
+    }
+
+
+    const timer =
+      window.setInterval(
+        () => setQrNow(
+          Date.now(),
+        ),
+        1000,
+      );
+
+
+    return () => window.clearInterval(
+      timer,
+    );
+
+  }, [
+    whatsAppQr.open,
+    whatsAppQr.expiresAt,
+  ]);
+
+  useEffect(() => {
+
+    if(
+      !whatsAppQr.open
+      ||
+      !token
+    ){
+
+      return;
+
+    }
+
+
+    const poller =
+      window.setInterval(
+        () => {
+          loadAll();
+        },
+        4000,
+      );
+
+
+    return () => window.clearInterval(
+      poller,
+    );
+
+  }, [
+    whatsAppQr.open,
+    token,
+  ]);
+
+  useEffect(() => {
+
+    if(
+      whatsAppQr.open
+      &&
+      isWhatsAppInstanceConnected(
+        data.whatsapp?.instance?.status,
+      )
+    ){
+
+      setWhatsAppQr(
+        emptyWhatsAppQrState(),
+      );
+
+      setNotice(
+        "WhatsApp bot paired. QR ditutup secara automatik.",
+      );
+
+    }
+
+  }, [
+    whatsAppQr.open,
+    data.whatsapp?.instance?.status,
+  ]);
+
   function signOut(){
 
     localStorage.removeItem(
@@ -891,26 +963,22 @@ function App(){
 
   }
 
-  async function openWhatsAppQr(){
+  async function openWhatsAppQr(
+    mode:WhatsAppQrMode = "dashboard",
+  ){
 
-    const qrWindow =
-      window.open(
-        "",
-        "mypocket-whatsapp-qr",
-      );
+    setQrNow(
+      Date.now(),
+    );
 
-    qrWindow
-      ?.document
-      .write(
-        buildQrPopupPage(
-          "Loading WhatsApp QR",
-          "Sedang dapatkan QR pairing daripada server...",
-        ),
-      );
-
-    qrWindow
-      ?.document
-      .close();
+    setWhatsAppQr({
+      open:true,
+      mode,
+      imageSrc:"",
+      loading:true,
+      error:"",
+      expiresAt:null,
+    });
 
     try{
 
@@ -920,35 +988,42 @@ function App(){
           token,
         );
 
-      if(
-        qrWindow
-        &&
-        !qrWindow.closed
-      ){
+      const imageSrc =
+        extractQrImageSrc(
+          html,
+        );
 
-        qrWindow
-          .document
-          .open();
 
-        qrWindow
-          .document
-          .write(
-            html,
-          );
+      if(!imageSrc){
 
-        qrWindow
-          .document
-          .close();
-
-        qrWindow
-          .focus();
-
-        return;
+        throw new Error(
+          "QR WhatsApp belum tersedia sekarang. Tekan Reset expired QR untuk generate QR baru.",
+        );
 
       }
 
+
+      const expiresAt =
+        Date.now()
+        +
+        60_000;
+
+
+      setQrNow(
+        Date.now(),
+      );
+
+      setWhatsAppQr({
+        open:true,
+        mode,
+        imageSrc,
+        loading:false,
+        error:"",
+        expiresAt,
+      });
+
       setNotice(
-        "Browser block popup QR. Benarkan popup untuk app.imai.my kemudian tekan Open WhatsApp QR semula.",
+        "QR WhatsApp tersedia. Scan dalam masa lebih kurang 1 minit.",
       );
 
     }catch(error){
@@ -958,30 +1033,14 @@ function App(){
           ? error.message
           : "WhatsApp QR could not be opened.";
 
-      if(
-        qrWindow
-        &&
-        !qrWindow.closed
-      ){
-
-        qrWindow
-          .document
-          .open();
-
-        qrWindow
-          .document
-          .write(
-            buildQrPopupPage(
-              "WhatsApp QR belum tersedia",
-              message,
-            ),
-          );
-
-        qrWindow
-          .document
-          .close();
-
-      }
+      setWhatsAppQr({
+        open:true,
+        mode,
+        imageSrc:"",
+        loading:false,
+        error:message,
+        expiresAt:null,
+      });
 
       setNotice(
         message,
@@ -991,8 +1050,18 @@ function App(){
 
   }
 
+  function closeWhatsAppQr(){
 
-  async function resetWhatsAppInstance(){
+    setWhatsAppQr(
+      emptyWhatsAppQrState(),
+    );
+
+  }
+
+
+  async function resetWhatsAppInstance(
+    mode?:WhatsAppQrMode,
+  ){
 
     try{
 
@@ -1009,7 +1078,19 @@ function App(){
         "WhatsApp QR telah direset. Buka QR semula dan scan dalam masa lebih kurang 1 minit.",
       );
 
+      setWhatsAppQr(
+        emptyWhatsAppQrState(),
+      );
+
       await loadAll();
+
+      if(mode){
+
+        await openWhatsAppQr(
+          mode,
+        );
+
+      }
 
     }catch(error){
 
@@ -1046,6 +1127,22 @@ function App(){
       ||
       !onboardingCompleted
     );
+
+  const qrSecondsLeft =
+    whatsAppQr.expiresAt
+      ? Math.max(
+        0,
+        Math.ceil(
+          (
+            whatsAppQr.expiresAt
+            -
+            qrNow
+          )
+          /
+          1000,
+        ),
+      )
+      : 0;
 
   if(
     token
@@ -1096,6 +1193,9 @@ function App(){
         connectGoogleSheet={connectGoogleSheet}
         openWhatsAppQr={openWhatsAppQr}
         resetWhatsAppInstance={resetWhatsAppInstance}
+        whatsAppQr={whatsAppQr}
+        qrSecondsLeft={qrSecondsLeft}
+        closeWhatsAppQr={closeWhatsAppQr}
       />
     );
 
@@ -1112,6 +1212,9 @@ function App(){
       connectGoogleSheet={connectGoogleSheet}
       openWhatsAppQr={openWhatsAppQr}
       resetWhatsAppInstance={resetWhatsAppInstance}
+      whatsAppQr={whatsAppQr}
+      qrSecondsLeft={qrSecondsLeft}
+      closeWhatsAppQr={closeWhatsAppQr}
       signOut={signOut}
     />
   );
@@ -1175,8 +1278,11 @@ function SetupWizard(
     notice:string;
     installApp:() => void;
     connectGoogleSheet:() => void;
-    openWhatsAppQr:() => void;
-    resetWhatsAppInstance:() => void;
+    openWhatsAppQr:(mode?:WhatsAppQrMode) => void;
+    resetWhatsAppInstance:(mode?:WhatsAppQrMode) => void;
+    whatsAppQr:WhatsAppQrState;
+    qrSecondsLeft:number;
+    closeWhatsAppQr:() => void;
   },
 ){
 
@@ -1593,7 +1699,7 @@ function SetupWizard(
               {!isWhatsAppConnected && (
                 <button
                   className="primary"
-                  onClick={props.openWhatsAppQr}
+                  onClick={() => props.openWhatsAppQr("wizard")}
                 >
                   Open WhatsApp QR
                 </button>
@@ -1602,10 +1708,21 @@ function SetupWizard(
               {!isWhatsAppConnected && (
                 <button
                   className="secondary"
-                  onClick={props.resetWhatsAppInstance}
+                  onClick={() => props.resetWhatsAppInstance()}
                 >
                   Reset expired QR
                 </button>
+              )}
+
+              {props.whatsAppQr.open && props.whatsAppQr.mode === "wizard" && (
+                <WhatsAppQrPanel
+                  qr={props.whatsAppQr}
+                  secondsLeft={props.qrSecondsLeft}
+                  inline
+                  openQr={() => props.openWhatsAppQr("wizard")}
+                  resetQr={() => props.resetWhatsAppInstance("wizard")}
+                  closeQr={props.closeWhatsAppQr}
+                />
               )}
             </WizardCard>
           )}
@@ -1750,8 +1867,11 @@ function Dashboard(
     resetWizard:() => void;
     installApp:() => void;
     connectGoogleSheet:() => void;
-    openWhatsAppQr:() => void;
-    resetWhatsAppInstance:() => void;
+    openWhatsAppQr:(mode?:WhatsAppQrMode) => void;
+    resetWhatsAppInstance:(mode?:WhatsAppQrMode) => void;
+    whatsAppQr:WhatsAppQrState;
+    qrSecondsLeft:number;
+    closeWhatsAppQr:() => void;
     signOut:() => void;
   },
 ){
@@ -2212,7 +2332,7 @@ function Dashboard(
               <div className="panelActions">
                 <button
                   className="primary"
-                  onClick={props.openWhatsAppQr}
+                  onClick={() => props.openWhatsAppQr("dashboard")}
                 >
                   Open WhatsApp QR
                 </button>
@@ -2268,8 +2388,8 @@ function Dashboard(
                   "transactions",
                 )}
               />
-              <Action title="Open WhatsApp QR" desc="Reconnect bot pairing." icon="☏" onClick={props.openWhatsAppQr} />
-              <Action title="Reset WhatsApp QR" desc="Generate a fresh pairing instance." icon="↻" onClick={props.resetWhatsAppInstance} />
+              <Action title="Open WhatsApp QR" desc="Reconnect bot pairing." icon="☏" onClick={() => props.openWhatsAppQr("dashboard")} />
+              <Action title="Reset WhatsApp QR" desc="Generate a fresh pairing instance." icon="↻" onClick={() => props.resetWhatsAppInstance()} />
               <Action title="Setup Wizard" desc="Review onboarding steps." icon="⚙" onClick={props.resetWizard} />
             </div>
             </Panel>
@@ -2463,6 +2583,16 @@ function Dashboard(
           Refresh
         </button>
 
+        {props.whatsAppQr.open && props.whatsAppQr.mode === "dashboard" && (
+          <WhatsAppQrPanel
+            qr={props.whatsAppQr}
+            secondsLeft={props.qrSecondsLeft}
+            openQr={() => props.openWhatsAppQr("dashboard")}
+            resetQr={() => props.resetWhatsAppInstance("dashboard")}
+            closeQr={props.closeWhatsAppQr}
+          />
+        )}
+
         <nav className="mobileNav">
           <button
             className={activeView === "dashboard" ? "active" : ""}
@@ -2490,6 +2620,121 @@ function Dashboard(
           </button>
         </nav>
       </main>
+    </div>
+  );
+
+}
+
+
+function WhatsAppQrPanel(
+  props:{
+    qr:WhatsAppQrState;
+    secondsLeft:number;
+    inline?:boolean;
+    openQr:() => void;
+    resetQr:() => void;
+    closeQr:() => void;
+  },
+){
+
+  const expired =
+    Boolean(
+      props.qr.expiresAt,
+    )
+    &&
+    props.secondsLeft <= 0;
+
+  const content =
+    (
+      <section className={props.inline ? "qrPanel inline" : "qrPanel"}>
+        <div className="qrHeader">
+          <div>
+            <h2>WhatsApp pairing QR</h2>
+            <p>
+              Scan QR ini di WhatsApp → Linked devices → Link a device.
+            </p>
+          </div>
+
+          <button
+            className="iconButton"
+            onClick={props.closeQr}
+            aria-label="Close WhatsApp QR"
+          >
+            ×
+          </button>
+        </div>
+
+        {props.qr.loading && (
+          <div className="qrState">
+            Sedang dapatkan QR daripada Evolution...
+          </div>
+        )}
+
+        {props.qr.error && !props.qr.loading && (
+          <div className="qrState warning">
+            <strong>QR belum tersedia.</strong>
+            <span>{props.qr.error}</span>
+          </div>
+        )}
+
+        {props.qr.imageSrc && !props.qr.loading && !expired && (
+          <div className="qrImageShell">
+            <img
+              className="qrImage"
+              src={props.qr.imageSrc}
+              alt="WhatsApp pairing QR code"
+            />
+          </div>
+        )}
+
+        {props.qr.imageSrc && !props.qr.loading && expired && (
+          <div className="qrState warning">
+            <strong>QR expired.</strong>
+            <span>Generate QR baru sebelum scan untuk elak QR lama digunakan.</span>
+          </div>
+        )}
+
+        {props.qr.expiresAt && !props.qr.loading && (
+          <div className={expired ? "qrTimer expired" : "qrTimer"}>
+            {expired
+              ? "Expired"
+              : `Expired dalam ${props.secondsLeft}s`}
+          </div>
+        )}
+
+        <div className="qrActions">
+          <button
+            className="secondary"
+            onClick={props.openQr}
+          >
+            Reload QR
+          </button>
+
+          <button
+            className="primary"
+            onClick={props.resetQr}
+          >
+            Generate new QR
+          </button>
+        </div>
+
+        <p className="hint">
+          QR akan ditutup automatik selepas bot berjaya paired.
+        </p>
+      </section>
+    );
+
+
+  if(props.inline){
+
+    return content;
+
+  }
+
+
+  return (
+    <div className="qrModalBackdrop" role="dialog" aria-modal="true">
+      {content}
     </div>
   );
 
