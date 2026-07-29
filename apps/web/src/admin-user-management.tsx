@@ -160,6 +160,17 @@ export function AdminUserManagement(
       "ALL" | WorkspacePackage
     >("ALL");
 
+  const [
+    currentPage,
+    setCurrentPage,
+  ] =
+    useState(
+      1,
+    );
+
+  const pageSize =
+    10;
+
   const filteredUsers =
     useMemo(
       () => {
@@ -236,6 +247,36 @@ export function AdminUserManagement(
         ) > 0,
     ).length;
 
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(
+        filteredUsers.length
+        /
+        pageSize,
+      ),
+    );
+
+  const safeCurrentPage =
+    Math.min(
+      currentPage,
+      totalPages,
+    );
+
+  const paginatedUsers =
+    filteredUsers.slice(
+      (
+        safeCurrentPage
+        -
+        1
+      )
+      *
+      pageSize,
+      safeCurrentPage
+      *
+      pageSize,
+    );
+
   return (
     <section className="admin-users-shell">
       <header className="admin-users-header">
@@ -294,10 +335,15 @@ export function AdminUserManagement(
             value={query}
             placeholder="Name, email or workspace"
             onChange={
-              (event) =>
+              (event) => {
                 setQuery(
                   event.target.value,
-                )
+                );
+
+                setCurrentPage(
+                  1,
+                );
+              }
             }
           />
         </label>
@@ -308,11 +354,16 @@ export function AdminUserManagement(
           <select
             value={packageFilter}
             onChange={
-              (event) =>
+              (event) => {
                 setPackageFilter(
                   event.target.value as
                     "ALL" | WorkspacePackage,
-                )
+                );
+
+                setCurrentPage(
+                  1,
+                );
+              }
             }
           >
             <option value="ALL">
@@ -340,8 +391,11 @@ export function AdminUserManagement(
       )}
 
       <div className="admin-users-count">
-        Showing {filteredUsers.length} of{" "}
-        {props.users.length} users
+        Showing {paginatedUsers.length} of{" "}
+        {filteredUsers.length} users
+        {totalPages > 1
+          ? ` · Page ${safeCurrentPage} / ${totalPages}`
+          : ""}
       </div>
 
       {filteredUsers.length === 0
@@ -359,13 +413,13 @@ export function AdminUserManagement(
                   <th>Workspace</th>
                   <th>Connections</th>
                   <th>Registered</th>
-                  <th>Account status</th>
-                  <th>Package management</th>
+                  <th>Package</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
 
               <tbody>
-                {filteredUsers.map(
+                {paginatedUsers.map(
                   (user) => {
                     const workspace =
                       user.workspace;
@@ -514,85 +568,7 @@ export function AdminUserManagement(
                         </td>
 
                         <td>
-                          <div className="admin-access-control">
-                            <strong
-                              className={
-                                user.status && user.status !== "ACTIVE"
-                                  ? "admin-access-danger"
-                                  : "admin-access-ok"
-                              }
-                            >
-                              {user.status || "ACTIVE"}
-                            </strong>
-
-                            <div className="admin-user-actions">
-                              {user.status === "BANNED"
-                                ? (
-                                  <button
-                                    type="button"
-                                    disabled={isBusy}
-                                    onClick={() => props.onSuperAdminUserAction(
-                                      user.userId,
-                                      "unban",
-                                      "User unbanned.",
-                                      `Unban ${user.email}?`,
-                                    )}
-                                  >
-                                    Unban
-                                  </button>
-                                )
-                                : (
-                                  <button
-                                    type="button"
-                                    className="dangerGhost"
-                                    disabled={isBusy || user.isSuperAdmin}
-                                    onClick={() => props.onSuperAdminUserAction(
-                                      user.userId,
-                                      "ban",
-                                      "User banned.",
-                                      `Ban ${user.email}? User tidak boleh login selepas ini.`,
-                                    )}
-                                  >
-                                    Ban
-                                  </button>
-                                )}
-
-                              {user.status === "DEACTIVATED"
-                                ? (
-                                  <button
-                                    type="button"
-                                    disabled={isBusy}
-                                    onClick={() => props.onSuperAdminUserAction(
-                                      user.userId,
-                                      "reactivate",
-                                      "User reactivated.",
-                                      `Reactivate ${user.email}?`,
-                                    )}
-                                  >
-                                    Reactivate
-                                  </button>
-                                )
-                                : (
-                                  <button
-                                    type="button"
-                                    className="dangerGhost"
-                                    disabled={isBusy || user.isSuperAdmin}
-                                    onClick={() => props.onSuperAdminUserAction(
-                                      user.userId,
-                                      "deactivate",
-                                      "User deactivated.",
-                                      `Deactivate ${user.email}? Ini soft delete dan boleh reactivate semula.`,
-                                    )}
-                                  >
-                                    Deactivate
-                                  </button>
-                                )}
-                            </div>
-                          </div>
-                        </td>
-
-                        <td>
-                          <div className="admin-package-control">
+                          <div className="admin-package-control compact">
                             <select
                               value={user.package}
                               disabled={
@@ -625,11 +601,33 @@ export function AdminUserManagement(
                               {isBusy
                                 ? "Updating…"
                                 : isOwner
-                                  ? `Current: ${packageLabel(user.package)}`
-                                  : "Inherited from workspace owner"}
+                                  ? packageLabel(user.package)
+                                  : "Inherited"}
                             </span>
+                          </div>
+                        </td>
 
-                            <div className="admin-user-actions">
+                        <td>
+                          <details className="admin-action-menu">
+                            <summary>
+                              Actions
+                            </summary>
+
+                            <div className="admin-action-panel">
+                              <div className="admin-action-status">
+                                <span>Account status</span>
+
+                                <strong
+                                  className={
+                                    user.status && user.status !== "ACTIVE"
+                                      ? "admin-access-danger"
+                                      : "admin-access-ok"
+                                  }
+                                >
+                                  {user.status || "ACTIVE"}
+                                </strong>
+                              </div>
+
                               <button
                                 type="button"
                                 disabled={!isOwner || isBusy || !workspace?.googleConnected}
@@ -645,7 +643,6 @@ export function AdminUserManagement(
 
                               <button
                                 type="button"
-                                className="dangerGhost"
                                 disabled={!isOwner || isBusy || !workspace?.whatsappCount}
                                 onClick={() => props.onSuperAdminUserAction(
                                   user.userId,
@@ -656,8 +653,70 @@ export function AdminUserManagement(
                               >
                                 Disconnect WA
                               </button>
+
+                              {user.status === "BANNED"
+                                ? (
+                                  <button
+                                    type="button"
+                                    disabled={isBusy}
+                                    onClick={() => props.onSuperAdminUserAction(
+                                      user.userId,
+                                      "unban",
+                                      "User unbanned.",
+                                      `Unban ${user.email}?`,
+                                    )}
+                                  >
+                                    Unban user
+                                  </button>
+                                )
+                                : (
+                                  <button
+                                    type="button"
+                                    className="dangerGhost"
+                                    disabled={isBusy || user.isSuperAdmin}
+                                    onClick={() => props.onSuperAdminUserAction(
+                                      user.userId,
+                                      "ban",
+                                      "User banned.",
+                                      `Ban ${user.email}? User tidak boleh login selepas ini.`,
+                                    )}
+                                  >
+                                    Ban user
+                                  </button>
+                                )}
+
+                              {user.status === "DEACTIVATED"
+                                ? (
+                                  <button
+                                    type="button"
+                                    disabled={isBusy}
+                                    onClick={() => props.onSuperAdminUserAction(
+                                      user.userId,
+                                      "reactivate",
+                                      "User reactivated.",
+                                      `Reactivate ${user.email}?`,
+                                    )}
+                                  >
+                                    Reactivate user
+                                  </button>
+                                )
+                                : (
+                                  <button
+                                    type="button"
+                                    className="dangerGhost"
+                                    disabled={isBusy || user.isSuperAdmin}
+                                    onClick={() => props.onSuperAdminUserAction(
+                                      user.userId,
+                                      "deactivate",
+                                      "User deactivated.",
+                                      `Deactivate ${user.email}? Ini soft delete dan boleh reactivate semula.`,
+                                    )}
+                                  >
+                                    Deactivate user
+                                  </button>
+                                )}
                             </div>
-                          </div>
+                          </details>
                         </td>
                       </tr>
                     );
@@ -667,6 +726,30 @@ export function AdminUserManagement(
             </table>
           </div>
         )}
+
+      {filteredUsers.length > pageSize && (
+        <div className="admin-users-pagination">
+          <button
+            type="button"
+            disabled={safeCurrentPage <= 1}
+            onClick={() => setCurrentPage(safeCurrentPage - 1)}
+          >
+            Previous
+          </button>
+
+          <span>
+            Page {safeCurrentPage} / {totalPages}
+          </span>
+
+          <button
+            type="button"
+            disabled={safeCurrentPage >= totalPages}
+            onClick={() => setCurrentPage(safeCurrentPage + 1)}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </section>
   );
 }
