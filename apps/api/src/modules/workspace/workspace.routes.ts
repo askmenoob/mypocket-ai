@@ -91,7 +91,7 @@ const workspaceRoutes:
     );
 
 
-    app.delete(
+    app.post(
       "/admin/users/:userId/delete",
       controller.adminDeleteUser,
     );
