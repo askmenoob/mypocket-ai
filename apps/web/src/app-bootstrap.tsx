@@ -2305,6 +2305,68 @@ function Dashboard(
   }
 
 
+  async function superAdminUserAction(
+    userId:string,
+    action:
+      | "google-sheet/upgrade"
+      | "whatsapp/disconnect"
+      | "ban"
+      | "unban"
+      | "deactivate"
+      | "reactivate",
+    label:string,
+    confirmText:string,
+  ){
+
+    const confirmed =
+      window.confirm(
+        confirmText,
+      );
+
+
+    if(!confirmed){
+      return;
+    }
+
+
+    const token =
+      stored(STORAGE.token);
+
+
+    setPackageBusyUserId(
+      userId,
+    );
+
+
+    try{
+
+      await api(
+        `/workspace/admin/users/${userId}/${action}`,
+        token,
+        {
+          method:"POST",
+          body:JSON.stringify({}),
+        },
+      );
+
+
+      setActionMessage(
+        label,
+      );
+
+
+      props.refresh();
+
+    }finally{
+
+      setPackageBusyUserId("");
+
+    }
+
+  }
+
+
+
   async function updateUserPackage(
     userId:string,
     packageType:WorkspacePackage,
@@ -2758,6 +2820,7 @@ function Dashboard(
               message={actionMessage}
               onRefresh={props.refresh}
               onUpdatePackage={updateUserPackage}
+              onSuperAdminUserAction={superAdminUserAction}
             />
           )}
 

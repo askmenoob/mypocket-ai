@@ -44,6 +44,42 @@ const workspaceRoutes:
 
 
     app.post(
+      "/admin/users/:userId/google-sheet/upgrade",
+      controller.adminUpgradeUserGoogleSheet,
+    );
+
+
+    app.post(
+      "/admin/users/:userId/whatsapp/disconnect",
+      controller.adminDisconnectUserWhatsApp,
+    );
+
+
+    app.post(
+      "/admin/users/:userId/ban",
+      controller.adminBanUser,
+    );
+
+
+    app.post(
+      "/admin/users/:userId/unban",
+      controller.adminUnbanUser,
+    );
+
+
+    app.post(
+      "/admin/users/:userId/deactivate",
+      controller.adminDeactivateUser,
+    );
+
+
+    app.post(
+      "/admin/users/:userId/reactivate",
+      controller.adminReactivateUser,
+    );
+
+
+    app.post(
       "/",
       controller.create,
     );

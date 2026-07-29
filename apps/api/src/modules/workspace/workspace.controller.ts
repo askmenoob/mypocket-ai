@@ -119,6 +119,136 @@ export class WorkspaceController {
 
 
 
+  adminUpgradeUserGoogleSheet = async (
+    request:
+      FastifyRequest<{
+        Params:{
+          userId:string;
+        };
+      }>,
+  ) => {
+
+    await request.jwtVerify();
+
+    return this.service
+      .adminUpgradeUserGoogleSheet(
+        request.user.email,
+        request.params.userId,
+      );
+
+  };
+
+
+
+  adminDisconnectUserWhatsApp = async (
+    request:
+      FastifyRequest<{
+        Params:{
+          userId:string;
+        };
+      }>,
+  ) => {
+
+    await request.jwtVerify();
+
+    return this.service
+      .adminDisconnectUserWhatsApp(
+        request.user.email,
+        request.params.userId,
+      );
+
+  };
+
+
+
+  adminBanUser = async (
+    request:
+      FastifyRequest<{
+        Params:{
+          userId:string;
+        };
+      }>,
+  ) => {
+
+    await request.jwtVerify();
+
+    return this.service
+      .adminSetUserAccessStatus(
+        request.user.email,
+        request.params.userId,
+        "BANNED",
+      );
+
+  };
+
+
+
+  adminUnbanUser = async (
+    request:
+      FastifyRequest<{
+        Params:{
+          userId:string;
+        };
+      }>,
+  ) => {
+
+    await request.jwtVerify();
+
+    return this.service
+      .adminSetUserAccessStatus(
+        request.user.email,
+        request.params.userId,
+        "ACTIVE",
+      );
+
+  };
+
+
+
+  adminDeactivateUser = async (
+    request:
+      FastifyRequest<{
+        Params:{
+          userId:string;
+        };
+      }>,
+  ) => {
+
+    await request.jwtVerify();
+
+    return this.service
+      .adminSetUserAccessStatus(
+        request.user.email,
+        request.params.userId,
+        "DEACTIVATED",
+      );
+
+  };
+
+
+
+  adminReactivateUser = async (
+    request:
+      FastifyRequest<{
+        Params:{
+          userId:string;
+        };
+      }>,
+  ) => {
+
+    await request.jwtVerify();
+
+    return this.service
+      .adminSetUserAccessStatus(
+        request.user.email,
+        request.params.userId,
+        "ACTIVE",
+      );
+
+  };
+
+
+
 
 
 

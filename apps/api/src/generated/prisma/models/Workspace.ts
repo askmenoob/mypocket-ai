@@ -464,10 +464,6 @@ export type WorkspaceUncheckedUpdateManyWithoutOwnerNestedInput = {
   deleteMany?: Prisma.WorkspaceScalarWhereInput | Prisma.WorkspaceScalarWhereInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type EnumWorkspaceTypeFieldUpdateOperationsInput = {
   set?: $Enums.WorkspaceType
 }

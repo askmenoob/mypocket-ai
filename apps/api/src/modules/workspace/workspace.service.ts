@@ -25,8 +25,20 @@ import {
   AppError,
 } from "../../shared/errors/index.js";
 
+import {
+  env,
+} from "../../config/env.js";
+
+import {
+  GoogleSettingsService,
+} from "../google/settings/google-settings.service.js";
+
 
 export class WorkspaceService {
+
+  private readonly app:
+    FastifyInstance;
+
 
   private readonly repository:
     WorkspaceRepository;
@@ -40,9 +52,17 @@ export class WorkspaceService {
     TokenService;
 
 
+  private readonly googleSettingsService:
+    GoogleSettingsService;
+
+
   constructor(
     app: FastifyInstance,
   ) {
+
+    this.app =
+      app;
+
 
     this.repository =
       new WorkspaceRepository(
@@ -58,6 +78,12 @@ export class WorkspaceService {
 
     this.tokenService =
       new TokenService(
+        app,
+      );
+
+
+    this.googleSettingsService =
+      new GoogleSettingsService(
         app,
       );
 
@@ -382,6 +408,363 @@ export class WorkspaceService {
 
 
 
+  async adminUpgradeUserGoogleSheet(
+    actorEmail:string,
+    userId:string,
+  ){
+
+    this.assertSuperAdmin(
+      actorEmail,
+    );
+
+
+    const user =
+      await this.repository
+        .findAdminUserById(
+          userId,
+        );
+
+
+    if(!user){
+
+      throw new AppError(
+        "ADMIN_USER_NOT_FOUND",
+        "User not found",
+        404,
+      );
+
+    }
+
+
+    const workspace =
+      this.resolveAdminUserPrimaryWorkspace(
+        user,
+      );
+
+
+    if(!workspace){
+
+      throw new AppError(
+        "ADMIN_USER_WORKSPACE_NOT_FOUND",
+        "User workspace not found",
+        404,
+      );
+
+    }
+
+
+    const setting =
+      await this.googleSettingsService
+        .autoCreateSheet(
+          workspace.id,
+          `MyPocket ${workspace.type} Template`,
+        );
+
+
+    const updated =
+      await this.repository
+        .findAdminUserById(
+          userId,
+        );
+
+
+    return {
+      message:
+        `Google Sheet upgraded to ${workspace.type} template.`,
+
+      google:
+        setting,
+
+      user:
+        this.toAdminUserPackage(
+          updated!,
+        ),
+    };
+
+  }
+
+
+
+  async adminDisconnectUserWhatsApp(
+    actorEmail:string,
+    userId:string,
+  ){
+
+    this.assertSuperAdmin(
+      actorEmail,
+    );
+
+
+    const user =
+      await this.repository
+        .findAdminUserById(
+          userId,
+        );
+
+
+    if(!user){
+
+      throw new AppError(
+        "ADMIN_USER_NOT_FOUND",
+        "User not found",
+        404,
+      );
+
+    }
+
+
+    const workspace =
+      this.resolveAdminUserPrimaryWorkspace(
+        user,
+      );
+
+
+    if(!workspace){
+
+      throw new AppError(
+        "ADMIN_USER_WORKSPACE_NOT_FOUND",
+        "User workspace not found",
+        404,
+      );
+
+    }
+
+
+    const instances =
+      await this.app.prisma.whatsAppInstance
+        .findMany({
+          where:{
+            workspaceId:
+              workspace.id,
+          },
+        });
+
+
+    for(const instance of instances){
+
+      await this.destroyEvolutionInstance(
+        instance.instanceName,
+      );
+
+    }
+
+
+    if(instances.length){
+
+      await this.app.prisma.whatsAppInstance
+        .deleteMany({
+          where:{
+            workspaceId:
+              workspace.id,
+          },
+        });
+
+    }
+
+
+    const updated =
+      await this.repository
+        .findAdminUserById(
+          userId,
+        );
+
+
+    return {
+      message:
+        "WhatsApp pairing disconnected by super admin.",
+
+      disconnected:
+        instances.length,
+
+      user:
+        this.toAdminUserPackage(
+          updated!,
+        ),
+    };
+
+  }
+
+
+
+  async adminSetUserAccessStatus(
+    actorEmail:string,
+    userId:string,
+    status:
+      | "ACTIVE"
+      | "BANNED"
+      | "DEACTIVATED",
+  ){
+
+    this.assertSuperAdmin(
+      actorEmail,
+    );
+
+
+    const user =
+      await this.repository
+        .findAdminUserById(
+          userId,
+        );
+
+
+    if(!user){
+
+      throw new AppError(
+        "ADMIN_USER_NOT_FOUND",
+        "User not found",
+        404,
+      );
+
+    }
+
+
+    if(
+      isSuperAdminEmail(
+        user.email,
+      )
+      &&
+      status !== "ACTIVE"
+    ){
+
+      throw new AppError(
+        "SUPER_ADMIN_SELF_PROTECTION",
+        "Super admin account cannot be banned or deactivated",
+        400,
+      );
+
+    }
+
+
+    await this.app.prisma.user
+      .update({
+        where:{
+          id:
+            userId,
+        },
+
+        data:{
+          status,
+
+          bannedAt:
+            status === "BANNED"
+              ? new Date()
+              : null,
+
+          deactivatedAt:
+            status === "DEACTIVATED"
+              ? new Date()
+              : null,
+        },
+      });
+
+
+    const updated =
+      await this.repository
+        .findAdminUserById(
+          userId,
+        );
+
+
+    return this.toAdminUserPackage(
+      updated!,
+    );
+
+  }
+
+
+
+  private resolveAdminUserPrimaryWorkspace(
+    user:{
+      memberships:Array<{
+        role:string;
+        createdAt:Date;
+        workspace:any;
+      }>;
+    },
+  ){
+
+    const orderedMemberships =
+      [...user.memberships]
+        .filter(
+          (item) =>
+            Boolean(
+              item.workspace,
+            ),
+        )
+        .sort(
+          (left, right) =>
+            right.createdAt.getTime()
+            -
+            left.createdAt.getTime(),
+        );
+
+
+    const activeMembership =
+      orderedMemberships.find(
+        (item) =>
+          item.role === "OWNER",
+      )
+      ??
+      orderedMemberships[0]
+      ??
+      null;
+
+
+    return activeMembership?.workspace
+      ??
+      null;
+
+  }
+
+
+
+  private async destroyEvolutionInstance(
+    instanceName:string,
+  ){
+
+    if(!env.EVOLUTION_API_KEY){
+
+      return;
+
+    }
+
+
+    for(const endpoint of [
+      `/instance/logout/${encodeURIComponent(instanceName)}`,
+      `/instance/delete/${encodeURIComponent(instanceName)}`,
+    ]){
+
+      try{
+
+        await fetch(
+          `${env.EVOLUTION_API_URL}${endpoint}`,
+          {
+            method:
+              "DELETE",
+
+            headers:{
+              apikey:
+                env.EVOLUTION_API_KEY,
+            },
+          },
+        );
+
+      }catch(error){
+
+        console.error(
+          "SUPER_ADMIN_EVOLUTION_DESTROY_FAILED:",
+          endpoint,
+          error,
+        );
+
+      }
+
+    }
+
+  }
+
+
+
   private packageToWorkspaceType(
     packageType:WorkspacePackage,
   ):WorkspaceType{
@@ -461,6 +844,9 @@ export class WorkspaceService {
       name:string | null;
       createdAt:Date;
       updatedAt:Date;
+      status?:string;
+      bannedAt?:Date | null;
+      deactivatedAt?:Date | null;
 
       subscription?:{
         plan:string;

@@ -99,6 +99,25 @@ export class AuthService {
     }
 
 
+    if(
+      user.status === "BANNED"
+      ||
+      user.status === "DEACTIVATED"
+      ||
+      user.bannedAt
+      ||
+      user.deactivatedAt
+    ){
+
+      throw new AppError(
+        "ACCOUNT_ACCESS_DISABLED",
+        "This account has been disabled. Please contact MyPocket support.",
+        403,
+      );
+
+    }
+
+
     const membership =
       user.memberships?.find(
         (item) =>

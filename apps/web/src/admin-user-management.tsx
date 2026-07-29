@@ -17,6 +17,9 @@ type AdminManagedUser = {
   email:string;
   name:string | null;
   isSuperAdmin?:boolean;
+  status?:string | null;
+  bannedAt?:string | null;
+  deactivatedAt?:string | null;
   package:WorkspacePackage;
   subscriptionPlan:string;
   subscriptionStatus:string;
@@ -46,6 +49,19 @@ type AdminUserManagementProps = {
   onUpdatePackage:(
     userId:string,
     packageType:WorkspacePackage,
+  ) => Promise<void> | void;
+
+  onSuperAdminUserAction:(
+    userId:string,
+    action:
+      | "google-sheet/upgrade"
+      | "whatsapp/disconnect"
+      | "ban"
+      | "unban"
+      | "deactivate"
+      | "reactivate",
+    label:string,
+    confirmText:string,
   ) => Promise<void> | void;
 };
 
@@ -343,6 +359,7 @@ export function AdminUserManagement(
                   <th>Workspace</th>
                   <th>Connections</th>
                   <th>Registered</th>
+                  <th>Account status</th>
                   <th>Package management</th>
                 </tr>
               </thead>
@@ -497,6 +514,84 @@ export function AdminUserManagement(
                         </td>
 
                         <td>
+                          <div className="admin-access-control">
+                            <strong
+                              className={
+                                user.status && user.status !== "ACTIVE"
+                                  ? "admin-access-danger"
+                                  : "admin-access-ok"
+                              }
+                            >
+                              {user.status || "ACTIVE"}
+                            </strong>
+
+                            <div className="admin-user-actions">
+                              {user.status === "BANNED"
+                                ? (
+                                  <button
+                                    type="button"
+                                    disabled={isBusy}
+                                    onClick={() => props.onSuperAdminUserAction(
+                                      user.userId,
+                                      "unban",
+                                      "User unbanned.",
+                                      `Unban ${user.email}?`,
+                                    )}
+                                  >
+                                    Unban
+                                  </button>
+                                )
+                                : (
+                                  <button
+                                    type="button"
+                                    className="dangerGhost"
+                                    disabled={isBusy || user.isSuperAdmin}
+                                    onClick={() => props.onSuperAdminUserAction(
+                                      user.userId,
+                                      "ban",
+                                      "User banned.",
+                                      `Ban ${user.email}? User tidak boleh login selepas ini.`,
+                                    )}
+                                  >
+                                    Ban
+                                  </button>
+                                )}
+
+                              {user.status === "DEACTIVATED"
+                                ? (
+                                  <button
+                                    type="button"
+                                    disabled={isBusy}
+                                    onClick={() => props.onSuperAdminUserAction(
+                                      user.userId,
+                                      "reactivate",
+                                      "User reactivated.",
+                                      `Reactivate ${user.email}?`,
+                                    )}
+                                  >
+                                    Reactivate
+                                  </button>
+                                )
+                                : (
+                                  <button
+                                    type="button"
+                                    className="dangerGhost"
+                                    disabled={isBusy || user.isSuperAdmin}
+                                    onClick={() => props.onSuperAdminUserAction(
+                                      user.userId,
+                                      "deactivate",
+                                      "User deactivated.",
+                                      `Deactivate ${user.email}? Ini soft delete dan boleh reactivate semula.`,
+                                    )}
+                                  >
+                                    Deactivate
+                                  </button>
+                                )}
+                            </div>
+                          </div>
+                        </td>
+
+                        <td>
                           <div className="admin-package-control">
                             <select
                               value={user.package}
@@ -528,11 +623,40 @@ export function AdminUserManagement(
 
                             <span>
                               {isBusy
-                                ? "Updating package…"
+                                ? "Updating…"
                                 : isOwner
                                   ? `Current: ${packageLabel(user.package)}`
                                   : "Inherited from workspace owner"}
                             </span>
+
+                            <div className="admin-user-actions">
+                              <button
+                                type="button"
+                                disabled={!isOwner || isBusy || !workspace?.googleConnected}
+                                onClick={() => props.onSuperAdminUserAction(
+                                  user.userId,
+                                  "google-sheet/upgrade",
+                                  "Google Sheet upgraded ikut package semasa.",
+                                  `Upgrade Google Sheet untuk ${user.email} ikut package ${user.package}? Sheet lama tidak dipadam.`,
+                                )}
+                              >
+                                Upgrade Sheet
+                              </button>
+
+                              <button
+                                type="button"
+                                className="dangerGhost"
+                                disabled={!isOwner || isBusy || !workspace?.whatsappCount}
+                                onClick={() => props.onSuperAdminUserAction(
+                                  user.userId,
+                                  "whatsapp/disconnect",
+                                  "WhatsApp pairing disconnected.",
+                                  `Disconnect WhatsApp bot untuk ${user.email}? User perlu pair semula selepas ini.`,
+                                )}
+                              >
+                                Disconnect WA
+                              </button>
+                            </div>
                           </div>
                         </td>
                       </tr>
