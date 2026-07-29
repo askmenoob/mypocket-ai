@@ -989,9 +989,21 @@ export class WorkspaceService {
       },
     });
 
+    const authToken =
+      await this.tokenService
+        .generate(
+          input.userId,
+          email,
+          invite.workspaceId,
+          member.role,
+        );
+
     return {
       success:
         true,
+
+      token:
+        authToken,
 
       workspaceId:
         invite.workspaceId,

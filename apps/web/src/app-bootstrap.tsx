@@ -611,20 +611,30 @@ function App(){
 
         setAcceptingInvite(true);
 
-        await api(
-          "/workspace/invites/accept",
-          token,
-          {
-            method:
-              "POST",
+        const inviteResult =
+          await api<{
+            token?:string;
+            workspaceId?:string;
+            role?:string;
+          }>(
+            "/workspace/invites/accept",
+            token,
+            {
+              method:
+                "POST",
 
-            body:
-              JSON.stringify({
-                token:
-                  inviteToken,
-              }),
-          },
-        );
+              body:
+                JSON.stringify({
+                  token:
+                    inviteToken,
+                }),
+            },
+          );
+
+        const nextToken =
+          inviteResult.token
+          ||
+          token;
 
         if(cancelled){
           return;
@@ -652,8 +662,19 @@ function App(){
           "/#dashboard",
         );
 
+        if(inviteResult.token){
+          localStorage.setItem(
+            STORAGE.token,
+            nextToken,
+          );
+
+          setToken(
+            nextToken,
+          );
+        }
+
         await loadAll(
-          token,
+          nextToken,
         );
 
       }catch(error){
