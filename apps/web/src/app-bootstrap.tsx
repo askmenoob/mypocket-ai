@@ -103,6 +103,36 @@ type DashboardView =
   | "admin"
   | "settings";
 
+
+function readInitialDashboardView():DashboardView{
+  if(typeof window === "undefined"){
+    return "dashboard";
+  }
+
+  const hash =
+    window.location.hash
+      .replace(/^#/, "")
+      .trim();
+
+  if(
+    hash === "dashboard"
+    ||
+    hash === "transactions"
+    ||
+    hash === "whatsapp"
+    ||
+    hash === "google"
+    ||
+    hash === "admin"
+    ||
+    hash === "settings"
+  ){
+    return hash;
+  }
+
+  return "dashboard";
+}
+
 type WhatsAppQrMode =
   | "wizard"
   | "dashboard";
@@ -2200,6 +2230,15 @@ function Dashboard(
   ){
 
     setActiveView(view);
+
+    if(typeof window !== "undefined"){
+      window.history.replaceState(
+        null,
+        "",
+        `#${view}`,
+      );
+    }
+
     setActionMessage("");
 
   }
