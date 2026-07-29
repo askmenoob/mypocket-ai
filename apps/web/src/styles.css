@@ -2384,3 +2384,143 @@ button.primaryLink{
     overflow-x: auto;
   }
 }
+
+/* Responsive frame fix */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.appShell,
+.main,
+.dashboardShell,
+.premiumDashboard,
+.pd-dashboard,
+.pd-main,
+.pd-content,
+.admin-users-shell {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.main {
+  overflow-x: hidden;
+}
+
+.admin-users-shell {
+  overflow: visible;
+}
+
+.admin-users-table-wrap {
+  width: 100%;
+  max-width: 100%;
+}
+
+.admin-users-table {
+  width: 100%;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1500px) {
+  .main {
+    padding-left: clamp(14px, 2vw, 28px);
+    padding-right: clamp(14px, 2vw, 28px);
+  }
+
+  .admin-users-shell {
+    width: 100%;
+  }
+}
+
+@media (max-width: 1280px) {
+  .admin-users-table {
+    table-layout: auto;
+  }
+
+  .admin-users-table-wrap {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-users-toolbar,
+  .admin-users-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-users-table,
+  .admin-users-table thead,
+  .admin-users-table tbody,
+  .admin-users-table tr,
+  .admin-users-table th,
+  .admin-users-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-users-table thead {
+    display: none;
+  }
+
+  .admin-users-table tr {
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: 18px;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, .72);
+  }
+
+  .admin-users-table td {
+    padding: 8px 0;
+    border: 0;
+  }
+
+  .admin-action-panel {
+    position: static;
+    margin-top: 8px;
+    box-shadow: none;
+  }
+}
+
+@media(max-width:720px){
+  .mobileNav{
+    grid-template-columns:repeat(6,1fr);
+    gap:4px;
+    padding:7px;
+  }
+
+  .mobileNav button{
+    min-width:0;
+    padding:7px 2px;
+  }
+
+  .mobileNav svg{
+    width:17px;
+    height:17px;
+  }
+
+  .mobileNav span{
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:9px;
+    line-height:1.1;
+  }
+}
+
+@media(max-width:380px){
+  .mobileNav span{
+    font-size:8px;
+  }
+}

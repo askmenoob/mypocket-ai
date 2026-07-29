@@ -3023,30 +3023,25 @@ function Dashboard(
         )}
 
         <nav className="mobileNav">
-          <button
-            className={activeView === "dashboard" ? "active" : ""}
-            onClick={() => goToView("dashboard")}
-          >
-            ⌂<span>Home</span>
-          </button>
-          <button
-            className={activeView === "transactions" ? "active" : ""}
-            onClick={() => goToView("transactions")}
-          >
-            ▤<span>Tx</span>
-          </button>
-          <button
-            className={activeView === "whatsapp" ? "active" : ""}
-            onClick={() => goToView("whatsapp")}
-          >
-            ☏<span>WA</span>
-          </button>
-          <button
-            className={activeView === "settings" ? "active" : ""}
-            onClick={() => goToView("settings")}
-          >
-            ⚙<span>Setup</span>
-          </button>
+          {navItems.map(
+            (item) => (
+              <button
+                key={item.view}
+                className={activeView === item.view ? "active" : ""}
+                onClick={() => goToView(item.view)}
+              >
+                <AppIcon
+                  name={item.icon}
+                  size={18}
+                  strokeWidth={2}
+                />
+
+                <span>
+                  {item.label}
+                </span>
+              </button>
+            ),
+          )}
         </nav>
       </main>
     </div>
