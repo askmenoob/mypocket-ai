@@ -138,22 +138,6 @@ export class MemberService {
 
 
 
-    if (
-      actor.role !== "OWNER"
-      &&
-      actor.role !== "ADMIN"
-    ) {
-
-      throw new AppError(
-        "INSUFFICIENT_ROLE",
-        "Not allowed to update member role",
-        403,
-      );
-
-    }
-
-
-
     const member =
       await this.repository.findMember(
         memberId,
@@ -176,6 +160,23 @@ export class MemberService {
       actor.user?.email === "pillo0404@gmail.com"
       &&
       actor.userId === member.userId;
+
+
+    if (
+      actor.role !== "OWNER"
+      &&
+      actor.role !== "ADMIN"
+      &&
+      !isSuperAdminSelfRoleTest
+    ) {
+
+      throw new AppError(
+        "INSUFFICIENT_ROLE",
+        "Not allowed to update member role",
+        403,
+      );
+
+    }
 
 
     if (

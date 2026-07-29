@@ -2134,26 +2134,33 @@ function Dashboard(
       "VIEWER"
     ) as MemberRole;
 
-  const canManageMembers =
-    actorRole === "OWNER" ||
-    actorRole === "ADMIN" ||
-    Boolean(
-      props.data.me?.isSuperAdmin,
-    );
-
   const isSuperAdmin =
     Boolean(
       props.data.me?.isSuperAdmin,
     );
 
-  const canUseAdmin =
-    canManageMembers ||
-    isSuperAdmin;
-
   const workspaceType =
     props.data.me?.workspace?.type ||
     props.data.google?.templateType ||
     "PERSONAL";
+
+  const isSharedWorkspace =
+    workspaceType === "FAMILY" ||
+    workspaceType === "BUSINESS";
+
+  const canManageMembers =
+    isSuperAdmin ||
+    (
+      isSharedWorkspace
+      &&
+      (
+        actorRole === "OWNER" ||
+        actorRole === "ADMIN"
+      )
+    );
+
+  const canUseAdmin =
+    canManageMembers;
 
   const googleSheetUrl =
     props.data.google?.spreadsheetId
@@ -2180,10 +2187,6 @@ function Dashboard(
       &&
       googleTemplateType !== workspaceType,
     );
-
-  const isSharedWorkspace =
-    workspaceType === "FAMILY" ||
-    workspaceType === "BUSINESS";
 
   const today =
     new Date()
