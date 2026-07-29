@@ -37,6 +37,18 @@ const workspaceRoutes:
     );
 
 
+    app.post(
+      "/invites",
+      controller.createInvite,
+    );
+
+
+    app.post(
+      "/invites/accept",
+      controller.acceptInvite,
+    );
+
+
     app.patch(
       "/admin/users/:userId/package",
       controller.adminUpdateUserPackage,

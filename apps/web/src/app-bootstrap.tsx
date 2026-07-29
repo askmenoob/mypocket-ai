@@ -33,7 +33,7 @@ type MemberRole =
   | "OWNER"
   | "ADMIN"
   | "MEMBER"
-  | "VIEWER";
+;
 
 type WorkspaceType =
   | "PERSONAL"
@@ -2131,7 +2131,7 @@ function Dashboard(
   const actorRole =
     (
       props.data.me?.workspace?.role ||
-      "VIEWER"
+      "MEMBER"
     ) as MemberRole;
 
   const isSuperAdmin =
@@ -2148,15 +2148,19 @@ function Dashboard(
     workspaceType === "FAMILY" ||
     workspaceType === "BUSINESS";
 
+  const canChangeWorkspaceSettings =
+    actorRole === "OWNER" ||
+    actorRole === "ADMIN";
+
+  const canViewWorkspaceSettings =
+    canChangeWorkspaceSettings;
+
   const canManageMembers =
     isSuperAdmin ||
     (
       isSharedWorkspace
       &&
-      (
-        actorRole === "OWNER" ||
-        actorRole === "ADMIN"
-      )
+      canChangeWorkspaceSettings
     );
 
   const canUseAdmin =
@@ -2245,16 +2249,20 @@ function Dashboard(
         label:"Transactions",
         view:"transactions",
       },
-      {
-        icon:"whatsapp",
-        label:"WhatsApp",
-        view:"whatsapp",
-      },
-      {
-        icon:"sheet",
-        label:"Google Sheet",
-        view:"google",
-      },
+      ...(canViewWorkspaceSettings
+        ? [
+          {
+            icon:"whatsapp",
+            label:"WhatsApp",
+            view:"whatsapp" as DashboardView,
+          },
+          {
+            icon:"sheet",
+            label:"Google Sheet",
+            view:"google" as DashboardView,
+          },
+        ]
+        : []),
       ...(canUseAdmin
         ? [
           {
@@ -2264,11 +2272,15 @@ function Dashboard(
           },
         ]
         : []),
-      {
-        icon:"settings",
-        label:"Settings",
-        view:"settings",
-      },
+      ...(canViewWorkspaceSettings
+        ? [
+          {
+            icon:"settings",
+            label:"Settings",
+            view:"settings" as DashboardView,
+          },
+        ]
+        : []),
     ];
 
   useEffect(
@@ -2286,6 +2298,37 @@ function Dashboard(
       );
     },
     [],
+  );
+
+
+  useEffect(
+    () => {
+      if(
+        !canViewWorkspaceSettings
+        &&
+        activeView !== "dashboard"
+        &&
+        activeView !== "transactions"
+        &&
+        !(
+          isSuperAdmin
+          &&
+          activeView === "admin"
+        )
+      ){
+        setActiveView("dashboard");
+
+        if(typeof window !== "undefined"){
+          window.location.hash =
+            "dashboard";
+        }
+      }
+    },
+    [
+      activeView,
+      canViewWorkspaceSettings,
+      isSuperAdmin,
+    ],
   );
 
 
@@ -2736,7 +2779,7 @@ function Dashboard(
             </Panel>
           )}
 
-          {(activeView === "dashboard" || activeView === "whatsapp") && (
+          {canViewWorkspaceSettings && (activeView === "dashboard" || activeView === "whatsapp") && (
             <Panel title="WhatsApp">
             <StatusGrid
               rows={[
@@ -2794,7 +2837,7 @@ function Dashboard(
             </Panel>
           )}
 
-          {(activeView === "dashboard" || activeView === "google") && (
+          {canViewWorkspaceSettings && (activeView === "dashboard" || activeView === "google") && (
             <Panel title="Google Sheet">
               <StatusGrid
                 rows={[
@@ -2893,7 +2936,7 @@ function Dashboard(
             </Panel>
           )}
 
-          {activeView === "dashboard" && (
+          {activeView === "dashboard" && canViewWorkspaceSettings && (
             <Panel title="Quick Actions" wide>
             <div className="actions">
               <Action
@@ -2965,7 +3008,6 @@ function Dashboard(
                   >
                     <option value="ADMIN">ADMIN</option>
                     <option value="MEMBER">MEMBER</option>
-                    <option value="VIEWER">VIEWER</option>
                   </select>
                 </label>
 
@@ -3036,8 +3078,7 @@ function Dashboard(
                           <option value="OWNER">OWNER</option>
                           <option value="ADMIN">ADMIN</option>
                           <option value="MEMBER">MEMBER</option>
-                          <option value="VIEWER">VIEWER</option>
-                        </select>
+                              </select>
 
                         {roleChanged && (
                           <button

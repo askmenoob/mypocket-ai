@@ -8,6 +8,12 @@ import {
 } from "./whatsapp.controller.js";
 
 
+import {
+  requireRole,
+  Roles,
+} from "../../shared/auth/index.js";
+
+
 
 export default async function whatsappRoutes(
   app:FastifyInstance,
@@ -29,7 +35,10 @@ export default async function whatsappRoutes(
     "/whatsapp/qr",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.showWorkspaceQr,
@@ -51,7 +60,10 @@ export default async function whatsappRoutes(
     "/whatsapp/instance/disconnect",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.resetWorkspaceInstance,
@@ -62,7 +74,10 @@ export default async function whatsappRoutes(
     "/whatsapp/instance/reset",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.resetWorkspaceInstance,
@@ -74,7 +89,10 @@ export default async function whatsappRoutes(
     "/whatsapp/members",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.listMembers,
@@ -86,7 +104,10 @@ export default async function whatsappRoutes(
     "/whatsapp/members/:memberId/phone",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.unlinkMemberPhone,
@@ -98,7 +119,10 @@ export default async function whatsappRoutes(
     "/whatsapp/members/link",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.linkMemberPhone,
@@ -109,7 +133,10 @@ export default async function whatsappRoutes(
     "/whatsapp/dev/instance",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.registerDevInstance,
@@ -120,7 +147,10 @@ export default async function whatsappRoutes(
     "/whatsapp/dev/transaction",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.createDevTransaction,

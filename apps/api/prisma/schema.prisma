@@ -8,37 +8,40 @@ datasource db {
 }
 
 model User {
-  id           String            @id @default(cuid())
-  email        String            @unique
-  name         String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  status       String            @default("ACTIVE")
-  bannedAt     DateTime?
-  deactivatedAt DateTime?
-  subscription Subscription?
-  transactions Transaction[]
-  workspaces   Workspace[]
-  memberships  WorkspaceMember[]
+  id              String            @id @default(cuid())
+  email           String            @unique
+  name            String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  status          String            @default("ACTIVE")
+  bannedAt        DateTime?
+  deactivatedAt   DateTime?
+  subscription    Subscription?
+  transactions    Transaction[]
+  workspaces      Workspace[]
+  memberships     WorkspaceMember[]
+  createdInvites  WorkspaceInvite[] @relation("WorkspaceInviteCreatedBy")
+  acceptedInvites WorkspaceInvite[] @relation("WorkspaceInviteAcceptedBy")
 }
 
 model Workspace {
-  id             String             @id @default(cuid())
-  name           String
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  id                    String                  @id @default(cuid())
+  name                  String
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
   onboardingCompletedAt DateTime?
-  ownerId        String
-  type           WorkspaceType      @default(PERSONAL)
-  categories     Category[]
-  google         GoogleAccount?
-  googleSetting  WorkspaceGoogleSetting?
-  merchants      Merchant[]
-  paymentMethods PaymentMethod[]
-  transactions   Transaction[]
-  whatsapp       WhatsAppInstance[]
-  owner          User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  members        WorkspaceMember[]
+  ownerId               String
+  type                  WorkspaceType           @default(PERSONAL)
+  categories            Category[]
+  google                GoogleAccount?
+  googleSetting         WorkspaceGoogleSetting?
+  merchants             Merchant[]
+  paymentMethods        PaymentMethod[]
+  transactions          Transaction[]
+  whatsapp              WhatsAppInstance[]
+  owner                 User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members               WorkspaceMember[]
+  invites               WorkspaceInvite[]
 }
 
 model GoogleAccount {
@@ -56,9 +59,7 @@ model GoogleAccount {
   workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
-
 model WorkspaceGoogleSetting {
-
   id String @id @default(cuid())
 
   workspaceId String @unique
@@ -71,21 +72,15 @@ model WorkspaceGoogleSetting {
 
   backupSpreadsheetTitle String?
 
-
   templateType String?
-
 
   rootFolderId String?
 
-
   reportsFolderId String?
-
 
   receiptsFolderId String?
 
-
   exportsFolderId String?
-
 
   transactionSheet String @default("Transactions")
 
@@ -98,49 +93,40 @@ model WorkspaceGoogleSetting {
   updatedAt DateTime @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
 }
 
+enum WorkspaceInviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
 
 enum GoogleSheetMode {
-
   AUTO_CREATED
 
   EXISTING_SHEET
-
 }
 
 model GoogleTemplate {
-
   id String @id @default(cuid())
-
 
   type WorkspaceType
 
-
   name String
-
 
   spreadsheetId String
 
-
   version String @default("1.0")
-
 
   active Boolean @default(true)
 
-
   createdAt DateTime @default(now())
-
 
   updatedAt DateTime @updatedAt
 
-
   @@unique([type, version])
-
 }
-
-
 
 model WhatsAppInstance {
   id           String    @id @default(cuid())
@@ -259,4 +245,33 @@ enum TransactionStatus {
   PENDING
   CONFIRMED
   CANCELLED
+}
+
+model WorkspaceInvite {
+  id String @id @default(cuid())
+
+  workspaceId  String
+  createdById  String
+  acceptedById String?
+
+  email               String
+  whatsappPhoneNumber String?
+  role                WorkspaceRole @default(MEMBER)
+
+  tokenHash String                @unique
+  status    WorkspaceInviteStatus @default(PENDING)
+
+  expiresAt  DateTime
+  acceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace  Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy  User      @relation("WorkspaceInviteCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  acceptedBy User?     @relation("WorkspaceInviteAcceptedBy", fields: [acceptedById], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([email])
+  @@index([status, expiresAt])
 }

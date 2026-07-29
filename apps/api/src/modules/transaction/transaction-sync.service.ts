@@ -142,6 +142,14 @@ export class TransactionSyncService {
 
       transactionIso,
 
+      payload.createdById
+      ??
+      "",
+
+      payload.createdByEmail
+      ??
+      "",
+
     ];
 
 
@@ -154,7 +162,7 @@ export class TransactionSyncService {
             spreadsheetId,
 
             range:
-              "Transactions!A:M",
+              "Transactions!A:O",
 
             values,
 

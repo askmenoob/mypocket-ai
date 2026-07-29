@@ -42,4 +42,10 @@ export interface TransactionSyncPayload {
 
   source?:string;
 
+
+  createdById?:string;
+
+
+  createdByEmail?:string;
+
 }

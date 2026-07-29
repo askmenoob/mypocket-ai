@@ -8,6 +8,12 @@ import {
 } from "./google-settings.controller.js";
 
 
+import {
+  requireRole,
+  Roles,
+} from "../../../shared/auth/index.js";
+
+
 
 export default async function googleSettingsRoutes(
   app:FastifyInstance,
@@ -24,7 +30,10 @@ export default async function googleSettingsRoutes(
     "/settings",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.get,
@@ -36,7 +45,10 @@ export default async function googleSettingsRoutes(
     "/settings/connect",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.connect,
@@ -48,7 +60,10 @@ export default async function googleSettingsRoutes(
     "/settings/auto-create",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.autoCreate,

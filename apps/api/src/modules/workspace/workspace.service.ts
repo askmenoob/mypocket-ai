@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import {
   WorkspaceRepository,
@@ -670,6 +671,286 @@ export class WorkspaceService {
     );
 
   }
+
+
+  async createInvite(
+    input:{
+      actorUserId:string;
+      workspaceId:string;
+      email:string;
+      whatsappPhoneNumber?:string;
+      role:"ADMIN" | "MEMBER";
+    },
+  ){
+
+    const actor =
+      await this.app.prisma.workspaceMember.findUnique({
+        where:{
+          userId_workspaceId:{
+            userId:
+              input.actorUserId,
+
+            workspaceId:
+              input.workspaceId,
+          },
+        },
+        include:{
+          workspace:true,
+        },
+      });
+
+    if(
+      !actor
+      ||
+      (
+        actor.role !== "OWNER"
+        &&
+        actor.role !== "ADMIN"
+      )
+    ){
+      throw new AppError(
+        "INVITE_FORBIDDEN",
+        "Only Owner/Admin can invite members",
+        403,
+      );
+    }
+
+    if(actor.workspace.type === "PERSONAL"){
+      throw new AppError(
+        "INVITE_SHARED_WORKSPACE_REQUIRED",
+        "Invite is only available for Family or Business workspace",
+        400,
+      );
+    }
+
+    const email =
+      String(input.email || "")
+        .trim()
+        .toLowerCase();
+
+    if(!email || !email.includes("@")){
+      throw new AppError(
+        "INVITE_EMAIL_REQUIRED",
+        "Valid email is required",
+        400,
+      );
+    }
+
+    const role =
+      input.role === "ADMIN"
+        ? "ADMIN"
+        : "MEMBER";
+
+    if(actor.role === "ADMIN" && role === "ADMIN"){
+      throw new AppError(
+        "ADMIN_INVITE_LIMIT",
+        "Admin cannot invite another admin",
+        403,
+      );
+    }
+
+    const token =
+      randomBytes(32)
+        .toString("hex");
+
+    const tokenHash =
+      createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+    const expiresAt =
+      new Date(
+        Date.now() + 1000 * 60 * 60 * 24 * 7,
+      );
+
+    const invite =
+      await this.app.prisma.workspaceInvite.create({
+        data:{
+          workspaceId:
+            input.workspaceId,
+
+          createdById:
+            input.actorUserId,
+
+          email,
+
+          whatsappPhoneNumber:
+            input.whatsappPhoneNumber
+              ? String(input.whatsappPhoneNumber).replace(/\D/g, "")
+              : null,
+
+          role,
+
+          tokenHash,
+
+          expiresAt,
+        },
+      });
+
+    return {
+      inviteId:
+        invite.id,
+
+      email:
+        invite.email,
+
+      role:
+        invite.role,
+
+      whatsappPhoneNumber:
+        invite.whatsappPhoneNumber,
+
+      expiresAt:
+        invite.expiresAt,
+
+      inviteUrl:
+        `https://app.imai.my/invite/${token}`,
+
+      token,
+    };
+
+  }
+
+
+
+  async acceptInvite(
+    input:{
+      userId:string;
+      email:string;
+      token:string;
+    },
+  ){
+
+    const token =
+      String(input.token || "")
+        .trim();
+
+    const email =
+      String(input.email || "")
+        .trim()
+        .toLowerCase();
+
+    if(!token){
+      throw new AppError(
+        "INVITE_TOKEN_REQUIRED",
+        "Invite token is required",
+        400,
+      );
+    }
+
+    const tokenHash =
+      createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+    const invite =
+      await this.app.prisma.workspaceInvite.findUnique({
+        where:{
+          tokenHash,
+        },
+      });
+
+    if(!invite || invite.status !== "PENDING"){
+      throw new AppError(
+        "INVITE_NOT_FOUND",
+        "Invite is not valid",
+        404,
+      );
+    }
+
+    if(invite.expiresAt.getTime() < Date.now()){
+      await this.app.prisma.workspaceInvite.update({
+        where:{
+          id:
+            invite.id,
+        },
+        data:{
+          status:
+            "EXPIRED",
+        },
+      });
+
+      throw new AppError(
+        "INVITE_EXPIRED",
+        "Invite has expired",
+        400,
+      );
+    }
+
+    if(invite.email.toLowerCase() !== email){
+      throw new AppError(
+        "INVITE_EMAIL_MISMATCH",
+        "Please login with the invited email",
+        403,
+      );
+    }
+
+    const member =
+      await this.app.prisma.workspaceMember.upsert({
+        where:{
+          userId_workspaceId:{
+            userId:
+              input.userId,
+
+            workspaceId:
+              invite.workspaceId,
+          },
+        },
+        update:{
+          role:
+            invite.role,
+
+          whatsappPhoneNumber:
+            invite.whatsappPhoneNumber,
+        },
+        create:{
+          userId:
+            input.userId,
+
+          workspaceId:
+            invite.workspaceId,
+
+          role:
+            invite.role,
+
+          whatsappPhoneNumber:
+            invite.whatsappPhoneNumber,
+        },
+      });
+
+    await this.app.prisma.workspaceInvite.update({
+      where:{
+        id:
+          invite.id,
+      },
+      data:{
+        status:
+          "ACCEPTED",
+
+        acceptedById:
+          input.userId,
+
+        acceptedAt:
+          new Date(),
+      },
+    });
+
+    return {
+      success:
+        true,
+
+      workspaceId:
+        invite.workspaceId,
+
+      memberId:
+        member.id,
+
+      role:
+        member.role,
+    };
+
+  }
+
 
 
 

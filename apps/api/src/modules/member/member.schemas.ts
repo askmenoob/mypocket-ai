@@ -6,7 +6,6 @@ export const MemberRoleSchema =
     "OWNER",
     "ADMIN",
     "MEMBER",
-    "VIEWER",
   ]);
 
 

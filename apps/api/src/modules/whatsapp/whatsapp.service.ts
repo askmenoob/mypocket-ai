@@ -2074,6 +2074,8 @@ export class WhatsAppService {
       return this.handleLastCommand(
         instance.workspaceId,
         normalized,
+        actorMember.userId,
+        actorMember.role,
       );
 
     }
@@ -2114,6 +2116,8 @@ export class WhatsAppService {
         instance.workspaceId,
         normalized,
         listCommand,
+        actorMember.userId,
+        actorMember.role,
       );
 
     }
@@ -2125,6 +2129,8 @@ export class WhatsAppService {
         instance.workspaceId,
         normalized,
         summaryPeriod,
+        actorMember.userId,
+        actorMember.role,
       );
 
     }
@@ -2767,12 +2773,17 @@ export class WhatsAppService {
 
   private async getWorkspaceSheetTransactions(
     workspaceId:string,
+    actor?:{
+      userId:string;
+      role:string;
+    },
   ){
 
     const transactions =
       await this.transactionService
         .getSheetTransactions(
           workspaceId,
+          actor,
         );
 
 
@@ -2904,12 +2915,23 @@ export class WhatsAppService {
     workspaceId:string,
 
     normalized:NormalizedEvolutionMessage,
+
+    actorUserId:string,
+
+    actorRole:string,
   ){
 
     const transaction =
       (
         await this.getWorkspaceSheetTransactions(
           workspaceId,
+          {
+            userId:
+              actorUserId,
+
+            role:
+              actorRole,
+          },
         )
       )[0]
       ??
@@ -3186,6 +3208,10 @@ export class WhatsAppService {
     normalized:NormalizedEvolutionMessage,
 
     command:WhatsAppListCommand,
+
+    actorUserId:string,
+
+    actorRole:string,
   ){
 
     const now =
@@ -3198,6 +3224,13 @@ export class WhatsAppService {
     let transactions =
       await this.getWorkspaceSheetTransactions(
         workspaceId,
+        {
+          userId:
+            actorUserId,
+
+          role:
+            actorRole,
+        },
       );
 
 
@@ -3315,6 +3348,10 @@ export class WhatsAppService {
       | "today"
       | "week"
       | "month",
+
+    actorUserId:string,
+
+    actorRole:string,
   ){
 
     const now =
@@ -3341,6 +3378,13 @@ export class WhatsAppService {
       (
         await this.getWorkspaceSheetTransactions(
           workspaceId,
+          {
+            userId:
+              actorUserId,
+
+            role:
+              actorRole,
+          },
         )
       )
         .filter(

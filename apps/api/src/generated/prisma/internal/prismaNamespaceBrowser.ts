@@ -62,7 +62,8 @@ export const ModelName = {
   Transaction: 'Transaction',
   Category: 'Category',
   Merchant: 'Merchant',
-  PaymentMethod: 'PaymentMethod'
+  PaymentMethod: 'PaymentMethod',
+  WorkspaceInvite: 'WorkspaceInvite'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -248,6 +249,25 @@ export const PaymentMethodScalarFieldEnum = {
 } as const
 
 export type PaymentMethodScalarFieldEnum = (typeof PaymentMethodScalarFieldEnum)[keyof typeof PaymentMethodScalarFieldEnum]
+
+
+export const WorkspaceInviteScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  createdById: 'createdById',
+  acceptedById: 'acceptedById',
+  email: 'email',
+  whatsappPhoneNumber: 'whatsappPhoneNumber',
+  role: 'role',
+  tokenHash: 'tokenHash',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  acceptedAt: 'acceptedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceInviteScalarFieldEnum = (typeof WorkspaceInviteScalarFieldEnum)[keyof typeof WorkspaceInviteScalarFieldEnum]
 
 
 export const SortOrder = {

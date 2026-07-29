@@ -23,7 +23,6 @@ export const WorkspaceRoleSchema =
     "OWNER",
     "ADMIN",
     "MEMBER",
-    "VIEWER",
   ]);
 
 

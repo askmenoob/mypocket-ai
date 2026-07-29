@@ -9,6 +9,16 @@
 * 🟢 You can import this file directly.
 */
 
+export const WorkspaceInviteStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REVOKED: 'REVOKED',
+  EXPIRED: 'EXPIRED'
+} as const
+
+export type WorkspaceInviteStatus = (typeof WorkspaceInviteStatus)[keyof typeof WorkspaceInviteStatus]
+
+
 export const GoogleSheetMode = {
   AUTO_CREATED: 'AUTO_CREATED',
   EXISTING_SHEET: 'EXISTING_SHEET'

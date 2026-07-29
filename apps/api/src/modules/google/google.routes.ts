@@ -8,6 +8,12 @@ import {
 } from "./google.controller.js";
 
 
+import {
+  requireRole,
+  Roles,
+} from "../../shared/auth/index.js";
+
+
 
 export default async function googleRoutes(
   app:FastifyInstance,
@@ -37,7 +43,10 @@ export default async function googleRoutes(
     "/google/connect",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.connect,
@@ -49,7 +58,10 @@ export default async function googleRoutes(
     "/google/disconnect",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.disconnect,

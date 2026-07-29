@@ -123,6 +123,10 @@ export class TransactionService {
 
   async getSheetTransactions(
     workspaceId:string,
+    actor?:{
+      userId:string;
+      role:string;
+    },
   ){
 
     const setting =
@@ -252,6 +256,14 @@ export class TransactionService {
             input.source
             ??
             "SYSTEM",
+
+          createdById:
+            input.createdById,
+
+          createdByEmail:
+            await this.resolveUserEmail(
+              input.createdById,
+            ),
 
         });
 
@@ -424,6 +436,34 @@ export class TransactionService {
 
 
   }
+
+
+
+
+  private async resolveUserEmail(
+    userId:string,
+  ){
+
+    const user =
+      await this.app.prisma.user
+        .findUnique({
+          where:{
+            id:
+              userId,
+          },
+          select:{
+            email:
+              true,
+          },
+        });
+
+
+    return user?.email
+      ??
+      "";
+
+  }
+
 
 
 
@@ -691,6 +731,20 @@ export class TransactionService {
         )
         ||
         "GOOGLE_SHEET",
+
+      createdById:
+        valueAt(
+          13,
+        )
+        ||
+        "",
+
+      createdByEmail:
+        valueAt(
+          14,
+        )
+        ||
+        "",
 
       category:
         categoryName

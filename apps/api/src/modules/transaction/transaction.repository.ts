@@ -21,12 +21,16 @@ export class TransactionRepository {
 
   async findTransactions(
     workspaceId:string,
+    createdById?:string,
   ){
 
     return this.prisma.transaction.findMany({
 
       where:{
         workspaceId,
+        ...(createdById
+          ? { createdById }
+          : {}),
       },
 
       include:{

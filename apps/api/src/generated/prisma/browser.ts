@@ -77,3 +77,8 @@ export type Merchant = Prisma.MerchantModel
  * 
  */
 export type PaymentMethod = Prisma.PaymentMethodModel
+/**
+ * Model WorkspaceInvite
+ * 
+ */
+export type WorkspaceInvite = Prisma.WorkspaceInviteModel

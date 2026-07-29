@@ -395,7 +395,8 @@ export const ModelName = {
   Transaction: 'Transaction',
   Category: 'Category',
   Merchant: 'Merchant',
-  PaymentMethod: 'PaymentMethod'
+  PaymentMethod: 'PaymentMethod',
+  WorkspaceInvite: 'WorkspaceInvite'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -411,7 +412,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "workspace" | "googleAccount" | "workspaceGoogleSetting" | "googleTemplate" | "whatsAppInstance" | "subscription" | "workspaceMember" | "transaction" | "category" | "merchant" | "paymentMethod"
+    modelProps: "user" | "workspace" | "googleAccount" | "workspaceGoogleSetting" | "googleTemplate" | "whatsAppInstance" | "subscription" | "workspaceMember" | "transaction" | "category" | "merchant" | "paymentMethod" | "workspaceInvite"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1303,6 +1304,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WorkspaceInvite: {
+      payload: Prisma.$WorkspaceInvitePayload<ExtArgs>
+      fields: Prisma.WorkspaceInviteFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkspaceInviteFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceInvitePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkspaceInviteFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceInvitePayload>
+        }
+        findFirst: {
+          args: Prisma.WorkspaceInviteFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceInvitePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkspaceInviteFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceInvitePayload>
+        }
+        findMany: {
+          args: Prisma.WorkspaceInviteFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceInvitePayload>[]
+        }
+        create: {
+          args: Prisma.WorkspaceInviteCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceInvitePayload>
+        }
+        createMany: {
+          args: Prisma.WorkspaceInviteCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkspaceInviteCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceInvitePayload>[]
+        }
+        delete: {
+          args: Prisma.WorkspaceInviteDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceInvitePayload>
+        }
+        update: {
+          args: Prisma.WorkspaceInviteUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceInvitePayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkspaceInviteDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkspaceInviteUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkspaceInviteUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceInvitePayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkspaceInviteUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceInvitePayload>
+        }
+        aggregate: {
+          args: Prisma.WorkspaceInviteAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkspaceInvite>
+        }
+        groupBy: {
+          args: Prisma.WorkspaceInviteGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkspaceInviteGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkspaceInviteCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkspaceInviteCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1511,6 +1586,25 @@ export const PaymentMethodScalarFieldEnum = {
 export type PaymentMethodScalarFieldEnum = (typeof PaymentMethodScalarFieldEnum)[keyof typeof PaymentMethodScalarFieldEnum]
 
 
+export const WorkspaceInviteScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  createdById: 'createdById',
+  acceptedById: 'acceptedById',
+  email: 'email',
+  whatsappPhoneNumber: 'whatsappPhoneNumber',
+  role: 'role',
+  tokenHash: 'tokenHash',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  acceptedAt: 'acceptedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceInviteScalarFieldEnum = (typeof WorkspaceInviteScalarFieldEnum)[keyof typeof WorkspaceInviteScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1661,6 +1755,20 @@ export type ListEnumTransactionStatusFieldRefInput<$PrismaModel> = FieldRefInput
 
 
 /**
+ * Reference to a field of type 'WorkspaceInviteStatus'
+ */
+export type EnumWorkspaceInviteStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkspaceInviteStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'WorkspaceInviteStatus[]'
+ */
+export type ListEnumWorkspaceInviteStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkspaceInviteStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'Int'
  */
 export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -1795,6 +1903,7 @@ export type GlobalOmitConfig = {
   category?: Prisma.CategoryOmit
   merchant?: Prisma.MerchantOmit
   paymentMethod?: Prisma.PaymentMethodOmit
+  workspaceInvite?: Prisma.WorkspaceInviteOmit
 }
 
 /* Types for Logging */

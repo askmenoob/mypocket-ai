@@ -303,5 +303,63 @@ export class WorkspaceController {
   };
 
 
+  createInvite =
+    async (
+      request:any,
+      reply:any,
+    ) => {
+
+      await request.jwtVerify();
+
+      const result =
+        await this.service.createInvite({
+          actorUserId:
+            request.user.userId,
+
+          workspaceId:
+            request.user.workspaceId,
+
+          email:
+            request.body?.email,
+
+          whatsappPhoneNumber:
+            request.body?.whatsappPhoneNumber,
+
+          role:
+            request.body?.role,
+        });
+
+      return reply.send(result);
+
+    };
+
+
+
+  acceptInvite =
+    async (
+      request:any,
+      reply:any,
+    ) => {
+
+      await request.jwtVerify();
+
+      const result =
+        await this.service.acceptInvite({
+          userId:
+            request.user.userId,
+
+          email:
+            request.user.email,
+
+          token:
+            request.body?.token,
+        });
+
+      return reply.send(result);
+
+    };
+
+
+
 
 }
