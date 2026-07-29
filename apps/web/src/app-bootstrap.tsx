@@ -103,6 +103,43 @@ type DashboardView =
   | "admin"
   | "settings";
 
+const DASHBOARD_VIEWS:DashboardView[] =
+  [
+    "dashboard",
+    "transactions",
+    "whatsapp",
+    "google",
+    "admin",
+    "settings",
+  ];
+
+function readDashboardViewFromHash():DashboardView{
+
+  if(typeof window === "undefined"){
+    return "dashboard";
+  }
+
+  const hash =
+    window.location.hash.replace("#", "");
+
+  return DASHBOARD_VIEWS.includes(hash as DashboardView)
+    ? hash as DashboardView
+    : "dashboard";
+
+}
+
+function writeDashboardViewHash(view:DashboardView){
+
+  if(
+    typeof window !== "undefined"
+    &&
+    window.location.hash !== `#${view}`
+  ){
+    window.history.replaceState(null, "", `#${view}`);
+  }
+
+}
+
 
 function readInitialDashboardView():DashboardView{
   if(typeof window === "undefined"){
@@ -2065,7 +2102,7 @@ function Dashboard(
 ){
 
   const [activeView, setActiveView] =
-    useState<DashboardView>("dashboard");
+    useState<DashboardView>(readDashboardViewFromHash);
 
   const [sidebarOpen, setSidebarOpen] =
     useState(true);
@@ -2085,6 +2122,9 @@ function Dashboard(
   const [newMemberRole, setNewMemberRole] =
     useState<MemberRole>("MEMBER");
 
+  const [pendingMemberRoles, setPendingMemberRoles] =
+    useState<Record<string, MemberRole>>({});
+
   const [packageBusyUserId, setPackageBusyUserId] =
     useState("");
 
@@ -2096,7 +2136,10 @@ function Dashboard(
 
   const canManageMembers =
     actorRole === "OWNER" ||
-    actorRole === "ADMIN";
+    actorRole === "ADMIN" ||
+    Boolean(
+      props.data.me?.isSuperAdmin,
+    );
 
   const isSuperAdmin =
     Boolean(
@@ -2225,6 +2268,24 @@ function Dashboard(
       },
     ];
 
+  useEffect(
+    () => {
+      const syncViewFromHash =
+        () => setActiveView(
+          readDashboardViewFromHash(),
+        );
+
+      window.addEventListener("hashchange", syncViewFromHash);
+
+      return () => window.removeEventListener(
+        "hashchange",
+        syncViewFromHash,
+      );
+    },
+    [],
+  );
+
+
   function goToView(
     view:DashboardView,
   ){
@@ -2250,6 +2311,7 @@ function Dashboard(
 
     if(view){
       setActiveView(view);
+      writeDashboardViewHash(view);
     }
 
     setActionMessage(message);
@@ -2303,7 +2365,7 @@ function Dashboard(
       stored(STORAGE.token);
 
     await api(
-      "/members",
+      "/workspace/members",
       token,
       {
         method:"POST",
@@ -2329,7 +2391,7 @@ function Dashboard(
       stored(STORAGE.token);
 
     await api(
-      `/members/${memberId}/role`,
+      `/workspace/members/${memberId}/role`,
       token,
       {
         method:"PATCH",
@@ -2338,6 +2400,16 @@ function Dashboard(
         }),
       },
     );
+
+    setPendingMemberRoles((current) => {
+      const next = {
+        ...current,
+      };
+
+      delete next[memberId];
+
+      return next;
+    });
 
     setActionMessage("Member role updated.");
     props.refresh();
@@ -2463,7 +2535,7 @@ function Dashboard(
       stored(STORAGE.token);
 
     await api(
-      `/members/${memberId}`,
+      `/workspace/members/${memberId}`,
       token,
       {
         method:"DELETE",
@@ -2914,10 +2986,31 @@ function Dashboard(
                       member.role === "ADMIN"
                     );
 
+                  const isOwnMember =
+                    member.userId === props.data.me?.user?.id ||
+                    member.email === props.data.me?.user?.email;
+
+                  const canSuperAdminTestOwnRole =
+                    Boolean(props.data.me?.isSuperAdmin) &&
+                    props.data.me?.user?.email === "pillo0404@gmail.com" &&
+                    isOwnMember;
+
                   const canEditMember =
-                    canManageMembers &&
-                    !isOwner &&
-                    !adminCannotEdit;
+                    (
+                      canManageMembers &&
+                      !isOwner &&
+                      !adminCannotEdit
+                    )
+                    ||
+                    canSuperAdminTestOwnRole;
+
+                  const selectedRole =
+                    pendingMemberRoles[member.memberId]
+                    ??
+                    member.role;
+
+                  const roleChanged =
+                    selectedRole !== member.role;
 
                   return (
                     <div className="memberRow" key={member.memberId}>
@@ -2929,18 +3022,31 @@ function Dashboard(
 
                       <div className="memberControls">
                         <select
-                          value={member.role}
+                          value={selectedRole}
                           disabled={!canEditMember}
-                          onChange={(event) => updateMemberRole(
-                            member.memberId,
-                            event.target.value as MemberRole,
-                          )}
+                          onChange={(event) => setPendingMemberRoles((current) => ({
+                            ...current,
+                            [member.memberId]:
+                              event.target.value as MemberRole,
+                          }))}
                         >
                           <option value="OWNER">OWNER</option>
                           <option value="ADMIN">ADMIN</option>
                           <option value="MEMBER">MEMBER</option>
                           <option value="VIEWER">VIEWER</option>
                         </select>
+
+                        {roleChanged && (
+                          <button
+                            className="primary smallButton"
+                            onClick={() => updateMemberRole(
+                              member.memberId,
+                              selectedRole,
+                            )}
+                          >
+                            Save
+                          </button>
+                        )}
 
                         {member.whatsappPhoneNumber ? (
                           <button

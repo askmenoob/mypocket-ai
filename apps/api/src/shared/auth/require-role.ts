@@ -7,6 +7,10 @@ import type {
   Role,
 } from "./roles.js";
 
+import {
+  isSuperAdminEmail,
+} from "./super-admin.js";
+
 
 
 export function requireRole(
@@ -54,6 +58,17 @@ export function requireRole(
 
     }
 
+
+
+    if (
+      isSuperAdminEmail(
+        request.user.email,
+      )
+    ) {
+
+      return;
+
+    }
 
 
     if (

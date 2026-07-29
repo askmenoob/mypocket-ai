@@ -101,6 +101,8 @@ export class MemberRepository {
 
         workspace: true,
 
+        user: true,
+
       },
 
     });

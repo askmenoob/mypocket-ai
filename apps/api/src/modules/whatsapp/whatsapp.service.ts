@@ -17,6 +17,10 @@ import {
   AppError,
 } from "../../shared/errors/index.js";
 
+import {
+  isSuperAdminEmail,
+} from "../../shared/auth/index.js";
+
 import QRCode from "qrcode";
 
 
@@ -305,6 +309,10 @@ export class WhatsAppService {
             userId:
               input.actorUserId,
           },
+
+          include:{
+            user:true,
+          },
         });
 
 
@@ -315,6 +323,10 @@ export class WhatsAppService {
         actorMember.role !== "OWNER"
         &&
         actorMember.role !== "ADMIN"
+        &&
+        !await this.isSuperAdminUserId(
+          input.actorUserId,
+        )
       )
     ){
 
@@ -778,6 +790,10 @@ export class WhatsAppService {
             userId:
               input.actorUserId,
           },
+
+          include:{
+            user:true,
+          },
         });
 
 
@@ -1147,6 +1163,34 @@ export class WhatsAppService {
 
 
 
+  private async isSuperAdminUserId(
+    userId:string,
+  ){
+
+    const user =
+      await this.app.prisma.user
+        .findUnique({
+          where:{
+            id:
+              userId,
+          },
+
+          select:{
+            email:
+              true,
+          },
+        });
+
+
+    return isSuperAdminEmail(
+      user?.email,
+    );
+
+  }
+
+
+
+
 
   async listWorkspaceWhatsAppMembers(
     input:{
@@ -1166,6 +1210,10 @@ export class WhatsAppService {
             userId:
               input.actorUserId,
           },
+
+          include:{
+            user:true,
+          },
         });
 
 
@@ -1176,6 +1224,10 @@ export class WhatsAppService {
         actorMember.role !== "OWNER"
         &&
         actorMember.role !== "ADMIN"
+        &&
+        !await this.isSuperAdminUserId(
+          input.actorUserId,
+        )
       )
     ){
 
@@ -1272,6 +1324,10 @@ export class WhatsAppService {
         actorMember.role !== "OWNER"
         &&
         actorMember.role !== "ADMIN"
+        &&
+        !await this.isSuperAdminUserId(
+          input.actorUserId,
+        )
       )
     ){
 
