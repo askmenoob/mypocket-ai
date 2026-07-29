@@ -1048,9 +1048,21 @@ function App(){
     const title =
       `MyPocket ${templateType[0]}${templateType.slice(1).toLowerCase()} Template`;
 
+    const currentTemplate =
+      data.google?.templateType ||
+      "";
+
+    const actionLabel =
+      currentTemplate &&
+      currentTemplate !== templateType
+        ?
+        `Upgrade Google Sheet daripada ${currentTemplate} kepada ${templateType}`
+        :
+        `Recreate Google Sheet ${templateType}`;
+
     const confirmed =
       window.confirm(
-        `Recreate Google Sheet akan hasilkan sheet baru menggunakan template ${templateType} untuk workspace ${workspaceType}. Relink hanya reconnect permission; recreate sahaja yang tukar template. Teruskan?`,
+        `${actionLabel} akan hasilkan sheet baru dalam Google Drive anda. Sheet lama tidak dipadam dan boleh dijadikan archive. Teruskan?`,
       );
 
 
@@ -1064,7 +1076,12 @@ function App(){
     try{
 
       setNotice(
-        "Sedang recreate Google Sheet...",
+        currentTemplate &&
+        currentTemplate !== templateType
+          ?
+          `Sedang upgrade Google Sheet kepada ${templateType}...`
+          :
+          "Sedang recreate Google Sheet...",
       );
 
       await api(
@@ -1079,7 +1096,12 @@ function App(){
       );
 
       setNotice(
-        "Google Sheet baru telah dibuat dan disambungkan kepada workspace.",
+        currentTemplate &&
+        currentTemplate !== templateType
+          ?
+          `Google Sheet ${templateType} baru telah dibuat dan disambungkan kepada workspace.`
+          :
+          "Google Sheet baru telah dibuat dan disambungkan kepada workspace.",
       );
 
       await loadAll();
@@ -3335,7 +3357,12 @@ function Plan(
 function LogoBlock(){
   return (
     <div className="brand">
-      <div className="brandMark">μ</div>
+      <span className="brandMark brandMarkImage">
+        <img
+          src="/mypocket-logo.png?v=3"
+          alt="MyPocket AI logo"
+        />
+      </span>
       <span>MyPocket AI</span>
     </div>
   );

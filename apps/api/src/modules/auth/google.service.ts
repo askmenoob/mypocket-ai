@@ -72,9 +72,6 @@ export class GoogleService {
 
       access_type:
         "offline",
-
-      prompt:
-        "consent",
     });
 
 

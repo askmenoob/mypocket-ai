@@ -31,6 +31,15 @@ export function buildApp() {
       "http://localhost:3001",
       "http://127.0.0.1:3001",
     ],
+    methods: [
+      "GET",
+      "HEAD",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
     credentials: true,
   });
 

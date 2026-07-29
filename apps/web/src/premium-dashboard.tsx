@@ -1496,13 +1496,17 @@ export function PremiumDashboard(
             <div className="pd-sheet-info">
               <span>Workspace package</span>
               <strong>{workspaceType}</strong>
-
               <span>Template</span>
               <strong>
-                {google.spreadsheetTitle ||
-                  "MyPocket Personal Template"}
+                {google.templateType ||
+                  "Not connected"}
               </strong>
 
+              <span>Title</span>
+              <strong>
+                {google.spreadsheetTitle ||
+                  "-"}
+              </strong>
               <span>Mode</span>
               <strong>
                 {google.mode || "AUTO_CREATED"}
@@ -1513,8 +1517,17 @@ export function PremiumDashboard(
                 {new Date().toLocaleString("en-MY")}
               </strong>
             </div>
-
             <div>
+              {google.templateType &&
+                google.templateType !== workspaceType && (
+                  <div className="pd-warning">
+                    Workspace package sekarang ialah {workspaceType}, tetapi Google Sheet
+                    masih menggunakan template {google.templateType}. Tekan button upgrade
+                    untuk create Google Sheet baru ikut package semasa. Sheet lama tidak
+                    dipadam dan kekal dalam Google Drive anda.
+                  </div>
+                )}
+
               <div className="pd-url">
                 {sheetUrl ||
                   "Google Sheet is not connected"}
@@ -1560,7 +1573,13 @@ export function PremiumDashboard(
                     name="rotate"
                     size={14}
                   />
-                  Recreate Google Sheet
+                  {google.templateType &&
+
+                  google.templateType !== workspaceType
+
+                    ? `Upgrade Google Sheet to ${workspaceType}`
+
+                    : "Recreate Google Sheet"}
                 </button>
               </div>
             </div>

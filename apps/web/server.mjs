@@ -17,12 +17,28 @@ const types = {
 };
 
 createServer((req, res) => {
+  const host = String(req.headers.host || "").split(":")[0];
   const url = new URL(req.url || "/", `http://${req.headers.host}`);
   const safePath = normalize(url.pathname).replace(/^(\.\.[/\\])+/, "");
+
+  const isPublicDomain =
+    host === "imai.my" ||
+    host === "www.imai.my";
+
   let filePath = join(root, safePath === "/" ? "index.html" : safePath);
 
+  if (
+    isPublicDomain &&
+    (
+      safePath === "/" ||
+      safePath === "/index.html"
+    )
+  ) {
+    filePath = join(root, "landing.html");
+  }
+
   if (!existsSync(filePath)) {
-    filePath = join(root, "index.html");
+    filePath = join(root, isPublicDomain ? "landing.html" : "index.html");
   }
 
   res.setHeader("Content-Type", types[extname(filePath)] || "application/octet-stream");

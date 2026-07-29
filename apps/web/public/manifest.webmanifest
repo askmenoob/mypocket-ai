@@ -10,9 +10,9 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/mypocket-logo.png?v=2",
+      "sizes": "120x120",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

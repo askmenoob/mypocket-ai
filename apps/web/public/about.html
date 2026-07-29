@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+
+    <meta
+      name="description"
+      content="MyPocket AI is a finance automation application that helps users record expenses and organise transactions in their own Google Sheets and Google Drive."
+    />
+
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#062f30" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MyPocket AI" />
+
+    <meta
+      property="og:description"
+      content="AI-powered expense tracking and finance automation using the user's own Google Sheets and Google Drive."
+    />
+
+    <meta
+      property="og:url"
+      content="https://imai.my/about.html"
+    />
+
+    <link
+      rel="canonical"
+      href="https://imai.my/about.html"
+    />
+
+    <link rel="icon" href="/icon.svg" />
+
+    <title>MyPocket AI — Expense Tracking and Finance Automation</title>
+
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+
+        --background: #f5f9f8;
+        --surface: #ffffff;
+        --surface-soft: #edf7f4;
+        --primary: #063f3e;
+        --primary-dark: #042f30;
+        --accent: #17a77c;
+        --accent-dark: #087f68;
+        --text: #173b3b;
+        --muted: #5c7472;
+        --border: #d7e7e3;
+        --shadow: 0 24px 70px rgba(6, 63, 62, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(
+            circle at 90% 0%,
+            rgba(23, 167, 124, 0.16),
+            transparent 32rem
+          ),
+          radial-gradient(
+            circle at 0% 35%,
+            rgba(6, 63, 62, 0.08),
+            transparent 28rem
+          ),
+          var(--background);
+
+        color: var(--text);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .container {
+        width: min(100% - 40px, 1160px);
+        margin-inline: auto;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        border-bottom: 1px solid rgba(215, 231, 227, 0.88);
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(18px);
+      }
+
+      .navigation {
+        min-height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--primary-dark);
+        font-size: 20px;
+        font-weight: 850;
+        text-decoration: none;
+      }
+
+      .brand img {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+      }
+
+      .navigation-links {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+
+      .navigation-links a {
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .navigation-links a:hover {
+        color: var(--primary);
+      }
+
+      .button {
+        min-height: 48px;
+        padding: 0 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid transparent;
+        border-radius: 14px;
+        background: var(--primary);
+        color: #ffffff;
+        font-size: 15px;
+        font-weight: 800;
+        text-decoration: none;
+        box-shadow: 0 12px 28px rgba(6, 63, 62, 0.18);
+        transition:
+          transform 160ms ease,
+          box-shadow 160ms ease,
+          background 160ms ease;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+        background: var(--primary-dark);
+        box-shadow: 0 16px 34px rgba(6, 63, 62, 0.24);
+      }
+
+      .button-secondary {
+        border-color: var(--border);
+        background: #ffffff;
+        color: var(--primary);
+        box-shadow: none;
+      }
+
+      .button-secondary:hover {
+        background: var(--surface-soft);
+      }
+
+      .hero {
+        padding: 96px 0 72px;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+        align-items: center;
+        gap: 64px;
+      }
+
+      .eyebrow {
+        width: fit-content;
+        margin: 0 0 22px;
+        padding: 9px 14px;
+        border: 1px solid #bce2d7;
+        border-radius: 999px;
+        background: #eaf8f4;
+        color: var(--accent-dark);
+        font-size: 13px;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 800px;
+        margin: 0;
+        color: var(--primary-dark);
+        font-size: clamp(48px, 7.2vw, 82px);
+        line-height: 0.98;
+        letter-spacing: -0.055em;
+      }
+
+      .hero-description {
+        max-width: 720px;
+        margin: 28px 0 0;
+        color: var(--muted);
+        font-size: clamp(18px, 2vw, 21px);
+        line-height: 1.75;
+      }
+
+      .hero-actions {
+        margin-top: 34px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .trust-list {
+        margin: 32px 0 0;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        list-style: none;
+      }
+
+      .trust-list li {
+        padding: 9px 13px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        color: #456260;
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .product-preview {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 30px;
+        padding: 26px;
+        background:
+          linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.98),
+            rgba(236, 248, 245, 0.96)
+          );
+        box-shadow: var(--shadow);
+      }
+
+      .product-preview::before {
+        position: absolute;
+        top: -80px;
+        right: -70px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: rgba(23, 167, 124, 0.13);
+        content: "";
+      }
+
+      .preview-header {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .preview-header strong {
+        color: var(--primary-dark);
+        font-size: 18px;
+      }
+
+      .status {
+        padding: 7px 11px;
+        border-radius: 999px;
+        background: #dbf8ea;
+        color: #087d53;
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .preview-message {
+        position: relative;
+        margin-top: 28px;
+        padding: 17px 18px;
+        border-radius: 18px 18px 5px 18px;
+        background: #dff8e9;
+        color: #174f3e;
+        font-size: 16px;
+        line-height: 1.55;
+      }
+
+      .preview-confirmation {
+        position: relative;
+        margin: 14px 34px 0 0;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 5px 18px 18px 18px;
+        background: #ffffff;
+        color: #405f5c;
+        line-height: 1.65;
+      }
+
+      .preview-confirmation strong {
+        color: var(--primary);
+      }
+
+      .preview-summary {
+        position: relative;
+        margin-top: 22px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .summary-card {
+        border: 1px solid var(--border);
+        border-radius: 17px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.82);
+      }
+
+      .summary-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .summary-card strong {
+        display: block;
+        margin-top: 8px;
+        color: var(--primary-dark);
+        font-size: 21px;
+      }
+
+      .section {
+        padding: 82px 0;
+      }
+
+      .section-soft {
+        border-block: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .section-heading {
+        max-width: 760px;
+        margin-bottom: 38px;
+      }
+
+      .section-heading p {
+        margin: 0 0 12px;
+        color: var(--accent-dark);
+        font-size: 13px;
+        font-weight: 850;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      h2 {
+        margin: 0;
+        color: var(--primary-dark);
+        font-size: clamp(34px, 5vw, 52px);
+        line-height: 1.08;
+        letter-spacing: -0.04em;
+      }
+
+      .section-intro {
+        max-width: 760px;
+        margin: 18px 0 0;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.75;
+      }
+
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        padding: 26px;
+        background: var(--surface);
+        box-shadow: 0 12px 34px rgba(6, 63, 62, 0.055);
+      }
+
+      .card-number {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 13px;
+        background: var(--surface-soft);
+        color: var(--accent-dark);
+        font-weight: 900;
+      }
+
+      .card h3 {
+        margin: 20px 0 10px;
+        color: var(--primary-dark);
+        font-size: 20px;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .google-panel {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 38px;
+        align-items: start;
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        padding: clamp(28px, 5vw, 52px);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .google-panel h2 {
+        font-size: clamp(34px, 4.7vw, 48px);
+      }
+
+      .google-panel-description {
+        margin: 20px 0 0;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.75;
+      }
+
+      .data-list {
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 14px;
+        list-style: none;
+      }
+
+      .data-list li {
+        position: relative;
+        padding: 18px 20px 18px 52px;
+        border: 1px solid var(--border);
+        border-radius: 17px;
+        background: var(--surface-soft);
+        color: #3d5d5a;
+        line-height: 1.65;
+      }
+
+      .data-list li::before {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        width: 20px;
+        height: 20px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #ffffff;
+        content: "✓";
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .data-list strong {
+        color: var(--primary-dark);
+      }
+
+      .privacy-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 30px;
+        border-radius: 28px;
+        padding: clamp(30px, 5vw, 54px);
+        background:
+          linear-gradient(135deg, #052f30, #075c52);
+        color: #ffffff;
+        box-shadow: 0 24px 60px rgba(5, 47, 48, 0.22);
+      }
+
+      .privacy-banner h2 {
+        color: #ffffff;
+      }
+
+      .privacy-banner p {
+        max-width: 700px;
+        margin: 16px 0 0;
+        color: #d5eae5;
+        font-size: 17px;
+        line-height: 1.75;
+      }
+
+      .privacy-banner .button {
+        flex: 0 0 auto;
+        background: #ffffff;
+        color: var(--primary-dark);
+        box-shadow: none;
+      }
+
+      .site-footer {
+        margin-top: 82px;
+        border-top: 1px solid var(--border);
+        background: #ffffff;
+      }
+
+      .footer-content {
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 30px;
+      }
+
+      .footer-brand strong {
+        display: block;
+        color: var(--primary-dark);
+        font-size: 18px;
+      }
+
+      .footer-brand p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 20px;
+      }
+
+      .footer-links a {
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .footer-links a:hover {
+        color: var(--primary);
+      }
+
+      @media (max-width: 900px) {
+        .hero-grid,
+        .google-panel {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-grid {
+          gap: 44px;
+        }
+
+        .card-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .privacy-banner {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .container {
+          width: min(100% - 24px, 1160px);
+        }
+
+        .navigation {
+          min-height: 68px;
+        }
+
+        .navigation-links a:not(.button) {
+          display: none;
+        }
+
+        .navigation-links {
+          gap: 8px;
+        }
+
+        .navigation-links .button {
+          min-height: 42px;
+          padding-inline: 15px;
+          font-size: 13px;
+        }
+
+        .hero {
+          padding: 68px 0 54px;
+        }
+
+        h1 {
+          font-size: clamp(45px, 15vw, 68px);
+        }
+
+        .hero-description {
+          font-size: 17px;
+        }
+
+        .product-preview {
+          border-radius: 22px;
+          padding: 20px;
+        }
+
+        .preview-summary {
+          grid-template-columns: 1fr;
+        }
+
+        .section {
+          padding: 62px 0;
+        }
+
+        .footer-content {
+          padding: 34px 0;
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .footer-links {
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="site-header">
+      <div class="container navigation">
+        <a
+          class="brand"
+          href="/about.html"
+          aria-label="MyPocket AI homepage"
+        >
+          <img
+            src="/icon.svg"
+            alt="MyPocket AI logo"
+          />
+
+          <span>MyPocket AI</span>
+        </a>
+
+        <nav
+          class="navigation-links"
+          aria-label="Main navigation"
+        >
+          <a href="#how-it-works">How it works</a>
+          <a href="#google-data">Google data use</a>
+          <a href="/privacy">Privacy</a>
+
+          <a
+            class="button"
+            href="/"
+          >
+            Open MyPocket AI
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div>
+            <p class="eyebrow">
+              AI-powered finance automation
+            </p>
+
+            <h1>MyPocket AI</h1>
+
+            <p class="hero-description">
+              MyPocket AI helps individuals, families and businesses
+              record daily expenses, organise transactions and maintain
+              financial records using their own Google Sheets and
+              Google Drive.
+            </p>
+
+            <div class="hero-actions">
+              <a
+                class="button"
+                href="/"
+              >
+                Open MyPocket AI
+              </a>
+
+              <a
+                class="button button-secondary"
+                href="#google-data"
+              >
+                See how Google data is used
+              </a>
+            </div>
+
+            <ul class="trust-list">
+              <li>Your Google account</li>
+              <li>Your Google Sheets</li>
+              <li>Your Google Drive</li>
+              <li>You control access</li>
+            </ul>
+          </div>
+
+          <aside
+            class="product-preview"
+            aria-label="Example MyPocket AI transaction"
+          >
+            <div class="preview-header">
+              <strong>MyPocket AI</strong>
+              <span class="status">Connected</span>
+            </div>
+
+            <div class="preview-message">
+              KFC RM20
+            </div>
+
+            <div class="preview-confirmation">
+              <strong>Transaction recorded</strong><br />
+              Food &amp; Dining · Expense · RM20.00<br />
+              Saved to your Google Sheet.
+            </div>
+
+            <div class="preview-summary">
+              <div class="summary-card">
+                <span>Transactions</span>
+                <strong>Automatic</strong>
+              </div>
+
+              <div class="summary-card">
+                <span>Data ownership</span>
+                <strong>User controlled</strong>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section
+        id="how-it-works"
+        class="section section-soft"
+      >
+        <div class="container">
+          <div class="section-heading">
+            <p>How it works</p>
+
+            <h2>
+              A simpler way to organise everyday financial records
+            </h2>
+
+            <div class="section-intro">
+              MyPocket AI combines transaction automation, messaging
+              tools and Google services to help users maintain clear,
+              accessible financial records.
+            </div>
+          </div>
+
+          <div class="card-grid">
+            <article class="card">
+              <span class="card-number">1</span>
+              <h3>Sign in securely</h3>
+
+              <p>
+                Users sign in with their Google Account to authenticate
+                their identity and access their MyPocket AI workspace.
+              </p>
+            </article>
+
+            <article class="card">
+              <span class="card-number">2</span>
+              <h3>Connect Google services</h3>
+
+              <p>
+                Users authorise MyPocket AI to create or manage the
+                Google Sheets and Google Drive files required for their
+                financial records.
+              </p>
+            </article>
+
+            <article class="card">
+              <span class="card-number">3</span>
+              <h3>Record and review</h3>
+
+              <p>
+                Expenses and transactions are organised automatically,
+                saved to the user's files and made available through
+                the MyPocket AI dashboard.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="google-data"
+        class="section"
+      >
+        <div class="container google-panel">
+          <div>
+            <p class="eyebrow">
+              Transparent Google data use
+            </p>
+
+            <h2>
+              Why MyPocket AI requests Google access
+            </h2>
+
+            <p class="google-panel-description">
+              Google access is requested only to provide features chosen
+              by the user. The permissions requested are displayed
+              during Google's authorisation process before access is
+              granted.
+            </p>
+          </div>
+
+          <ul class="data-list">
+            <li>
+              <strong>Google Account information:</strong>
+              used for secure authentication and identification of the
+              user's MyPocket AI account.
+            </li>
+
+            <li>
+              <strong>Google Sheets:</strong>
+              used to create and update transaction records, categories,
+              summaries and financial information requested by the user.
+            </li>
+
+            <li>
+              <strong>Google Drive:</strong>
+              used to create and manage files required by MyPocket AI,
+              including authorised spreadsheet and receipt-related
+              files.
+            </li>
+
+            <li>
+              <strong>User control:</strong>
+              access can be disconnected from MyPocket AI or revoked
+              through the user's Google Account settings.
+            </li>
+
+            <li>
+              <strong>No sale of Google user data:</strong>
+              MyPocket AI does not sell Google user data or use it for
+              personalised advertising.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container privacy-banner">
+          <div>
+            <h2>Privacy-first by design</h2>
+
+            <p>
+              MyPocket AI is designed around user control. Financial
+              records are maintained in Google files connected or
+              created with the user's authorisation. Our Privacy Policy
+              explains how information is accessed, used, stored and
+              protected.
+            </p>
+          </div>
+
+          <a
+            class="button"
+            href="/privacy"
+          >
+            Read Privacy Policy
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-content">
+        <div class="footer-brand">
+          <strong>MyPocket AI</strong>
+
+          <p>
+            AI-powered expense tracking and finance automation.
+          </p>
+        </div>
+
+        <nav
+          class="footer-links"
+          aria-label="Footer navigation"
+        >
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms of Service</a>
+          <a href="mailto:support@imai.my">Contact Support</a>
+          <a href="/">Open App</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
