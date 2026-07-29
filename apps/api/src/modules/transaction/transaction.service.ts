@@ -152,7 +152,7 @@ export class TransactionService {
               setting.spreadsheetId,
 
             range:
-              "Transactions!A:M",
+              "Transactions!A:O",
           },
         );
 
@@ -170,6 +170,12 @@ export class TransactionService {
         (transaction) => Boolean(
           transaction,
         ),
+      )
+      .filter(
+        (transaction:any) =>
+          actor?.role === "MEMBER"
+            ? transaction.createdById === actor.userId
+            : true,
       );
 
   }
