@@ -39,3 +39,10 @@ logs/
 # Development backups
 *.backup*
 backups/
+
+# Local build/cache and emergency backup files
+*.tsbuildinfo
+*.bak
+*.bak.*
+*.before-*
+*.broken-refactor.*
