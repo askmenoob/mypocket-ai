@@ -14,6 +14,7 @@ const STORAGE = {
   terms: "imai_terms_accepted",
   onboarding: "imai_onboarding_completed",
   wizardStep: "imai_setup_wizard_step",
+  invite: "imai_pending_invite_token",
 };
 
 function googleLoginUrl(){
@@ -493,6 +494,14 @@ function App(){
       stored(STORAGE.wizardStep),
     );
 
+  const [pendingInviteToken, setPendingInviteToken] =
+    useState(
+      stored(STORAGE.invite),
+    );
+
+  const [acceptingInvite, setAcceptingInvite] =
+    useState(false);
+
   const [whatsAppQr, setWhatsAppQr] =
     useState<WhatsAppQrState>(
       emptyWhatsAppQrState,
@@ -582,6 +591,120 @@ function App(){
   ]);
 
   useEffect(() => {
+
+    // accept pending invite after login
+    const inviteToken =
+      pendingInviteToken
+      ||
+      stored(STORAGE.invite);
+
+    if(!token || !inviteToken){
+      return;
+    }
+
+    let cancelled =
+      false;
+
+    async function acceptInvite(){
+
+      try{
+
+        setAcceptingInvite(true);
+
+        await api(
+          "/workspace/invites/accept",
+          token,
+          {
+            method:
+              "POST",
+
+            body:
+              JSON.stringify({
+                token:
+                  inviteToken,
+              }),
+          },
+        );
+
+        if(cancelled){
+          return;
+        }
+
+        localStorage.removeItem(
+          STORAGE.invite,
+        );
+
+        setPendingInviteToken("");
+
+        localStorage.removeItem(
+          STORAGE.wizardStep,
+        );
+
+        setPreferredWizardStep("");
+
+        setNotice(
+          "Invite accepted. Welcome to your shared workspace.",
+        );
+
+        window.history.replaceState(
+          null,
+          document.title,
+          "/#dashboard",
+        );
+
+        await loadAll(
+          token,
+        );
+
+      }catch(error){
+
+        if(!cancelled){
+          setNotice(
+            error instanceof Error
+              ? error.message
+              : "Invite accept failed.",
+          );
+        }
+
+      }finally{
+
+        if(!cancelled){
+          setAcceptingInvite(false);
+        }
+
+      }
+
+    }
+
+    acceptInvite();
+
+    return () => {
+      cancelled =
+        true;
+    };
+
+  }, [
+    token,
+    pendingInviteToken,
+  ]);
+
+
+  useEffect(() => {
+
+    // store invite token from path before Google redirects away
+    const inviteMatch =
+      window.location.pathname.match(/^\/invite\/([^/]+)/);
+
+    if(inviteMatch?.[1]){
+      localStorage.setItem(
+        STORAGE.invite,
+        inviteMatch[1],
+      );
+
+      setPendingInviteToken(
+        inviteMatch[1],
+      );
+    }
 
     const hash =
       new URLSearchParams(
@@ -1331,6 +1454,10 @@ function App(){
   const needsWizard =
     Boolean(token)
     &&
+    !acceptingInvite
+    &&
+    !pendingInviteToken
+    &&
     Boolean(data.me?.workspace?.id)
     &&
     !(
@@ -1370,7 +1497,11 @@ function App(){
   if(
     token
     &&
-    state.loading
+    (
+      state.loading
+      ||
+      acceptingInvite
+    )
     &&
     !data.me
   ){
