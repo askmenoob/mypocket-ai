@@ -2116,6 +2116,9 @@ function Dashboard(
   const [linkPhone, setLinkPhone] =
     useState("");
 
+  const [inviteUrl, setInviteUrl] =
+    useState("");
+
   const [newMemberEmail, setNewMemberEmail] =
     useState("");
 
@@ -2382,27 +2385,42 @@ function Dashboard(
 
   }
 
-  async function linkMember(){
+  async function createMemberInvite(){
 
     const token =
       stored(STORAGE.token);
 
-    await api(
-      "/whatsapp/members/link",
-      token,
-      {
-        method:"POST",
-        body:JSON.stringify({
-          email:linkEmail,
-          phoneNumber:linkPhone,
-        }),
-      },
+    const response =
+      await api<{
+        inviteUrl:string;
+      }>(
+        "/workspace/invites",
+        token,
+        {
+          method:"POST",
+          body:JSON.stringify({
+            email:
+              linkEmail,
+
+            whatsappPhoneNumber:
+              linkPhone,
+
+            role:
+              newMemberRole,
+          }),
+        },
+      );
+
+    setInviteUrl(
+      response.inviteUrl,
     );
 
-    setLinkEmail("");
-    setLinkPhone("");
-    setActionMessage("WhatsApp number linked.");
+    setActionMessage(
+      "Invite link created. Share this link with the member.",
+    );
+
     props.refresh();
+
   }
 
   async function addMember(){
@@ -2470,7 +2488,8 @@ function Dashboard(
       | "ban"
       | "unban"
       | "deactivate"
-      | "reactivate",
+      | "reactivate"
+      | "delete",
     label:string,
     confirmText:string,
   ){
@@ -3131,31 +3150,69 @@ function Dashboard(
           )}
 
           {canManageMembers && activeView === "admin" && (
-            <Panel title="Member WhatsApp Link">
-            <label className="field">
-              Member email
-              <input
-                value={linkEmail}
-                onChange={(event) => setLinkEmail(event.target.value)}
-                placeholder="member@example.com"
-              />
-            </label>
+            <Panel title="Invite Member">
+              <p className="helperText">
+                Invite link akan bind email, nombor WhatsApp dan role kepada workspace ini.
+                Member tidak akan create Google Sheet sendiri.
+              </p>
 
-            <label className="field">
-              WhatsApp phone
-              <input
-                value={linkPhone}
-                onChange={(event) => setLinkPhone(event.target.value)}
-                placeholder="60123456789"
-              />
-            </label>
+              <label className="field">
+                Member email
+                <input
+                  value={linkEmail}
+                  onChange={(event) => {
+                    setLinkEmail(event.target.value);
+                    setInviteUrl("");
+                  }}
+                  placeholder="member@example.com"
+                />
+              </label>
 
-            <button
-              className="primary"
-              onClick={linkMember}
-            >
-              Link member
-            </button>
+              <label className="field">
+                WhatsApp phone
+                <input
+                  value={linkPhone}
+                  onChange={(event) => {
+                    setLinkPhone(event.target.value);
+                    setInviteUrl("");
+                  }}
+                  placeholder="60123456789"
+                />
+              </label>
+
+              <label className="field">
+                Role
+                <select
+                  value={newMemberRole}
+                  onChange={(event) => {
+                    setNewMemberRole(event.target.value as MemberRole);
+                    setInviteUrl("");
+                  }}
+                >
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="MEMBER">MEMBER</option>
+                </select>
+              </label>
+
+              <button
+                className="primary"
+                onClick={createMemberInvite}
+              >
+                Create invite link
+              </button>
+
+              {inviteUrl && (
+                <div className="inviteBox">
+                  <span>Invite link</span>
+                  <code>{inviteUrl}</code>
+                  <button
+                    className="ghost"
+                    onClick={() => navigator.clipboard?.writeText(inviteUrl)}
+                  >
+                    Copy link
+                  </button>
+                </div>
+              )}
             </Panel>
           )}
 

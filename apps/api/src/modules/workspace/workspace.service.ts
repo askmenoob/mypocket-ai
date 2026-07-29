@@ -672,6 +672,60 @@ export class WorkspaceService {
 
   }
 
+  async adminDeleteUser(
+    input:{
+      actorEmail:string;
+      userId:string;
+    },
+  ){
+
+    this.assertSuperAdmin(
+      input.actorEmail,
+    );
+
+    const user =
+      await this.app.prisma.user.findUnique({
+        where:{
+          id:
+            input.userId,
+        },
+      });
+
+    if(!user){
+      throw new AppError(
+        "USER_NOT_FOUND",
+        "User not found",
+        404,
+      );
+    }
+
+    if(isSuperAdminEmail(user.email)){
+      throw new AppError(
+        "SUPER_ADMIN_DELETE_BLOCKED",
+        "Super admin account cannot be deleted",
+        400,
+      );
+    }
+
+    await this.app.prisma.user.delete({
+      where:{
+        id:
+          input.userId,
+      },
+    });
+
+    return {
+      success:
+        true,
+
+      deletedUserId:
+        input.userId,
+    };
+
+  }
+
+
+
 
   async createInvite(
     input:{

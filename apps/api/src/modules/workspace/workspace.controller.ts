@@ -302,6 +302,29 @@ export class WorkspaceController {
 
   };
 
+  adminDeleteUser =
+    async (
+      request:any,
+      reply:any,
+    ) => {
+
+      await request.jwtVerify();
+
+      const result =
+        await this.service.adminDeleteUser({
+          actorEmail:
+            request.user.email,
+
+          userId:
+            request.params.userId,
+        });
+
+      return reply.send(result);
+
+    };
+
+
+
 
   createInvite =
     async (

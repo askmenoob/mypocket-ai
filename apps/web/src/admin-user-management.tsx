@@ -59,7 +59,8 @@ type AdminUserManagementProps = {
       | "ban"
       | "unban"
       | "deactivate"
-      | "reactivate",
+      | "reactivate"
+      | "delete",
     label:string,
     confirmText:string,
   ) => Promise<void> | void;
@@ -715,6 +716,20 @@ export function AdminUserManagement(
                                     Deactivate user
                                   </button>
                                 )}
+
+                              <button
+                                type="button"
+                                className="dangerGhost"
+                                disabled={isBusy || user.isSuperAdmin}
+                                onClick={() => props.onSuperAdminUserAction(
+                                  user.userId,
+                                  "delete",
+                                  "User deleted.",
+                                  `Delete ${user.email}? Ini akan padam akaun user dan data berkaitan yang cascade. Tindakan ini tidak boleh undo.`,
+                                )}
+                              >
+                                Delete user
+                              </button>
                             </div>
                           </details>
                         </td>
