@@ -17,6 +17,10 @@ export class WorkspaceRepository {
         userId,
       },
 
+      orderBy:{
+        createdAt:"desc",
+      },
+
       include: {
         workspace: true,
       },

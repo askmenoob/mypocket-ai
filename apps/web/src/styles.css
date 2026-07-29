@@ -1781,3 +1781,312 @@ button.primaryLink{
     grid-template-columns:1fr;
   }
 }
+
+/* === IMAI ADMIN USER MANAGEMENT === */
+
+.admin-users-shell {
+  width: 100%;
+  padding: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 22px;
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 22px 60px rgba(2, 6, 23, 0.28);
+}
+
+.admin-users-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.admin-users-header h2 {
+  margin: 5px 0 7px;
+  font-size: clamp(1.45rem, 2vw, 2rem);
+}
+
+.admin-users-header p {
+  max-width: 680px;
+  margin: 0;
+  color: #94a3b8;
+}
+
+.admin-users-eyebrow {
+  color: #38bdf8;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.admin-users-refresh {
+  min-height: 42px;
+  padding: 0 17px;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 12px;
+  background: rgba(14, 165, 233, 0.12);
+  color: #e0f2fe;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.admin-users-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.admin-users-stats article {
+  padding: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 16px;
+  background: rgba(30, 41, 59, 0.62);
+}
+
+.admin-users-stats span {
+  display: block;
+  margin-bottom: 7px;
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+.admin-users-stats strong {
+  font-size: 1.55rem;
+}
+
+.admin-users-toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 220px;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.admin-users-toolbar label {
+  display: grid;
+  gap: 7px;
+}
+
+.admin-users-toolbar label > span {
+  color: #94a3b8;
+  font-size: 0.76rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.admin-users-toolbar input,
+.admin-users-toolbar select,
+.admin-package-control select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 11px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #f8fafc;
+}
+
+.admin-users-message {
+  margin-bottom: 12px;
+  padding: 11px 13px;
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  border-radius: 11px;
+  background: rgba(34, 197, 94, 0.1);
+  color: #bbf7d0;
+}
+
+.admin-users-count {
+  margin: 0 0 10px;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.admin-users-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 16px;
+}
+
+.admin-users-table {
+  width: 100%;
+  min-width: 1050px;
+  border-collapse: collapse;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  padding: 15px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-users-table th {
+  background: rgba(30, 41, 59, 0.92);
+  color: #94a3b8;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-users-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-users-table tbody tr:hover td {
+  background: rgba(51, 65, 85, 0.22);
+}
+
+.admin-user-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 225px;
+}
+
+.admin-user-avatar {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  background: linear-gradient(
+    135deg,
+    rgba(14, 165, 233, 0.9),
+    rgba(99, 102, 241, 0.9)
+  );
+  font-weight: 850;
+}
+
+.admin-user-identity strong,
+.admin-workspace-detail strong,
+.admin-date-detail strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.admin-user-identity span,
+.admin-workspace-detail span,
+.admin-date-detail span,
+.admin-package-control span {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+.admin-user-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.admin-user-badge {
+  padding: 3px 7px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  color: #cbd5e1;
+  font-size: 0.65rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.admin-user-badge.super {
+  border-color: rgba(250, 204, 21, 0.35);
+  background: rgba(250, 204, 21, 0.1);
+  color: #fef08a;
+}
+
+.admin-workspace-detail {
+  min-width: 190px;
+}
+
+.admin-connection-list {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  min-width: 150px;
+}
+
+.admin-connection {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.admin-connection.ok {
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
+}
+
+.admin-connection.off {
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+}
+
+.admin-sheet-link {
+  color: #7dd3fc;
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.admin-sheet-link:hover {
+  text-decoration: underline;
+}
+
+.admin-package-control {
+  display: grid;
+  gap: 6px;
+  min-width: 170px;
+}
+
+.admin-package-control select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.admin-muted,
+.admin-users-empty {
+  color: #94a3b8;
+}
+
+.admin-users-empty {
+  padding: 35px 20px;
+  border: 1px dashed rgba(148, 163, 184, 0.25);
+  border-radius: 15px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .admin-users-header {
+    display: grid;
+  }
+
+  .admin-users-refresh {
+    width: 100%;
+  }
+
+  .admin-users-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-users-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-users-shell {
+    padding: 16px;
+    border-radius: 17px;
+  }
+
+  .admin-users-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === END IMAI ADMIN USER MANAGEMENT === */

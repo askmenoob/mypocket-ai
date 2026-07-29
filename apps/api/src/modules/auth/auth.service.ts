@@ -76,7 +76,18 @@ export class AuthService {
 
     } else {
 
-      workspace = user.workspaces[0];
+      const activeMembership =
+        user.memberships?.find(
+          (item) =>
+            Boolean(
+              item.workspace,
+            ),
+        );
+
+      workspace =
+        activeMembership?.workspace
+        ??
+        null;
 
     }
 

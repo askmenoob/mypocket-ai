@@ -29,7 +29,15 @@ export class AuthRepository {
 
         subscription:true,
 
-        memberships:true,
+        memberships:{
+          include:{
+            workspace:true,
+          },
+
+          orderBy:{
+            createdAt:"desc",
+          },
+        },
 
       },
 

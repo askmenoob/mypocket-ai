@@ -308,10 +308,32 @@ export class WorkspaceService {
     }
 
 
-    const workspace =
-      user.workspaces[0]
+    const activeMembership =
+      [...user.memberships]
+        .filter(
+          (item) =>
+            Boolean(
+              item.workspace,
+            ),
+        )
+        .sort(
+          (left, right) =>
+            right.createdAt.getTime()
+            -
+            left.createdAt.getTime(),
+        )
+        .find(
+          (item) =>
+            item.role === "OWNER",
+        )
       ??
-      user.memberships[0]?.workspace;
+      null;
+
+
+    const workspace =
+      activeMembership?.workspace
+      ??
+      null;
 
 
     if(!workspace){
@@ -439,26 +461,62 @@ export class WorkspaceService {
       name:string | null;
       createdAt:Date;
       updatedAt:Date;
+
       subscription?:{
         plan:string;
         status:string;
       } | null;
+
       workspaces:Array<any>;
+
       memberships:Array<{
+        workspaceId:string;
+        role:string;
+        createdAt:Date;
         workspace:any;
       }>;
     },
   ){
 
-    const workspace =
-      user.workspaces[0]
+    const orderedMemberships =
+      [...user.memberships]
+        .filter(
+          (item) =>
+            Boolean(
+              item.workspace,
+            ),
+        )
+        .sort(
+          (left, right) =>
+            right.createdAt.getTime()
+            -
+            left.createdAt.getTime(),
+        );
+
+
+    const activeMembership =
+      orderedMemberships.find(
+        (item) =>
+          item.role === "OWNER",
+      )
       ??
-      user.memberships[0]?.workspace
+      orderedMemberships[0]
       ??
       null;
 
+
+    const workspace =
+      activeMembership?.workspace
+      ??
+      null;
+
+
     const workspaceType =
-      workspace?.type as WorkspaceType | undefined;
+      workspace?.type as
+        WorkspaceType
+        |
+        undefined;
+
 
     const subscriptionPlan =
       user.subscription?.plan
@@ -467,7 +525,6 @@ export class WorkspaceService {
 
 
     return {
-
       userId:
         user.id,
 
@@ -477,14 +534,18 @@ export class WorkspaceService {
       name:
         user.name,
 
+      isSuperAdmin:
+        isSuperAdminEmail(
+          user.email,
+        ),
+
       package:
         this.resolveUserPackage(
           workspaceType,
           subscriptionPlan,
         ),
 
-      subscriptionPlan:
-        subscriptionPlan,
+      subscriptionPlan,
 
       subscriptionStatus:
         user.subscription?.status
@@ -503,6 +564,11 @@ export class WorkspaceService {
             type:
               workspace.type,
 
+            role:
+              activeMembership?.role
+              ??
+              null,
+
             memberCount:
               workspace.members?.length
               ??
@@ -513,8 +579,34 @@ export class WorkspaceService {
                 workspace.googleSetting,
               ),
 
+            spreadsheetId:
+              workspace.googleSetting
+                ?.spreadsheetId
+              ??
+              null,
+
             whatsappCount:
               workspace.whatsapp?.length
+              ??
+              0,
+
+            whatsappConnectedCount:
+              workspace.whatsapp
+                ?.filter(
+                  (instance:any) =>
+                    [
+                      "ONLINE",
+                      "CONNECTED",
+                      "OPEN",
+                    ].includes(
+                      String(
+                        instance.status
+                        ??
+                        "",
+                      ).toUpperCase(),
+                    ),
+                )
+                .length
               ??
               0,
           }
@@ -525,7 +617,6 @@ export class WorkspaceService {
 
       updatedAt:
         user.updatedAt,
-
     };
 
   }
