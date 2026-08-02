@@ -102,7 +102,7 @@ const PREMIUM_DASHBOARD_TEXT = {
   en:{
     transactionPeriod:"Transaction period", record:"record", records:"records", today:"Today", thisWeek:"This Week", thisMonth:"This Month", thisYear:"This Year", allTime:"All Time", customRange:"Custom Range", to:"to",
     expense:"Expense", income:"Income", filteredTransaction:"filtered transaction", filteredTransactions:"filtered transactions", balance:"Balance", membersLinked:"members linked", healthy:"Healthy", live:"Live", connected:"Connected", disconnected:"Disconnected", checking:"Checking", notConnected:"Not connected", myPocketWorkspace:"MyPocket workspace",
-    expenseTrend:"Expense Trend", spendingByCategory:"Spending by Category", total:"Total", recentTransactions:"Recent Transactions", viewAll:"View all",
+    expenseTrend:"Expense Trend", spendingByCategory:"Spending by Category", financeAllocation:"Income Allocation", paidExpenses:"Paid expenses", unpaidCommitments:"Unpaid commitments", availableBalance:"Available balance", deficit:"Deficit", incomeRequired:"Income required", total:"Total", recentTransactions:"Recent Transactions", viewAll:"View all",
     date:"Date", type:"Type", category:"Category", merchant:"Merchant", amount:"Amount", source:"Source", recordedBy:"Recorded by",
     whatsappIntegration:"WhatsApp Integration", manage:"Manage", instance:"Instance", status:"Status", trigger:"Trigger", members:"Members", lastSync:"Last Sync", notLinked:"not linked",
     aliasLabel:"WhatsApp group bot alias", saving:"Saving...", saveAlias:"Save Alias", aliasHelp:"In groups, start messages with ! or @{alias}. Private chat does not need a trigger.",
@@ -112,7 +112,7 @@ const PREMIUM_DASHBOARD_TEXT = {
   ms:{
     transactionPeriod:"Tempoh transaksi", record:"rekod", records:"rekod", today:"Hari Ini", thisWeek:"Minggu Ini", thisMonth:"Bulan Ini", thisYear:"Tahun Ini", allTime:"Sepanjang Masa", customRange:"Julat Tersuai", to:"hingga",
     expense:"Belanja", income:"Income", filteredTransaction:"transaksi ditapis", filteredTransactions:"transaksi ditapis", balance:"Baki", membersLinked:"ahli dipautkan", healthy:"Sihat", live:"Live", connected:"Connected", disconnected:"Disconnected", checking:"Menyemak", notConnected:"Belum connected", myPocketWorkspace:"Workspace MyPocket",
-    expenseTrend:"Trend Belanja", spendingByCategory:"Belanja Mengikut Kategori", total:"Jumlah", recentTransactions:"Transaksi Terkini", viewAll:"Lihat semua",
+    expenseTrend:"Trend Belanja", spendingByCategory:"Belanja Mengikut Kategori", financeAllocation:"Agihan Income", paidExpenses:"Belanja sudah dibayar", unpaidCommitments:"Komitmen belum dibayar", availableBalance:"Baki tersedia", deficit:"Defisit", incomeRequired:"Income diperlukan", total:"Jumlah", recentTransactions:"Transaksi Terkini", viewAll:"Lihat semua",
     date:"Tarikh", type:"Jenis", category:"Kategori", merchant:"Merchant", amount:"Jumlah", source:"Sumber", recordedBy:"Direkod oleh",
     whatsappIntegration:"Integrasi WhatsApp", manage:"Urus", instance:"Instance", status:"Status", trigger:"Trigger", members:"Ahli", lastSync:"Sync terakhir", notLinked:"belum linked",
     aliasLabel:"Alias bot WhatsApp group", saving:"Menyimpan...", saveAlias:"Simpan Alias", aliasHelp:"Dalam group, mula mesej dengan ! atau @{alias}. Private chat tidak perlu trigger.",
@@ -596,6 +596,30 @@ export function PremiumDashboard(
     periodIncome
     -
     periodExpense;
+
+  const unpaidCommitmentTotal =
+    Number(
+      props.data?.commitments?.summary?.totalUnpaid,
+    )
+    ||
+    0;
+
+  const committedOutflow =
+    periodExpense
+    +
+    unpaidCommitmentTotal;
+
+  const availableAfterCommitments =
+    Math.max(
+      periodIncome - committedOutflow,
+      0,
+    );
+
+  const incomeDeficit =
+    Math.max(
+      committedOutflow - periodIncome,
+      0,
+    );
 
   const validTransactionDates =
     transactions
@@ -1310,14 +1334,46 @@ export function PremiumDashboard(
   let accumulated =
     0;
 
+  const financeAllocationItems =
+    [
+      {
+        name:
+          text.paidExpenses,
+        amount:
+          periodExpense,
+      },
+      {
+        name:
+          text.unpaidCommitments,
+        amount:
+          unpaidCommitmentTotal,
+      },
+      {
+        name:
+          text.availableBalance,
+        amount:
+          availableAfterCommitments,
+      },
+    ].filter(
+      (item) =>
+        item.amount > 0,
+    );
+
+  const financeAllocationTotal =
+    Math.max(
+      periodIncome,
+      committedOutflow,
+      0,
+    );
+
   const donutStops =
-    visibleCategories.map(
+    financeAllocationItems.map(
       (item, index) => {
         const percentage =
-          monthExpense > 0
+          financeAllocationTotal > 0
             ? (
               item.amount /
-              monthExpense
+              financeAllocationTotal
             ) * 100
             : 0;
 
@@ -1335,7 +1391,7 @@ export function PremiumDashboard(
     );
 
   const donutBackground =
-    monthExpense > 0
+    financeAllocationTotal > 0
       ? `conic-gradient(${donutStops.join(",")})`
       : "conic-gradient(#e4edeb 0% 100%)";
 
@@ -1672,7 +1728,7 @@ export function PremiumDashboard(
         .pd-legend{display:flex;flex-direction:column;gap:11px}
         .pd-legend-row{display:grid;grid-template-columns:9px minmax(0,1fr) auto 45px;align-items:center;gap:8px;color:#3f5d5b;font-size:11px}
         .pd-dot{width:8px;height:8px;border-radius:50%}.pd-legend-value{color:#203f3f;font-weight:700}.pd-legend-percent{text-align:right;color:#718784}
-        .pd-total{display:flex;justify-content:space-between;margin-top:4px;padding-top:12px;border-top:1px solid #e3ecea;color:#102f31;font-size:12px;font-weight:800}
+        .pd-total{display:flex;justify-content:space-between;margin-top:4px;padding-top:12px;border-top:1px solid #e3ecea;color:#102f31;font-size:12px;font-weight:800}.pd-total.deficit{color:#e44953}
         .pd-filter-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:13px 15px;margin-bottom:14px;border:1px solid #d9e7e4;border-radius:10px;background:#f8fbfa}
         .pd-filter-copy{display:grid;gap:2px}.pd-filter-copy strong{font-size:12px;color:#244946}.pd-filter-copy span{font-size:10px;color:#718784}
         .pd-filter-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
@@ -1854,7 +1910,11 @@ export function PremiumDashboard(
           icon="calendar"
           label={`${props.transactionFilterLabel} ${text.income}`}
           value={currency(periodIncome)}
-          subtitle={`${text.balance} ${currency(periodBalance)}`}
+          subtitle={
+            incomeDeficit > 0
+              ? `${text.deficit} ${currency(incomeDeficit)}`
+              : `${text.availableBalance} ${currency(availableAfterCommitments)}`
+          }
           trend={null}
           sparklineData={monthSparklineData}
         />
@@ -2032,7 +2092,7 @@ export function PremiumDashboard(
         </DashboardPanel>
 
         <DashboardPanel
-          title={`${text.spendingByCategory} · ${props.transactionFilterLabel}`}
+          title={`${text.financeAllocation} · ${props.transactionFilterLabel}`}
         >
           <div className="pd-donut-layout">
             <div
@@ -2044,25 +2104,27 @@ export function PremiumDashboard(
               <div className="pd-donut-centre">
                 <span>RM</span>
                 <strong>
-                  {monthExpense.toLocaleString(
+                  {financeAllocationTotal.toLocaleString(
                     locale,
                     {
                       minimumFractionDigits:2,
                     },
                   )}
                 </strong>
-                <span>{text.total}</span>
+                <span>
+                  {incomeDeficit > 0 ? text.incomeRequired : text.total}
+                </span>
               </div>
             </div>
 
             <div className="pd-legend">
-              {visibleCategories.map(
+              {financeAllocationItems.map(
                 (item, index) => {
                   const percentage =
-                    monthExpense > 0
+                    financeAllocationTotal > 0
                       ? (
                         item.amount /
-                        monthExpense
+                        financeAllocationTotal
                       ) * 100
                       : 0;
 
@@ -2095,9 +2157,16 @@ export function PremiumDashboard(
                 },
               )}
 
+              {incomeDeficit > 0 && (
+                <div className="pd-total deficit">
+                  <span>{text.deficit}</span>
+                  <span>{currency(incomeDeficit)}</span>
+                </div>
+              )}
+
               <div className="pd-total">
-                <span>{text.total}</span>
-                <span>{currency(monthExpense)}</span>
+                <span>{text.income}</span>
+                <span>{currency(periodIncome)}</span>
               </div>
             </div>
           </div>
