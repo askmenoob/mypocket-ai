@@ -3246,6 +3246,11 @@ function Dashboard(
   const [commitmentFilter, setCommitmentFilter] =
     useState("unpaid");
 
+  const [commitmentsViewData, setCommitmentsViewData] =
+    useState<CommitmentListData | null>(
+      props.data.commitments,
+    );
+
   const [botEnabled, setBotEnabled] =
     useState(true);
 
@@ -3332,6 +3337,16 @@ function Dashboard(
 
   const canUseAdmin =
     canManageMembers;
+
+  useEffect(
+    () => {
+      setCommitmentsViewData(
+        props.data.commitments,
+      );
+    },
+    [props.data.commitments],
+  );
+
 
   useEffect(
     () => {
@@ -3629,6 +3644,7 @@ function Dashboard(
 
   async function reloadCommitments(
     status = commitmentFilter,
+    message = "Commitments refreshed.",
   ){
     const activeToken =
       localStorage.getItem(
@@ -3648,9 +3664,12 @@ function Dashboard(
         activeToken,
       );
 
-    props.data.commitments = result;
-    setActionMessage("Commitments refreshed.");
-    await props.refresh();
+    setCommitmentsViewData(
+      result,
+    );
+    setActionMessage(
+      message,
+    );
   }
 
   async function createCommitment(){
@@ -3688,8 +3707,10 @@ function Dashboard(
 
     setCommitmentName("");
     setCommitmentAmount("");
-    setActionMessage("Commitment berjaya ditambah.");
-    await props.refresh();
+    await reloadCommitments(
+      commitmentFilter,
+      "Commitment berjaya ditambah.",
+    );
   }
 
   async function updateCommitmentStatus(
@@ -3718,8 +3739,10 @@ function Dashboard(
       },
     );
 
-    setActionMessage(message);
-    await props.refresh();
+    await reloadCommitments(
+      commitmentFilter,
+      message,
+    );
   }
 
   async function archiveCommitment(
@@ -3737,8 +3760,10 @@ function Dashboard(
       activeToken,
       { method:"POST" },
     );
-    setActionMessage("Commitment diarchive. Sejarah tidak dipadam.");
-    await props.refresh();
+    await reloadCommitments(
+      commitmentFilter,
+      "Commitment diarchive. Sejarah tidak dipadam.",
+    );
   }
 
   async function markCommitmentPaid(
@@ -3756,8 +3781,10 @@ function Dashboard(
       activeToken,
       { method:"POST" },
     );
-    setActionMessage("Commitment bulan semasa ditanda PAID.");
-    await props.refresh();
+    await reloadCommitments(
+      commitmentFilter,
+      "Commitment bulan semasa ditanda PAID.",
+    );
   }
 
   async function saveBotSettings(){
@@ -4740,7 +4767,7 @@ function Dashboard(
                   Refresh
                 </button>
                 <span>
-                  {props.data.commitments?.period.label || "Bulan semasa"} · Jumlah belum dibayar RM{props.data.commitments?.summary.totalUnpaid || "0.00"}
+                  {commitmentsViewData?.period.label || "Bulan semasa"} · Jumlah belum dibayar RM{commitmentsViewData?.summary.totalUnpaid || "0.00"}
                 </span>
               </div>
 
@@ -4771,7 +4798,7 @@ function Dashboard(
               </div>
 
               <div className="commitmentList">
-                {(props.data.commitments?.items || []).map((item) => (
+                {(commitmentsViewData?.items || []).map((item) => (
                   <div className="commitmentRow" key={item.id}>
                     <div>
                       <strong>{item.name}</strong>
