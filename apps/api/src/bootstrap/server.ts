@@ -6,17 +6,10 @@ export async function startServer() {
 
   const app = buildApp();
 
-  await app.listen({
-    host: env.HOST,
-    port: env.PORT,
-  });
-
   const commitmentScheduler =
     new CommitmentScheduler(
       app,
     );
-
-  commitmentScheduler.start();
 
   app.addHook(
     "onClose",
@@ -24,5 +17,12 @@ export async function startServer() {
       commitmentScheduler.stop();
     },
   );
+
+  await app.listen({
+    host: env.HOST,
+    port: env.PORT,
+  });
+
+  commitmentScheduler.start();
 
 }
