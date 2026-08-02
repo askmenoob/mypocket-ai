@@ -2300,6 +2300,11 @@ export class WhatsAppService {
     }
 
 
+    const commandReplyLanguage =
+      await this.getWorkspaceReplyLanguage(
+        instance.workspaceId,
+      );
+
     if(
       !this.canUseWhatsAppCommand(
         actorMember.role,
@@ -2311,6 +2316,7 @@ export class WhatsAppService {
         normalized,
         this.buildCommandNotAllowedReply(
           commandKind,
+          commandReplyLanguage,
         ),
       );
 
@@ -2348,6 +2354,7 @@ export class WhatsAppService {
         actorMember.userId,
         actorMember.role,
         editCommand,
+        commandReplyLanguage,
       );
 
     }
@@ -2358,6 +2365,7 @@ export class WhatsAppService {
       return this.handleUndoCommand(
         instance.workspaceId,
         normalized,
+        commandReplyLanguage,
       );
 
     }
@@ -2380,6 +2388,7 @@ export class WhatsAppService {
         instance.workspaceId,
         normalized,
         actorMember.userId,
+        commandReplyLanguage,
       );
 
     }
@@ -2392,6 +2401,7 @@ export class WhatsAppService {
         normalized,
         actorMember.userId,
         actorMember.role,
+        commandReplyLanguage,
       );
 
     }
@@ -2401,6 +2411,7 @@ export class WhatsAppService {
 
       return this.handleCategoriesCommand(
         normalized,
+        commandReplyLanguage,
       );
 
     }
@@ -2411,6 +2422,7 @@ export class WhatsAppService {
       return this.handleMembersCommand(
         instance.workspaceId,
         normalized,
+        commandReplyLanguage,
       );
 
     }
@@ -2421,6 +2433,7 @@ export class WhatsAppService {
       return this.handleInfoCommand(
         normalized,
         infoCommand,
+        commandReplyLanguage,
       );
 
     }
@@ -2447,6 +2460,7 @@ export class WhatsAppService {
         listCommand,
         actorMember.userId,
         actorMember.role,
+        commandReplyLanguage,
       );
 
     }
@@ -2460,6 +2474,7 @@ export class WhatsAppService {
         summaryPeriod,
         actorMember.userId,
         actorMember.role,
+        commandReplyLanguage,
       );
 
     }
@@ -2468,6 +2483,7 @@ export class WhatsAppService {
     const parseCheck =
       await this.safeParseWebhookTransaction(
         normalized,
+        commandReplyLanguage,
       );
 
 
@@ -2505,7 +2521,9 @@ export class WhatsAppService {
 
       await this.safeSendWebhookReply(
         normalized,
-        "ℹ️ Transaksi ini sudah direkod sebelum ini.",
+        commandReplyLanguage === "en"
+          ? "ℹ️ This transaction was already recorded."
+          : "ℹ️ Transaksi ini sudah direkod sebelum ini.",
       );
 
 
@@ -2562,6 +2580,7 @@ export class WhatsAppService {
       normalized,
       this.buildTransactionReply(
         result.parsed,
+        commandReplyLanguage,
       ),
     );
 
@@ -2877,7 +2896,11 @@ export class WhatsAppService {
 
   private buildCommandNotAllowedReply(
     commandKind:WhatsAppCommandKind,
+    language:"ms" | "en" = "ms",
   ){
+
+    const isEnglish =
+      language === "en";
 
     if(
       commandKind === "edit"
@@ -2886,8 +2909,12 @@ export class WhatsAppService {
     ){
 
       return [
-        "🔒 Command ini hanya untuk Owner/Admin.",
-        "Jika perlu ubah transaksi, sila hubungi admin workspace.",
+        isEnglish
+          ? "🔒 This command is only for Owner/Admin."
+          : "🔒 Command ini hanya untuk Owner/Admin.",
+        isEnglish
+          ? "If a transaction needs to be changed, contact a workspace admin."
+          : "Jika perlu ubah transaksi, sila hubungi admin workspace.",
       ].join(
         "\n",
       );
@@ -2898,8 +2925,12 @@ export class WhatsAppService {
     if(commandKind === "members"){
 
       return [
-        "🔒 Command members hanya untuk Owner/Admin.",
-        "Sila hubungi admin workspace untuk semak atau link nombor WhatsApp.",
+        isEnglish
+          ? "🔒 The members command is only for Owner/Admin."
+          : "🔒 Command members hanya untuk Owner/Admin.",
+        isEnglish
+          ? "Contact a workspace admin to check or link a WhatsApp number."
+          : "Sila hubungi admin workspace untuk semak atau link nombor WhatsApp.",
       ].join(
         "\n",
       );
@@ -2910,8 +2941,12 @@ export class WhatsAppService {
     if(commandKind === "reminder"){
 
       return [
-        "🔒 Command reminder tidak dibenarkan untuk akaun anda.",
-        "Sila hubungi admin workspace.",
+        isEnglish
+          ? "🔒 Reminder commands are not allowed for your account."
+          : "🔒 Command reminder tidak dibenarkan untuk akaun anda.",
+        isEnglish
+          ? "Contact a workspace admin."
+          : "Sila hubungi admin workspace.",
       ].join(
         "\n",
       );
@@ -2922,8 +2957,12 @@ export class WhatsAppService {
     if(commandKind === "transaction"){
 
       return [
-        "🔒 Akaun anda belum dibenarkan merekod transaksi.",
-        "Sila hubungi admin workspace.",
+        isEnglish
+          ? "🔒 Your account is not allowed to record transactions yet."
+          : "🔒 Akaun anda belum dibenarkan merekod transaksi.",
+        isEnglish
+          ? "Contact a workspace admin."
+          : "Sila hubungi admin workspace.",
       ].join(
         "\n",
       );
@@ -2932,7 +2971,9 @@ export class WhatsAppService {
 
 
     return [
-      "🔒 Command ini tidak dibenarkan untuk akaun anda.",
+      isEnglish
+        ? "🔒 This command is not allowed for your account."
+        : "🔒 Command ini tidak dibenarkan untuk akaun anda.",
       `Command: ${commandKind}`,
     ].join(
       "\n",
@@ -3557,14 +3598,16 @@ export class WhatsAppService {
     command:
       | "methods"
       | "commands",
+
+    language:"ms" | "en" = "ms",
   ){
 
     const reply =
       command === "methods"
         ?
-        this.buildMethodsReply()
+        this.buildMethodsReply(language)
         :
-        this.buildCommandsReply();
+        this.buildCommandsReply(language);
 
 
     await this.safeSendWebhookReply(
@@ -3593,10 +3636,14 @@ export class WhatsAppService {
 
 
 
-  private buildMethodsReply(){
+  private buildMethodsReply(
+    language:"ms" | "en" = "ms",
+  ){
 
     return WhatsAppReplyBuilder
-      .methods();
+      .methods(
+        language,
+      );
 
   }
 
@@ -3604,10 +3651,14 @@ export class WhatsAppService {
 
 
 
-  private buildCommandsReply(){
+  private buildCommandsReply(
+    language:"ms" | "en" = "ms",
+  ){
 
     return WhatsAppReplyBuilder
-      .commands();
+      .commands(
+        language,
+      );
 
   }
 
@@ -3619,6 +3670,8 @@ export class WhatsAppService {
     workspaceId:string,
 
     normalized:NormalizedEvolutionMessage,
+
+    language:"ms" | "en" = "ms",
   ){
 
     const members =
@@ -3664,6 +3717,7 @@ export class WhatsAppService {
                   member.whatsappPhoneNumber,
               }),
             ),
+          language,
         ),
     );
 
@@ -3689,22 +3743,15 @@ export class WhatsAppService {
 
   private async handleCategoriesCommand(
     normalized:NormalizedEvolutionMessage,
+
+    language:"ms" | "en" = "ms",
   ){
 
     const reply =
-      [
-        "🏷️ Kategori auto MyPocket",
-        "",
-        "• Food — makan, minum, kopi, nasi",
-        "• Transport — petrol, grab, tol, parking",
-        "• Bills — bill, elektrik, air, internet",
-        "• Shopping — belanja, beli, shopee, lazada",
-        "• Rent — rent, sewa",
-        "• Salary — gaji, bonus, income, terima, refund",
-        "• Others — fallback",
-      ].join(
-        "\n",
-      );
+      WhatsAppReplyBuilder
+        .categories(
+          language,
+        );
 
 
     await this.safeSendWebhookReply(
@@ -3879,6 +3926,8 @@ export class WhatsAppService {
     actorUserId:string,
 
     actorRole:string,
+
+    language:"ms" | "en" = "ms",
   ){
 
     const transaction =
@@ -3903,9 +3952,12 @@ export class WhatsAppService {
         ?
         this.buildLastReply(
           transaction,
+          language,
         )
         :
-        "ℹ️ Tiada transaksi aktif ditemui.";
+        language === "en"
+          ? "ℹ️ No active transaction found."
+          : "ℹ️ Tiada transaksi aktif ditemui.";
 
 
     await this.safeSendWebhookReply(
@@ -3951,7 +4003,12 @@ export class WhatsAppService {
         name:string;
       } | null;
     },
+
+    language:"ms" | "en" = "ms",
   ){
+
+    const isEnglish =
+      language === "en";
 
     const category =
       transaction.category?.name
@@ -3976,7 +4033,9 @@ export class WhatsAppService {
 
 
     return [
-      "🧾 Transaksi terakhir",
+      isEnglish
+        ? "🧾 Last transaction"
+        : "🧾 Transaksi terakhir",
       `${transaction.type}: ${category}${merchant}${paymentMethod}`,
       `${transaction.currency}${transaction.amount}`,
       transaction.description
@@ -3999,6 +4058,8 @@ export class WhatsAppService {
     normalized:NormalizedEvolutionMessage,
 
     userId:string,
+
+    language:"ms" | "en" = "ms",
   ){
 
     const member =
@@ -4032,7 +4093,9 @@ export class WhatsAppService {
 
       await this.safeSendWebhookReply(
         normalized,
-        "⚠️ Identity WhatsApp tidak dijumpai.",
+        language === "en"
+          ? "⚠️ WhatsApp identity was not found."
+          : "⚠️ Identity WhatsApp tidak dijumpai.",
       );
 
 
@@ -4096,6 +4159,8 @@ export class WhatsAppService {
     normalized:NormalizedEvolutionMessage,
 
     instanceName:string,
+
+    language:"ms" | "en" = "ms",
   ){
 
     const setting =
@@ -4117,12 +4182,17 @@ export class WhatsAppService {
         });
 
 
+    const isEnglish =
+      language === "en";
+
     const reply =
       [
-        "✅ MyPocket AI aktif",
+        isEnglish
+          ? "✅ MyPocket AI is active"
+          : "✅ MyPocket AI aktif",
         `WhatsApp: ${instanceName}`,
         `Workspace: ${workspace?.type ?? "-"}`,
-        `Google Sheet: ${setting ? "connected" : "not connected"}`,
+        `Google Sheet: ${setting ? isEnglish ? "connected" : "disambungkan" : isEnglish ? "not connected" : "belum disambungkan"}`,
         `Timezone: ${env.DEFAULT_TIMEZONE}`,
       ].join(
         "\n",
@@ -4172,6 +4242,8 @@ export class WhatsAppService {
     actorUserId:string,
 
     actorRole:string,
+
+    language:"ms" | "en" = "ms",
   ){
 
     const now =
@@ -4179,7 +4251,9 @@ export class WhatsAppService {
 
 
     let title =
-      "📋 Senarai transaksi";
+      language === "en"
+        ? "📋 Transaction list"
+        : "📋 Senarai transaksi";
 
     let transactions =
       await this.getWorkspaceSheetTransactions(
@@ -4203,7 +4277,9 @@ export class WhatsAppService {
 
 
       title =
-        `🔎 Carian transaksi: ${keyword}`;
+        language === "en"
+          ? `🔎 Transaction search: ${keyword}`
+          : `🔎 Carian transaksi: ${keyword}`;
 
 
       transactions =
@@ -4237,14 +4313,16 @@ export class WhatsAppService {
 
       title =
         period === "today"
-          ?
-          "📋 Transaksi hari ini"
-          :
-          period === "week"
-            ?
-            "📋 Transaksi minggu ini"
-            :
-            "📋 Transaksi bulan ini";
+          ? language === "en"
+            ? "📋 Today's transactions"
+            : "📋 Transaksi hari ini"
+          : period === "week"
+            ? language === "en"
+              ? "📋 This week transactions"
+              : "📋 Transaksi minggu ini"
+            : language === "en"
+              ? "📋 This month transactions"
+              : "📋 Transaksi bulan ini";
 
 
       transactions =
@@ -4269,6 +4347,7 @@ export class WhatsAppService {
         .transactionList(
           transactions,
           title,
+          language,
         );
 
 
@@ -4312,6 +4391,8 @@ export class WhatsAppService {
     actorUserId:string,
 
     actorRole:string,
+
+    language:"ms" | "en" = "ms",
   ){
 
     const now =
@@ -4372,6 +4453,7 @@ export class WhatsAppService {
         env.DEFAULT_TIMEZONE,
         period,
         periodRange.label,
+        language,
       );
 
 
@@ -4428,6 +4510,8 @@ export class WhatsAppService {
       | "month",
 
     label:string,
+
+    language:"ms" | "en" = "ms",
   ){
 
     void now;
@@ -4438,6 +4522,7 @@ export class WhatsAppService {
         transactions,
         period,
         label,
+        language,
       );
 
   }
@@ -4460,6 +4545,8 @@ export class WhatsAppService {
       | "VIEWER",
 
     edit:WhatsAppEditCommand,
+
+    language:"ms" | "en" = "ms",
   ){
 
     void userId;
@@ -4479,7 +4566,9 @@ export class WhatsAppService {
 
       await this.safeSendWebhookReply(
         normalized,
-        "ℹ️ Tiada transaksi aktif untuk dikemaskini.",
+        language === "en"
+          ? "ℹ️ No active transaction to update."
+          : "ℹ️ Tiada transaksi aktif untuk dikemaskini.",
       );
 
 
@@ -4525,7 +4614,9 @@ export class WhatsAppService {
 
         await this.safeSendWebhookReply(
           normalized,
-          "⚠️ Tarikh tidak sah. Contoh: edit last date today atau edit last date 2026-07-27",
+          language === "en"
+            ? "⚠️ Invalid date. Example: edit last date today or edit last date 2026-07-27"
+            : "⚠️ Tarikh tidak sah. Contoh: edit last date today atau edit last date 2026-07-27",
         );
 
 
@@ -4576,7 +4667,9 @@ export class WhatsAppService {
 
         await this.safeSendWebhookReply(
           normalized,
-          "⚠️ Masa tidak sah. Contoh: edit last time 14:30",
+          language === "en"
+            ? "⚠️ Invalid time. Example: edit last time 14:30"
+            : "⚠️ Masa tidak sah. Contoh: edit last time 14:30",
         );
 
 
@@ -4627,7 +4720,9 @@ export class WhatsAppService {
 
         await this.safeSendWebhookReply(
           normalized,
-          "⚠️ Jenis transaksi tidak sah. Contoh: edit last type income atau edit last type expense",
+          language === "en"
+            ? "⚠️ Invalid transaction type. Example: edit last type income or edit last type expense"
+            : "⚠️ Jenis transaksi tidak sah. Contoh: edit last type income atau edit last type expense",
         );
 
 
@@ -4717,7 +4812,9 @@ export class WhatsAppService {
 
         await this.safeSendWebhookReply(
           normalized,
-          "⚠️ Amount tidak sah. Contoh: edit last amount rm10",
+          language === "en"
+            ? "⚠️ Invalid amount. Example: edit last amount rm10"
+            : "⚠️ Amount tidak sah. Contoh: edit last amount rm10",
         );
 
 
@@ -4833,6 +4930,7 @@ export class WhatsAppService {
       this.buildEditLastReply(
         updated,
         edit.field,
+        language,
       ),
     );
 
@@ -5288,12 +5386,15 @@ export class WhatsAppService {
     transaction:any,
 
     field:string,
+
+    language:"ms" | "en" = "ms",
   ){
 
     return WhatsAppReplyBuilder
       .editLast(
         transaction,
         field,
+        language,
       );
 
   }
@@ -5306,6 +5407,8 @@ export class WhatsAppService {
     workspaceId:string,
 
     normalized:NormalizedEvolutionMessage,
+
+    language:"ms" | "en" = "ms",
   ){
 
     const since =
@@ -5338,7 +5441,9 @@ export class WhatsAppService {
 
       await this.safeSendWebhookReply(
         normalized,
-        "ℹ️ Tiada transaksi terbaru untuk dibatalkan.",
+        language === "en"
+          ? "ℹ️ No recent transaction to undo."
+          : "ℹ️ Tiada transaksi terbaru untuk dibatalkan.",
       );
 
 
@@ -5377,6 +5482,7 @@ export class WhatsAppService {
       normalized,
       this.buildUndoReply(
         cancelled,
+        language,
       ),
     );
 
@@ -5833,11 +5939,14 @@ export class WhatsAppService {
         name:string;
       } | null;
     },
+
+    language:"ms" | "en" = "ms",
   ){
 
     return WhatsAppReplyBuilder
       .undo(
         transaction,
+        language,
       );
 
   }
@@ -5962,6 +6071,8 @@ export class WhatsAppService {
 
   private async safeParseWebhookTransaction(
     normalized:NormalizedEvolutionMessage,
+
+    language:"ms" | "en" = "ms",
   ){
 
     try{
@@ -5990,6 +6101,7 @@ export class WhatsAppService {
         normalized,
         this.buildParseFailedReply(
           reason,
+          language,
         ),
       );
 
@@ -6011,11 +6123,14 @@ export class WhatsAppService {
 
   private buildParseFailedReply(
     reason:string,
+
+    language:"ms" | "en" = "ms",
   ){
 
     return WhatsAppReplyBuilder
       .parseFailed(
         reason,
+        language,
       );
 
   }
@@ -6168,11 +6283,14 @@ export class WhatsAppService {
 
   private buildTransactionReply(
     parsed:ParsedWhatsAppTransaction,
+
+    language:"ms" | "en" = "ms",
   ){
 
     return WhatsAppReplyBuilder
       .transaction(
         parsed,
+        language,
       );
 
   }
