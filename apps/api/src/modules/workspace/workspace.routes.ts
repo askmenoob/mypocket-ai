@@ -31,6 +31,13 @@ const workspaceRoutes:
     );
 
 
+    app.patch(
+      "/name",
+      controller.updateName,
+    );
+
+
+
     app.get(
       "/admin/users",
       controller.adminListUsers,

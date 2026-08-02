@@ -157,25 +157,112 @@ export class TransactionService {
         );
 
 
-    return rows
-      .slice(
-        1,
-      )
+    const transactions =
+      rows
+        .slice(
+          1,
+        )
+        .map(
+          (row) => this.parseSheetTransactionRow(
+            row,
+          ),
+        )
+        .filter(
+          (transaction) => Boolean(
+            transaction,
+          ),
+        )
+        .filter(
+          (transaction:any) =>
+            actor?.role === "MEMBER"
+              ? transaction.createdById === actor.userId
+              : true,
+        ) as Array<any>;
+
+
+    const members =
+      await this.app.prisma.workspaceMember
+        .findMany({
+          where:{
+            workspaceId,
+          },
+
+          select:{
+            userId:true,
+
+            user:{
+              select:{
+                name:true,
+                email:true,
+              },
+            },
+          },
+        });
+
+
+    const memberByUserId =
+      new Map(
+        members.map(
+          (member) => [
+            member.userId,
+            member.user,
+          ],
+        ),
+      );
+
+
+    return transactions
       .map(
-        (row) => this.parseSheetTransactionRow(
-          row,
-        ),
+        (transaction) => {
+
+          const recordedBy =
+            memberByUserId.get(
+              transaction.createdById,
+            );
+
+
+          return {
+            ...transaction,
+
+            createdBy:
+              recordedBy
+                ? {
+                  id:
+                    transaction.createdById,
+
+                  name:
+                    recordedBy.name,
+
+                  email:
+                    recordedBy.email,
+                }
+                : transaction.createdByEmail
+                  ? {
+                    id:
+                      transaction.createdById
+                      ||
+                      "",
+
+                    name:
+                      null,
+
+                    email:
+                      transaction.createdByEmail,
+                  }
+                  : null,
+          };
+
+        },
       )
-      .filter(
-        (transaction) => Boolean(
-          transaction,
-        ),
-      )
-      .filter(
-        (transaction:any) =>
-          actor?.role === "MEMBER"
-            ? transaction.createdById === actor.userId
-            : true,
+      .sort(
+        (first, second) =>
+          new Date(
+            second.transactionDate,
+          ).getTime()
+          -
+          new Date(
+            first.transactionDate,
+          ).getTime(),
       );
 
   }

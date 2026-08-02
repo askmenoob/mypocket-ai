@@ -333,6 +333,7 @@ export class AuthController {
     return this.service
       .getCurrentSession(
         request.user.userId,
+        request.user.workspaceId,
       );
 
   };

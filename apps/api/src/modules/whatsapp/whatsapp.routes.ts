@@ -56,6 +56,20 @@ export default async function whatsappRoutes(
   );
 
 
+  app.patch(
+    "/whatsapp/bot-alias",
+    {
+      preHandler:[
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
+      ],
+    },
+    controller.updateBotAlias,
+  );
+
+
   app.post(
     "/whatsapp/instance/disconnect",
     {

@@ -50,6 +50,9 @@ type AdminUser = {
   isSuperAdmin?:boolean;
   email:string;
   name:string | null;
+  status?:string | null;
+  bannedAt?:string | null;
+  deactivatedAt?:string | null;
   package:WorkspacePackage;
   subscriptionPlan:string;
   subscriptionStatus:string;
@@ -76,6 +79,13 @@ type Transaction = {
   description:string | null;
   transactionDate:string;
   source?:string | null;
+  createdById?:string | null;
+  createdByEmail?:string | null;
+  createdBy?:{
+    id?:string | null;
+    name?:string | null;
+    email?:string | null;
+  } | null;
   category?:{ name:string } | null;
   merchant?:{ name:string } | null;
   paymentMethod?:{ name:string } | null;
@@ -86,9 +96,46 @@ type LoadState = {
   error:string | null;
 };
 
+type BillingPlan =
+  | "PERSONAL_PRO"
+  | "FAMILY"
+  | "BUSINESS";
+
+
+type BillingSubscriptionData = {
+  workspace:{
+    id:string;
+    name:string;
+    type:WorkspaceType;
+    role:string;
+  };
+
+  access:{
+    plan:string;
+    status:string;
+    expiresAt:string | null;
+  };
+
+  billing:{
+    plan:BillingPlan;
+    pendingPlan:BillingPlan | null;
+    planChangeRequestedAt:string | null;
+    status:string;
+    provider:string;
+    checkoutUrl:string | null;
+    currentPeriodStart:string | null;
+    currentPeriodEnd:string | null;
+    lastPaymentAt:string | null;
+    lastPaymentStatus:string | null;
+    canceledAt:string | null;
+  } | null;
+};
+
+
 type DashboardData = {
   health:any | null;
   me:any | null;
+  billing:BillingSubscriptionData | null;
   google:any | null;
   whatsapp:any | null;
   members:Member[];
@@ -96,13 +143,552 @@ type DashboardData = {
   transactions:Transaction[];
 };
 
+
+const BILLING_PLAN_OPTIONS:Array<{
+  plan:BillingPlan;
+  name:string;
+  price:string;
+  description:string;
+}> = [
+  {
+    plan:
+      "PERSONAL_PRO",
+
+    name:
+      "Personal Pro",
+
+    price:
+      "RM9 / month",
+
+    description:
+      "For one active individual with personal finance, AI, Google Sheets and Google Drive.",
+  },
+
+  {
+    plan:
+      "FAMILY",
+
+    name:
+      "Family",
+
+    price:
+      "RM19 / month",
+
+    description:
+      "Shared family records, multiple members and WhatsApp phone whitelist.",
+  },
+
+  {
+    plan:
+      "BUSINESS",
+
+    name:
+      "Business / Company",
+
+    price:
+      "RM49 / month",
+
+    description:
+      "For owners and employees with roles, company records and complete reporting.",
+  },
+];
+
+
+function billingPlanLabel(
+  plan:string | null | undefined,
+){
+
+  if(plan === "PERSONAL_PRO"){
+    return "Personal Pro";
+  }
+
+
+  if(plan === "FAMILY"){
+    return "Family";
+  }
+
+
+  if(plan === "BUSINESS"){
+    return "Business / Company";
+  }
+
+
+  if(plan === "FREE"){
+    return "Free";
+  }
+
+
+  return "Personal";
+
+}
+
+
+function billingStatusLabel(
+  status:string | null | undefined,
+){
+
+  if(status === "CHECKOUT_PENDING"){
+    return "Payment pending";
+  }
+
+
+  if(status === "SCHEDULED"){
+    return "Scheduled";
+  }
+
+
+  if(status === "RETRYING"){
+    return "Payment retrying";
+  }
+
+
+  if(status === "PAUSED"){
+    return "Paused";
+  }
+
+
+  if(status === "CANCELED"){
+    return "Canceled";
+  }
+
+
+  if(status === "EXPIRED"){
+    return "Expired";
+  }
+
+
+  if(status === "INACTIVE"){
+    return "Inactive";
+  }
+
+
+  return "Active";
+
+}
+
 type DashboardView =
   | "dashboard"
   | "transactions"
   | "whatsapp"
   | "google"
   | "admin"
-  | "settings";
+  | "settings"
+  | "super-admin";
+
+type TransactionFilterMode =
+  | "TODAY"
+  | "WEEK"
+  | "MONTH"
+  | "YEAR"
+  | "ALL"
+  | "CUSTOM";
+
+
+type TransactionFilterRange = {
+  start:Date | null;
+  end:Date | null;
+};
+
+
+function transactionDateInputValue(
+  date:Date,
+){
+
+  const year =
+    date.getFullYear();
+
+  const month =
+    String(
+      date.getMonth() + 1,
+    ).padStart(
+      2,
+      "0",
+    );
+
+  const day =
+    String(
+      date.getDate(),
+    ).padStart(
+      2,
+      "0",
+    );
+
+
+  return `${year}-${month}-${day}`;
+
+}
+
+
+function parseTransactionDateInput(
+  value:string,
+){
+
+  if(
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      value,
+    )
+  ){
+
+    return null;
+
+  }
+
+
+  const [
+    year,
+    month,
+    day,
+  ] =
+    value
+      .split("-")
+      .map(Number);
+
+
+  const date =
+    new Date(
+      year,
+      month - 1,
+      day,
+    );
+
+
+  if(
+    date.getFullYear() !== year
+    ||
+    date.getMonth() !== month - 1
+    ||
+    date.getDate() !== day
+  ){
+
+    return null;
+
+  }
+
+
+  return date;
+
+}
+
+
+function resolveTransactionFilterRange(
+  mode:TransactionFilterMode,
+  customFrom:string,
+  customTo:string,
+  referenceDate:Date = new Date(),
+):TransactionFilterRange {
+
+  const today =
+    new Date(
+      referenceDate.getFullYear(),
+      referenceDate.getMonth(),
+      referenceDate.getDate(),
+    );
+
+
+  if(mode === "ALL"){
+
+    return {
+      start:null,
+      end:null,
+    };
+
+  }
+
+
+  if(mode === "TODAY"){
+
+    return {
+      start:
+        today,
+
+      end:
+        new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() + 1,
+        ),
+    };
+
+  }
+
+
+  if(mode === "WEEK"){
+
+    const mondayOffset =
+      (
+        today.getDay()
+        +
+        6
+      )
+      %
+      7;
+
+    const start =
+      new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() - mondayOffset,
+      );
+
+
+    return {
+      start,
+
+      end:
+        new Date(
+          start.getFullYear(),
+          start.getMonth(),
+          start.getDate() + 7,
+        ),
+    };
+
+  }
+
+
+  if(mode === "MONTH"){
+
+    return {
+      start:
+        new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          1,
+        ),
+
+      end:
+        new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          1,
+        ),
+    };
+
+  }
+
+
+  if(mode === "YEAR"){
+
+    return {
+      start:
+        new Date(
+          today.getFullYear(),
+          0,
+          1,
+        ),
+
+      end:
+        new Date(
+          today.getFullYear() + 1,
+          0,
+          1,
+        ),
+    };
+
+  }
+
+
+  let from =
+    parseTransactionDateInput(
+      customFrom,
+    );
+
+  let to =
+    parseTransactionDateInput(
+      customTo,
+    );
+
+
+  if(
+    from
+    &&
+    to
+    &&
+    from.getTime() > to.getTime()
+  ){
+
+    const temporary =
+      from;
+
+    from =
+      to;
+
+    to =
+      temporary;
+
+  }
+
+
+  return {
+    start:
+      from,
+
+    end:
+      to
+        ? new Date(
+          to.getFullYear(),
+          to.getMonth(),
+          to.getDate() + 1,
+        )
+        : null,
+  };
+
+}
+
+
+function transactionFilterDisplayLabel(
+  mode:TransactionFilterMode,
+  range:TransactionFilterRange,
+){
+
+  const labels:
+    Record<string, string> =
+    {
+      TODAY:
+        "Today",
+
+      WEEK:
+        "This Week",
+
+      MONTH:
+        "This Month",
+
+      YEAR:
+        "This Year",
+
+      ALL:
+        "All Time",
+    };
+
+
+  if(mode !== "CUSTOM"){
+
+    return labels[mode]
+    ||
+    "Transactions";
+
+  }
+
+
+  const displayDate =
+    (
+      date:Date | null,
+    ) =>
+      date
+        ? date.toLocaleDateString(
+          "en-MY",
+          {
+            day:
+              "numeric",
+
+            month:
+              "short",
+
+            year:
+              "numeric",
+          },
+        )
+        : "";
+
+
+  const startLabel =
+    displayDate(
+      range.start,
+    );
+
+  const inclusiveEnd =
+    range.end
+      ? new Date(
+        range.end.getFullYear(),
+        range.end.getMonth(),
+        range.end.getDate() - 1,
+      )
+      : null;
+
+  const endLabel =
+    displayDate(
+      inclusiveEnd,
+    );
+
+
+  if(
+    startLabel
+    &&
+    endLabel
+  ){
+
+    return `${startLabel} – ${endLabel}`;
+
+  }
+
+
+  if(startLabel){
+
+    return `From ${startLabel}`;
+
+  }
+
+
+  if(endLabel){
+
+    return `Until ${endLabel}`;
+
+  }
+
+
+  return "Custom Range";
+
+}
+
+
+function transactionMatchesFilter(
+  transaction:Transaction,
+  range:TransactionFilterRange,
+){
+
+  const timestamp =
+    new Date(
+      transaction.transactionDate,
+    ).getTime();
+
+
+  if(
+    !Number.isFinite(
+      timestamp,
+    )
+  ){
+
+    return false;
+
+  }
+
+
+  if(
+    range.start
+    &&
+    timestamp < range.start.getTime()
+  ){
+
+    return false;
+
+  }
+
+
+  if(
+    range.end
+    &&
+    timestamp >= range.end.getTime()
+  ){
+
+    return false;
+
+  }
+
+
+  return true;
+
+}
+
+
 
 const DASHBOARD_VIEWS:DashboardView[] =
   [
@@ -479,6 +1065,7 @@ function App(){
     useState<DashboardData>({
       health:null,
       me:null,
+      billing:null,
       google:null,
       whatsapp:null,
       members:[],
@@ -673,9 +1260,11 @@ function App(){
           );
         }
 
-        await loadAll(
-          nextToken,
+        window.location.replace(
+          "/#dashboard",
         );
+
+        return;
 
       }catch(error){
 
@@ -751,10 +1340,12 @@ function App(){
 
     if(isGoogleLogin){
 
-      localStorage.setItem(
-        STORAGE.token,
-        authToken,
-      );
+      if(!stored(STORAGE.invite)){
+        localStorage.setItem(
+          STORAGE.token,
+          authToken,
+        );
+      }
 
       setToken(authToken);
 
@@ -780,7 +1371,7 @@ function App(){
         window.location.pathname + window.location.search,
       );
 
-      if(isGoogleLogin){
+      if(isGoogleLogin && !stored(STORAGE.invite)){
         loadAll(authToken);
       }
 
@@ -920,6 +1511,7 @@ function App(){
 
       const [
         me,
+        billing,
         google,
         whatsapp,
         members,
@@ -927,6 +1519,11 @@ function App(){
       ] =
         await Promise.all([
           api<any>("/auth/me", activeToken),
+          optionalApi<BillingSubscriptionData | null>(
+            "/billing/subscription",
+            activeToken,
+            null,
+          ),
           optionalApi<any | null>("/google/settings", activeToken, null),
           optionalApi<any | null>("/whatsapp/status", activeToken, null),
           optionalApi<Member[]>("/whatsapp/members", activeToken, []),
@@ -953,6 +1550,7 @@ function App(){
       setData({
         health,
         me,
+        billing,
         google,
         whatsapp,
         members:
@@ -1224,8 +1822,35 @@ function App(){
         error:null,
       });
 
+      const response =
+        await fetch(
+          `${API_BASE}/google/oauth/url`,
+          {
+            headers:{
+              Authorization:
+                `Bearer ${token}`,
+            },
+          },
+        );
+
+
+      const result =
+        await response.json();
+
+
+      if(!result.url){
+
+        throw new Error(
+          result.message
+          ||
+          "Google OAuth URL failed",
+        );
+
+      }
+
+
       window.location.href =
-        googleLoginUrl();
+        result.url;
 
     }catch(error){
 
@@ -1474,6 +2099,8 @@ function App(){
 
   const needsWizard =
     Boolean(token)
+    &&
+    data.me?.workspace?.role !== "MEMBER"
     &&
     !acceptingInvite
     &&
@@ -2234,6 +2861,202 @@ function SetupWizard(
 
 }
 
+function TransactionFilterControls(
+  props:{
+    mode:TransactionFilterMode;
+    label:string;
+    customFrom:string;
+    customTo:string;
+    transactionCount:number;
+    onModeChange:(mode:TransactionFilterMode) => void;
+    onCustomFromChange:(value:string) => void;
+    onCustomToChange:(value:string) => void;
+  },
+){
+
+  const controlStyle:React.CSSProperties =
+    {
+      border:
+        "1px solid #cbdedb",
+
+      borderRadius:
+        8,
+
+      background:
+        "#ffffff",
+
+      color:
+        "#193c3c",
+
+      padding:
+        "9px 11px",
+
+      font:
+        "inherit",
+    };
+
+
+  return (
+    <div
+      style={{
+        display:
+          "flex",
+
+        flexWrap:
+          "wrap",
+
+        justifyContent:
+          "space-between",
+
+        alignItems:
+          "center",
+
+        gap:
+          12,
+
+        marginBottom:
+          16,
+
+        padding:
+          14,
+
+        border:
+          "1px solid #d7e4e2",
+
+        borderRadius:
+          12,
+
+        background:
+          "#f7fbfa",
+      }}
+    >
+      <div
+        style={{
+          display:
+            "grid",
+
+          gap:
+            3,
+        }}
+      >
+        <strong>
+          Transaction period
+        </strong>
+
+        <span
+          style={{
+            color:
+              "#68807d",
+
+            fontSize:
+              12,
+          }}
+        >
+          {props.label} · {props.transactionCount} record{
+            props.transactionCount === 1
+              ? ""
+              : "s"
+          }
+        </span>
+      </div>
+
+      <div
+        style={{
+          display:
+            "flex",
+
+          flexWrap:
+            "wrap",
+
+          alignItems:
+            "center",
+
+          gap:
+            8,
+        }}
+      >
+        <select
+          value={props.mode}
+          aria-label="Transaction period"
+          style={controlStyle}
+          onChange={(event) =>
+            props.onModeChange(
+              event.target.value as TransactionFilterMode,
+            )
+          }
+        >
+          <option value="TODAY">
+            Today
+          </option>
+
+          <option value="WEEK">
+            This Week
+          </option>
+
+          <option value="MONTH">
+            This Month
+          </option>
+
+          <option value="YEAR">
+            This Year
+          </option>
+
+          <option value="ALL">
+            All Time
+          </option>
+
+          <option value="CUSTOM">
+            Custom Range
+          </option>
+        </select>
+
+        {props.mode === "CUSTOM" && (
+          <>
+            <input
+              type="date"
+              value={props.customFrom}
+              aria-label="Transaction date from"
+              style={controlStyle}
+              onChange={(event) =>
+                props.onCustomFromChange(
+                  event.target.value,
+                )
+              }
+            />
+
+            <span
+              style={{
+                color:
+                  "#68807d",
+
+                fontSize:
+                  12,
+              }}
+            >
+              to
+            </span>
+
+            <input
+              type="date"
+              value={props.customTo}
+              aria-label="Transaction date to"
+              style={controlStyle}
+              onChange={(event) =>
+                props.onCustomToChange(
+                  event.target.value,
+                )
+              }
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+}
+
+
+
 function Dashboard(
   props:{
     data:DashboardData;
@@ -2262,6 +3085,17 @@ function Dashboard(
   const [actionMessage, setActionMessage] =
     useState("");
 
+  const [billingOpen, setBillingOpen] =
+    useState(false);
+
+  const [billingBusyPlan, setBillingBusyPlan] =
+    useState<BillingPlan | null>(
+      null,
+    );
+
+  const [billingError, setBillingError] =
+    useState("");
+
   const [linkEmail, setLinkEmail] =
     useState("");
 
@@ -2283,11 +3117,83 @@ function Dashboard(
   const [packageBusyUserId, setPackageBusyUserId] =
     useState("");
 
+  const [workspaceName, setWorkspaceName] =
+    useState(
+      props.data.me?.workspace?.name
+      ||
+      "",
+    );
+
+  const [workspaceNameBusy, setWorkspaceNameBusy] =
+    useState(false);
+
+  const [transactionFilter, setTransactionFilter] =
+    useState<TransactionFilterMode>(
+      "MONTH",
+    );
+
+  const [transactionCustomFrom, setTransactionCustomFrom] =
+    useState(
+      () => {
+
+        const current =
+          new Date();
+
+        return transactionDateInputValue(
+          new Date(
+            current.getFullYear(),
+            current.getMonth(),
+            1,
+          ),
+        );
+
+      },
+    );
+
+  const [transactionCustomTo, setTransactionCustomTo] =
+    useState(
+      () =>
+        transactionDateInputValue(
+          new Date(),
+        ),
+    );
+
   const actorRole =
     (
       props.data.me?.workspace?.role ||
       "MEMBER"
     ) as MemberRole;
+
+  const currentAccessPlan =
+    props.data.billing?.access?.plan
+    ||
+    props.data.me?.subscriptionPlan
+    ||
+    props.data.me?.package
+    ||
+    "PERSONAL";
+
+  const currentBillingPlan =
+    props.data.billing?.billing?.plan
+    ??
+    null;
+
+  const pendingBillingPlan =
+    props.data.billing?.billing?.pendingPlan
+    ??
+    null;
+
+  const currentBillingStatus =
+    props.data.billing?.billing?.status
+    ||
+    props.data.billing?.access?.status
+    ||
+    props.data.me?.subscriptionStatus
+    ||
+    "ACTIVE";
+
+  const canManageBilling =
+    actorRole === "OWNER";
 
   const isSuperAdmin =
     Boolean(
@@ -2321,6 +3227,45 @@ function Dashboard(
   const canUseAdmin =
     canManageMembers;
 
+  useEffect(
+    () => {
+
+      if(!billingOpen){
+        return;
+      }
+
+
+      const handleKeyDown =
+        (
+          event:KeyboardEvent,
+        ) => {
+
+          if(event.key === "Escape"){
+            setBillingOpen(false);
+          }
+
+        };
+
+
+      window.addEventListener(
+        "keydown",
+        handleKeyDown,
+      );
+
+
+      return () =>
+        window.removeEventListener(
+          "keydown",
+          handleKeyDown,
+        );
+
+    },
+    [
+      billingOpen,
+    ],
+  );
+
+
   const googleSheetUrl =
     props.data.google?.spreadsheetId
       ?
@@ -2345,6 +3290,29 @@ function Dashboard(
       googleTemplateType
       &&
       googleTemplateType !== workspaceType,
+    );
+
+  const transactionDateRange =
+    resolveTransactionFilterRange(
+      transactionFilter,
+      transactionCustomFrom,
+      transactionCustomTo,
+    );
+
+  const filteredTransactions =
+    props.data.transactions
+      .filter(
+        (transaction) =>
+          transactionMatchesFilter(
+            transaction,
+            transactionDateRange,
+          ),
+      );
+
+  const transactionFilterLabel =
+    transactionFilterDisplayLabel(
+      transactionFilter,
+      transactionDateRange,
     );
 
   const today =
@@ -2387,6 +3355,154 @@ function Dashboard(
     isWhatsAppInstanceConnected(
       props.data.whatsapp?.instance?.status,
     );
+
+  async function saveWorkspaceName(){
+
+    const activeToken =
+      localStorage.getItem(
+        STORAGE.token,
+      )
+      ||
+      "";
+
+
+    if(!activeToken){
+
+      setActionMessage(
+        "Session telah tamat. Sila log masuk semula.",
+      );
+
+      return;
+
+    }
+
+
+    const normalizedName =
+      workspaceName
+        .trim()
+        .replace(
+          /\s+/g,
+          " ",
+        );
+
+
+    if(
+      normalizedName.length < 3
+      ||
+      normalizedName.length > 80
+    ){
+
+      setActionMessage(
+        "Nama workspace mestilah antara 3 hingga 80 aksara.",
+      );
+
+      return;
+
+    }
+
+
+    setWorkspaceNameBusy(
+      true,
+    );
+
+
+    try{
+
+      const result =
+        await api<{
+          id:string;
+          name:string;
+          type:WorkspaceType;
+          role:MemberRole;
+        }>(
+          "/workspace/name",
+          activeToken,
+          {
+            method:
+              "PATCH",
+
+            body:
+              JSON.stringify({
+                name:
+                  normalizedName,
+              }),
+          },
+        );
+
+
+      setWorkspaceName(
+        result.name,
+      );
+
+      setActionMessage(
+        `Nama workspace berjaya ditukar kepada ${result.name}.`,
+      );
+
+      await props.refresh();
+
+    }catch(error){
+
+      setActionMessage(
+        error instanceof Error
+          ? error.message
+          : "Nama workspace tidak berjaya disimpan.",
+      );
+
+    }finally{
+
+      setWorkspaceNameBusy(
+        false,
+      );
+
+    }
+
+  }
+
+
+
+  async function saveWhatsAppBotAlias(
+    botAlias:string,
+  ){
+
+    const activeToken =
+      localStorage.getItem(
+        STORAGE.token,
+      )
+      ||
+      "";
+
+    if(!activeToken){
+
+      throw new Error(
+        "Session telah tamat. Sila log masuk semula.",
+      );
+
+    }
+
+    const result =
+      await api<{
+        botAlias:string;
+        groupTrigger:string;
+      }>(
+        "/whatsapp/bot-alias",
+        activeToken,
+        {
+          method:"PATCH",
+
+          body:
+            JSON.stringify({
+              botAlias,
+            }),
+        },
+      );
+
+    setActionMessage(
+      `WhatsApp group trigger disimpan sebagai ${result.groupTrigger}.`,
+    );
+
+    await props.refresh();
+
+  }
 
   const navItems:Array<{
     icon:string;
@@ -2683,7 +3799,7 @@ function Dashboard(
       );
 
 
-      props.refresh();
+      await props.refresh();
 
     }finally{
 
@@ -2756,6 +3872,7 @@ function Dashboard(
       token,
       {
         method:"DELETE",
+        body:JSON.stringify({}),
       },
     );
 
@@ -2782,6 +3899,206 @@ function Dashboard(
     props.refresh();
   }
 
+  function openBillingManager(){
+
+    setBillingError("");
+    setBillingOpen(true);
+
+  }
+
+
+  async function selectBillingPlan(
+    plan:BillingPlan,
+  ){
+
+    if(!canManageBilling){
+
+      setBillingError(
+        "Only the workspace Owner can manage subscriptions.",
+      );
+
+      return;
+
+    }
+
+
+    const token =
+      stored(
+        STORAGE.token,
+      );
+
+
+    if(!token){
+
+      setBillingError(
+        "Your login session is unavailable. Please sign in again.",
+      );
+
+      return;
+
+    }
+
+
+    const billing =
+      props.data.billing?.billing
+      ??
+      null;
+
+
+    setBillingBusyPlan(
+      plan,
+    );
+
+    setBillingError("");
+
+
+    try{
+
+      if(
+        billing?.pendingPlan
+        === plan
+      ){
+
+        setActionMessage(
+          `${billingPlanLabel(plan)} is already scheduled for the next billing cycle.`,
+        );
+
+        return;
+
+      }
+
+
+      if(
+        billing
+        &&
+        [
+          "ACTIVE",
+          "SCHEDULED",
+          "RETRYING",
+        ].includes(
+          billing.status,
+        )
+      ){
+
+        const result =
+          await api<{
+            currentPlan:BillingPlan;
+            pendingPlan:BillingPlan;
+            status:string;
+            effective:string;
+            reused:boolean;
+          }>(
+            "/billing/hitpay/plan",
+            token,
+            {
+              method:
+                "PUT",
+
+              body:
+                JSON.stringify({
+                  plan,
+                }),
+            },
+          );
+
+
+        setActionMessage(
+          result.reused
+            ? `${billingPlanLabel(plan)} is already scheduled for the next billing cycle.`
+            : `${billingPlanLabel(plan)} will take effect on the next billing cycle.`,
+        );
+
+
+        props.refresh();
+
+        return;
+
+      }
+
+
+      if(
+        billing?.checkoutUrl
+        &&
+        billing.plan === plan
+        &&
+        [
+          "CHECKOUT_PENDING",
+          "PENDING",
+        ].includes(
+          billing.status,
+        )
+      ){
+
+        window.location.assign(
+          billing.checkoutUrl,
+        );
+
+        return;
+
+      }
+
+
+      if(billing){
+
+        throw new Error(
+          "This subscription is still being processed. Please refresh before choosing another plan.",
+        );
+
+      }
+
+
+      const result =
+        await api<{
+          checkoutUrl:string;
+          plan:BillingPlan;
+          reused:boolean;
+        }>(
+          "/billing/hitpay/checkout",
+          token,
+          {
+            method:
+              "POST",
+
+            body:
+              JSON.stringify({
+                plan,
+              }),
+          },
+        );
+
+
+      if(!result.checkoutUrl){
+
+        throw new Error(
+          "HitPay checkout URL was not returned.",
+        );
+
+      }
+
+
+      window.location.assign(
+        result.checkoutUrl,
+      );
+
+    }catch(error){
+
+      setBillingError(
+        error instanceof Error
+          ? error.message
+          : "Unable to manage the subscription.",
+      );
+
+    }finally{
+
+      setBillingBusyPlan(
+        null,
+      );
+
+    }
+
+  }
+
+
   return (
     <div className={sidebarOpen ? "appShell" : "appShell sidebarCollapsed"}>
       <aside className="sidebar">
@@ -2797,15 +4114,83 @@ function Dashboard(
               {item.label}
             </button>
           ))}
+
+          {isSuperAdmin && (
+            <button
+              type="button"
+              className={
+                activeView === "super-admin"
+                  ? "active"
+                  : ""
+              }
+              onClick={() =>
+                goToView("super-admin")
+              }
+            >
+              <span
+                className="super-admin-nav-icon"
+                aria-hidden="true"
+              >
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 3 20 6v5c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+              </span>
+
+              Super Admin
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="sideCard sideCardInline billingSideCard"
+            onClick={openBillingManager}
+            aria-label="Manage subscription plan"
+          >
+            <strong>
+              {billingPlanLabel(
+                currentAccessPlan,
+              )}
+            </strong>
+
+            <span>
+              <i aria-hidden="true" />
+
+              {
+                pendingBillingPlan
+                  ? `Next: ${billingPlanLabel(
+                      pendingBillingPlan,
+                    )}`
+                  : billingStatusLabel(
+                      currentBillingStatus,
+                    )
+              }
+            </span>
+
+            <small>
+              Manage plan
+            </small>
+          </button>
         </nav>
 
-        <div className="sideCard">
-          <strong>Pro Plan</strong>
-          <span>Active</span>
-        </div>
       </aside>
 
-      <main className="main">
+      <main
+        className={
+          activeView === "super-admin"
+            ? "main superAdminMain"
+            : "main"
+        }
+      >
         <header className="topbar">
           <div className="topIdentity">
             <button
@@ -2868,7 +4253,34 @@ function Dashboard(
 
         {activeView === "dashboard" && (
           <PremiumDashboard
-            data={props.data}
+            data={{
+              ...props.data,
+              transactions:
+                filteredTransactions,
+            }}
+            transactionFilter={transactionFilter}
+            transactionFilterLabel={transactionFilterLabel}
+            transactionCustomFrom={transactionCustomFrom}
+            transactionCustomTo={transactionCustomTo}
+            filterStart={
+              transactionDateRange.start?.getTime()
+              ??
+              null
+            }
+            filterEnd={
+              transactionDateRange.end?.getTime()
+              ??
+              null
+            }
+            onTransactionFilterChange={
+              setTransactionFilter
+            }
+            onTransactionCustomFromChange={
+              setTransactionCustomFrom
+            }
+            onTransactionCustomToChange={
+              setTransactionCustomTo
+            }
             onRefresh={props.refresh}
             onSetup={props.resetWizard}
             onRelinkGoogle={props.connectGoogleSheet}
@@ -2878,6 +4290,12 @@ function Dashboard(
             }
             onOpenWhatsApp={() =>
               setActiveView("whatsapp")
+            }
+            canManageWhatsApp={
+              canViewWorkspaceSettings
+            }
+            onSaveWhatsAppAlias={
+              saveWhatsAppBotAlias
             }
             onAddTransaction={() =>
               showActionMessage(
@@ -2891,11 +4309,26 @@ function Dashboard(
           className={
             activeView === "dashboard"
               ? "grid pd-legacy-hidden"
-              : "grid"
+              : activeView === "super-admin"
+                ? "grid appFullWidthGrid superAdminGrid"
+                : "grid appFullWidthGrid"
           }
         >
           {(activeView === "dashboard" || activeView === "transactions") && (
             <Panel title={activeView === "transactions" ? "Transactions" : "Recent Transactions"} wide>
+              {activeView === "transactions" && (
+                <TransactionFilterControls
+                  mode={transactionFilter}
+                  label={transactionFilterLabel}
+                  customFrom={transactionCustomFrom}
+                  customTo={transactionCustomTo}
+                  transactionCount={filteredTransactions.length}
+                  onModeChange={setTransactionFilter}
+                  onCustomFromChange={setTransactionCustomFrom}
+                  onCustomToChange={setTransactionCustomTo}
+                />
+              )}
+
             <div className="tableWrap">
               <table>
                 <thead>
@@ -2906,10 +4339,11 @@ function Dashboard(
                     <th>Merchant</th>
                     <th>Amount</th>
                     <th>Source</th>
+                    <th>Recorded by</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {props.data.transactions.slice(0, 10).map((item) => (
+                  {filteredTransactions.map((item) => (
                     <tr key={item.id}>
                       <td>{new Date(item.transactionDate).toLocaleString("en-MY")}</td>
                       <td>
@@ -2923,6 +4357,48 @@ function Dashboard(
                         {money(item.amount, item.currency)}
                       </td>
                       <td>{item.source || "SYSTEM"}</td>
+
+                      <td>
+
+                        {
+
+                          item.createdBy?.name
+
+                          ||
+
+                          item.createdBy?.email
+
+                          ||
+
+                          item.createdByEmail
+
+                          ||
+
+                          props.data.members.find(
+
+                            (member) =>
+
+                              member.userId === item.createdById,
+
+                          )?.name
+
+                          ||
+
+                          props.data.members.find(
+
+                            (member) =>
+
+                              member.userId === item.createdById,
+
+                          )?.email
+
+                          ||
+
+                          "-"
+
+                        }
+
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -3141,7 +4617,7 @@ function Dashboard(
             </Panel>
           )}
 
-          {isSuperAdmin && activeView === "admin" && (
+          {isSuperAdmin && activeView === "super-admin" && (
             <AdminUserManagement
               users={props.data.adminUsers}
               busyUserId={packageBusyUserId}
@@ -3382,6 +4858,155 @@ function Dashboard(
                 ]}
               />
 
+              {isSharedWorkspace && canChangeWorkspaceSettings && (
+                <div
+                  style={{
+                    marginTop:
+                      18,
+                    padding:
+                      16,
+                    border:
+                      "1px solid #d7e4e2",
+                    borderRadius:
+                      12,
+                    background:
+                      "#f7fbfa",
+                  }}
+                >
+                  <strong>
+                    Workspace name
+                  </strong>
+
+                  <p className="hint">
+                    Gunakan nama keluarga, organisasi atau syarikat anda. Hanya Owner dan Admin boleh menukar nama ini.
+                  </p>
+
+                  <div
+                    style={{
+                      display:
+                        "flex",
+                      flexWrap:
+                        "wrap",
+                      gap:
+                        10,
+                      alignItems:
+                        "center",
+                    }}
+                  >
+                    <input
+                      value={workspaceName}
+                      maxLength={80}
+                      disabled={workspaceNameBusy}
+                      aria-label="Workspace name"
+                      placeholder={
+                        workspaceType === "BUSINESS"
+                          ? "Contoh: AZ Prestige Sdn Bhd"
+                          : "Contoh: Keluarga Nik"
+                      }
+                      onChange={(event) =>
+                        setWorkspaceName(
+                          event.target.value,
+                        )
+                      }
+                      onKeyDown={(event) => {
+
+                        if(event.key === "Enter"){
+
+                          event.preventDefault();
+
+                          void saveWorkspaceName();
+
+                        }
+
+                      }}
+                      style={{
+                        flex:
+                          "1 1 320px",
+                        minWidth:
+                          220,
+                        border:
+                          "1px solid #cbdedb",
+                        borderRadius:
+                          8,
+                        padding:
+                          "10px 12px",
+                        font:
+                          "inherit",
+                        background:
+                          "#ffffff",
+                      }}
+                    />
+
+                    <button
+                      className="primary"
+                      disabled={
+                        workspaceNameBusy
+                        ||
+                        workspaceName.trim().length < 3
+                        ||
+                        workspaceName.trim() ===
+                          (
+                            props.data.me?.workspace?.name
+                            ||
+                            ""
+                          )
+                      }
+                      onClick={() =>
+                        void saveWorkspaceName()
+                      }
+                    >
+                      {
+                        workspaceNameBusy
+                          ? "Saving..."
+                          : "Save workspace name"
+                      }
+                    </button>
+                  </div>
+
+                  <p className="hint">
+                    Menukar nama workspace tidak akan menukar nama fail Google Sheet.
+                  </p>
+                </div>
+              )}
+
+              <section className="billingSettingsCard">
+                <div>
+                  <span className="billingSettingsEyebrow">
+                    Subscription
+                  </span>
+
+                  <strong>
+                    {billingPlanLabel(
+                      currentAccessPlan,
+                    )}
+                  </strong>
+
+                  <p>
+                    {
+                      pendingBillingPlan
+                        ? `${billingPlanLabel(
+                            pendingBillingPlan,
+                          )} is scheduled for the next billing cycle.`
+                        : canManageBilling
+                          ? "View available packages or manage your current subscription."
+                          : "Subscription changes can only be made by the workspace Owner."
+                    }
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={openBillingManager}
+                >
+                  {
+                    canManageBilling
+                      ? "Upgrade / manage plan"
+                      : "View plan"
+                  }
+                </button>
+              </section>
+
               <div className="panelActions">
                 <button className="primary" onClick={props.installApp}>
                   Install app
@@ -3410,6 +5035,48 @@ function Dashboard(
           Refresh
         </button>
 
+        {billingOpen && (
+          <BillingPlanModal
+            workspaceType={
+              workspaceType as WorkspaceType
+            }
+            currentAccessPlan={
+              currentAccessPlan
+            }
+            currentBillingPlan={
+              currentBillingPlan
+            }
+            pendingPlan={
+              pendingBillingPlan
+            }
+            billingStatus={
+              currentBillingStatus
+            }
+            checkoutUrl={
+              props.data.billing
+                ?.billing
+                ?.checkoutUrl
+              ??
+              null
+            }
+            canManage={
+              canManageBilling
+            }
+            busyPlan={
+              billingBusyPlan
+            }
+            error={
+              billingError
+            }
+            close={() =>
+              setBillingOpen(false)
+            }
+            selectPlan={
+              selectBillingPlan
+            }
+          />
+        )}
+
         {props.whatsAppQr.open && props.whatsAppQr.mode === "dashboard" && (
           <WhatsAppQrPanel
             qr={props.whatsAppQr}
@@ -3424,6 +5091,7 @@ function Dashboard(
           {navItems.map(
             (item) => (
               <button
+                type="button"
                 key={item.view}
                 className={activeView === item.view ? "active" : ""}
                 onClick={() => goToView(item.view)}
@@ -3440,8 +5108,341 @@ function Dashboard(
               </button>
             ),
           )}
+
+          {isSuperAdmin && (
+            <button
+              type="button"
+              className={
+                activeView === "super-admin"
+                  ? "active"
+                  : ""
+              }
+              onClick={() => goToView("super-admin")}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 3 20 6v5c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+
+              <span>
+                Super Admin
+              </span>
+            </button>
+          )}
         </nav>
       </main>
+    </div>
+  );
+
+}
+
+
+function BillingPlanModal(
+  props:{
+    workspaceType:WorkspaceType;
+    currentAccessPlan:string;
+    currentBillingPlan:BillingPlan | null;
+    pendingPlan:BillingPlan | null;
+    billingStatus:string;
+    checkoutUrl:string | null;
+    canManage:boolean;
+    busyPlan:BillingPlan | null;
+    error:string;
+    close:() => void;
+    selectPlan:(plan:BillingPlan) => void;
+  },
+){
+
+  const recurringBillingAvailable =
+    Boolean(
+      props.currentBillingPlan
+      &&
+      [
+        "ACTIVE",
+        "SCHEDULED",
+        "RETRYING",
+      ].includes(
+        props.billingStatus,
+      ),
+    );
+
+
+  return (
+    <div
+      className="billingModalBackdrop"
+      role="presentation"
+      onMouseDown={
+        (event) => {
+
+          if(
+            event.target
+            ===
+            event.currentTarget
+          ){
+            props.close();
+          }
+
+        }
+      }
+    >
+      <section
+        className="billingModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="billing-modal-title"
+      >
+        <header className="billingModalHeader">
+          <div>
+            <span>
+              MyPocket AI subscription
+            </span>
+
+            <h2 id="billing-modal-title">
+              Choose the right plan
+            </h2>
+
+            <p>
+              Your current access is{" "}
+              <strong>
+                {billingPlanLabel(
+                  props.currentAccessPlan,
+                )}
+              </strong>.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="billingModalClose"
+            aria-label="Close subscription manager"
+            onClick={props.close}
+          >
+            ×
+          </button>
+        </header>
+
+        {props.pendingPlan && (
+          <div className="billingPendingNotice">
+            <strong>
+              Plan change scheduled
+            </strong>
+
+            <span>
+              {billingPlanLabel(
+                props.pendingPlan,
+              )} will become active after the next successful billing cycle.
+            </span>
+          </div>
+        )}
+
+        {!props.canManage && (
+          <div className="billingOwnerNotice">
+            Only the workspace Owner can purchase or change a subscription.
+          </div>
+        )}
+
+        {props.error && (
+          <div className="billingModalError">
+            {props.error}
+          </div>
+        )}
+
+        <div className="billingPlanGrid">
+          {BILLING_PLAN_OPTIONS.map(
+            (
+              option,
+            ) => {
+
+              const isPending =
+                props.pendingPlan
+                === option.plan;
+
+              const isCurrentBilling =
+                props.currentBillingPlan
+                === option.plan;
+
+              const isCurrentAccess =
+                props.currentAccessPlan
+                === option.plan;
+
+              const personalProBlocked =
+                option.plan
+                  === "PERSONAL_PRO"
+                &&
+                props.workspaceType
+                  === "FAMILY";
+
+              const continueCheckout =
+                Boolean(
+                  isCurrentBilling
+                  &&
+                  props.checkoutUrl
+                  &&
+                  [
+                    "CHECKOUT_PENDING",
+                    "PENDING",
+                  ].includes(
+                    props.billingStatus,
+                  ),
+                );
+
+              const activeBillingPlan =
+                isCurrentBilling
+                &&
+                props.billingStatus
+                  === "ACTIVE";
+
+              const disabled =
+                !props.canManage
+                ||
+                Boolean(
+                  props.busyPlan,
+                )
+                ||
+                isPending
+                ||
+                activeBillingPlan
+                ||
+                (
+                  isCurrentAccess
+                  &&
+                  !props.currentBillingPlan
+                )
+                ||
+                personalProBlocked;
+
+
+              let buttonLabel =
+                "Choose plan";
+
+
+              if(props.busyPlan === option.plan){
+
+                buttonLabel =
+                  "Processing...";
+
+              }else if(isPending){
+
+                buttonLabel =
+                  "Scheduled";
+
+              }else if(continueCheckout){
+
+                buttonLabel =
+                  "Continue payment";
+
+              }else if(activeBillingPlan){
+
+                buttonLabel =
+                  "Current billing plan";
+
+              }else if(
+                isCurrentAccess
+                &&
+                !props.currentBillingPlan
+              ){
+
+                buttonLabel =
+                  "Current plan";
+
+              }else if(personalProBlocked){
+
+                buttonLabel =
+                  "Unavailable for Family";
+
+              }else if(recurringBillingAvailable){
+
+                buttonLabel =
+                  "Switch next cycle";
+
+              }
+
+
+              return (
+                <article
+                  className={
+                    [
+                      "billingPlanCard",
+                      isCurrentAccess
+                        ? "current"
+                        : "",
+                      isPending
+                        ? "pending"
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
+                  key={option.plan}
+                >
+                  <div className="billingPlanCardTop">
+                    <div>
+                      <span className="billingPlanName">
+                        {option.name}
+                      </span>
+
+                      <strong>
+                        {option.price}
+                      </strong>
+                    </div>
+
+                    {isCurrentAccess && (
+                      <span className="billingPlanBadge">
+                        Current
+                      </span>
+                    )}
+
+                    {isPending && (
+                      <span className="billingPlanBadge pending">
+                        Next cycle
+                      </span>
+                    )}
+                  </div>
+
+                  <p>
+                    {option.description}
+                  </p>
+
+                  <button
+                    type="button"
+                    disabled={
+                      disabled
+                    }
+                    onClick={() =>
+                      props.selectPlan(
+                        option.plan,
+                      )
+                    }
+                  >
+                    {buttonLabel}
+                  </button>
+                </article>
+              );
+
+            },
+          )}
+        </div>
+
+        <footer className="billingModalFooter">
+          <span>
+            Payments are processed securely by HitPay.
+          </span>
+
+          <span>
+            Plan changes for an active subscription take effect on the next successful billing cycle.
+          </span>
+        </footer>
+      </section>
     </div>
   );
 

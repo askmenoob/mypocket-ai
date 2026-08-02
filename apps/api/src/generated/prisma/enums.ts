@@ -61,3 +61,33 @@ export const TransactionStatus = {
 } as const
 
 export type TransactionStatus = (typeof TransactionStatus)[keyof typeof TransactionStatus]
+
+
+export const MonthlyCommitmentStatus = {
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  OVERDUE: 'OVERDUE',
+  SKIPPED: 'SKIPPED'
+} as const
+
+export type MonthlyCommitmentStatus = (typeof MonthlyCommitmentStatus)[keyof typeof MonthlyCommitmentStatus]
+
+
+export const CommitmentReminderDeliveryKind = {
+  DUE: 'DUE',
+  OVERDUE: 'OVERDUE'
+} as const
+
+export type CommitmentReminderDeliveryKind = (typeof CommitmentReminderDeliveryKind)[keyof typeof CommitmentReminderDeliveryKind]
+
+
+export const CommitmentReminderDeliveryStatus = {
+  PENDING: 'PENDING',
+  SENDING: 'SENDING',
+  SENT: 'SENT',
+  FAILED: 'FAILED',
+  UNKNOWN: 'UNKNOWN',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type CommitmentReminderDeliveryStatus = (typeof CommitmentReminderDeliveryStatus)[keyof typeof CommitmentReminderDeliveryStatus]

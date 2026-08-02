@@ -22,7 +22,7 @@ export default async function googleOAuthRoutes(
 
 
   app.get(
-    "/google/oauth/url",
+    "/url",
     {
       preHandler:[
         app.authenticate,
@@ -34,10 +34,40 @@ export default async function googleOAuthRoutes(
 
 
   app.get(
-    "/google/oauth/callback",
+    "/callback",
     {},
     controller.callback,
   );
 
+
+
+  /*
+   * Backward compatibility untuk redirect URI lama:
+   * /api/v1/google/oauth/google/oauth/callback
+   */
+  app.get(
+    "/google/oauth/callback",
+    async (
+      request,
+      reply,
+    ) => {
+      const query =
+        request.raw.url
+          ?.split("?")[1]
+        ??
+        "";
+
+      const target =
+        `/api/v1/google/oauth/callback${
+          query
+            ? `?${query}`
+            : ""
+        }`;
+
+      return reply.redirect(
+        target,
+      );
+    },
+  );
 
 }

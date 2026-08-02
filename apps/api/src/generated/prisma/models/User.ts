@@ -212,6 +212,7 @@ export type UserWhereInput = {
   memberships?: Prisma.WorkspaceMemberListRelationFilter
   createdInvites?: Prisma.WorkspaceInviteListRelationFilter
   acceptedInvites?: Prisma.WorkspaceInviteListRelationFilter
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -229,6 +230,7 @@ export type UserOrderByWithRelationInput = {
   memberships?: Prisma.WorkspaceMemberOrderByRelationAggregateInput
   createdInvites?: Prisma.WorkspaceInviteOrderByRelationAggregateInput
   acceptedInvites?: Prisma.WorkspaceInviteOrderByRelationAggregateInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -249,6 +251,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   memberships?: Prisma.WorkspaceMemberListRelationFilter
   createdInvites?: Prisma.WorkspaceInviteListRelationFilter
   acceptedInvites?: Prisma.WorkspaceInviteListRelationFilter
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -294,6 +297,7 @@ export type UserCreateInput = {
   memberships?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
   createdInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutCreatedByInput
   acceptedInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -311,6 +315,7 @@ export type UserUncheckedCreateInput = {
   memberships?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
   createdInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutCreatedByInput
   acceptedInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserUpdateInput = {
@@ -328,6 +333,7 @@ export type UserUpdateInput = {
   memberships?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
   createdInvites?: Prisma.WorkspaceInviteUpdateManyWithoutCreatedByNestedInput
   acceptedInvites?: Prisma.WorkspaceInviteUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -345,6 +351,7 @@ export type UserUncheckedUpdateInput = {
   memberships?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
   createdInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutCreatedByNestedInput
   acceptedInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -467,6 +474,20 @@ export type UserUpdateOneRequiredWithoutSubscriptionNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSubscriptionInput, Prisma.UserUpdateWithoutSubscriptionInput>, Prisma.UserUncheckedUpdateWithoutSubscriptionInput>
 }
 
+export type UserCreateNestedOneWithoutWorkspaceBillingSubscriptionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWorkspaceBillingSubscriptionsInput, Prisma.UserUncheckedCreateWithoutWorkspaceBillingSubscriptionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWorkspaceBillingSubscriptionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutWorkspaceBillingSubscriptionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWorkspaceBillingSubscriptionsInput, Prisma.UserUncheckedCreateWithoutWorkspaceBillingSubscriptionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWorkspaceBillingSubscriptionsInput
+  upsert?: Prisma.UserUpsertWithoutWorkspaceBillingSubscriptionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWorkspaceBillingSubscriptionsInput, Prisma.UserUpdateWithoutWorkspaceBillingSubscriptionsInput>, Prisma.UserUncheckedUpdateWithoutWorkspaceBillingSubscriptionsInput>
+}
+
 export type UserCreateNestedOneWithoutMembershipsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutMembershipsInput, Prisma.UserUncheckedCreateWithoutMembershipsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutMembershipsInput
@@ -539,6 +560,7 @@ export type UserCreateWithoutWorkspacesInput = {
   memberships?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
   createdInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutCreatedByInput
   acceptedInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserUncheckedCreateWithoutWorkspacesInput = {
@@ -555,6 +577,7 @@ export type UserUncheckedCreateWithoutWorkspacesInput = {
   memberships?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
   createdInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutCreatedByInput
   acceptedInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserCreateOrConnectWithoutWorkspacesInput = {
@@ -587,6 +610,7 @@ export type UserUpdateWithoutWorkspacesInput = {
   memberships?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
   createdInvites?: Prisma.WorkspaceInviteUpdateManyWithoutCreatedByNestedInput
   acceptedInvites?: Prisma.WorkspaceInviteUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutWorkspacesInput = {
@@ -603,6 +627,7 @@ export type UserUncheckedUpdateWithoutWorkspacesInput = {
   memberships?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
   createdInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutCreatedByNestedInput
   acceptedInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserCreateWithoutSubscriptionInput = {
@@ -619,6 +644,7 @@ export type UserCreateWithoutSubscriptionInput = {
   memberships?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
   createdInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutCreatedByInput
   acceptedInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserUncheckedCreateWithoutSubscriptionInput = {
@@ -635,6 +661,7 @@ export type UserUncheckedCreateWithoutSubscriptionInput = {
   memberships?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
   createdInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutCreatedByInput
   acceptedInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserCreateOrConnectWithoutSubscriptionInput = {
@@ -667,6 +694,7 @@ export type UserUpdateWithoutSubscriptionInput = {
   memberships?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
   createdInvites?: Prisma.WorkspaceInviteUpdateManyWithoutCreatedByNestedInput
   acceptedInvites?: Prisma.WorkspaceInviteUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSubscriptionInput = {
@@ -678,6 +706,91 @@ export type UserUncheckedUpdateWithoutSubscriptionInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutCreatedByNestedInput
+  workspaces?: Prisma.WorkspaceUncheckedUpdateManyWithoutOwnerNestedInput
+  memberships?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
+  createdInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutCreatedByNestedInput
+  acceptedInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateManyWithoutOwnerUserNestedInput
+}
+
+export type UserCreateWithoutWorkspaceBillingSubscriptionsInput = {
+  id?: string
+  email: string
+  name?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  status?: string
+  bannedAt?: Date | string | null
+  deactivatedAt?: Date | string | null
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutCreatedByInput
+  workspaces?: Prisma.WorkspaceCreateNestedManyWithoutOwnerInput
+  memberships?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
+  createdInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutCreatedByInput
+  acceptedInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutAcceptedByInput
+}
+
+export type UserUncheckedCreateWithoutWorkspaceBillingSubscriptionsInput = {
+  id?: string
+  email: string
+  name?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  status?: string
+  bannedAt?: Date | string | null
+  deactivatedAt?: Date | string | null
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutCreatedByInput
+  workspaces?: Prisma.WorkspaceUncheckedCreateNestedManyWithoutOwnerInput
+  memberships?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
+  createdInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutCreatedByInput
+  acceptedInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutAcceptedByInput
+}
+
+export type UserCreateOrConnectWithoutWorkspaceBillingSubscriptionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutWorkspaceBillingSubscriptionsInput, Prisma.UserUncheckedCreateWithoutWorkspaceBillingSubscriptionsInput>
+}
+
+export type UserUpsertWithoutWorkspaceBillingSubscriptionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutWorkspaceBillingSubscriptionsInput, Prisma.UserUncheckedUpdateWithoutWorkspaceBillingSubscriptionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutWorkspaceBillingSubscriptionsInput, Prisma.UserUncheckedCreateWithoutWorkspaceBillingSubscriptionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutWorkspaceBillingSubscriptionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutWorkspaceBillingSubscriptionsInput, Prisma.UserUncheckedUpdateWithoutWorkspaceBillingSubscriptionsInput>
+}
+
+export type UserUpdateWithoutWorkspaceBillingSubscriptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutCreatedByNestedInput
+  workspaces?: Prisma.WorkspaceUpdateManyWithoutOwnerNestedInput
+  memberships?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
+  createdInvites?: Prisma.WorkspaceInviteUpdateManyWithoutCreatedByNestedInput
+  acceptedInvites?: Prisma.WorkspaceInviteUpdateManyWithoutAcceptedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutWorkspaceBillingSubscriptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   transactions?: Prisma.TransactionUncheckedUpdateManyWithoutCreatedByNestedInput
   workspaces?: Prisma.WorkspaceUncheckedUpdateManyWithoutOwnerNestedInput
   memberships?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -699,6 +812,7 @@ export type UserCreateWithoutMembershipsInput = {
   workspaces?: Prisma.WorkspaceCreateNestedManyWithoutOwnerInput
   createdInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutCreatedByInput
   acceptedInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserUncheckedCreateWithoutMembershipsInput = {
@@ -715,6 +829,7 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
   workspaces?: Prisma.WorkspaceUncheckedCreateNestedManyWithoutOwnerInput
   createdInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutCreatedByInput
   acceptedInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserCreateOrConnectWithoutMembershipsInput = {
@@ -747,6 +862,7 @@ export type UserUpdateWithoutMembershipsInput = {
   workspaces?: Prisma.WorkspaceUpdateManyWithoutOwnerNestedInput
   createdInvites?: Prisma.WorkspaceInviteUpdateManyWithoutCreatedByNestedInput
   acceptedInvites?: Prisma.WorkspaceInviteUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMembershipsInput = {
@@ -763,6 +879,7 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
   workspaces?: Prisma.WorkspaceUncheckedUpdateManyWithoutOwnerNestedInput
   createdInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutCreatedByNestedInput
   acceptedInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserCreateWithoutTransactionsInput = {
@@ -779,6 +896,7 @@ export type UserCreateWithoutTransactionsInput = {
   memberships?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
   createdInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutCreatedByInput
   acceptedInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserUncheckedCreateWithoutTransactionsInput = {
@@ -795,6 +913,7 @@ export type UserUncheckedCreateWithoutTransactionsInput = {
   memberships?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
   createdInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutCreatedByInput
   acceptedInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserCreateOrConnectWithoutTransactionsInput = {
@@ -827,6 +946,7 @@ export type UserUpdateWithoutTransactionsInput = {
   memberships?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
   createdInvites?: Prisma.WorkspaceInviteUpdateManyWithoutCreatedByNestedInput
   acceptedInvites?: Prisma.WorkspaceInviteUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTransactionsInput = {
@@ -843,6 +963,7 @@ export type UserUncheckedUpdateWithoutTransactionsInput = {
   memberships?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
   createdInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutCreatedByNestedInput
   acceptedInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserCreateWithoutCreatedInvitesInput = {
@@ -859,6 +980,7 @@ export type UserCreateWithoutCreatedInvitesInput = {
   workspaces?: Prisma.WorkspaceCreateNestedManyWithoutOwnerInput
   memberships?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
   acceptedInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserUncheckedCreateWithoutCreatedInvitesInput = {
@@ -875,6 +997,7 @@ export type UserUncheckedCreateWithoutCreatedInvitesInput = {
   workspaces?: Prisma.WorkspaceUncheckedCreateNestedManyWithoutOwnerInput
   memberships?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
   acceptedInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutAcceptedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserCreateOrConnectWithoutCreatedInvitesInput = {
@@ -896,6 +1019,7 @@ export type UserCreateWithoutAcceptedInvitesInput = {
   workspaces?: Prisma.WorkspaceCreateNestedManyWithoutOwnerInput
   memberships?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
   createdInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutCreatedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserUncheckedCreateWithoutAcceptedInvitesInput = {
@@ -912,6 +1036,7 @@ export type UserUncheckedCreateWithoutAcceptedInvitesInput = {
   workspaces?: Prisma.WorkspaceUncheckedCreateNestedManyWithoutOwnerInput
   memberships?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
   createdInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutCreatedByInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedManyWithoutOwnerUserInput
 }
 
 export type UserCreateOrConnectWithoutAcceptedInvitesInput = {
@@ -944,6 +1069,7 @@ export type UserUpdateWithoutCreatedInvitesInput = {
   workspaces?: Prisma.WorkspaceUpdateManyWithoutOwnerNestedInput
   memberships?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
   acceptedInvites?: Prisma.WorkspaceInviteUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreatedInvitesInput = {
@@ -960,6 +1086,7 @@ export type UserUncheckedUpdateWithoutCreatedInvitesInput = {
   workspaces?: Prisma.WorkspaceUncheckedUpdateManyWithoutOwnerNestedInput
   memberships?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
   acceptedInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutAcceptedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserUpsertWithoutAcceptedInvitesInput = {
@@ -987,6 +1114,7 @@ export type UserUpdateWithoutAcceptedInvitesInput = {
   workspaces?: Prisma.WorkspaceUpdateManyWithoutOwnerNestedInput
   memberships?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
   createdInvites?: Prisma.WorkspaceInviteUpdateManyWithoutCreatedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUpdateManyWithoutOwnerUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAcceptedInvitesInput = {
@@ -1003,6 +1131,7 @@ export type UserUncheckedUpdateWithoutAcceptedInvitesInput = {
   workspaces?: Prisma.WorkspaceUncheckedUpdateManyWithoutOwnerNestedInput
   memberships?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
   createdInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutCreatedByNestedInput
+  workspaceBillingSubscriptions?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateManyWithoutOwnerUserNestedInput
 }
 
 
@@ -1016,6 +1145,7 @@ export type UserCountOutputType = {
   memberships: number
   createdInvites: number
   acceptedInvites: number
+  workspaceBillingSubscriptions: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1024,6 +1154,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   memberships?: boolean | UserCountOutputTypeCountMembershipsArgs
   createdInvites?: boolean | UserCountOutputTypeCountCreatedInvitesArgs
   acceptedInvites?: boolean | UserCountOutputTypeCountAcceptedInvitesArgs
+  workspaceBillingSubscriptions?: boolean | UserCountOutputTypeCountWorkspaceBillingSubscriptionsArgs
 }
 
 /**
@@ -1071,6 +1202,13 @@ export type UserCountOutputTypeCountAcceptedInvitesArgs<ExtArgs extends runtime.
   where?: Prisma.WorkspaceInviteWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountWorkspaceBillingSubscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkspaceBillingSubscriptionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1087,6 +1225,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   memberships?: boolean | Prisma.User$membershipsArgs<ExtArgs>
   createdInvites?: boolean | Prisma.User$createdInvitesArgs<ExtArgs>
   acceptedInvites?: boolean | Prisma.User$acceptedInvitesArgs<ExtArgs>
+  workspaceBillingSubscriptions?: boolean | Prisma.User$workspaceBillingSubscriptionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1131,6 +1270,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   memberships?: boolean | Prisma.User$membershipsArgs<ExtArgs>
   createdInvites?: boolean | Prisma.User$createdInvitesArgs<ExtArgs>
   acceptedInvites?: boolean | Prisma.User$acceptedInvitesArgs<ExtArgs>
+  workspaceBillingSubscriptions?: boolean | Prisma.User$workspaceBillingSubscriptionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1145,6 +1285,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     memberships: Prisma.$WorkspaceMemberPayload<ExtArgs>[]
     createdInvites: Prisma.$WorkspaceInvitePayload<ExtArgs>[]
     acceptedInvites: Prisma.$WorkspaceInvitePayload<ExtArgs>[]
+    workspaceBillingSubscriptions: Prisma.$WorkspaceBillingSubscriptionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1555,6 +1696,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   memberships<T extends Prisma.User$membershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$membershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdInvites<T extends Prisma.User$createdInvitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdInvitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceInvitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   acceptedInvites<T extends Prisma.User$acceptedInvitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$acceptedInvitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceInvitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  workspaceBillingSubscriptions<T extends Prisma.User$workspaceBillingSubscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$workspaceBillingSubscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceBillingSubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2121,6 +2263,30 @@ export type User$acceptedInvitesArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.WorkspaceInviteScalarFieldEnum | Prisma.WorkspaceInviteScalarFieldEnum[]
+}
+
+/**
+ * User.workspaceBillingSubscriptions
+ */
+export type User$workspaceBillingSubscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkspaceBillingSubscription
+   */
+  select?: Prisma.WorkspaceBillingSubscriptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkspaceBillingSubscription
+   */
+  omit?: Prisma.WorkspaceBillingSubscriptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkspaceBillingSubscriptionInclude<ExtArgs> | null
+  where?: Prisma.WorkspaceBillingSubscriptionWhereInput
+  orderBy?: Prisma.WorkspaceBillingSubscriptionOrderByWithRelationInput | Prisma.WorkspaceBillingSubscriptionOrderByWithRelationInput[]
+  cursor?: Prisma.WorkspaceBillingSubscriptionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WorkspaceBillingSubscriptionScalarFieldEnum | Prisma.WorkspaceBillingSubscriptionScalarFieldEnum[]
 }
 
 /**

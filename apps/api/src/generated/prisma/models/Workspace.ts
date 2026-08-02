@@ -208,6 +208,11 @@ export type WorkspaceWhereInput = {
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   members?: Prisma.WorkspaceMemberListRelationFilter
   invites?: Prisma.WorkspaceInviteListRelationFilter
+  billingSubscription?: Prisma.XOR<Prisma.WorkspaceBillingSubscriptionNullableScalarRelationFilter, Prisma.WorkspaceBillingSubscriptionWhereInput> | null
+  commitments?: Prisma.CommitmentListRelationFilter
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceListRelationFilter
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryListRelationFilter
+  botSettings?: Prisma.XOR<Prisma.WorkspaceBotSettingsNullableScalarRelationFilter, Prisma.WorkspaceBotSettingsWhereInput> | null
 }
 
 export type WorkspaceOrderByWithRelationInput = {
@@ -228,6 +233,11 @@ export type WorkspaceOrderByWithRelationInput = {
   owner?: Prisma.UserOrderByWithRelationInput
   members?: Prisma.WorkspaceMemberOrderByRelationAggregateInput
   invites?: Prisma.WorkspaceInviteOrderByRelationAggregateInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionOrderByWithRelationInput
+  commitments?: Prisma.CommitmentOrderByRelationAggregateInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceOrderByRelationAggregateInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryOrderByRelationAggregateInput
+  botSettings?: Prisma.WorkspaceBotSettingsOrderByWithRelationInput
 }
 
 export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
@@ -251,6 +261,11 @@ export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   members?: Prisma.WorkspaceMemberListRelationFilter
   invites?: Prisma.WorkspaceInviteListRelationFilter
+  billingSubscription?: Prisma.XOR<Prisma.WorkspaceBillingSubscriptionNullableScalarRelationFilter, Prisma.WorkspaceBillingSubscriptionWhereInput> | null
+  commitments?: Prisma.CommitmentListRelationFilter
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceListRelationFilter
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryListRelationFilter
+  botSettings?: Prisma.XOR<Prisma.WorkspaceBotSettingsNullableScalarRelationFilter, Prisma.WorkspaceBotSettingsWhereInput> | null
 }, "id">
 
 export type WorkspaceOrderByWithAggregationInput = {
@@ -296,6 +311,11 @@ export type WorkspaceCreateInput = {
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateInput = {
@@ -315,6 +335,11 @@ export type WorkspaceUncheckedCreateInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUpdateInput = {
@@ -334,6 +359,11 @@ export type WorkspaceUpdateInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateInput = {
@@ -353,6 +383,11 @@ export type WorkspaceUncheckedUpdateInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateManyInput = {
@@ -517,6 +552,20 @@ export type WorkspaceUpdateOneRequiredWithoutWhatsappNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutWhatsappInput, Prisma.WorkspaceUpdateWithoutWhatsappInput>, Prisma.WorkspaceUncheckedUpdateWithoutWhatsappInput>
 }
 
+export type WorkspaceCreateNestedOneWithoutBillingSubscriptionInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutBillingSubscriptionInput, Prisma.WorkspaceUncheckedCreateWithoutBillingSubscriptionInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutBillingSubscriptionInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+}
+
+export type WorkspaceUpdateOneRequiredWithoutBillingSubscriptionNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutBillingSubscriptionInput, Prisma.WorkspaceUncheckedCreateWithoutBillingSubscriptionInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutBillingSubscriptionInput
+  upsert?: Prisma.WorkspaceUpsertWithoutBillingSubscriptionInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutBillingSubscriptionInput, Prisma.WorkspaceUpdateWithoutBillingSubscriptionInput>, Prisma.WorkspaceUncheckedUpdateWithoutBillingSubscriptionInput>
+}
+
 export type WorkspaceCreateNestedOneWithoutMembersInput = {
   create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutMembersInput, Prisma.WorkspaceUncheckedCreateWithoutMembersInput>
   connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutMembersInput
@@ -601,6 +650,62 @@ export type WorkspaceUpdateOneRequiredWithoutInvitesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutInvitesInput, Prisma.WorkspaceUpdateWithoutInvitesInput>, Prisma.WorkspaceUncheckedUpdateWithoutInvitesInput>
 }
 
+export type WorkspaceCreateNestedOneWithoutBotSettingsInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutBotSettingsInput, Prisma.WorkspaceUncheckedCreateWithoutBotSettingsInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutBotSettingsInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+}
+
+export type WorkspaceUpdateOneRequiredWithoutBotSettingsNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutBotSettingsInput, Prisma.WorkspaceUncheckedCreateWithoutBotSettingsInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutBotSettingsInput
+  upsert?: Prisma.WorkspaceUpsertWithoutBotSettingsInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutBotSettingsInput, Prisma.WorkspaceUpdateWithoutBotSettingsInput>, Prisma.WorkspaceUncheckedUpdateWithoutBotSettingsInput>
+}
+
+export type WorkspaceCreateNestedOneWithoutCommitmentsInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutCommitmentsInput, Prisma.WorkspaceUncheckedCreateWithoutCommitmentsInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutCommitmentsInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+}
+
+export type WorkspaceUpdateOneRequiredWithoutCommitmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutCommitmentsInput, Prisma.WorkspaceUncheckedCreateWithoutCommitmentsInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutCommitmentsInput
+  upsert?: Prisma.WorkspaceUpsertWithoutCommitmentsInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutCommitmentsInput, Prisma.WorkspaceUpdateWithoutCommitmentsInput>, Prisma.WorkspaceUncheckedUpdateWithoutCommitmentsInput>
+}
+
+export type WorkspaceCreateNestedOneWithoutMonthlyCommitmentsInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutMonthlyCommitmentsInput, Prisma.WorkspaceUncheckedCreateWithoutMonthlyCommitmentsInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutMonthlyCommitmentsInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+}
+
+export type WorkspaceUpdateOneRequiredWithoutMonthlyCommitmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutMonthlyCommitmentsInput, Prisma.WorkspaceUncheckedCreateWithoutMonthlyCommitmentsInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutMonthlyCommitmentsInput
+  upsert?: Prisma.WorkspaceUpsertWithoutMonthlyCommitmentsInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutMonthlyCommitmentsInput, Prisma.WorkspaceUpdateWithoutMonthlyCommitmentsInput>, Prisma.WorkspaceUncheckedUpdateWithoutMonthlyCommitmentsInput>
+}
+
+export type WorkspaceCreateNestedOneWithoutCommitmentReminderDeliveriesInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutCommitmentReminderDeliveriesInput, Prisma.WorkspaceUncheckedCreateWithoutCommitmentReminderDeliveriesInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutCommitmentReminderDeliveriesInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+}
+
+export type WorkspaceUpdateOneRequiredWithoutCommitmentReminderDeliveriesNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutCommitmentReminderDeliveriesInput, Prisma.WorkspaceUncheckedCreateWithoutCommitmentReminderDeliveriesInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutCommitmentReminderDeliveriesInput
+  upsert?: Prisma.WorkspaceUpsertWithoutCommitmentReminderDeliveriesInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutCommitmentReminderDeliveriesInput, Prisma.WorkspaceUpdateWithoutCommitmentReminderDeliveriesInput>, Prisma.WorkspaceUncheckedUpdateWithoutCommitmentReminderDeliveriesInput>
+}
+
 export type WorkspaceCreateWithoutOwnerInput = {
   id?: string
   name: string
@@ -617,6 +722,11 @@ export type WorkspaceCreateWithoutOwnerInput = {
   whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutOwnerInput = {
@@ -635,6 +745,11 @@ export type WorkspaceUncheckedCreateWithoutOwnerInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutOwnerInput = {
@@ -692,6 +807,11 @@ export type WorkspaceCreateWithoutGoogleInput = {
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutGoogleInput = {
@@ -710,6 +830,11 @@ export type WorkspaceUncheckedCreateWithoutGoogleInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutGoogleInput = {
@@ -744,6 +869,11 @@ export type WorkspaceUpdateWithoutGoogleInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutGoogleInput = {
@@ -762,6 +892,11 @@ export type WorkspaceUncheckedUpdateWithoutGoogleInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutGoogleSettingInput = {
@@ -780,6 +915,11 @@ export type WorkspaceCreateWithoutGoogleSettingInput = {
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutGoogleSettingInput = {
@@ -798,6 +938,11 @@ export type WorkspaceUncheckedCreateWithoutGoogleSettingInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutGoogleSettingInput = {
@@ -832,6 +977,11 @@ export type WorkspaceUpdateWithoutGoogleSettingInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutGoogleSettingInput = {
@@ -850,6 +1000,11 @@ export type WorkspaceUncheckedUpdateWithoutGoogleSettingInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutWhatsappInput = {
@@ -868,6 +1023,11 @@ export type WorkspaceCreateWithoutWhatsappInput = {
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutWhatsappInput = {
@@ -886,6 +1046,11 @@ export type WorkspaceUncheckedCreateWithoutWhatsappInput = {
   transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutWorkspaceInput
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutWhatsappInput = {
@@ -920,6 +1085,11 @@ export type WorkspaceUpdateWithoutWhatsappInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutWhatsappInput = {
@@ -938,6 +1108,119 @@ export type WorkspaceUncheckedUpdateWithoutWhatsappInput = {
   transactions?: Prisma.TransactionUncheckedUpdateManyWithoutWorkspaceNestedInput
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceCreateWithoutBillingSubscriptionInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboardingCompletedAt?: Date | string | null
+  type?: $Enums.WorkspaceType
+  categories?: Prisma.CategoryCreateNestedManyWithoutWorkspaceInput
+  google?: Prisma.GoogleAccountCreateNestedOneWithoutWorkspaceInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingCreateNestedOneWithoutWorkspaceInput
+  merchants?: Prisma.MerchantCreateNestedManyWithoutWorkspaceInput
+  paymentMethods?: Prisma.PaymentMethodCreateNestedManyWithoutWorkspaceInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
+  owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
+  invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
+}
+
+export type WorkspaceUncheckedCreateWithoutBillingSubscriptionInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboardingCompletedAt?: Date | string | null
+  ownerId: string
+  type?: $Enums.WorkspaceType
+  categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutWorkspaceInput
+  google?: Prisma.GoogleAccountUncheckedCreateNestedOneWithoutWorkspaceInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUncheckedCreateNestedOneWithoutWorkspaceInput
+  merchants?: Prisma.MerchantUncheckedCreateNestedManyWithoutWorkspaceInput
+  paymentMethods?: Prisma.PaymentMethodUncheckedCreateNestedManyWithoutWorkspaceInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
+  invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
+}
+
+export type WorkspaceCreateOrConnectWithoutBillingSubscriptionInput = {
+  where: Prisma.WorkspaceWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutBillingSubscriptionInput, Prisma.WorkspaceUncheckedCreateWithoutBillingSubscriptionInput>
+}
+
+export type WorkspaceUpsertWithoutBillingSubscriptionInput = {
+  update: Prisma.XOR<Prisma.WorkspaceUpdateWithoutBillingSubscriptionInput, Prisma.WorkspaceUncheckedUpdateWithoutBillingSubscriptionInput>
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutBillingSubscriptionInput, Prisma.WorkspaceUncheckedCreateWithoutBillingSubscriptionInput>
+  where?: Prisma.WorkspaceWhereInput
+}
+
+export type WorkspaceUpdateToOneWithWhereWithoutBillingSubscriptionInput = {
+  where?: Prisma.WorkspaceWhereInput
+  data: Prisma.XOR<Prisma.WorkspaceUpdateWithoutBillingSubscriptionInput, Prisma.WorkspaceUncheckedUpdateWithoutBillingSubscriptionInput>
+}
+
+export type WorkspaceUpdateWithoutBillingSubscriptionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  type?: Prisma.EnumWorkspaceTypeFieldUpdateOperationsInput | $Enums.WorkspaceType
+  categories?: Prisma.CategoryUpdateManyWithoutWorkspaceNestedInput
+  google?: Prisma.GoogleAccountUpdateOneWithoutWorkspaceNestedInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUpdateOneWithoutWorkspaceNestedInput
+  merchants?: Prisma.MerchantUpdateManyWithoutWorkspaceNestedInput
+  paymentMethods?: Prisma.PaymentMethodUpdateManyWithoutWorkspaceNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
+  owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
+  invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceUncheckedUpdateWithoutBillingSubscriptionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumWorkspaceTypeFieldUpdateOperationsInput | $Enums.WorkspaceType
+  categories?: Prisma.CategoryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  google?: Prisma.GoogleAccountUncheckedUpdateOneWithoutWorkspaceNestedInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUncheckedUpdateOneWithoutWorkspaceNestedInput
+  merchants?: Prisma.MerchantUncheckedUpdateManyWithoutWorkspaceNestedInput
+  paymentMethods?: Prisma.PaymentMethodUncheckedUpdateManyWithoutWorkspaceNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+  invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutMembersInput = {
@@ -956,6 +1239,11 @@ export type WorkspaceCreateWithoutMembersInput = {
   whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutMembersInput = {
@@ -974,6 +1262,11 @@ export type WorkspaceUncheckedCreateWithoutMembersInput = {
   transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutWorkspaceInput
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutMembersInput = {
@@ -1008,6 +1301,11 @@ export type WorkspaceUpdateWithoutMembersInput = {
   whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutMembersInput = {
@@ -1026,6 +1324,11 @@ export type WorkspaceUncheckedUpdateWithoutMembersInput = {
   transactions?: Prisma.TransactionUncheckedUpdateManyWithoutWorkspaceNestedInput
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutTransactionsInput = {
@@ -1044,6 +1347,11 @@ export type WorkspaceCreateWithoutTransactionsInput = {
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutTransactionsInput = {
@@ -1062,6 +1370,11 @@ export type WorkspaceUncheckedCreateWithoutTransactionsInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutTransactionsInput = {
@@ -1096,6 +1409,11 @@ export type WorkspaceUpdateWithoutTransactionsInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutTransactionsInput = {
@@ -1114,6 +1432,11 @@ export type WorkspaceUncheckedUpdateWithoutTransactionsInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutCategoriesInput = {
@@ -1132,6 +1455,11 @@ export type WorkspaceCreateWithoutCategoriesInput = {
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutCategoriesInput = {
@@ -1150,6 +1478,11 @@ export type WorkspaceUncheckedCreateWithoutCategoriesInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutCategoriesInput = {
@@ -1184,6 +1517,11 @@ export type WorkspaceUpdateWithoutCategoriesInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutCategoriesInput = {
@@ -1202,6 +1540,11 @@ export type WorkspaceUncheckedUpdateWithoutCategoriesInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutMerchantsInput = {
@@ -1220,6 +1563,11 @@ export type WorkspaceCreateWithoutMerchantsInput = {
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutMerchantsInput = {
@@ -1238,6 +1586,11 @@ export type WorkspaceUncheckedCreateWithoutMerchantsInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutMerchantsInput = {
@@ -1272,6 +1625,11 @@ export type WorkspaceUpdateWithoutMerchantsInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutMerchantsInput = {
@@ -1290,6 +1648,11 @@ export type WorkspaceUncheckedUpdateWithoutMerchantsInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutPaymentMethodsInput = {
@@ -1308,6 +1671,11 @@ export type WorkspaceCreateWithoutPaymentMethodsInput = {
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutPaymentMethodsInput = {
@@ -1326,6 +1694,11 @@ export type WorkspaceUncheckedCreateWithoutPaymentMethodsInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutPaymentMethodsInput = {
@@ -1360,6 +1733,11 @@ export type WorkspaceUpdateWithoutPaymentMethodsInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutPaymentMethodsInput = {
@@ -1378,6 +1756,11 @@ export type WorkspaceUncheckedUpdateWithoutPaymentMethodsInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutInvitesInput = {
@@ -1396,6 +1779,11 @@ export type WorkspaceCreateWithoutInvitesInput = {
   whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
   owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutInvitesInput = {
@@ -1414,6 +1802,11 @@ export type WorkspaceUncheckedCreateWithoutInvitesInput = {
   transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutWorkspaceInput
   whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutInvitesInput = {
@@ -1448,6 +1841,11 @@ export type WorkspaceUpdateWithoutInvitesInput = {
   whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutInvitesInput = {
@@ -1466,6 +1864,443 @@ export type WorkspaceUncheckedUpdateWithoutInvitesInput = {
   transactions?: Prisma.TransactionUncheckedUpdateManyWithoutWorkspaceNestedInput
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceCreateWithoutBotSettingsInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboardingCompletedAt?: Date | string | null
+  type?: $Enums.WorkspaceType
+  categories?: Prisma.CategoryCreateNestedManyWithoutWorkspaceInput
+  google?: Prisma.GoogleAccountCreateNestedOneWithoutWorkspaceInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingCreateNestedOneWithoutWorkspaceInput
+  merchants?: Prisma.MerchantCreateNestedManyWithoutWorkspaceInput
+  paymentMethods?: Prisma.PaymentMethodCreateNestedManyWithoutWorkspaceInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
+  owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
+  invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+}
+
+export type WorkspaceUncheckedCreateWithoutBotSettingsInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboardingCompletedAt?: Date | string | null
+  ownerId: string
+  type?: $Enums.WorkspaceType
+  categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutWorkspaceInput
+  google?: Prisma.GoogleAccountUncheckedCreateNestedOneWithoutWorkspaceInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUncheckedCreateNestedOneWithoutWorkspaceInput
+  merchants?: Prisma.MerchantUncheckedCreateNestedManyWithoutWorkspaceInput
+  paymentMethods?: Prisma.PaymentMethodUncheckedCreateNestedManyWithoutWorkspaceInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
+  invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+}
+
+export type WorkspaceCreateOrConnectWithoutBotSettingsInput = {
+  where: Prisma.WorkspaceWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutBotSettingsInput, Prisma.WorkspaceUncheckedCreateWithoutBotSettingsInput>
+}
+
+export type WorkspaceUpsertWithoutBotSettingsInput = {
+  update: Prisma.XOR<Prisma.WorkspaceUpdateWithoutBotSettingsInput, Prisma.WorkspaceUncheckedUpdateWithoutBotSettingsInput>
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutBotSettingsInput, Prisma.WorkspaceUncheckedCreateWithoutBotSettingsInput>
+  where?: Prisma.WorkspaceWhereInput
+}
+
+export type WorkspaceUpdateToOneWithWhereWithoutBotSettingsInput = {
+  where?: Prisma.WorkspaceWhereInput
+  data: Prisma.XOR<Prisma.WorkspaceUpdateWithoutBotSettingsInput, Prisma.WorkspaceUncheckedUpdateWithoutBotSettingsInput>
+}
+
+export type WorkspaceUpdateWithoutBotSettingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  type?: Prisma.EnumWorkspaceTypeFieldUpdateOperationsInput | $Enums.WorkspaceType
+  categories?: Prisma.CategoryUpdateManyWithoutWorkspaceNestedInput
+  google?: Prisma.GoogleAccountUpdateOneWithoutWorkspaceNestedInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUpdateOneWithoutWorkspaceNestedInput
+  merchants?: Prisma.MerchantUpdateManyWithoutWorkspaceNestedInput
+  paymentMethods?: Prisma.PaymentMethodUpdateManyWithoutWorkspaceNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
+  owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
+  invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceUncheckedUpdateWithoutBotSettingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumWorkspaceTypeFieldUpdateOperationsInput | $Enums.WorkspaceType
+  categories?: Prisma.CategoryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  google?: Prisma.GoogleAccountUncheckedUpdateOneWithoutWorkspaceNestedInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUncheckedUpdateOneWithoutWorkspaceNestedInput
+  merchants?: Prisma.MerchantUncheckedUpdateManyWithoutWorkspaceNestedInput
+  paymentMethods?: Prisma.PaymentMethodUncheckedUpdateManyWithoutWorkspaceNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+  invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceCreateWithoutCommitmentsInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboardingCompletedAt?: Date | string | null
+  type?: $Enums.WorkspaceType
+  categories?: Prisma.CategoryCreateNestedManyWithoutWorkspaceInput
+  google?: Prisma.GoogleAccountCreateNestedOneWithoutWorkspaceInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingCreateNestedOneWithoutWorkspaceInput
+  merchants?: Prisma.MerchantCreateNestedManyWithoutWorkspaceInput
+  paymentMethods?: Prisma.PaymentMethodCreateNestedManyWithoutWorkspaceInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
+  owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
+  invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
+}
+
+export type WorkspaceUncheckedCreateWithoutCommitmentsInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboardingCompletedAt?: Date | string | null
+  ownerId: string
+  type?: $Enums.WorkspaceType
+  categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutWorkspaceInput
+  google?: Prisma.GoogleAccountUncheckedCreateNestedOneWithoutWorkspaceInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUncheckedCreateNestedOneWithoutWorkspaceInput
+  merchants?: Prisma.MerchantUncheckedCreateNestedManyWithoutWorkspaceInput
+  paymentMethods?: Prisma.PaymentMethodUncheckedCreateNestedManyWithoutWorkspaceInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
+  invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
+}
+
+export type WorkspaceCreateOrConnectWithoutCommitmentsInput = {
+  where: Prisma.WorkspaceWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutCommitmentsInput, Prisma.WorkspaceUncheckedCreateWithoutCommitmentsInput>
+}
+
+export type WorkspaceUpsertWithoutCommitmentsInput = {
+  update: Prisma.XOR<Prisma.WorkspaceUpdateWithoutCommitmentsInput, Prisma.WorkspaceUncheckedUpdateWithoutCommitmentsInput>
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutCommitmentsInput, Prisma.WorkspaceUncheckedCreateWithoutCommitmentsInput>
+  where?: Prisma.WorkspaceWhereInput
+}
+
+export type WorkspaceUpdateToOneWithWhereWithoutCommitmentsInput = {
+  where?: Prisma.WorkspaceWhereInput
+  data: Prisma.XOR<Prisma.WorkspaceUpdateWithoutCommitmentsInput, Prisma.WorkspaceUncheckedUpdateWithoutCommitmentsInput>
+}
+
+export type WorkspaceUpdateWithoutCommitmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  type?: Prisma.EnumWorkspaceTypeFieldUpdateOperationsInput | $Enums.WorkspaceType
+  categories?: Prisma.CategoryUpdateManyWithoutWorkspaceNestedInput
+  google?: Prisma.GoogleAccountUpdateOneWithoutWorkspaceNestedInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUpdateOneWithoutWorkspaceNestedInput
+  merchants?: Prisma.MerchantUpdateManyWithoutWorkspaceNestedInput
+  paymentMethods?: Prisma.PaymentMethodUpdateManyWithoutWorkspaceNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
+  owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
+  invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceUncheckedUpdateWithoutCommitmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumWorkspaceTypeFieldUpdateOperationsInput | $Enums.WorkspaceType
+  categories?: Prisma.CategoryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  google?: Prisma.GoogleAccountUncheckedUpdateOneWithoutWorkspaceNestedInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUncheckedUpdateOneWithoutWorkspaceNestedInput
+  merchants?: Prisma.MerchantUncheckedUpdateManyWithoutWorkspaceNestedInput
+  paymentMethods?: Prisma.PaymentMethodUncheckedUpdateManyWithoutWorkspaceNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+  invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceCreateWithoutMonthlyCommitmentsInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboardingCompletedAt?: Date | string | null
+  type?: $Enums.WorkspaceType
+  categories?: Prisma.CategoryCreateNestedManyWithoutWorkspaceInput
+  google?: Prisma.GoogleAccountCreateNestedOneWithoutWorkspaceInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingCreateNestedOneWithoutWorkspaceInput
+  merchants?: Prisma.MerchantCreateNestedManyWithoutWorkspaceInput
+  paymentMethods?: Prisma.PaymentMethodCreateNestedManyWithoutWorkspaceInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
+  owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
+  invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
+}
+
+export type WorkspaceUncheckedCreateWithoutMonthlyCommitmentsInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboardingCompletedAt?: Date | string | null
+  ownerId: string
+  type?: $Enums.WorkspaceType
+  categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutWorkspaceInput
+  google?: Prisma.GoogleAccountUncheckedCreateNestedOneWithoutWorkspaceInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUncheckedCreateNestedOneWithoutWorkspaceInput
+  merchants?: Prisma.MerchantUncheckedCreateNestedManyWithoutWorkspaceInput
+  paymentMethods?: Prisma.PaymentMethodUncheckedCreateNestedManyWithoutWorkspaceInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
+  invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
+}
+
+export type WorkspaceCreateOrConnectWithoutMonthlyCommitmentsInput = {
+  where: Prisma.WorkspaceWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutMonthlyCommitmentsInput, Prisma.WorkspaceUncheckedCreateWithoutMonthlyCommitmentsInput>
+}
+
+export type WorkspaceUpsertWithoutMonthlyCommitmentsInput = {
+  update: Prisma.XOR<Prisma.WorkspaceUpdateWithoutMonthlyCommitmentsInput, Prisma.WorkspaceUncheckedUpdateWithoutMonthlyCommitmentsInput>
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutMonthlyCommitmentsInput, Prisma.WorkspaceUncheckedCreateWithoutMonthlyCommitmentsInput>
+  where?: Prisma.WorkspaceWhereInput
+}
+
+export type WorkspaceUpdateToOneWithWhereWithoutMonthlyCommitmentsInput = {
+  where?: Prisma.WorkspaceWhereInput
+  data: Prisma.XOR<Prisma.WorkspaceUpdateWithoutMonthlyCommitmentsInput, Prisma.WorkspaceUncheckedUpdateWithoutMonthlyCommitmentsInput>
+}
+
+export type WorkspaceUpdateWithoutMonthlyCommitmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  type?: Prisma.EnumWorkspaceTypeFieldUpdateOperationsInput | $Enums.WorkspaceType
+  categories?: Prisma.CategoryUpdateManyWithoutWorkspaceNestedInput
+  google?: Prisma.GoogleAccountUpdateOneWithoutWorkspaceNestedInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUpdateOneWithoutWorkspaceNestedInput
+  merchants?: Prisma.MerchantUpdateManyWithoutWorkspaceNestedInput
+  paymentMethods?: Prisma.PaymentMethodUpdateManyWithoutWorkspaceNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
+  owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
+  invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceUncheckedUpdateWithoutMonthlyCommitmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumWorkspaceTypeFieldUpdateOperationsInput | $Enums.WorkspaceType
+  categories?: Prisma.CategoryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  google?: Prisma.GoogleAccountUncheckedUpdateOneWithoutWorkspaceNestedInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUncheckedUpdateOneWithoutWorkspaceNestedInput
+  merchants?: Prisma.MerchantUncheckedUpdateManyWithoutWorkspaceNestedInput
+  paymentMethods?: Prisma.PaymentMethodUncheckedUpdateManyWithoutWorkspaceNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+  invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceCreateWithoutCommitmentReminderDeliveriesInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboardingCompletedAt?: Date | string | null
+  type?: $Enums.WorkspaceType
+  categories?: Prisma.CategoryCreateNestedManyWithoutWorkspaceInput
+  google?: Prisma.GoogleAccountCreateNestedOneWithoutWorkspaceInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingCreateNestedOneWithoutWorkspaceInput
+  merchants?: Prisma.MerchantCreateNestedManyWithoutWorkspaceInput
+  paymentMethods?: Prisma.PaymentMethodCreateNestedManyWithoutWorkspaceInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceCreateNestedManyWithoutWorkspaceInput
+  owner: Prisma.UserCreateNestedOneWithoutWorkspacesInput
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
+  invites?: Prisma.WorkspaceInviteCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsCreateNestedOneWithoutWorkspaceInput
+}
+
+export type WorkspaceUncheckedCreateWithoutCommitmentReminderDeliveriesInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboardingCompletedAt?: Date | string | null
+  ownerId: string
+  type?: $Enums.WorkspaceType
+  categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutWorkspaceInput
+  google?: Prisma.GoogleAccountUncheckedCreateNestedOneWithoutWorkspaceInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUncheckedCreateNestedOneWithoutWorkspaceInput
+  merchants?: Prisma.MerchantUncheckedCreateNestedManyWithoutWorkspaceInput
+  paymentMethods?: Prisma.PaymentMethodUncheckedCreateNestedManyWithoutWorkspaceInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutWorkspaceInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
+  invites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutWorkspaceInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedCreateNestedOneWithoutWorkspaceInput
+  commitments?: Prisma.CommitmentUncheckedCreateNestedManyWithoutWorkspaceInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedCreateNestedManyWithoutWorkspaceInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedCreateNestedOneWithoutWorkspaceInput
+}
+
+export type WorkspaceCreateOrConnectWithoutCommitmentReminderDeliveriesInput = {
+  where: Prisma.WorkspaceWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutCommitmentReminderDeliveriesInput, Prisma.WorkspaceUncheckedCreateWithoutCommitmentReminderDeliveriesInput>
+}
+
+export type WorkspaceUpsertWithoutCommitmentReminderDeliveriesInput = {
+  update: Prisma.XOR<Prisma.WorkspaceUpdateWithoutCommitmentReminderDeliveriesInput, Prisma.WorkspaceUncheckedUpdateWithoutCommitmentReminderDeliveriesInput>
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutCommitmentReminderDeliveriesInput, Prisma.WorkspaceUncheckedCreateWithoutCommitmentReminderDeliveriesInput>
+  where?: Prisma.WorkspaceWhereInput
+}
+
+export type WorkspaceUpdateToOneWithWhereWithoutCommitmentReminderDeliveriesInput = {
+  where?: Prisma.WorkspaceWhereInput
+  data: Prisma.XOR<Prisma.WorkspaceUpdateWithoutCommitmentReminderDeliveriesInput, Prisma.WorkspaceUncheckedUpdateWithoutCommitmentReminderDeliveriesInput>
+}
+
+export type WorkspaceUpdateWithoutCommitmentReminderDeliveriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  type?: Prisma.EnumWorkspaceTypeFieldUpdateOperationsInput | $Enums.WorkspaceType
+  categories?: Prisma.CategoryUpdateManyWithoutWorkspaceNestedInput
+  google?: Prisma.GoogleAccountUpdateOneWithoutWorkspaceNestedInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUpdateOneWithoutWorkspaceNestedInput
+  merchants?: Prisma.MerchantUpdateManyWithoutWorkspaceNestedInput
+  paymentMethods?: Prisma.PaymentMethodUpdateManyWithoutWorkspaceNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
+  owner?: Prisma.UserUpdateOneRequiredWithoutWorkspacesNestedInput
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
+  invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceUncheckedUpdateWithoutCommitmentReminderDeliveriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumWorkspaceTypeFieldUpdateOperationsInput | $Enums.WorkspaceType
+  categories?: Prisma.CategoryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  google?: Prisma.GoogleAccountUncheckedUpdateOneWithoutWorkspaceNestedInput
+  googleSetting?: Prisma.WorkspaceGoogleSettingUncheckedUpdateOneWithoutWorkspaceNestedInput
+  merchants?: Prisma.MerchantUncheckedUpdateManyWithoutWorkspaceNestedInput
+  paymentMethods?: Prisma.PaymentMethodUncheckedUpdateManyWithoutWorkspaceNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutWorkspaceNestedInput
+  whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+  invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateManyOwnerInput = {
@@ -1493,6 +2328,11 @@ export type WorkspaceUpdateWithoutOwnerInput = {
   whatsapp?: Prisma.WhatsAppInstanceUpdateManyWithoutWorkspaceNestedInput
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutOwnerInput = {
@@ -1511,6 +2351,11 @@ export type WorkspaceUncheckedUpdateWithoutOwnerInput = {
   whatsapp?: Prisma.WhatsAppInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   invites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutWorkspaceNestedInput
+  billingSubscription?: Prisma.WorkspaceBillingSubscriptionUncheckedUpdateOneWithoutWorkspaceNestedInput
+  commitments?: Prisma.CommitmentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  monthlyCommitments?: Prisma.MonthlyCommitmentInstanceUncheckedUpdateManyWithoutWorkspaceNestedInput
+  commitmentReminderDeliveries?: Prisma.CommitmentReminderDeliveryUncheckedUpdateManyWithoutWorkspaceNestedInput
+  botSettings?: Prisma.WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateManyWithoutOwnerInput = {
@@ -1535,6 +2380,9 @@ export type WorkspaceCountOutputType = {
   whatsapp: number
   members: number
   invites: number
+  commitments: number
+  monthlyCommitments: number
+  commitmentReminderDeliveries: number
 }
 
 export type WorkspaceCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1545,6 +2393,9 @@ export type WorkspaceCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensi
   whatsapp?: boolean | WorkspaceCountOutputTypeCountWhatsappArgs
   members?: boolean | WorkspaceCountOutputTypeCountMembersArgs
   invites?: boolean | WorkspaceCountOutputTypeCountInvitesArgs
+  commitments?: boolean | WorkspaceCountOutputTypeCountCommitmentsArgs
+  monthlyCommitments?: boolean | WorkspaceCountOutputTypeCountMonthlyCommitmentsArgs
+  commitmentReminderDeliveries?: boolean | WorkspaceCountOutputTypeCountCommitmentReminderDeliveriesArgs
 }
 
 /**
@@ -1606,6 +2457,27 @@ export type WorkspaceCountOutputTypeCountInvitesArgs<ExtArgs extends runtime.Typ
   where?: Prisma.WorkspaceInviteWhereInput
 }
 
+/**
+ * WorkspaceCountOutputType without action
+ */
+export type WorkspaceCountOutputTypeCountCommitmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CommitmentWhereInput
+}
+
+/**
+ * WorkspaceCountOutputType without action
+ */
+export type WorkspaceCountOutputTypeCountMonthlyCommitmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.MonthlyCommitmentInstanceWhereInput
+}
+
+/**
+ * WorkspaceCountOutputType without action
+ */
+export type WorkspaceCountOutputTypeCountCommitmentReminderDeliveriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CommitmentReminderDeliveryWhereInput
+}
+
 
 export type WorkspaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1625,6 +2497,11 @@ export type WorkspaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   members?: boolean | Prisma.Workspace$membersArgs<ExtArgs>
   invites?: boolean | Prisma.Workspace$invitesArgs<ExtArgs>
+  billingSubscription?: boolean | Prisma.Workspace$billingSubscriptionArgs<ExtArgs>
+  commitments?: boolean | Prisma.Workspace$commitmentsArgs<ExtArgs>
+  monthlyCommitments?: boolean | Prisma.Workspace$monthlyCommitmentsArgs<ExtArgs>
+  commitmentReminderDeliveries?: boolean | Prisma.Workspace$commitmentReminderDeliveriesArgs<ExtArgs>
+  botSettings?: boolean | Prisma.Workspace$botSettingsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workspace"]>
 
@@ -1672,6 +2549,11 @@ export type WorkspaceInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   members?: boolean | Prisma.Workspace$membersArgs<ExtArgs>
   invites?: boolean | Prisma.Workspace$invitesArgs<ExtArgs>
+  billingSubscription?: boolean | Prisma.Workspace$billingSubscriptionArgs<ExtArgs>
+  commitments?: boolean | Prisma.Workspace$commitmentsArgs<ExtArgs>
+  monthlyCommitments?: boolean | Prisma.Workspace$monthlyCommitmentsArgs<ExtArgs>
+  commitmentReminderDeliveries?: boolean | Prisma.Workspace$commitmentReminderDeliveriesArgs<ExtArgs>
+  botSettings?: boolean | Prisma.Workspace$botSettingsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkspaceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1694,6 +2576,11 @@ export type $WorkspacePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     owner: Prisma.$UserPayload<ExtArgs>
     members: Prisma.$WorkspaceMemberPayload<ExtArgs>[]
     invites: Prisma.$WorkspaceInvitePayload<ExtArgs>[]
+    billingSubscription: Prisma.$WorkspaceBillingSubscriptionPayload<ExtArgs> | null
+    commitments: Prisma.$CommitmentPayload<ExtArgs>[]
+    monthlyCommitments: Prisma.$MonthlyCommitmentInstancePayload<ExtArgs>[]
+    commitmentReminderDeliveries: Prisma.$CommitmentReminderDeliveryPayload<ExtArgs>[]
+    botSettings: Prisma.$WorkspaceBotSettingsPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2107,6 +2994,11 @@ export interface Prisma__WorkspaceClient<T, Null = never, ExtArgs extends runtim
   owner<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   members<T extends Prisma.Workspace$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   invites<T extends Prisma.Workspace$invitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$invitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceInvitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  billingSubscription<T extends Prisma.Workspace$billingSubscriptionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$billingSubscriptionArgs<ExtArgs>>): Prisma.Prisma__WorkspaceBillingSubscriptionClient<runtime.Types.Result.GetResult<Prisma.$WorkspaceBillingSubscriptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  commitments<T extends Prisma.Workspace$commitmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$commitmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommitmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  monthlyCommitments<T extends Prisma.Workspace$monthlyCommitmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$monthlyCommitmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MonthlyCommitmentInstancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  commitmentReminderDeliveries<T extends Prisma.Workspace$commitmentReminderDeliveriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$commitmentReminderDeliveriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommitmentReminderDeliveryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  botSettings<T extends Prisma.Workspace$botSettingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$botSettingsArgs<ExtArgs>>): Prisma.Prisma__WorkspaceBotSettingsClient<runtime.Types.Result.GetResult<Prisma.$WorkspaceBotSettingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2747,6 +3639,116 @@ export type Workspace$invitesArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.WorkspaceInviteScalarFieldEnum | Prisma.WorkspaceInviteScalarFieldEnum[]
+}
+
+/**
+ * Workspace.billingSubscription
+ */
+export type Workspace$billingSubscriptionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkspaceBillingSubscription
+   */
+  select?: Prisma.WorkspaceBillingSubscriptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkspaceBillingSubscription
+   */
+  omit?: Prisma.WorkspaceBillingSubscriptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkspaceBillingSubscriptionInclude<ExtArgs> | null
+  where?: Prisma.WorkspaceBillingSubscriptionWhereInput
+}
+
+/**
+ * Workspace.commitments
+ */
+export type Workspace$commitmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Commitment
+   */
+  select?: Prisma.CommitmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Commitment
+   */
+  omit?: Prisma.CommitmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CommitmentInclude<ExtArgs> | null
+  where?: Prisma.CommitmentWhereInput
+  orderBy?: Prisma.CommitmentOrderByWithRelationInput | Prisma.CommitmentOrderByWithRelationInput[]
+  cursor?: Prisma.CommitmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CommitmentScalarFieldEnum | Prisma.CommitmentScalarFieldEnum[]
+}
+
+/**
+ * Workspace.monthlyCommitments
+ */
+export type Workspace$monthlyCommitmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MonthlyCommitmentInstance
+   */
+  select?: Prisma.MonthlyCommitmentInstanceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MonthlyCommitmentInstance
+   */
+  omit?: Prisma.MonthlyCommitmentInstanceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MonthlyCommitmentInstanceInclude<ExtArgs> | null
+  where?: Prisma.MonthlyCommitmentInstanceWhereInput
+  orderBy?: Prisma.MonthlyCommitmentInstanceOrderByWithRelationInput | Prisma.MonthlyCommitmentInstanceOrderByWithRelationInput[]
+  cursor?: Prisma.MonthlyCommitmentInstanceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.MonthlyCommitmentInstanceScalarFieldEnum | Prisma.MonthlyCommitmentInstanceScalarFieldEnum[]
+}
+
+/**
+ * Workspace.commitmentReminderDeliveries
+ */
+export type Workspace$commitmentReminderDeliveriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CommitmentReminderDelivery
+   */
+  select?: Prisma.CommitmentReminderDeliverySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CommitmentReminderDelivery
+   */
+  omit?: Prisma.CommitmentReminderDeliveryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CommitmentReminderDeliveryInclude<ExtArgs> | null
+  where?: Prisma.CommitmentReminderDeliveryWhereInput
+  orderBy?: Prisma.CommitmentReminderDeliveryOrderByWithRelationInput | Prisma.CommitmentReminderDeliveryOrderByWithRelationInput[]
+  cursor?: Prisma.CommitmentReminderDeliveryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CommitmentReminderDeliveryScalarFieldEnum | Prisma.CommitmentReminderDeliveryScalarFieldEnum[]
+}
+
+/**
+ * Workspace.botSettings
+ */
+export type Workspace$botSettingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkspaceBotSettings
+   */
+  select?: Prisma.WorkspaceBotSettingsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkspaceBotSettings
+   */
+  omit?: Prisma.WorkspaceBotSettingsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkspaceBotSettingsInclude<ExtArgs> | null
+  where?: Prisma.WorkspaceBotSettingsWhereInput
 }
 
 /**

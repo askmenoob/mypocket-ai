@@ -66,12 +66,14 @@ export class GoogleService {
         "code",
 
       scope:
-        googleConfig.scopes.join(
-          " ",
-        ),
+        [
+          "openid",
+          "email",
+          "profile",
+        ].join(" "),
 
       access_type:
-        "offline",
+        "online",
     });
 
 

@@ -71,6 +71,29 @@ export class WorkspaceRepository {
 
 
 
+  async updateWorkspaceName(
+    workspaceId:string,
+    name:string,
+  ){
+
+    return this.prisma.workspace.update({
+
+      where:{
+        id:
+          workspaceId,
+      },
+
+      data:{
+        name,
+      },
+
+    });
+
+  }
+
+
+
+
   async createWorkspace(
     userId: string,
     name: string,

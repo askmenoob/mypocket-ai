@@ -391,12 +391,18 @@ export const ModelName = {
   GoogleTemplate: 'GoogleTemplate',
   WhatsAppInstance: 'WhatsAppInstance',
   Subscription: 'Subscription',
+  WorkspaceBillingSubscription: 'WorkspaceBillingSubscription',
+  BillingWebhookEvent: 'BillingWebhookEvent',
   WorkspaceMember: 'WorkspaceMember',
   Transaction: 'Transaction',
   Category: 'Category',
   Merchant: 'Merchant',
   PaymentMethod: 'PaymentMethod',
-  WorkspaceInvite: 'WorkspaceInvite'
+  WorkspaceInvite: 'WorkspaceInvite',
+  WorkspaceBotSettings: 'WorkspaceBotSettings',
+  Commitment: 'Commitment',
+  MonthlyCommitmentInstance: 'MonthlyCommitmentInstance',
+  CommitmentReminderDelivery: 'CommitmentReminderDelivery'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -412,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "workspace" | "googleAccount" | "workspaceGoogleSetting" | "googleTemplate" | "whatsAppInstance" | "subscription" | "workspaceMember" | "transaction" | "category" | "merchant" | "paymentMethod" | "workspaceInvite"
+    modelProps: "user" | "workspace" | "googleAccount" | "workspaceGoogleSetting" | "googleTemplate" | "whatsAppInstance" | "subscription" | "workspaceBillingSubscription" | "billingWebhookEvent" | "workspaceMember" | "transaction" | "category" | "merchant" | "paymentMethod" | "workspaceInvite" | "workspaceBotSettings" | "commitment" | "monthlyCommitmentInstance" | "commitmentReminderDelivery"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -934,6 +940,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WorkspaceBillingSubscription: {
+      payload: Prisma.$WorkspaceBillingSubscriptionPayload<ExtArgs>
+      fields: Prisma.WorkspaceBillingSubscriptionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkspaceBillingSubscriptionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBillingSubscriptionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkspaceBillingSubscriptionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBillingSubscriptionPayload>
+        }
+        findFirst: {
+          args: Prisma.WorkspaceBillingSubscriptionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBillingSubscriptionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkspaceBillingSubscriptionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBillingSubscriptionPayload>
+        }
+        findMany: {
+          args: Prisma.WorkspaceBillingSubscriptionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBillingSubscriptionPayload>[]
+        }
+        create: {
+          args: Prisma.WorkspaceBillingSubscriptionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBillingSubscriptionPayload>
+        }
+        createMany: {
+          args: Prisma.WorkspaceBillingSubscriptionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkspaceBillingSubscriptionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBillingSubscriptionPayload>[]
+        }
+        delete: {
+          args: Prisma.WorkspaceBillingSubscriptionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBillingSubscriptionPayload>
+        }
+        update: {
+          args: Prisma.WorkspaceBillingSubscriptionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBillingSubscriptionPayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkspaceBillingSubscriptionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkspaceBillingSubscriptionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkspaceBillingSubscriptionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBillingSubscriptionPayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkspaceBillingSubscriptionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBillingSubscriptionPayload>
+        }
+        aggregate: {
+          args: Prisma.WorkspaceBillingSubscriptionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkspaceBillingSubscription>
+        }
+        groupBy: {
+          args: Prisma.WorkspaceBillingSubscriptionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkspaceBillingSubscriptionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkspaceBillingSubscriptionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkspaceBillingSubscriptionCountAggregateOutputType> | number
+        }
+      }
+    }
+    BillingWebhookEvent: {
+      payload: Prisma.$BillingWebhookEventPayload<ExtArgs>
+      fields: Prisma.BillingWebhookEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BillingWebhookEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillingWebhookEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BillingWebhookEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillingWebhookEventPayload>
+        }
+        findFirst: {
+          args: Prisma.BillingWebhookEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillingWebhookEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BillingWebhookEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillingWebhookEventPayload>
+        }
+        findMany: {
+          args: Prisma.BillingWebhookEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillingWebhookEventPayload>[]
+        }
+        create: {
+          args: Prisma.BillingWebhookEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillingWebhookEventPayload>
+        }
+        createMany: {
+          args: Prisma.BillingWebhookEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BillingWebhookEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillingWebhookEventPayload>[]
+        }
+        delete: {
+          args: Prisma.BillingWebhookEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillingWebhookEventPayload>
+        }
+        update: {
+          args: Prisma.BillingWebhookEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillingWebhookEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.BillingWebhookEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BillingWebhookEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BillingWebhookEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillingWebhookEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.BillingWebhookEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillingWebhookEventPayload>
+        }
+        aggregate: {
+          args: Prisma.BillingWebhookEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBillingWebhookEvent>
+        }
+        groupBy: {
+          args: Prisma.BillingWebhookEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BillingWebhookEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BillingWebhookEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BillingWebhookEventCountAggregateOutputType> | number
+        }
+      }
+    }
     WorkspaceMember: {
       payload: Prisma.$WorkspaceMemberPayload<ExtArgs>
       fields: Prisma.WorkspaceMemberFieldRefs
@@ -1378,6 +1532,302 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WorkspaceBotSettings: {
+      payload: Prisma.$WorkspaceBotSettingsPayload<ExtArgs>
+      fields: Prisma.WorkspaceBotSettingsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkspaceBotSettingsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBotSettingsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkspaceBotSettingsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBotSettingsPayload>
+        }
+        findFirst: {
+          args: Prisma.WorkspaceBotSettingsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBotSettingsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkspaceBotSettingsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBotSettingsPayload>
+        }
+        findMany: {
+          args: Prisma.WorkspaceBotSettingsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBotSettingsPayload>[]
+        }
+        create: {
+          args: Prisma.WorkspaceBotSettingsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBotSettingsPayload>
+        }
+        createMany: {
+          args: Prisma.WorkspaceBotSettingsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkspaceBotSettingsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBotSettingsPayload>[]
+        }
+        delete: {
+          args: Prisma.WorkspaceBotSettingsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBotSettingsPayload>
+        }
+        update: {
+          args: Prisma.WorkspaceBotSettingsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBotSettingsPayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkspaceBotSettingsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkspaceBotSettingsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkspaceBotSettingsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBotSettingsPayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkspaceBotSettingsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkspaceBotSettingsPayload>
+        }
+        aggregate: {
+          args: Prisma.WorkspaceBotSettingsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkspaceBotSettings>
+        }
+        groupBy: {
+          args: Prisma.WorkspaceBotSettingsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkspaceBotSettingsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkspaceBotSettingsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkspaceBotSettingsCountAggregateOutputType> | number
+        }
+      }
+    }
+    Commitment: {
+      payload: Prisma.$CommitmentPayload<ExtArgs>
+      fields: Prisma.CommitmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CommitmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CommitmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentPayload>
+        }
+        findFirst: {
+          args: Prisma.CommitmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CommitmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentPayload>
+        }
+        findMany: {
+          args: Prisma.CommitmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentPayload>[]
+        }
+        create: {
+          args: Prisma.CommitmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentPayload>
+        }
+        createMany: {
+          args: Prisma.CommitmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CommitmentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentPayload>[]
+        }
+        delete: {
+          args: Prisma.CommitmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentPayload>
+        }
+        update: {
+          args: Prisma.CommitmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.CommitmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CommitmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CommitmentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentPayload>[]
+        }
+        upsert: {
+          args: Prisma.CommitmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentPayload>
+        }
+        aggregate: {
+          args: Prisma.CommitmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCommitment>
+        }
+        groupBy: {
+          args: Prisma.CommitmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommitmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CommitmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommitmentCountAggregateOutputType> | number
+        }
+      }
+    }
+    MonthlyCommitmentInstance: {
+      payload: Prisma.$MonthlyCommitmentInstancePayload<ExtArgs>
+      fields: Prisma.MonthlyCommitmentInstanceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MonthlyCommitmentInstanceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyCommitmentInstancePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MonthlyCommitmentInstanceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyCommitmentInstancePayload>
+        }
+        findFirst: {
+          args: Prisma.MonthlyCommitmentInstanceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyCommitmentInstancePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MonthlyCommitmentInstanceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyCommitmentInstancePayload>
+        }
+        findMany: {
+          args: Prisma.MonthlyCommitmentInstanceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyCommitmentInstancePayload>[]
+        }
+        create: {
+          args: Prisma.MonthlyCommitmentInstanceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyCommitmentInstancePayload>
+        }
+        createMany: {
+          args: Prisma.MonthlyCommitmentInstanceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MonthlyCommitmentInstanceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyCommitmentInstancePayload>[]
+        }
+        delete: {
+          args: Prisma.MonthlyCommitmentInstanceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyCommitmentInstancePayload>
+        }
+        update: {
+          args: Prisma.MonthlyCommitmentInstanceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyCommitmentInstancePayload>
+        }
+        deleteMany: {
+          args: Prisma.MonthlyCommitmentInstanceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MonthlyCommitmentInstanceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MonthlyCommitmentInstanceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyCommitmentInstancePayload>[]
+        }
+        upsert: {
+          args: Prisma.MonthlyCommitmentInstanceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyCommitmentInstancePayload>
+        }
+        aggregate: {
+          args: Prisma.MonthlyCommitmentInstanceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMonthlyCommitmentInstance>
+        }
+        groupBy: {
+          args: Prisma.MonthlyCommitmentInstanceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MonthlyCommitmentInstanceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MonthlyCommitmentInstanceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MonthlyCommitmentInstanceCountAggregateOutputType> | number
+        }
+      }
+    }
+    CommitmentReminderDelivery: {
+      payload: Prisma.$CommitmentReminderDeliveryPayload<ExtArgs>
+      fields: Prisma.CommitmentReminderDeliveryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CommitmentReminderDeliveryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentReminderDeliveryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CommitmentReminderDeliveryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentReminderDeliveryPayload>
+        }
+        findFirst: {
+          args: Prisma.CommitmentReminderDeliveryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentReminderDeliveryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CommitmentReminderDeliveryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentReminderDeliveryPayload>
+        }
+        findMany: {
+          args: Prisma.CommitmentReminderDeliveryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentReminderDeliveryPayload>[]
+        }
+        create: {
+          args: Prisma.CommitmentReminderDeliveryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentReminderDeliveryPayload>
+        }
+        createMany: {
+          args: Prisma.CommitmentReminderDeliveryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CommitmentReminderDeliveryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentReminderDeliveryPayload>[]
+        }
+        delete: {
+          args: Prisma.CommitmentReminderDeliveryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentReminderDeliveryPayload>
+        }
+        update: {
+          args: Prisma.CommitmentReminderDeliveryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentReminderDeliveryPayload>
+        }
+        deleteMany: {
+          args: Prisma.CommitmentReminderDeliveryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CommitmentReminderDeliveryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CommitmentReminderDeliveryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentReminderDeliveryPayload>[]
+        }
+        upsert: {
+          args: Prisma.CommitmentReminderDeliveryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommitmentReminderDeliveryPayload>
+        }
+        aggregate: {
+          args: Prisma.CommitmentReminderDeliveryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCommitmentReminderDelivery>
+        }
+        groupBy: {
+          args: Prisma.CommitmentReminderDeliveryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommitmentReminderDeliveryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CommitmentReminderDeliveryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommitmentReminderDeliveryCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1501,6 +1951,7 @@ export const WhatsAppInstanceScalarFieldEnum = {
   id: 'id',
   instanceName: 'instanceName',
   phoneNumber: 'phoneNumber',
+  botAlias: 'botAlias',
   status: 'status',
   workspaceId: 'workspaceId',
   createdAt: 'createdAt',
@@ -1521,6 +1972,53 @@ export const SubscriptionScalarFieldEnum = {
 } as const
 
 export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
+
+
+export const WorkspaceBillingSubscriptionScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  ownerUserId: 'ownerUserId',
+  plan: 'plan',
+  status: 'status',
+  provider: 'provider',
+  providerPlanId: 'providerPlanId',
+  pendingPlan: 'pendingPlan',
+  pendingProviderPlanId: 'pendingProviderPlanId',
+  planChangeRequestedAt: 'planChangeRequestedAt',
+  providerSubscriptionId: 'providerSubscriptionId',
+  checkoutReference: 'checkoutReference',
+  checkoutUrl: 'checkoutUrl',
+  currentPeriodStart: 'currentPeriodStart',
+  currentPeriodEnd: 'currentPeriodEnd',
+  lastPaymentAt: 'lastPaymentAt',
+  lastPaymentStatus: 'lastPaymentStatus',
+  canceledAt: 'canceledAt',
+  lastWebhookAt: 'lastWebhookAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceBillingSubscriptionScalarFieldEnum = (typeof WorkspaceBillingSubscriptionScalarFieldEnum)[keyof typeof WorkspaceBillingSubscriptionScalarFieldEnum]
+
+
+export const BillingWebhookEventScalarFieldEnum = {
+  id: 'id',
+  workspaceBillingSubscriptionId: 'workspaceBillingSubscriptionId',
+  provider: 'provider',
+  eventKey: 'eventKey',
+  signature: 'signature',
+  eventObject: 'eventObject',
+  eventType: 'eventType',
+  externalId: 'externalId',
+  status: 'status',
+  payload: 'payload',
+  processedAt: 'processedAt',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BillingWebhookEventScalarFieldEnum = (typeof BillingWebhookEventScalarFieldEnum)[keyof typeof BillingWebhookEventScalarFieldEnum]
 
 
 export const WorkspaceMemberScalarFieldEnum = {
@@ -1605,12 +2103,105 @@ export const WorkspaceInviteScalarFieldEnum = {
 export type WorkspaceInviteScalarFieldEnum = (typeof WorkspaceInviteScalarFieldEnum)[keyof typeof WorkspaceInviteScalarFieldEnum]
 
 
+export const WorkspaceBotSettingsScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  botEnabled: 'botEnabled',
+  replyLanguage: 'replyLanguage',
+  timezone: 'timezone',
+  defaultReminderDaysBefore: 'defaultReminderDaysBefore',
+  defaultReminderTime: 'defaultReminderTime',
+  quietHoursStart: 'quietHoursStart',
+  quietHoursEnd: 'quietHoursEnd',
+  overdueReminderEnabled: 'overdueReminderEnabled',
+  whatsappNotificationEnabled: 'whatsappNotificationEnabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceBotSettingsScalarFieldEnum = (typeof WorkspaceBotSettingsScalarFieldEnum)[keyof typeof WorkspaceBotSettingsScalarFieldEnum]
+
+
+export const CommitmentScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  ownerUserId: 'ownerUserId',
+  name: 'name',
+  amount: 'amount',
+  currency: 'currency',
+  dueDay: 'dueDay',
+  reminderDaysBefore: 'reminderDaysBefore',
+  reminderTime: 'reminderTime',
+  timezone: 'timezone',
+  isActive: 'isActive',
+  archivedAt: 'archivedAt',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CommitmentScalarFieldEnum = (typeof CommitmentScalarFieldEnum)[keyof typeof CommitmentScalarFieldEnum]
+
+
+export const MonthlyCommitmentInstanceScalarFieldEnum = {
+  id: 'id',
+  commitmentId: 'commitmentId',
+  workspaceId: 'workspaceId',
+  periodYear: 'periodYear',
+  periodMonth: 'periodMonth',
+  dueDate: 'dueDate',
+  status: 'status',
+  paidAt: 'paidAt',
+  reminderSentAt: 'reminderSentAt',
+  lastReminderKey: 'lastReminderKey',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MonthlyCommitmentInstanceScalarFieldEnum = (typeof MonthlyCommitmentInstanceScalarFieldEnum)[keyof typeof MonthlyCommitmentInstanceScalarFieldEnum]
+
+
+export const CommitmentReminderDeliveryScalarFieldEnum = {
+  id: 'id',
+  monthlyCommitmentId: 'monthlyCommitmentId',
+  workspaceId: 'workspaceId',
+  kind: 'kind',
+  status: 'status',
+  idempotencyKey: 'idempotencyKey',
+  scheduledFor: 'scheduledFor',
+  nextAttemptAt: 'nextAttemptAt',
+  attemptCount: 'attemptCount',
+  maxAttempts: 'maxAttempts',
+  claimedAt: 'claimedAt',
+  claimToken: 'claimToken',
+  claimExpiresAt: 'claimExpiresAt',
+  recipientPhone: 'recipientPhone',
+  providerMessageId: 'providerMessageId',
+  lastErrorCode: 'lastErrorCode',
+  lastErrorMessage: 'lastErrorMessage',
+  lastAttemptAt: 'lastAttemptAt',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CommitmentReminderDeliveryScalarFieldEnum = (typeof CommitmentReminderDeliveryScalarFieldEnum)[keyof typeof CommitmentReminderDeliveryScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -1627,6 +2218,15 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
 
@@ -1695,6 +2295,20 @@ export type ListEnumGoogleSheetModeFieldRefInput<$PrismaModel> = FieldRefInputTy
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -1779,6 +2393,62 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'MonthlyCommitmentStatus'
+ */
+export type EnumMonthlyCommitmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MonthlyCommitmentStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'MonthlyCommitmentStatus[]'
+ */
+export type ListEnumMonthlyCommitmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MonthlyCommitmentStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'CommitmentReminderDeliveryKind'
+ */
+export type EnumCommitmentReminderDeliveryKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommitmentReminderDeliveryKind'>
+    
+
+
+/**
+ * Reference to a field of type 'CommitmentReminderDeliveryKind[]'
+ */
+export type ListEnumCommitmentReminderDeliveryKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommitmentReminderDeliveryKind[]'>
+    
+
+
+/**
+ * Reference to a field of type 'CommitmentReminderDeliveryStatus'
+ */
+export type EnumCommitmentReminderDeliveryStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommitmentReminderDeliveryStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'CommitmentReminderDeliveryStatus[]'
+ */
+export type ListEnumCommitmentReminderDeliveryStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommitmentReminderDeliveryStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**
@@ -1898,12 +2568,18 @@ export type GlobalOmitConfig = {
   googleTemplate?: Prisma.GoogleTemplateOmit
   whatsAppInstance?: Prisma.WhatsAppInstanceOmit
   subscription?: Prisma.SubscriptionOmit
+  workspaceBillingSubscription?: Prisma.WorkspaceBillingSubscriptionOmit
+  billingWebhookEvent?: Prisma.BillingWebhookEventOmit
   workspaceMember?: Prisma.WorkspaceMemberOmit
   transaction?: Prisma.TransactionOmit
   category?: Prisma.CategoryOmit
   merchant?: Prisma.MerchantOmit
   paymentMethod?: Prisma.PaymentMethodOmit
   workspaceInvite?: Prisma.WorkspaceInviteOmit
+  workspaceBotSettings?: Prisma.WorkspaceBotSettingsOmit
+  commitment?: Prisma.CommitmentOmit
+  monthlyCommitmentInstance?: Prisma.MonthlyCommitmentInstanceOmit
+  commitmentReminderDelivery?: Prisma.CommitmentReminderDeliveryOmit
 }
 
 /* Types for Logging */

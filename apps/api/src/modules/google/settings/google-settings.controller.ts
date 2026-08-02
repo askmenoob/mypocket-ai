@@ -48,10 +48,55 @@ export class GoogleSettingsController {
     await request.jwtVerify();
 
 
-    return this.service
-      .getSettings(
-        request.user.workspaceId,
-      );
+    const setting =
+      await this.service
+        .getSettings(
+          request.user.workspaceId,
+        );
+
+    if(setting){
+      return setting;
+    }
+
+    const sharedMembership =
+      await request.server.prisma.workspaceMember.findFirst({
+        where:{
+          userId:
+            request.user.userId,
+
+          role:{
+            in:[
+              "MEMBER",
+              "ADMIN",
+            ],
+          },
+
+          workspace:{
+            type:{
+              in:[
+                "FAMILY",
+                "BUSINESS",
+              ],
+            },
+          },
+        },
+
+        include:{
+          workspace:{
+            include:{
+              googleSetting:true,
+            },
+          },
+        },
+
+        orderBy:{
+          createdAt:
+            "desc",
+        },
+      });
+
+    return sharedMembership?.workspace.googleSetting
+      ?? setting;
 
   }
 

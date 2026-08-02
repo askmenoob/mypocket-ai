@@ -76,6 +76,8 @@ export interface NormalizedEvolutionMessage {
 
   remoteJid?:string;
 
+  participantJid?:string;
+
   pushName?:string;
 
   messageId?:string;

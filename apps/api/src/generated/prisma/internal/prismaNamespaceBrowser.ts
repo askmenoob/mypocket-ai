@@ -58,12 +58,18 @@ export const ModelName = {
   GoogleTemplate: 'GoogleTemplate',
   WhatsAppInstance: 'WhatsAppInstance',
   Subscription: 'Subscription',
+  WorkspaceBillingSubscription: 'WorkspaceBillingSubscription',
+  BillingWebhookEvent: 'BillingWebhookEvent',
   WorkspaceMember: 'WorkspaceMember',
   Transaction: 'Transaction',
   Category: 'Category',
   Merchant: 'Merchant',
   PaymentMethod: 'PaymentMethod',
-  WorkspaceInvite: 'WorkspaceInvite'
+  WorkspaceInvite: 'WorkspaceInvite',
+  WorkspaceBotSettings: 'WorkspaceBotSettings',
+  Commitment: 'Commitment',
+  MonthlyCommitmentInstance: 'MonthlyCommitmentInstance',
+  CommitmentReminderDelivery: 'CommitmentReminderDelivery'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -166,6 +172,7 @@ export const WhatsAppInstanceScalarFieldEnum = {
   id: 'id',
   instanceName: 'instanceName',
   phoneNumber: 'phoneNumber',
+  botAlias: 'botAlias',
   status: 'status',
   workspaceId: 'workspaceId',
   createdAt: 'createdAt',
@@ -186,6 +193,53 @@ export const SubscriptionScalarFieldEnum = {
 } as const
 
 export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
+
+
+export const WorkspaceBillingSubscriptionScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  ownerUserId: 'ownerUserId',
+  plan: 'plan',
+  status: 'status',
+  provider: 'provider',
+  providerPlanId: 'providerPlanId',
+  pendingPlan: 'pendingPlan',
+  pendingProviderPlanId: 'pendingProviderPlanId',
+  planChangeRequestedAt: 'planChangeRequestedAt',
+  providerSubscriptionId: 'providerSubscriptionId',
+  checkoutReference: 'checkoutReference',
+  checkoutUrl: 'checkoutUrl',
+  currentPeriodStart: 'currentPeriodStart',
+  currentPeriodEnd: 'currentPeriodEnd',
+  lastPaymentAt: 'lastPaymentAt',
+  lastPaymentStatus: 'lastPaymentStatus',
+  canceledAt: 'canceledAt',
+  lastWebhookAt: 'lastWebhookAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceBillingSubscriptionScalarFieldEnum = (typeof WorkspaceBillingSubscriptionScalarFieldEnum)[keyof typeof WorkspaceBillingSubscriptionScalarFieldEnum]
+
+
+export const BillingWebhookEventScalarFieldEnum = {
+  id: 'id',
+  workspaceBillingSubscriptionId: 'workspaceBillingSubscriptionId',
+  provider: 'provider',
+  eventKey: 'eventKey',
+  signature: 'signature',
+  eventObject: 'eventObject',
+  eventType: 'eventType',
+  externalId: 'externalId',
+  status: 'status',
+  payload: 'payload',
+  processedAt: 'processedAt',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BillingWebhookEventScalarFieldEnum = (typeof BillingWebhookEventScalarFieldEnum)[keyof typeof BillingWebhookEventScalarFieldEnum]
 
 
 export const WorkspaceMemberScalarFieldEnum = {
@@ -270,12 +324,105 @@ export const WorkspaceInviteScalarFieldEnum = {
 export type WorkspaceInviteScalarFieldEnum = (typeof WorkspaceInviteScalarFieldEnum)[keyof typeof WorkspaceInviteScalarFieldEnum]
 
 
+export const WorkspaceBotSettingsScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  botEnabled: 'botEnabled',
+  replyLanguage: 'replyLanguage',
+  timezone: 'timezone',
+  defaultReminderDaysBefore: 'defaultReminderDaysBefore',
+  defaultReminderTime: 'defaultReminderTime',
+  quietHoursStart: 'quietHoursStart',
+  quietHoursEnd: 'quietHoursEnd',
+  overdueReminderEnabled: 'overdueReminderEnabled',
+  whatsappNotificationEnabled: 'whatsappNotificationEnabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceBotSettingsScalarFieldEnum = (typeof WorkspaceBotSettingsScalarFieldEnum)[keyof typeof WorkspaceBotSettingsScalarFieldEnum]
+
+
+export const CommitmentScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  ownerUserId: 'ownerUserId',
+  name: 'name',
+  amount: 'amount',
+  currency: 'currency',
+  dueDay: 'dueDay',
+  reminderDaysBefore: 'reminderDaysBefore',
+  reminderTime: 'reminderTime',
+  timezone: 'timezone',
+  isActive: 'isActive',
+  archivedAt: 'archivedAt',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CommitmentScalarFieldEnum = (typeof CommitmentScalarFieldEnum)[keyof typeof CommitmentScalarFieldEnum]
+
+
+export const MonthlyCommitmentInstanceScalarFieldEnum = {
+  id: 'id',
+  commitmentId: 'commitmentId',
+  workspaceId: 'workspaceId',
+  periodYear: 'periodYear',
+  periodMonth: 'periodMonth',
+  dueDate: 'dueDate',
+  status: 'status',
+  paidAt: 'paidAt',
+  reminderSentAt: 'reminderSentAt',
+  lastReminderKey: 'lastReminderKey',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MonthlyCommitmentInstanceScalarFieldEnum = (typeof MonthlyCommitmentInstanceScalarFieldEnum)[keyof typeof MonthlyCommitmentInstanceScalarFieldEnum]
+
+
+export const CommitmentReminderDeliveryScalarFieldEnum = {
+  id: 'id',
+  monthlyCommitmentId: 'monthlyCommitmentId',
+  workspaceId: 'workspaceId',
+  kind: 'kind',
+  status: 'status',
+  idempotencyKey: 'idempotencyKey',
+  scheduledFor: 'scheduledFor',
+  nextAttemptAt: 'nextAttemptAt',
+  attemptCount: 'attemptCount',
+  maxAttempts: 'maxAttempts',
+  claimedAt: 'claimedAt',
+  claimToken: 'claimToken',
+  claimExpiresAt: 'claimExpiresAt',
+  recipientPhone: 'recipientPhone',
+  providerMessageId: 'providerMessageId',
+  lastErrorCode: 'lastErrorCode',
+  lastErrorMessage: 'lastErrorMessage',
+  lastAttemptAt: 'lastAttemptAt',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CommitmentReminderDeliveryScalarFieldEnum = (typeof CommitmentReminderDeliveryScalarFieldEnum)[keyof typeof CommitmentReminderDeliveryScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -292,4 +439,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

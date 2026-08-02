@@ -21,6 +21,7 @@ import {
 
 
 import {
+  whatsappBotAliasSchema,
   whatsappDevInstanceSchema,
   whatsappDevTransactionSchema,
   whatsappMemberLinkSchema,
@@ -176,6 +177,52 @@ export class WhatsAppController {
       });
 
   };
+
+
+  updateBotAlias =
+  async (
+    request:FastifyRequest,
+    reply:FastifyReply,
+  ) => {
+
+    await request.jwtVerify();
+
+
+    const user =
+      request.user as any;
+
+
+    const body =
+      whatsappBotAliasSchema
+        .parse(
+          request.body,
+        );
+
+
+    const result =
+      await this.service
+        .updateWorkspaceWhatsAppBotAlias({
+          actorUserId:
+            user.userId,
+
+          workspaceId:
+            user.workspaceId,
+
+          botAlias:
+            body.botAlias,
+        });
+
+
+    return reply
+      .code(200)
+      .send(
+        result,
+      );
+
+  };
+
+
+
 
 
   resetWorkspaceInstance =

@@ -1,5 +1,27 @@
 import { AppIcon } from "./app-icon";
+import {
+  useEffect,
+  useState,
+} from "react";
+type TransactionFilterMode =
+  | "TODAY"
+  | "WEEK"
+  | "MONTH"
+  | "YEAR"
+  | "ALL"
+  | "CUSTOM";
+
+
 type PremiumDashboardProps = {
+  transactionFilter:TransactionFilterMode;
+  transactionFilterLabel:string;
+  transactionCustomFrom:string;
+  transactionCustomTo:string;
+  filterStart:number | null;
+  filterEnd:number | null;
+  onTransactionFilterChange:(value:TransactionFilterMode) => void;
+  onTransactionCustomFromChange:(value:string) => void;
+  onTransactionCustomToChange:(value:string) => void;
   data:any;
   onRefresh:() => void;
   onSetup:() => void;
@@ -8,6 +30,10 @@ type PremiumDashboardProps = {
   onOpenTransactions:() => void;
   onOpenWhatsApp:() => void;
   onAddTransaction:() => void;
+  canManageWhatsApp:boolean;
+  onSaveWhatsAppAlias:(
+    botAlias:string,
+  ) => Promise<void>;
 };
 
 const currency = (
@@ -432,234 +458,744 @@ export function PremiumDashboard(
       ? props.data.members
       : [];
 
+  const currentBotAlias =
+    String(
+      props.data?.whatsapp?.instance?.botAlias
+      ||
+      "mypocket",
+    )
+      .trim()
+      .replace(
+        /^@+/,
+        "",
+      )
+      .toLowerCase();
+
+  const [botAlias, setBotAlias] =
+    useState(
+      currentBotAlias,
+    );
+
+  const [aliasSaving, setAliasSaving] =
+    useState(false);
+
+  const [aliasMessage, setAliasMessage] =
+    useState("");
+
+  useEffect(
+    () => {
+
+      setBotAlias(
+        currentBotAlias,
+      );
+
+    },
+    [
+      currentBotAlias,
+    ],
+  );
+
   const now =
     new Date();
 
-  const today =
-    new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    );
-
-  const yesterday =
-    new Date(today);
-
-  yesterday.setDate(
-    yesterday.getDate() - 1,
-  );
+  const amountOf =
+    (item:any) =>
+      Number(
+        item?.amount,
+      )
+      ||
+      0;
 
   const expenses =
     transactions.filter(
       (item:any) =>
-        String(item?.type).toUpperCase() === "EXPENSE",
+        String(
+          item?.type,
+        ).toUpperCase() === "EXPENSE",
     );
 
-  const amountOf =
-    (item:any) =>
-      Number(item?.amount) || 0;
-
-  const todayExpense =
-    expenses
-      .filter((item:any) =>
-        sameDay(
-          new Date(item.transactionDate),
-          today,
-        ),
-      )
-      .reduce(
-        (total:number, item:any) =>
-          total + amountOf(item),
-        0,
-      );
-
-  const yesterdayExpense =
-    expenses
-      .filter((item:any) =>
-        sameDay(
-          new Date(item.transactionDate),
-          yesterday,
-        ),
-      )
-      .reduce(
-        (total:number, item:any) =>
-          total + amountOf(item),
-        0,
-      );
-
-  const monthExpenses =
-    expenses.filter(
-      (item:any) => {
-        const date =
-          new Date(item.transactionDate);
-
-        return (
-          date.getFullYear() === now.getFullYear() &&
-          date.getMonth() === now.getMonth()
-        );
-      },
-    );
-
-  const todaySparklineData =
-    Array.from(
-      {
-        length:8,
-      },
-      () => 0,
-    );
-
-  expenses
-    .filter(
+  const incomes =
+    transactions.filter(
       (item:any) =>
-        sameDay(
-          new Date(item.transactionDate),
-          today,
-        ),
-    )
-    .forEach(
-      (item:any) => {
-        const date =
-          new Date(item.transactionDate);
-
-        const bucket =
-          Math.min(
-            7,
-            Math.floor(
-              date.getHours() / 3,
-            ),
-          );
-
-        todaySparklineData[bucket] +=
-          amountOf(item);
-      },
+        String(
+          item?.type,
+        ).toUpperCase() === "INCOME",
     );
 
-  const previousMonth =
+  const periodExpense =
+    expenses.reduce(
+      (
+        total:number,
+        item:any,
+      ) =>
+        total
+        +
+        amountOf(
+          item,
+        ),
+      0,
+    );
+
+  const periodIncome =
+    incomes.reduce(
+      (
+        total:number,
+        item:any,
+      ) =>
+        total
+        +
+        amountOf(
+          item,
+        ),
+      0,
+    );
+
+  const periodBalance =
+    periodIncome
+    -
+    periodExpense;
+
+  const validTransactionDates =
+    transactions
+      .map(
+        (item:any) =>
+          new Date(
+            item.transactionDate,
+          ),
+      )
+      .filter(
+        (date:Date) =>
+          Number.isFinite(
+            date.getTime(),
+          ),
+      )
+      .sort(
+        (
+          first:Date,
+          second:Date,
+        ) =>
+          first.getTime()
+          -
+          second.getTime(),
+      );
+
+  const startOfDay =
+    (date:Date) =>
+      new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+      );
+
+  const nextDay =
+    (date:Date) =>
+      new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate() + 1,
+      );
+
+  const fallbackStart =
     new Date(
       now.getFullYear(),
-      now.getMonth() - 1,
+      now.getMonth(),
       1,
     );
 
-  const previousMonthExpense =
-    expenses
-      .filter((item:any) => {
-        const date =
-          new Date(item.transactionDate);
-
-        return (
-          date.getFullYear() ===
-            previousMonth.getFullYear() &&
-          date.getMonth() ===
-            previousMonth.getMonth()
-        );
-      })
-      .reduce(
-        (total:number, item:any) =>
-          total + amountOf(item),
-        0,
-      );
-
-  const monthExpense =
-    monthExpenses.reduce(
-      (total:number, item:any) =>
-        total + amountOf(item),
-      0,
-    );
-
-  const percentageChange =
-    (
-      current:number,
-      previous:number,
-    ):number | null => {
-      if (previous <= 0){
-        return null;
-      }
-
-      return (
-        (current - previous) /
-        previous
-      ) * 100;
-    };
-
-  const todayChange =
-    percentageChange(
-      todayExpense,
-      yesterdayExpense,
-    );
-
-  const monthChange =
-    percentageChange(
-      monthExpense,
-      previousMonthExpense,
-    );
-
-  const daysInMonth =
+  const fallbackEnd =
     new Date(
       now.getFullYear(),
       now.getMonth() + 1,
-      0,
-    ).getDate();
-
-  const dailyTotals =
-    Array.from(
-      {
-        length:daysInMonth,
-      },
-      (_, index) => ({
-        day:index + 1,
-        amount:0,
-      }),
+      1,
     );
 
-  monthExpenses.forEach(
-    (item:any) => {
-      const date =
-        new Date(item.transactionDate);
-
-      const index =
-        date.getDate() - 1;
-
-      if (
-        index >= 0 &&
-        index < dailyTotals.length
-      ){
-        dailyTotals[index].amount +=
-          amountOf(item);
-      }
-    },
-  );
-
-  const monthSparklineData =
-    dailyTotals
-      .slice(
-        0,
-        Math.max(
-          now.getDate(),
-          2,
-        ),
+  const inferredStart =
+    validTransactionDates.length > 0
+      ? startOfDay(
+        validTransactionDates[0],
       )
-      .map(
+      : fallbackStart;
+
+  const inferredEnd =
+    validTransactionDates.length > 0
+      ? nextDay(
+        validTransactionDates[
+          validTransactionDates.length - 1
+        ],
+      )
+      : fallbackEnd;
+
+  const chartStart =
+    props.filterStart === null
+      ? inferredStart
+      : new Date(
+        props.filterStart,
+      );
+
+  let chartEnd =
+    props.filterEnd === null
+      ? inferredEnd
+      : new Date(
+        props.filterEnd,
+      );
+
+
+  if(
+    chartEnd.getTime()
+    <=
+    chartStart.getTime()
+  ){
+
+    chartEnd =
+      nextDay(
+        chartStart,
+      );
+
+  }
+
+
+  type ChartBucket = {
+    key:string;
+    label:string;
+    shortLabel:string;
+    start:number;
+    end:number;
+  };
+
+
+  const chartBuckets:
+    ChartBucket[] =
+    [];
+
+
+  const addDayBuckets =
+    (
+      start:Date,
+      end:Date,
+    ) => {
+
+      let cursor =
+        startOfDay(
+          start,
+        );
+
+      let guard =
+        0;
+
+
+      while(
+        cursor.getTime() < end.getTime()
+        &&
+        guard < 400
+      ){
+
+        const next =
+          nextDay(
+            cursor,
+          );
+
+        chartBuckets.push({
+          key:
+            `day-${cursor.getTime()}`,
+
+          label:
+            cursor.toLocaleDateString(
+              "en-MY",
+              {
+                day:
+                  "numeric",
+
+                month:
+                  "short",
+
+                year:
+                  "numeric",
+              },
+            ),
+
+          shortLabel:
+            cursor.toLocaleDateString(
+              "en-MY",
+              {
+                day:
+                  "numeric",
+
+                month:
+                  "short",
+              },
+            ),
+
+          start:
+            cursor.getTime(),
+
+          end:
+            Math.min(
+              next.getTime(),
+              end.getTime(),
+            ),
+        });
+
+        cursor =
+          next;
+
+        guard +=
+          1;
+
+      }
+
+    };
+
+
+  const addMonthBuckets =
+    (
+      start:Date,
+      end:Date,
+    ) => {
+
+      let cursor =
+        new Date(
+          start.getFullYear(),
+          start.getMonth(),
+          1,
+        );
+
+      let guard =
+        0;
+
+
+      while(
+        cursor.getTime() < end.getTime()
+        &&
+        guard < 240
+      ){
+
+        const next =
+          new Date(
+            cursor.getFullYear(),
+            cursor.getMonth() + 1,
+            1,
+          );
+
+        chartBuckets.push({
+          key:
+            `month-${cursor.getFullYear()}-${cursor.getMonth()}`,
+
+          label:
+            cursor.toLocaleDateString(
+              "en-MY",
+              {
+                month:
+                  "long",
+
+                year:
+                  "numeric",
+              },
+            ),
+
+          shortLabel:
+            cursor.toLocaleDateString(
+              "en-MY",
+              {
+                month:
+                  "short",
+
+                year:
+                  "2-digit",
+              },
+            ),
+
+          start:
+            Math.max(
+              cursor.getTime(),
+              start.getTime(),
+            ),
+
+          end:
+            Math.min(
+              next.getTime(),
+              end.getTime(),
+            ),
+        });
+
+        cursor =
+          next;
+
+        guard +=
+          1;
+
+      }
+
+    };
+
+
+  const addYearBuckets =
+    (
+      start:Date,
+      end:Date,
+    ) => {
+
+      let cursor =
+        new Date(
+          start.getFullYear(),
+          0,
+          1,
+        );
+
+      let guard =
+        0;
+
+
+      while(
+        cursor.getTime() < end.getTime()
+        &&
+        guard < 100
+      ){
+
+        const next =
+          new Date(
+            cursor.getFullYear() + 1,
+            0,
+            1,
+          );
+
+        chartBuckets.push({
+          key:
+            `year-${cursor.getFullYear()}`,
+
+          label:
+            String(
+              cursor.getFullYear(),
+            ),
+
+          shortLabel:
+            String(
+              cursor.getFullYear(),
+            ),
+
+          start:
+            Math.max(
+              cursor.getTime(),
+              start.getTime(),
+            ),
+
+          end:
+            Math.min(
+              next.getTime(),
+              end.getTime(),
+            ),
+        });
+
+        cursor =
+          next;
+
+        guard +=
+          1;
+
+      }
+
+    };
+
+
+  if(props.transactionFilter === "TODAY"){
+
+    const base =
+      startOfDay(
+        chartStart,
+      );
+
+
+    for(
+      let index = 0;
+      index < 8;
+      index += 1
+    ){
+
+      const start =
+        new Date(
+          base.getFullYear(),
+          base.getMonth(),
+          base.getDate(),
+          index * 3,
+        );
+
+      const end =
+        new Date(
+          base.getFullYear(),
+          base.getMonth(),
+          base.getDate(),
+          (index + 1) * 3,
+        );
+
+      chartBuckets.push({
+        key:
+          `hour-${index}`,
+
+        label:
+          `${start.toLocaleTimeString(
+            "en-MY",
+            {
+              hour:
+                "numeric",
+
+              minute:
+                "2-digit",
+            },
+          )} – ${end.toLocaleTimeString(
+            "en-MY",
+            {
+              hour:
+                "numeric",
+
+              minute:
+                "2-digit",
+            },
+          )}`,
+
+        shortLabel:
+          start.toLocaleTimeString(
+            "en-MY",
+            {
+              hour:
+                "numeric",
+            },
+          ),
+
+        start:
+          start.getTime(),
+
+        end:
+          end.getTime(),
+      });
+
+    }
+
+  }else if(
+    props.transactionFilter === "WEEK"
+    ||
+    props.transactionFilter === "MONTH"
+  ){
+
+    addDayBuckets(
+      chartStart,
+      chartEnd,
+    );
+
+  }else if(
+    props.transactionFilter === "YEAR"
+  ){
+
+    addMonthBuckets(
+      chartStart,
+      chartEnd,
+    );
+
+  }else{
+
+    const durationInDays =
+      Math.max(
+        1,
+        Math.ceil(
+          (
+            chartEnd.getTime()
+            -
+            chartStart.getTime()
+          )
+          /
+          86400000,
+        ),
+      );
+
+
+    if(durationInDays <= 45){
+
+      addDayBuckets(
+        chartStart,
+        chartEnd,
+      );
+
+    }else if(durationInDays <= 1095){
+
+      addMonthBuckets(
+        chartStart,
+        chartEnd,
+      );
+
+    }else{
+
+      addYearBuckets(
+        chartStart,
+        chartEnd,
+      );
+
+    }
+
+  }
+
+
+  if(chartBuckets.length === 0){
+
+    chartBuckets.push({
+      key:
+        "empty",
+
+      label:
+        props.transactionFilterLabel,
+
+      shortLabel:
+        props.transactionFilterLabel,
+
+      start:
+        chartStart.getTime(),
+
+      end:
+        chartEnd.getTime(),
+    });
+
+  }
+
+
+  const dailyTotals =
+    chartBuckets.map(
+      (
+        bucket,
+        index,
+      ) => {
+
+        const amount =
+          expenses
+            .filter(
+              (item:any) => {
+
+                const timestamp =
+                  new Date(
+                    item.transactionDate,
+                  ).getTime();
+
+
+                return (
+                  Number.isFinite(
+                    timestamp,
+                  )
+                  &&
+                  timestamp >= bucket.start
+                  &&
+                  timestamp < bucket.end
+                );
+
+              },
+            )
+            .reduce(
+              (
+                total:number,
+                item:any,
+              ) =>
+                total
+                +
+                amountOf(
+                  item,
+                ),
+              0,
+            );
+
+
+        return {
+          day:
+            index + 1,
+
+          key:
+            bucket.key,
+
+          label:
+            bucket.label,
+
+          shortLabel:
+            bucket.shortLabel,
+
+          amount,
+        };
+
+      },
+    );
+
+  const daysInMonth =
+    Math.max(
+      dailyTotals.length,
+      2,
+    );
+
+  const todaySparklineData =
+    dailyTotals.length > 1
+      ? dailyTotals.map(
         (item) =>
           item.amount,
-      );
+      )
+      : [
+        0,
+        dailyTotals[0]?.amount
+        ??
+        0,
+      ];
+
+  const monthSparklineData =
+    todaySparklineData;
+
+  const todayExpense =
+    periodExpense;
+
+  const monthExpense =
+    periodExpense;
+
+  const todayChange:
+    number | null =
+    null;
+
+  const monthChange:
+    number | null =
+    null;
+
+  const monthExpenses =
+    expenses;
+
+  const chartLabelStep =
+    Math.max(
+      1,
+      Math.ceil(
+        dailyTotals.length
+        /
+        6,
+      ),
+    );
 
   const categoryMap =
     new Map<string, number>();
 
   monthExpenses.forEach(
     (item:any) => {
+
       const name =
         String(
-          item?.category?.name ||
+          item?.category?.name
+          ||
           "Others",
-        ).trim() || "Others";
+        ).trim()
+        ||
+        "Others";
 
       categoryMap.set(
         name,
-        (categoryMap.get(name) || 0) +
-          amountOf(item),
+        (
+          categoryMap.get(
+            name,
+          )
+          ||
+          0
+        )
+        +
+        amountOf(
+          item,
+        ),
       );
+
     },
   );
 
@@ -667,30 +1203,58 @@ export function PremiumDashboard(
     Array.from(
       categoryMap.entries(),
     )
-      .map(([name, amount]) => ({
-        name,
-        amount,
-      }))
+      .map(
+        (
+          [
+            name,
+            amount,
+          ],
+        ) => ({
+          name,
+          amount,
+        }),
+      )
       .sort(
-        (first, second) =>
-          second.amount - first.amount,
+        (
+          first,
+          second,
+        ) =>
+          second.amount
+          -
+          first.amount,
       );
 
   const visibleCategories =
-    categories.slice(0, 5);
+    categories.slice(
+      0,
+      5,
+    );
 
-  if (categories.length > 5){
+  if(categories.length > 5){
+
     visibleCategories.push({
-      name:"Others",
-      amount:categories
-        .slice(5)
-        .reduce(
-          (total, item) =>
-            total + item.amount,
-          0,
-        ),
+      name:
+        "Others",
+
+      amount:
+        categories
+          .slice(
+            5,
+          )
+          .reduce(
+            (
+              total,
+              item,
+            ) =>
+              total
+              +
+              item.amount,
+            0,
+          ),
     });
+
   }
+
 
   const colours = [
     "#079b83",
@@ -919,6 +1483,72 @@ export function PremiumDashboard(
       props.data?.whatsapp?.instance?.status,
     );
 
+  async function handleSaveBotAlias(){
+
+    if(!props.canManageWhatsApp){
+      return;
+    }
+
+    const normalized =
+      botAlias
+        .trim()
+        .replace(
+          /^@+/,
+          "",
+        )
+        .toLowerCase();
+
+    if(
+      normalized.length < 2
+      ||
+      normalized.length > 32
+      ||
+      !/^[a-z0-9._-]+$/.test(
+        normalized,
+      )
+    ){
+
+      setAliasMessage(
+        "Alias mesti 2 hingga 32 aksara: huruf, nombor, titik, underscore atau dash.",
+      );
+
+      return;
+
+    }
+
+    setAliasSaving(true);
+    setAliasMessage("");
+
+    try{
+
+      await props.onSaveWhatsAppAlias(
+        normalized,
+      );
+
+      setBotAlias(
+        normalized,
+      );
+
+      setAliasMessage(
+        `Alias berjaya disimpan. Group trigger: @${normalized}`,
+      );
+
+    }catch(error){
+
+      setAliasMessage(
+        error instanceof Error
+          ? error.message
+          : "Alias WhatsApp gagal disimpan.",
+      );
+
+    }finally{
+
+      setAliasSaving(false);
+
+    }
+
+  }
+
   const google =
     props.data?.google || {};
 
@@ -994,6 +1624,11 @@ export function PremiumDashboard(
         .pd-legend-row{display:grid;grid-template-columns:9px minmax(0,1fr) auto 45px;align-items:center;gap:8px;color:#3f5d5b;font-size:11px}
         .pd-dot{width:8px;height:8px;border-radius:50%}.pd-legend-value{color:#203f3f;font-weight:700}.pd-legend-percent{text-align:right;color:#718784}
         .pd-total{display:flex;justify-content:space-between;margin-top:4px;padding-top:12px;border-top:1px solid #e3ecea;color:#102f31;font-size:12px;font-weight:800}
+        .pd-filter-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:13px 15px;margin-bottom:14px;border:1px solid #d9e7e4;border-radius:10px;background:#f8fbfa}
+        .pd-filter-copy{display:grid;gap:2px}.pd-filter-copy strong{font-size:12px;color:#244946}.pd-filter-copy span{font-size:10px;color:#718784}
+        .pd-filter-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+        .pd-filter-select,.pd-filter-date{border:1px solid #cbdedb;border-radius:7px;background:#fff;color:#193c3c;padding:8px 9px;font-family:inherit;font-size:10px;outline:none}
+        .pd-filter-separator{font-size:10px;color:#718784}
         .pd-table-wrap{overflow-x:auto}.pd-table{width:100%;border-collapse:collapse;white-space:nowrap}
         .pd-table th{padding:9px 8px;border-bottom:1px solid #dde7e5;color:#6f8582;font-size:9px;text-align:left}
         .pd-table td{padding:8px;border-bottom:1px solid #e5edeb;color:#395655;font-size:10px}
@@ -1009,6 +1644,13 @@ export function PremiumDashboard(
         .pd-member-check{display:grid;width:19px;height:19px;place-items:center;border-radius:50%;background:#079b6e;color:#fff;font-size:10px}
         .pd-member strong{display:block;color:#173b3b;font-size:10px}.pd-member span{display:block;margin-top:2px;color:#77908d;font-size:8px}
         .pd-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+        .pd-alias-card{display:grid;gap:8px;margin-top:16px;padding:13px;border:1px solid #dce9e7;border-radius:9px;background:#f8fbfa}
+        .pd-alias-card label{font-size:10px;font-weight:800;color:#193c3c}
+        .pd-alias-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+        .pd-alias-input{width:100%;min-width:0;border:1px solid #cbdedb;border-radius:7px;background:#fff;color:#193c3c;padding:9px 10px;font-family:inherit;font-size:11px;outline:none}
+        .pd-alias-input:focus{border-color:#079b83;box-shadow:0 0 0 3px rgba(7,155,131,.1)}
+        .pd-alias-help{font-size:9px;line-height:1.5;color:#6e8582}
+        .pd-alias-message{font-size:9px;font-weight:700;color:#376462}
         .pd-sheet{display:grid;grid-template-columns:245px minmax(0,1fr);gap:20px}
         .pd-sheet-info{display:grid;grid-template-columns:100px minmax(0,1fr);gap:9px;font-size:10px}
         .pd-sheet-info span{color:#758b88}.pd-sheet-info strong{color:#173a3a}
@@ -1062,26 +1704,113 @@ export function PremiumDashboard(
           object-fit:contain;
         }
 
+        @media(max-width:720px){.pd-filter-bar{align-items:stretch}.pd-filter-controls{display:grid;grid-template-columns:1fr}.pd-filter-select,.pd-filter-date{width:100%}.pd-filter-separator{display:none}}
         @media(max-width:1200px){.pd-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.pd-chart-grid,.pd-content-grid,.pd-bottom-grid{grid-template-columns:1fr}}
+        @media(max-width:520px){.pd-alias-row{grid-template-columns:1fr}.pd-alias-row .pd-button{width:100%}}
         @media(max-width:720px){.pd-metrics{grid-template-columns:1fr}.pd-donut-layout,.pd-wa-layout,.pd-sheet{grid-template-columns:1fr}.pd-quick-grid{grid-template-columns:1fr}.pd-spark{width:72px}.pd-panel{padding:14px}.pd-legend-row{grid-template-columns:9px minmax(0,1fr) auto}.pd-legend-percent{display:none}}
       `}</style>
+
+      <section className="pd-filter-bar">
+        <div className="pd-filter-copy">
+          <strong>
+            Transaction period
+          </strong>
+
+          <span>
+            {props.transactionFilterLabel} · {transactions.length} record{
+              transactions.length === 1
+                ? ""
+                : "s"
+            }
+          </span>
+        </div>
+
+        <div className="pd-filter-controls">
+          <select
+            className="pd-filter-select"
+            value={props.transactionFilter}
+            aria-label="Dashboard transaction period"
+            onChange={(event) =>
+              props.onTransactionFilterChange(
+                event.target.value as TransactionFilterMode,
+              )
+            }
+          >
+            <option value="TODAY">
+              Today
+            </option>
+
+            <option value="WEEK">
+              This Week
+            </option>
+
+            <option value="MONTH">
+              This Month
+            </option>
+
+            <option value="YEAR">
+              This Year
+            </option>
+
+            <option value="ALL">
+              All Time
+            </option>
+
+            <option value="CUSTOM">
+              Custom Range
+            </option>
+          </select>
+
+          {props.transactionFilter === "CUSTOM" && (
+            <>
+              <input
+                className="pd-filter-date"
+                type="date"
+                value={props.transactionCustomFrom}
+                aria-label="Dashboard transaction date from"
+                onChange={(event) =>
+                  props.onTransactionCustomFromChange(
+                    event.target.value,
+                  )
+                }
+              />
+
+              <span className="pd-filter-separator">
+                to
+              </span>
+
+              <input
+                className="pd-filter-date"
+                type="date"
+                value={props.transactionCustomTo}
+                aria-label="Dashboard transaction date to"
+                onChange={(event) =>
+                  props.onTransactionCustomToChange(
+                    event.target.value,
+                  )
+                }
+              />
+            </>
+          )}
+        </div>
+      </section>
 
       <section className="pd-metrics">
         <MetricCard
           icon="wallet"
-          label="Today Expense"
-          value={currency(todayExpense)}
-          subtitle="vs yesterday"
-          trend={todayChange}
+          label={`${props.transactionFilterLabel} Expense`}
+          value={currency(periodExpense)}
+          subtitle={`${transactions.length} filtered transaction${transactions.length === 1 ? "" : "s"}`}
+          trend={null}
           sparklineData={todaySparklineData}
         />
 
         <MetricCard
           icon="calendar"
-          label="This Month"
-          value={currency(monthExpense)}
-          subtitle="vs last month"
-          trend={monthChange}
+          label={`${props.transactionFilterLabel} Income`}
+          value={currency(periodIncome)}
+          subtitle={`Balance ${currency(periodBalance)}`}
+          trend={null}
           sparklineData={monthSparklineData}
         />
 
@@ -1118,12 +1847,14 @@ export function PremiumDashboard(
       </section>
 
       <section className="pd-chart-grid">
-        <DashboardPanel title="Expense Trend">
+        <DashboardPanel
+          title={`Expense Trend · ${props.transactionFilterLabel}`}
+        >
           <svg
             className="pd-chart"
             viewBox={`0 0 ${chartWidth} ${chartHeight}`}
             role="img"
-            aria-label={`Expense trend for ${monthLabel}`}
+            aria-label={`Expense trend for ${props.transactionFilterLabel}`}
           >
             <defs>
               <linearGradient
@@ -1212,33 +1943,52 @@ export function PremiumDashboard(
                   strokeWidth="2.2"
                 >
                   <title>
-                    {`${item.day} ${shortMonth}: ${currency(item.amount)}`}
+                    {`${item.label}: ${currency(item.amount)}`}
                   </title>
                 </circle>
               ))}
 
-            {[1, 5, 10, 15, 20, 25, daysInMonth]
-              .filter(
-                (day, index, values) =>
-                  day <= daysInMonth &&
-                  values.indexOf(day) === index,
+            {dailyTotals
+              .map(
+                (
+                  item,
+                  index,
+                ) => ({
+                  item,
+                  index,
+                }),
               )
-              .map((day) => (
-                <text
-                  key={day}
-                  x={xFor(day - 1)}
-                  y={chartHeight - 9}
-                  fill="#718784"
-                  fontSize="9"
-                  textAnchor="middle"
-                >
-                  {day} {shortMonth}
-                </text>
-              ))}
+              .filter(
+                ({ index }) =>
+                  index % chartLabelStep === 0
+                  ||
+                  index === dailyTotals.length - 1,
+              )
+              .map(
+                (
+                  {
+                    item,
+                    index,
+                  },
+                ) => (
+                  <text
+                    key={`${item.key}-label`}
+                    x={xFor(index)}
+                    y={chartHeight - 9}
+                    fill="#718784"
+                    fontSize="9"
+                    textAnchor="middle"
+                  >
+                    {item.shortLabel}
+                  </text>
+                ),
+              )}
           </svg>
         </DashboardPanel>
 
-        <DashboardPanel title="Spending by Category">
+        <DashboardPanel
+          title={`Spending by Category · ${props.transactionFilterLabel}`}
+        >
           <div className="pd-donut-layout">
             <div
               className="pd-donut"
@@ -1311,7 +2061,7 @@ export function PremiumDashboard(
 
       <section className="pd-content-grid">
         <DashboardPanel
-          title="Recent Transactions"
+          title={`Recent Transactions · ${props.transactionFilterLabel}`}
           action={{
             label:"View all",
             onClick:props.onOpenTransactions,
@@ -1327,6 +2077,7 @@ export function PremiumDashboard(
                   <th>Merchant</th>
                   <th>Amount</th>
                   <th>Source</th>
+                  <th>Recorded by</th>
                 </tr>
               </thead>
 
@@ -1377,7 +2128,98 @@ export function PremiumDashboard(
                         </td>
 
                         <td>
+
+
                           {item.source || "SYSTEM"}
+
+
+                        </td>
+
+
+                        <td>
+
+
+                          {
+
+
+                            item.createdBy?.name
+
+
+                            ||
+
+
+                            item.createdBy?.email
+
+
+                            ||
+
+
+                            item.createdByEmail
+
+
+                            ||
+
+
+                            (
+
+
+                              props.data.members
+
+
+                              ||
+
+
+                              []
+
+
+                            ).find(
+
+
+                              (member:any) =>
+
+
+                                member.userId === item.createdById,
+
+
+                            )?.name
+
+
+                            ||
+
+
+                            (
+
+
+                              props.data.members
+
+
+                              ||
+
+
+                              []
+
+
+                            ).find(
+
+
+                              (member:any) =>
+
+
+                                member.userId === item.createdById,
+
+
+                            )?.email
+
+
+                            ||
+
+
+                            "-"
+
+
+                          }
+
+
                         </td>
                       </tr>
                     );
@@ -1409,6 +2251,13 @@ export function PremiumDashboard(
                 <span>Status</span>
                 <strong>● {whatsappStatus}</strong>
               </div>
+              <div className="pd-status-row">
+                <span>Trigger</span>
+                <strong>
+                  @{currentBotAlias} / !
+                </strong>
+              </div>
+
 
               <div className="pd-status-row">
                 <span>Members</span>
@@ -1456,6 +2305,74 @@ export function PremiumDashboard(
                 ))}
             </div>
           </div>
+
+            {props.canManageWhatsApp && (
+              <form
+                className="pd-alias-card"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleSaveBotAlias();
+                }}
+              >
+                <label htmlFor="pd-whatsapp-bot-alias">
+                  WhatsApp group bot alias
+                </label>
+
+                <div className="pd-alias-row">
+                  <input
+                    id="pd-whatsapp-bot-alias"
+                    className="pd-alias-input"
+                    value={botAlias}
+                    maxLength={33}
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="mypocket"
+                    aria-label="WhatsApp group bot alias"
+                    onChange={(event) =>
+                      setBotAlias(
+                        event.target.value,
+                      )
+                    }
+                  />
+
+                  <button
+                    type="submit"
+                    className="pd-button primary"
+                    disabled={
+                      aliasSaving
+                      ||
+                      botAlias.trim().length < 2
+                    }
+                  >
+                    {aliasSaving
+                      ? "Saving..."
+                      : "Save Alias"}
+                  </button>
+                </div>
+
+                <span className="pd-alias-help">
+                  Dalam group, mulakan mesej dengan
+                  {" "}
+                  <strong>!</strong>
+                  {" "}
+                  atau
+                  {" "}
+                  <strong>
+                    @{botAlias.trim() || currentBotAlias}
+                  </strong>.
+                  Private chat kekal tanpa trigger.
+                </span>
+
+                {aliasMessage && (
+                  <span
+                    className="pd-alias-message"
+                    aria-live="polite"
+                  >
+                    {aliasMessage}
+                  </span>
+                )}
+              </form>
+            )}
 
           <div className="pd-actions">
             <button

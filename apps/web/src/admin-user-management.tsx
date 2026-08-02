@@ -1,4 +1,5 @@
 import React, {
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -56,8 +57,6 @@ type AdminUserManagementProps = {
     action:
       | "google-sheet/upgrade"
       | "whatsapp/disconnect"
-      | "ban"
-      | "unban"
       | "deactivate"
       | "reactivate"
       | "delete",
@@ -65,6 +64,28 @@ type AdminUserManagementProps = {
     confirmText:string,
   ) => Promise<void> | void;
 };
+
+type IconName =
+  | "users"
+  | "user"
+  | "whatsapp"
+  | "sheet"
+  | "search"
+  | "refresh"
+  | "shield"
+  | "calendar"
+  | "more"
+  | "close";
+
+type StatusFilter =
+  | "ALL"
+  | "ACTIVE"
+  | "DEACTIVATED";
+
+type WorkspaceFilter =
+  | "ALL"
+  | WorkspaceType
+  | "NO_WORKSPACE";
 
 const packageOptions:Array<{
   value:WorkspacePackage;
@@ -87,6 +108,123 @@ const packageOptions:Array<{
     label:"Business",
   },
 ];
+
+function Icon(
+  props:{
+    name:IconName;
+    size?:number;
+  },
+){
+  const size =
+    props.size
+    ??
+    18;
+
+  const common = {
+    width:size,
+    height:size,
+    viewBox:"0 0 24 24",
+    fill:"none",
+    stroke:"currentColor",
+    strokeWidth:1.9,
+    strokeLinecap:"round" as const,
+    strokeLinejoin:"round" as const,
+    "aria-hidden":true,
+  };
+
+  if(props.name === "users"){
+    return (
+      <svg {...common}>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    );
+  }
+
+  if(props.name === "user"){
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21a8 8 0 0 1 16 0" />
+      </svg>
+    );
+  }
+
+  if(props.name === "whatsapp"){
+    return (
+      <svg {...common}>
+        <path d="M20.5 11.7a8.5 8.5 0 0 1-12.55 7.47L3 20.5l1.32-4.82A8.5 8.5 0 1 1 20.5 11.7Z" />
+        <path d="M8.5 7.8c.3-.3.7-.25.9.15l1 2c.15.3.08.6-.15.82l-.7.65a6.8 6.8 0 0 0 3.2 3.15l.62-.73c.2-.25.55-.32.82-.18l2.02 1c.38.18.45.6.17.9-.62.72-1.5 1.05-2.42.88-3.45-.65-6.2-3.38-6.86-6.82-.18-.9.18-1.8.9-2.42Z" />
+      </svg>
+    );
+  }
+
+  if(props.name === "sheet"){
+    return (
+      <svg {...common}>
+        <path d="M6 2h9l5 5v15H6z" />
+        <path d="M14 2v6h6" />
+        <path d="M9 13h8M9 17h8M12 10v10" />
+      </svg>
+    );
+  }
+
+  if(props.name === "search"){
+    return (
+      <svg {...common}>
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </svg>
+    );
+  }
+
+  if(props.name === "refresh"){
+    return (
+      <svg {...common}>
+        <path d="M20 6v5h-5" />
+        <path d="M4 18v-5h5" />
+        <path d="M18.4 9A7 7 0 0 0 6.2 6.2L4 8" />
+        <path d="M5.6 15A7 7 0 0 0 17.8 17.8L20 16" />
+      </svg>
+    );
+  }
+
+  if(props.name === "shield"){
+    return (
+      <svg {...common}>
+        <path d="M12 3 20 6v5c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6z" />
+        <path d="m9 12 2 2 4-4" />
+      </svg>
+    );
+  }
+
+  if(props.name === "calendar"){
+    return (
+      <svg {...common}>
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M16 3v4M8 3v4M3 10h18" />
+      </svg>
+    );
+  }
+
+  if(props.name === "close"){
+    return (
+      <svg {...common}>
+        <path d="m6 6 12 12M18 6 6 18" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...common}>
+      <circle cx="12" cy="5" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
 
 function formatDate(
   value:string,
@@ -144,6 +282,71 @@ function packageLabel(
   );
 }
 
+function packagePrice(
+  value:WorkspacePackage,
+){
+  if(value === "PERSONAL_PRO"){
+    return "RM9 / month";
+  }
+
+  if(value === "FAMILY"){
+    return "RM19 / month";
+  }
+
+  if(value === "BUSINESS"){
+    return "RM49 / month";
+  }
+
+  return "RM0 / free";
+}
+
+function effectiveStatus(
+  user:AdminManagedUser,
+){
+  if(user.bannedAt){
+    return "DEACTIVATED";
+  }
+
+  if(user.deactivatedAt){
+    return "DEACTIVATED";
+  }
+
+  const status =
+    (
+      user.status
+      ||
+      user.subscriptionStatus
+      ||
+      "ACTIVE"
+    )
+      .trim()
+      .toUpperCase();
+
+  if(status === "BANNED"){
+    return "DEACTIVATED";
+  }
+
+  if(status === "DEACTIVATED"){
+    return "DEACTIVATED";
+  }
+
+  return "ACTIVE";
+}
+
+function statusLabel(
+  status:string,
+){
+  if(status === "BANNED"){
+    return "Banned";
+  }
+
+  if(status === "DEACTIVATED"){
+    return "Deactivated";
+  }
+
+  return "Active";
+}
+
 export function AdminUserManagement(
   props:AdminUserManagementProps,
 ){
@@ -162,12 +365,78 @@ export function AdminUserManagement(
     >("ALL");
 
   const [
+    statusFilter,
+    setStatusFilter,
+  ] =
+    useState<StatusFilter>(
+      "ALL",
+    );
+
+  const [
+    workspaceFilter,
+    setWorkspaceFilter,
+  ] =
+    useState<WorkspaceFilter>(
+      "ALL",
+    );
+
+  const [
     currentPage,
     setCurrentPage,
   ] =
     useState(
       1,
     );
+
+  const [
+    selectedUser,
+    setSelectedUser,
+  ] =
+    useState<AdminManagedUser | null>(
+      null,
+    );
+
+  useEffect(
+    () => {
+      if(!selectedUser){
+        return;
+      }
+
+      const previousOverflow =
+        document.body.style.overflow;
+
+      const closeOnEscape = (
+        event:KeyboardEvent,
+      ) => {
+        if(event.key === "Escape"){
+          setSelectedUser(
+            null,
+          );
+        }
+      };
+
+      document.body.style.overflow =
+        "hidden";
+
+      window.addEventListener(
+        "keydown",
+        closeOnEscape,
+      );
+
+      return () => {
+        document.body.style.overflow =
+          previousOverflow;
+
+        window.removeEventListener(
+          "keydown",
+          closeOnEscape,
+        );
+      };
+    },
+    [
+      selectedUser,
+    ],
+  );
 
   const pageSize =
     10;
@@ -182,11 +451,17 @@ export function AdminUserManagement(
 
         return props.users.filter(
           (user) => {
+            const workspace =
+              user.workspace;
+
             const searchFields = [
               user.name,
               user.email,
-              user.workspace?.name,
-              user.workspace?.id,
+              workspace?.name,
+              workspace?.id,
+              workspace?.type,
+              workspace?.role,
+              user.package,
             ]
               .filter(Boolean)
               .map(
@@ -207,10 +482,33 @@ export function AdminUserManagement(
               ||
               user.package === packageFilter;
 
+            const status =
+              effectiveStatus(user);
+
+            const matchesStatus =
+              statusFilter === "ALL"
+              ||
+              status === statusFilter;
+
+            const matchesWorkspace =
+              workspaceFilter === "ALL"
+              ||
+              (
+                workspaceFilter === "NO_WORKSPACE"
+                  ?
+                  !workspace
+                  :
+                  workspace?.type === workspaceFilter
+              );
+
             return (
               matchesSearch
               &&
               matchesPackage
+              &&
+              matchesStatus
+              &&
+              matchesWorkspace
             );
           },
         );
@@ -219,14 +517,15 @@ export function AdminUserManagement(
         props.users,
         query,
         packageFilter,
+        statusFilter,
+        workspaceFilter,
       ],
     );
 
   const activeUsers =
     props.users.filter(
       (user) =>
-        user.subscriptionStatus
-          .toUpperCase()
+        effectiveStatus(user)
         ===
         "ACTIVE",
     ).length;
@@ -264,35 +563,163 @@ export function AdminUserManagement(
       totalPages,
     );
 
+  const firstResult =
+    (
+      safeCurrentPage
+      -
+      1
+    )
+    *
+    pageSize;
+
   const paginatedUsers =
     filteredUsers.slice(
-      (
-        safeCurrentPage
-        -
-        1
-      )
-      *
-      pageSize,
-      safeCurrentPage
-      *
+      firstResult,
+      firstResult
+      +
       pageSize,
     );
+
+  const lastResult =
+    Math.min(
+      firstResult
+      +
+      paginatedUsers.length,
+      filteredUsers.length,
+    );
+
+  const filtersActive =
+    Boolean(query)
+    ||
+    packageFilter !== "ALL"
+    ||
+    statusFilter !== "ALL"
+    ||
+    workspaceFilter !== "ALL";
+
+  function resetFilters(){
+    setQuery("");
+    setPackageFilter("ALL");
+    setStatusFilter("ALL");
+    setWorkspaceFilter("ALL");
+    setCurrentPage(1);
+  }
+
+  useEffect(
+    () => {
+
+      if(!selectedUser){
+        return;
+      }
+
+      const refreshedUser =
+        props.users.find(
+          (user) =>
+            user.userId
+            ===
+            selectedUser.userId,
+        );
+
+      if(!refreshedUser){
+
+        setSelectedUser(
+          null,
+        );
+
+        return;
+
+      }
+
+      setSelectedUser(
+        refreshedUser,
+      );
+
+    },
+    [
+      props.users,
+      selectedUser?.userId,
+    ],
+  );
+
+
+  const selectedWorkspace =
+    selectedUser?.workspace
+    ??
+    null;
+
+  const selectedStatus =
+    selectedUser
+      ?
+      effectiveStatus(
+        selectedUser,
+      )
+      :
+      "ACTIVE";
+
+  const selectedWhatsappOnline =
+    (
+      selectedWorkspace
+        ?.whatsappConnectedCount
+      ??
+      0
+    ) > 0;
+
+  const selectedSheetUrl =
+    selectedWorkspace?.spreadsheetId
+      ?
+      `https://docs.google.com/spreadsheets/d/${selectedWorkspace.spreadsheetId}/edit`
+      :
+      "";
+
+  function runSelectedUserAction(
+    action:
+      | "google-sheet/upgrade"
+      | "whatsapp/disconnect"
+      | "deactivate"
+      | "reactivate"
+      | "delete",
+    label:string,
+    confirmText:string,
+  ){
+    if(!selectedUser){
+      return;
+    }
+
+    const userId =
+      selectedUser.userId;
+
+    void props.onSuperAdminUserAction(
+      userId,
+      action,
+      label,
+      confirmText,
+    );
+  }
 
   return (
     <section className="admin-users-shell">
       <header className="admin-users-header">
-        <div>
+        <div className="admin-users-heading">
           <span className="admin-users-eyebrow">
             Super Admin
           </span>
 
-          <h2>
-            User Management
-          </h2>
+          <div className="admin-users-title-row">
+            <h2>
+              User Management
+            </h2>
+
+            <span className="admin-title-shield">
+              <Icon
+                name="shield"
+                size={18}
+              />
+            </span>
+          </div>
 
           <p>
-            View registered accounts, workspace connections
-            and manage packages safely.
+            Manage all registered users, workspace connections
+            and subscription packages.
           </p>
         </div>
 
@@ -301,40 +728,96 @@ export function AdminUserManagement(
           type="button"
           onClick={props.onRefresh}
         >
+          <Icon
+            name="refresh"
+            size={17}
+          />
+
           Refresh users
         </button>
       </header>
 
       <div className="admin-users-stats">
         <article>
-          <span>Registered users</span>
-          <strong>{props.users.length}</strong>
+          <span className="admin-stat-icon">
+            <Icon
+              name="users"
+              size={25}
+            />
+          </span>
+
+          <div>
+            <span>Registered Users</span>
+            <strong>
+              {props.users.length}
+            </strong>
+            <small>Total accounts</small>
+          </div>
         </article>
 
         <article>
-          <span>Active accounts</span>
-          <strong>{activeUsers}</strong>
+          <span className="admin-stat-icon">
+            <Icon
+              name="user"
+              size={25}
+            />
+          </span>
+
+          <div>
+            <span>Active Accounts</span>
+            <strong>
+              {activeUsers}
+            </strong>
+            <small>Currently active</small>
+          </div>
         </article>
 
         <article>
-          <span>Google connected</span>
-          <strong>{googleUsers}</strong>
+          <span className="admin-stat-icon">
+            <Icon
+              name="whatsapp"
+              size={26}
+            />
+          </span>
+
+          <div>
+            <span>WhatsApp Connected</span>
+            <strong>
+              {whatsappUsers}
+            </strong>
+            <small>Connected accounts</small>
+          </div>
         </article>
 
         <article>
-          <span>WhatsApp online</span>
-          <strong>{whatsappUsers}</strong>
+          <span className="admin-stat-icon">
+            <Icon
+              name="sheet"
+              size={24}
+            />
+          </span>
+
+          <div>
+            <span>Google Sheets</span>
+            <strong>
+              {googleUsers}
+            </strong>
+            <small>Connected workspaces</small>
+          </div>
         </article>
       </div>
 
       <div className="admin-users-toolbar">
         <label className="admin-users-search">
-          <span>Search</span>
+          <Icon
+            name="search"
+            size={18}
+          />
 
           <input
             type="search"
             value={query}
-            placeholder="Name, email or workspace"
+            placeholder="Search by name, email or workspace..."
             onChange={
               (event) => {
                 setQuery(
@@ -349,11 +832,10 @@ export function AdminUserManagement(
           />
         </label>
 
-        <label className="admin-users-filter">
-          <span>Package</span>
-
+        <label className="admin-users-select">
           <select
             value={packageFilter}
+            aria-label="Filter package"
             onChange={
               (event) => {
                 setPackageFilter(
@@ -368,7 +850,7 @@ export function AdminUserManagement(
             }
           >
             <option value="ALL">
-              All packages
+              All Packages
             </option>
 
             {packageOptions.map(
@@ -383,6 +865,90 @@ export function AdminUserManagement(
             )}
           </select>
         </label>
+
+        <label className="admin-users-select">
+          <select
+            value={statusFilter}
+            aria-label="Filter status"
+            onChange={
+              (event) => {
+                setStatusFilter(
+                  event.target.value as
+                    StatusFilter,
+                );
+
+                setCurrentPage(
+                  1,
+                );
+              }
+            }
+          >
+            <option value="ALL">
+              All Status
+            </option>
+
+            <option value="ACTIVE">
+              Active
+            </option>
+
+            <option value="DEACTIVATED">
+              Deactivated
+            </option>
+          </select>
+        </label>
+
+        <label className="admin-users-select">
+          <select
+            value={workspaceFilter}
+            aria-label="Filter workspace"
+            onChange={
+              (event) => {
+                setWorkspaceFilter(
+                  event.target.value as
+                    WorkspaceFilter,
+                );
+
+                setCurrentPage(
+                  1,
+                );
+              }
+            }
+          >
+            <option value="ALL">
+              All Workspaces
+            </option>
+
+            <option value="PERSONAL">
+              Personal
+            </option>
+
+            <option value="FAMILY">
+              Family
+            </option>
+
+            <option value="BUSINESS">
+              Business
+            </option>
+
+            <option value="NO_WORKSPACE">
+              No Workspace
+            </option>
+          </select>
+        </label>
+
+        <button
+          type="button"
+          className="admin-filter-clear"
+          disabled={!filtersActive}
+          onClick={resetFilters}
+        >
+          <Icon
+            name="close"
+            size={15}
+          />
+
+          Clear
+        </button>
       </div>
 
       {props.message && (
@@ -391,18 +957,23 @@ export function AdminUserManagement(
         </div>
       )}
 
-      <div className="admin-users-count">
-        Showing {paginatedUsers.length} of{" "}
-        {filteredUsers.length} users
-        {totalPages > 1
-          ? ` · Page ${safeCurrentPage} / ${totalPages}`
-          : ""}
-      </div>
-
       {filteredUsers.length === 0
         ? (
           <div className="admin-users-empty">
-            No registered users match this search.
+            <span className="admin-empty-icon">
+              <Icon
+                name="users"
+                size={28}
+              />
+            </span>
+
+            <strong>
+              No users found
+            </strong>
+
+            <span>
+              Try changing the search or filter settings.
+            </span>
           </div>
         )
         : (
@@ -415,7 +986,7 @@ export function AdminUserManagement(
                   <th>Connections</th>
                   <th>Registered</th>
                   <th>Package</th>
-                  <th>Actions</th>
+                  <th>Status</th>
                 </tr>
               </thead>
 
@@ -441,6 +1012,9 @@ export function AdminUserManagement(
                         0
                       ) > 0;
 
+                    const status =
+                      effectiveStatus(user);
+
                     const sheetUrl =
                       workspace?.spreadsheetId
                         ?
@@ -450,10 +1024,46 @@ export function AdminUserManagement(
 
                     return (
                       <tr key={user.userId}>
-                        <td>
-                          <div className="admin-user-identity">
+                        <td data-label="User">
+                          <div
+                            className="admin-user-identity admin-user-clickable"
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Manage ${user.email}`}
+                            onClick={
+                              () =>
+                                setSelectedUser(
+                                  user,
+                                )
+                            }
+                            onKeyDown={
+                              (event) => {
+                                if(
+                                  event.key === "Enter"
+                                  ||
+                                  event.key === " "
+                                ){
+                                  event.preventDefault();
+
+                                  setSelectedUser(
+                                    user,
+                                  );
+                                }
+                              }
+                            }
+                          >
                             <span className="admin-user-avatar">
                               {initials(user)}
+
+                              <i
+                                className={
+                                  status === "ACTIVE"
+                                    ?
+                                    "online"
+                                    :
+                                    "offline"
+                                }
+                              />
                             </span>
 
                             <div>
@@ -473,16 +1083,14 @@ export function AdminUserManagement(
                                 )}
 
                                 <em className="admin-user-badge">
-                                  {
-                                    user.subscriptionStatus
-                                  }
+                                  {statusLabel(status)}
                                 </em>
                               </div>
                             </div>
                           </div>
                         </td>
 
-                        <td>
+                        <td data-label="Workspace">
                           {workspace
                             ? (
                               <div className="admin-workspace-detail">
@@ -511,56 +1119,56 @@ export function AdminUserManagement(
                             )}
                         </td>
 
-                        <td>
+                        <td data-label="Connections">
                           <div className="admin-connection-list">
-                            <span
-                              className={
-                                workspace?.googleConnected
-                                  ?
-                                  "admin-connection ok"
-                                  :
-                                  "admin-connection off"
-                              }
-                            >
-                              Google{" "}
-                              {workspace?.googleConnected
-                                ? "Connected"
-                                : "Not connected"}
-                            </span>
-
                             <span
                               className={
                                 whatsappOnline
                                   ?
-                                  "admin-connection ok"
+                                  "admin-channel-badge success"
                                   :
-                                  "admin-connection off"
+                                  "admin-channel-badge muted"
                               }
                             >
-                              WhatsApp{" "}
-                              {whatsappOnline
-                                ? "Online"
-                                : "Offline"}
+                              <Icon
+                                name="whatsapp"
+                                size={13}
+                              />
+
+                              WhatsApp
                             </span>
 
-                            {sheetUrl && (
-                              <a
-                                className="admin-sheet-link"
-                                href={sheetUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                Open Google Sheet
-                              </a>
-                            )}
+                            <span
+                              className={
+                                workspace?.googleConnected
+                                  ?
+                                  "admin-channel-badge success"
+                                  :
+                                  "admin-channel-badge muted"
+                              }
+                            >
+                              <Icon
+                                name="sheet"
+                                size={13}
+                              />
+
+                              Google Sheet
+                            </span>
                           </div>
                         </td>
 
-                        <td>
+                        <td data-label="Registered">
                           <div className="admin-date-detail">
-                            <strong>
-                              {formatDate(user.createdAt)}
-                            </strong>
+                            <div>
+                              <Icon
+                                name="calendar"
+                                size={15}
+                              />
+
+                              <strong>
+                                {formatDate(user.createdAt)}
+                              </strong>
+                            </div>
 
                             <span>
                               ID: {user.userId.slice(0, 12)}…
@@ -568,201 +1176,534 @@ export function AdminUserManagement(
                           </div>
                         </td>
 
-                        <td>
-                          <div className="admin-package-control compact">
-                            <select
-                              value={user.package}
-                              disabled={
-                                !isOwner
-                                ||
-                                isBusy
-                              }
-                              onChange={
-                                (event) =>
-                                  props.onUpdatePackage(
-                                    user.userId,
-                                    event.target.value as
-                                      WorkspacePackage,
-                                  )
-                              }
-                            >
-                              {packageOptions.map(
-                                (option) => (
-                                  <option
-                                    key={option.value}
-                                    value={option.value}
-                                  >
-                                    {option.label}
-                                  </option>
-                                ),
-                              )}
-                            </select>
+                        <td data-label="Package">
+                          <div className="admin-package-display">
+                            <strong>
+                              {packageLabel(user.package)}
+                            </strong>
 
                             <span>
-                              {isBusy
-                                ? "Updating…"
-                                : isOwner
-                                  ? packageLabel(user.package)
-                                  : "Inherited"}
+                              {packagePrice(user.package)}
                             </span>
                           </div>
                         </td>
 
-                        <td>
-                          <details className="admin-action-menu">
-                            <summary>
-                              Actions
-                            </summary>
+                        <td data-label="Status">
+                          <span
+                            className={
+                              `admin-status-badge ${status.toLowerCase()}`
+                            }
+                          >
+                            <i />
 
-                            <div className="admin-action-panel">
-                              <div className="admin-action-status">
-                                <span>Account status</span>
-
-                                <strong
-                                  className={
-                                    user.status && user.status !== "ACTIVE"
-                                      ? "admin-access-danger"
-                                      : "admin-access-ok"
-                                  }
-                                >
-                                  {user.status || "ACTIVE"}
-                                </strong>
-                              </div>
-
-                              <button
-                                type="button"
-                                disabled={!isOwner || isBusy || !workspace?.googleConnected}
-                                onClick={() => props.onSuperAdminUserAction(
-                                  user.userId,
-                                  "google-sheet/upgrade",
-                                  "Google Sheet upgraded ikut package semasa.",
-                                  `Upgrade Google Sheet untuk ${user.email} ikut package ${user.package}? Sheet lama tidak dipadam.`,
-                                )}
-                              >
-                                Upgrade Sheet
-                              </button>
-
-                              <button
-                                type="button"
-                                disabled={!isOwner || isBusy || !workspace?.whatsappCount}
-                                onClick={() => props.onSuperAdminUserAction(
-                                  user.userId,
-                                  "whatsapp/disconnect",
-                                  "WhatsApp pairing disconnected.",
-                                  `Disconnect WhatsApp bot untuk ${user.email}? User perlu pair semula selepas ini.`,
-                                )}
-                              >
-                                Disconnect WA
-                              </button>
-
-                              {user.status === "BANNED"
-                                ? (
-                                  <button
-                                    type="button"
-                                    disabled={isBusy}
-                                    onClick={() => props.onSuperAdminUserAction(
-                                      user.userId,
-                                      "unban",
-                                      "User unbanned.",
-                                      `Unban ${user.email}?`,
-                                    )}
-                                  >
-                                    Unban user
-                                  </button>
-                                )
-                                : (
-                                  <button
-                                    type="button"
-                                    className="dangerGhost"
-                                    disabled={isBusy || user.isSuperAdmin}
-                                    onClick={() => props.onSuperAdminUserAction(
-                                      user.userId,
-                                      "ban",
-                                      "User banned.",
-                                      `Ban ${user.email}? User tidak boleh login selepas ini.`,
-                                    )}
-                                  >
-                                    Ban user
-                                  </button>
-                                )}
-
-                              {user.status === "DEACTIVATED"
-                                ? (
-                                  <button
-                                    type="button"
-                                    disabled={isBusy}
-                                    onClick={() => props.onSuperAdminUserAction(
-                                      user.userId,
-                                      "reactivate",
-                                      "User reactivated.",
-                                      `Reactivate ${user.email}?`,
-                                    )}
-                                  >
-                                    Reactivate user
-                                  </button>
-                                )
-                                : (
-                                  <button
-                                    type="button"
-                                    className="dangerGhost"
-                                    disabled={isBusy || user.isSuperAdmin}
-                                    onClick={() => props.onSuperAdminUserAction(
-                                      user.userId,
-                                      "deactivate",
-                                      "User deactivated.",
-                                      `Deactivate ${user.email}? Ini soft delete dan boleh reactivate semula.`,
-                                    )}
-                                  >
-                                    Deactivate user
-                                  </button>
-                                )}
-
-                              <button
-                                type="button"
-                                className="dangerGhost"
-                                disabled={isBusy || user.isSuperAdmin}
-                                onClick={() => props.onSuperAdminUserAction(
-                                  user.userId,
-                                  "delete",
-                                  "User deleted.",
-                                  `Delete ${user.email}? Ini akan padam akaun user dan data berkaitan yang cascade. Tindakan ini tidak boleh undo.`,
-                                )}
-                              >
-                                Delete user
-                              </button>
-                            </div>
-                          </details>
+                            {statusLabel(status)}
+                          </span>
                         </td>
+
                       </tr>
                     );
                   },
                 )}
               </tbody>
             </table>
+
+            <footer className="admin-users-table-footer">
+              <span>
+                Showing{" "}
+                {filteredUsers.length
+                  ?
+                  firstResult + 1
+                  :
+                  0}
+                {" "}to{" "}
+                {lastResult}
+                {" "}of{" "}
+                {filteredUsers.length}
+                {" "}users
+              </span>
+
+              <div className="admin-users-pagination">
+                <button
+                  type="button"
+                  aria-label="Previous page"
+                  disabled={safeCurrentPage <= 1}
+                  onClick={
+                    () =>
+                      setCurrentPage(
+                        safeCurrentPage - 1,
+                      )
+                  }
+                >
+                  ‹
+                </button>
+
+                <strong>
+                  {safeCurrentPage}
+                </strong>
+
+                <button
+                  type="button"
+                  aria-label="Next page"
+                  disabled={
+                    safeCurrentPage
+                    >=
+                    totalPages
+                  }
+                  onClick={
+                    () =>
+                      setCurrentPage(
+                        safeCurrentPage + 1,
+                      )
+                  }
+                >
+                  ›
+                </button>
+              </div>
+            </footer>
           </div>
         )}
 
-      {filteredUsers.length > pageSize && (
-        <div className="admin-users-pagination">
-          <button
-            type="button"
-            disabled={safeCurrentPage <= 1}
-            onClick={() => setCurrentPage(safeCurrentPage - 1)}
+      {selectedUser && (
+        <div
+          className="admin-user-modal-overlay"
+          role="presentation"
+          onMouseDown={
+            (event) => {
+              if(
+                event.target
+                ===
+                event.currentTarget
+              ){
+                setSelectedUser(
+                  null,
+                );
+              }
+            }
+          }
+        >
+          <section
+            className="admin-user-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-user-modal-title"
           >
-            Previous
-          </button>
+            <header className="admin-user-modal-header">
+              <div className="admin-user-modal-profile">
+                <span className="admin-user-modal-avatar">
+                  {initials(selectedUser)}
 
-          <span>
-            Page {safeCurrentPage} / {totalPages}
-          </span>
+                  <i
+                    className={
+                      selectedStatus === "ACTIVE"
+                        ?
+                        "online"
+                        :
+                        "offline"
+                    }
+                  />
+                </span>
 
-          <button
-            type="button"
-            disabled={safeCurrentPage >= totalPages}
-            onClick={() => setCurrentPage(safeCurrentPage + 1)}
-          >
-            Next
-          </button>
+                <div>
+                  <span className="admin-user-modal-eyebrow">
+                    User Management
+                  </span>
+
+                  <h3 id="admin-user-modal-title">
+                    {selectedUser.name || "Unnamed user"}
+                  </h3>
+
+                  <p>
+                    {selectedUser.email}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="admin-user-modal-close"
+                aria-label="Close user management"
+                onClick={
+                  () =>
+                    setSelectedUser(
+                      null,
+                    )
+                }
+              >
+                <Icon
+                  name="close"
+                  size={19}
+                />
+              </button>
+            </header>
+
+            <div className="admin-user-modal-summary">
+              <span
+                className={
+                  `admin-status-badge ${selectedStatus.toLowerCase()}`
+                }
+              >
+                <i />
+
+                {statusLabel(selectedStatus)}
+              </span>
+
+              <span className="admin-user-modal-plan">
+                {packageLabel(selectedUser.package)}
+              </span>
+
+              {selectedUser.isSuperAdmin && (
+                <span className="admin-user-modal-super">
+                  Super Admin
+                </span>
+              )}
+            </div>
+
+            <div className="admin-user-modal-body">
+              <section className="admin-user-modal-section">
+                <div className="admin-user-modal-section-title">
+                  <Icon
+                    name="user"
+                    size={17}
+                  />
+
+                  <h4>
+                    Account information
+                  </h4>
+                </div>
+
+                <div className="admin-user-modal-grid">
+                  <div className="admin-user-modal-field">
+                    <span>User ID</span>
+                    <strong>{selectedUser.userId}</strong>
+                  </div>
+
+                  <div className="admin-user-modal-field">
+                    <span>Registered</span>
+                    <strong>
+                      {formatDate(selectedUser.createdAt)}
+                    </strong>
+                  </div>
+
+                  <div className="admin-user-modal-field">
+                    <span>Account status</span>
+                    <strong>
+                      {statusLabel(selectedStatus)}
+                    </strong>
+                  </div>
+
+                  <div className="admin-user-modal-field">
+                    <span>Subscription status</span>
+                    <strong>
+                      {selectedUser.subscriptionStatus || "-"}
+                    </strong>
+                  </div>
+                </div>
+              </section>
+
+              <section className="admin-user-modal-section">
+                <div className="admin-user-modal-section-title">
+                  <Icon
+                    name="users"
+                    size={17}
+                  />
+
+                  <h4>
+                    Workspace
+                  </h4>
+                </div>
+
+                {selectedWorkspace
+                  ? (
+                    <div className="admin-user-modal-grid">
+                      <div className="admin-user-modal-field wide">
+                        <span>Workspace name</span>
+                        <strong>
+                          {selectedWorkspace.name}
+                        </strong>
+                      </div>
+
+                      <div className="admin-user-modal-field">
+                        <span>Type</span>
+                        <strong>
+                          {selectedWorkspace.type}
+                        </strong>
+                      </div>
+
+                      <div className="admin-user-modal-field">
+                        <span>Role</span>
+                        <strong>
+                          {selectedWorkspace.role || "NO ROLE"}
+                        </strong>
+                      </div>
+
+                      <div className="admin-user-modal-field">
+                        <span>Members</span>
+                        <strong>
+                          {selectedWorkspace.memberCount}
+                        </strong>
+                      </div>
+                    </div>
+                  )
+                  : (
+                    <div className="admin-user-modal-empty">
+                      No active workspace.
+                    </div>
+                  )}
+              </section>
+
+              <section className="admin-user-modal-section">
+                <div className="admin-user-modal-section-title">
+                  <Icon
+                    name="whatsapp"
+                    size={17}
+                  />
+
+                  <h4>
+                    Connections
+                  </h4>
+                </div>
+
+                <div className="admin-user-modal-connections">
+                  <span
+                    className={
+                      selectedWhatsappOnline
+                        ?
+                        "admin-channel-badge success"
+                        :
+                        "admin-channel-badge muted"
+                    }
+                  >
+                    <Icon
+                      name="whatsapp"
+                      size={14}
+                    />
+
+                    WhatsApp{" "}
+                    {selectedWhatsappOnline
+                      ? "Connected"
+                      : "Offline"}
+                  </span>
+
+                  <span
+                    className={
+                      selectedWorkspace?.googleConnected
+                        ?
+                        "admin-channel-badge success"
+                        :
+                        "admin-channel-badge muted"
+                    }
+                  >
+                    <Icon
+                      name="sheet"
+                      size={14}
+                    />
+
+                    Google Sheet{" "}
+                    {selectedWorkspace?.googleConnected
+                      ? "Connected"
+                      : "Not connected"}
+                  </span>
+
+                  {selectedSheetUrl && (
+                    <a
+                      className="admin-user-modal-sheet-link"
+                      href={selectedSheetUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open Google Sheet
+                    </a>
+                  )}
+                </div>
+              </section>
+
+              <section className="admin-user-modal-section">
+                <div className="admin-user-modal-section-title">
+                  <Icon
+                    name="shield"
+                    size={17}
+                  />
+
+                  <h4>
+                    Subscription package
+                  </h4>
+                </div>
+
+                <label className="admin-user-modal-package">
+                  <span>
+                    Current plan
+                  </span>
+
+                  <select
+                    value={selectedUser.package}
+                    disabled={
+                      selectedWorkspace?.role !== "OWNER"
+                      ||
+                      props.busyUserId === selectedUser.userId
+                    }
+                    onChange={
+                      (event) => {
+                        const nextPackage =
+                          event.target.value as
+                            WorkspacePackage;
+
+                        setSelectedUser(
+                          (current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  package:nextPackage,
+                                }
+                              :
+                              current,
+                        );
+
+                        void props.onUpdatePackage(
+                          selectedUser.userId,
+                          nextPackage,
+                        );
+                      }
+                    }
+                  >
+                    {packageOptions.map(
+                      (option) => (
+                        <option
+                          key={option.value}
+                          value={option.value}
+                        >
+                          {option.label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+
+                  <small>
+                    {selectedWorkspace?.role === "OWNER"
+                      ?
+                      packagePrice(selectedUser.package)
+                      :
+                      "Package inherited from workspace owner."}
+                  </small>
+                </label>
+              </section>
+            </div>
+
+            <footer className="admin-user-modal-footer">
+              <div className="admin-user-modal-standard-actions">
+                <button
+                  type="button"
+                  className="admin-modal-button secondary"
+                  disabled={
+                    selectedWorkspace?.role !== "OWNER"
+                    ||
+                    props.busyUserId === selectedUser.userId
+                    ||
+                    !selectedWorkspace?.googleConnected
+                  }
+                  onClick={
+                    () =>
+                      runSelectedUserAction(
+                        "google-sheet/upgrade",
+                        "Google Sheet upgraded ikut package semasa.",
+                        `Upgrade Google Sheet untuk ${selectedUser.email} ikut package ${selectedUser.package}? Sheet lama tidak dipadam.`,
+                      )
+                  }
+                >
+                  Upgrade Google Sheet
+                </button>
+
+                <button
+                  type="button"
+                  className="admin-modal-button secondary"
+                  disabled={
+                    selectedWorkspace?.role !== "OWNER"
+                    ||
+                    props.busyUserId === selectedUser.userId
+                    ||
+                    !(
+                      selectedWorkspace?.whatsappCount
+                      ??
+                      0
+                    )
+                  }
+                  onClick={
+                    () =>
+                      runSelectedUserAction(
+                        "whatsapp/disconnect",
+                        "WhatsApp pairing disconnected.",
+                        `Disconnect WhatsApp bot untuk ${selectedUser.email}? User perlu pair semula selepas ini.`,
+                      )
+                  }
+                >
+                  Disconnect WhatsApp
+                </button>
+              </div>
+
+              <div className="admin-user-modal-danger-actions">
+                {selectedStatus === "DEACTIVATED"
+                  ? (
+                    <button
+                      type="button"
+                      className="admin-modal-button success"
+                      disabled={
+                        props.busyUserId === selectedUser.userId
+                      }
+                      onClick={
+                        () =>
+                          runSelectedUserAction(
+                            "reactivate",
+                            "User reactivated.",
+                            `Reactivate ${selectedUser.email}?`,
+                          )
+                      }
+                    >
+                      Reactivate user
+                    </button>
+                  )
+                  : (
+                    <button
+                      type="button"
+                      className="admin-modal-button warning"
+                      disabled={
+                        props.busyUserId === selectedUser.userId
+                        ||
+                        selectedUser.isSuperAdmin
+                      }
+                      onClick={
+                        () =>
+                          runSelectedUserAction(
+                            "deactivate",
+                            "User deactivated.",
+                            `Deactivate ${selectedUser.email}? Ini soft delete dan boleh reactivate semula.`,
+                          )
+                      }
+                    >
+                      Deactivate user
+                    </button>
+                  )}
+
+                <button
+                  type="button"
+                  className="admin-modal-button danger"
+                  disabled={
+                    props.busyUserId === selectedUser.userId
+                    ||
+                    selectedUser.isSuperAdmin
+                  }
+                  onClick={
+                    () =>
+                      runSelectedUserAction(
+                        "delete",
+                        "User deleted.",
+                        `Delete ${selectedUser.email}? Ini akan padam akaun user dan data berkaitan yang cascade. Tindakan ini tidak boleh undo.`,
+                      )
+                  }
+                >
+                  Delete user
+                </button>
+              </div>
+            </footer>
+          </section>
         </div>
       )}
     </section>

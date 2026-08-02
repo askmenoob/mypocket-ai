@@ -22,6 +22,7 @@ model User {
   memberships     WorkspaceMember[]
   createdInvites  WorkspaceInvite[] @relation("WorkspaceInviteCreatedBy")
   acceptedInvites WorkspaceInvite[] @relation("WorkspaceInviteAcceptedBy")
+  workspaceBillingSubscriptions WorkspaceBillingSubscription[] @relation("WorkspaceBillingSubscriptionOwner")
 }
 
 model Workspace {
@@ -42,6 +43,11 @@ model Workspace {
   owner                 User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   members               WorkspaceMember[]
   invites               WorkspaceInvite[]
+  billingSubscription   WorkspaceBillingSubscription?
+  commitments                  Commitment[]
+  monthlyCommitments           MonthlyCommitmentInstance[]
+  commitmentReminderDeliveries CommitmentReminderDelivery[]
+  botSettings                  WorkspaceBotSettings?
 }
 
 model GoogleAccount {
@@ -132,6 +138,7 @@ model WhatsAppInstance {
   id           String    @id @default(cuid())
   instanceName String    @unique
   phoneNumber  String?
+  botAlias     String    @default("mypocket")
   status       String    @default("OFFLINE")
   workspaceId  String
   createdAt    DateTime  @default(now())
@@ -148,6 +155,61 @@ model Subscription {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+model WorkspaceBillingSubscription {
+  id                     String    @id @default(cuid())
+  workspaceId            String    @unique
+  ownerUserId            String
+  plan                   String
+  status                 String    @default("PENDING")
+  provider               String    @default("HITPAY")
+  providerPlanId         String
+  pendingPlan            String?
+  pendingProviderPlanId  String?
+  planChangeRequestedAt  DateTime?
+  providerSubscriptionId String?   @unique
+  checkoutReference      String?   @unique
+  checkoutUrl            String?
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  lastPaymentAt          DateTime?
+  lastPaymentStatus      String?
+  canceledAt             DateTime?
+  lastWebhookAt          DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  workspace     Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  ownerUser     User                  @relation("WorkspaceBillingSubscriptionOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  webhookEvents BillingWebhookEvent[]
+
+  @@index([ownerUserId])
+  @@index([plan, status])
+}
+
+model BillingWebhookEvent {
+  id                             String    @id @default(cuid())
+  workspaceBillingSubscriptionId String?
+  provider                       String    @default("HITPAY")
+  eventKey                       String    @unique
+  signature                      String
+  eventObject                    String
+  eventType                      String
+  externalId                     String?
+  status                         String    @default("RECEIVED")
+  payload                        Json
+  processedAt                    DateTime?
+  errorMessage                   String?
+  createdAt                      DateTime  @default(now())
+  updatedAt                      DateTime  @updatedAt
+
+  workspaceBillingSubscription WorkspaceBillingSubscription? @relation(fields: [workspaceBillingSubscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceBillingSubscriptionId])
+  @@index([eventObject, eventType])
+  @@index([externalId])
 }
 
 model WorkspaceMember {
@@ -275,3 +337,127 @@ model WorkspaceInvite {
   @@index([email])
   @@index([status, expiresAt])
 }
+
+// ===== SPRINT A: COMMITMENTS & REMINDERS =====
+
+model WorkspaceBotSettings {
+  id                              String   @id @default(cuid())
+  workspaceId                     String   @unique
+  botEnabled                      Boolean  @default(true)
+  replyLanguage                   String   @default("ms")
+  timezone                        String   @default("Asia/Kuala_Lumpur")
+  defaultReminderDaysBefore       Int      @default(2)
+  defaultReminderTime             String   @default("09:00")
+  quietHoursStart                 String   @default("22:00")
+  quietHoursEnd                   String   @default("08:00")
+  overdueReminderEnabled          Boolean  @default(true)
+  whatsappNotificationEnabled     Boolean  @default(true)
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Commitment {
+  id                   String   @id @default(cuid())
+  workspaceId          String
+  ownerUserId          String
+  name                 String
+  amount               Decimal
+  currency             String   @default("MYR")
+  dueDay               Int
+  reminderDaysBefore   Int      @default(2)
+  reminderTime         String   @default("09:00")
+  timezone             String   @default("Asia/Kuala_Lumpur")
+  isActive             Boolean  @default(true)
+  archivedAt           DateTime?
+  createdById          String
+  updatedById          String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  workspace        Workspace                   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  monthlyInstances MonthlyCommitmentInstance[]
+
+  @@index([workspaceId, isActive, archivedAt])
+  @@index([workspaceId, name])
+  @@index([ownerUserId])
+}
+
+model MonthlyCommitmentInstance {
+  id                 String                  @id @default(cuid())
+  commitmentId       String
+  workspaceId        String
+  periodYear         Int
+  periodMonth        Int
+  dueDate            DateTime
+  status             MonthlyCommitmentStatus @default(PENDING)
+  paidAt             DateTime?
+  reminderSentAt     DateTime?
+  lastReminderKey    String?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  commitment Commitment                  @relation(fields: [commitmentId], references: [id], onDelete: Cascade)
+  workspace  Workspace                   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  deliveries CommitmentReminderDelivery[]
+
+  @@unique([commitmentId, periodYear, periodMonth])
+  @@index([workspaceId, status, dueDate])
+  @@index([workspaceId, periodYear, periodMonth, status])
+}
+
+model CommitmentReminderDelivery {
+  id                    String                           @id @default(cuid())
+  monthlyCommitmentId   String
+  workspaceId           String
+  kind                  CommitmentReminderDeliveryKind
+  status                CommitmentReminderDeliveryStatus @default(PENDING)
+  idempotencyKey        String                           @unique
+  scheduledFor          DateTime
+  nextAttemptAt         DateTime?
+  attemptCount          Int                              @default(0)
+  maxAttempts           Int                              @default(3)
+  claimedAt             DateTime?
+  claimToken            String?
+  claimExpiresAt        DateTime?
+  recipientPhone        String?
+  providerMessageId     String?
+  lastErrorCode         String?
+  lastErrorMessage      String?
+  lastAttemptAt         DateTime?
+  sentAt                DateTime?
+  createdAt             DateTime                         @default(now())
+  updatedAt             DateTime                         @updatedAt
+
+  monthlyCommitment MonthlyCommitmentInstance @relation(fields: [monthlyCommitmentId], references: [id], onDelete: Cascade)
+  workspace         Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([monthlyCommitmentId, kind])
+  @@index([workspaceId, status])
+  @@index([status, scheduledFor, nextAttemptAt])
+  @@index([claimExpiresAt])
+}
+
+enum MonthlyCommitmentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  SKIPPED
+}
+
+enum CommitmentReminderDeliveryKind {
+  DUE
+  OVERDUE
+}
+
+enum CommitmentReminderDeliveryStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  UNKNOWN
+  CANCELLED
+}
+
+// ===== END SPRINT A: COMMITMENTS & REMINDERS =====

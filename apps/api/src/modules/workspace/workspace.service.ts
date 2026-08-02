@@ -173,6 +173,99 @@ export class WorkspaceService {
 
 
 
+  async updateWorkspaceName(
+    userId:string,
+    workspaceId:string,
+    requestedName:string,
+  ):Promise<WorkspaceContext> {
+
+    const membership =
+      await this.memberRepository
+        .findMembership(
+          userId,
+          workspaceId,
+        );
+
+
+    if(!membership){
+
+      throw new AppError(
+        "WORKSPACE_NOT_FOUND",
+        "Workspace membership not found",
+        404,
+      );
+
+    }
+
+
+    if(
+      membership.workspace.type !== "FAMILY"
+      &&
+      membership.workspace.type !== "BUSINESS"
+    ){
+
+      throw new AppError(
+        "WORKSPACE_RENAME_NOT_AVAILABLE",
+        "Workspace rename is only available for Family and Business workspaces",
+        403,
+      );
+
+    }
+
+
+    if(
+      membership.role !== "OWNER"
+      &&
+      membership.role !== "ADMIN"
+    ){
+
+      throw new AppError(
+        "INSUFFICIENT_ROLE",
+        "Only the Workspace Owner or Admin can rename this workspace",
+        403,
+      );
+
+    }
+
+
+    const name =
+      requestedName
+        .trim()
+        .replace(
+          /\s+/g,
+          " ",
+        );
+
+
+    const workspace =
+      await this.repository
+        .updateWorkspaceName(
+          workspaceId,
+          name,
+        );
+
+
+    return {
+
+      id:
+        workspace.id,
+
+      name:
+        workspace.name,
+
+      type:
+        workspace.type as WorkspaceContext["type"],
+
+      role:
+        membership.role as WorkspaceContext["role"],
+
+    };
+
+  }
+
+
+
+
   async createWorkspace(
     userId:string,
     name:string,
@@ -294,13 +387,152 @@ export class WorkspaceService {
         .findAdminUsers();
 
 
-    return users
-      .map(
-        (user) =>
-          this.toAdminUserPackage(
-            user,
-          ),
+    const activeBilling =
+      await this.app.prisma
+        .workspaceBillingSubscription
+        .findMany({
+          where:{
+            status:
+              "ACTIVE",
+          },
+
+          select:{
+            workspaceId:
+              true,
+
+            plan:
+              true,
+
+            status:
+              true,
+          },
+        });
+
+
+    const billingByWorkspace =
+      new Map(
+        activeBilling.map(
+          (
+            billing,
+          ) => [
+            billing.workspaceId,
+            billing,
+          ],
+        ),
       );
+
+
+    return users.map(
+      (
+        user,
+      ) => {
+
+        const memberships =
+          [...user.memberships]
+            .filter(
+              (
+                membership,
+              ) =>
+                Boolean(
+                  membership.workspace,
+                ),
+            )
+            .sort(
+              (
+                left,
+                right,
+              ) => {
+
+                const leftOwned =
+                  (
+                    left.role === "OWNER"
+                    &&
+                    left.workspace.ownerId
+                      === user.id
+                  )
+                    ? 1
+                    : 0;
+
+
+                const rightOwned =
+                  (
+                    right.role === "OWNER"
+                    &&
+                    right.workspace.ownerId
+                      === user.id
+                  )
+                    ? 1
+                    : 0;
+
+
+                if(leftOwned !== rightOwned){
+
+                  return rightOwned - leftOwned;
+
+                }
+
+
+                return (
+                  left.createdAt.getTime()
+                  -
+                  right.createdAt.getTime()
+                );
+
+              },
+            );
+
+
+        const selectedMembership =
+          memberships[0]
+          ??
+          null;
+
+
+        const mapped =
+          this.toAdminUserPackage({
+            ...user,
+            memberships,
+          });
+
+
+        const billing =
+          selectedMembership
+            ? billingByWorkspace.get(
+                selectedMembership.workspaceId,
+              )
+            : null;
+
+
+        const effectivePackage:
+          WorkspacePackage =
+            (
+              billing?.plan
+                === "PERSONAL_PRO"
+              &&
+              billing.status
+                === "ACTIVE"
+            )
+              ? "PERSONAL_PRO"
+              : mapped.package;
+
+
+        return {
+          ...mapped,
+
+          package:
+            effectivePackage,
+
+          subscriptionPlan:
+            effectivePackage,
+
+          subscriptionStatus:
+            billing?.status
+            ??
+            mapped.subscriptionStatus,
+        };
+
+      },
+    );
 
   }
 
@@ -338,23 +570,57 @@ export class WorkspaceService {
     const activeMembership =
       [...user.memberships]
         .filter(
-          (item) =>
+          (
+            membership,
+          ) =>
             Boolean(
-              item.workspace,
+              membership.workspace,
             ),
         )
         .sort(
-          (left, right) =>
-            right.createdAt.getTime()
-            -
-            left.createdAt.getTime(),
-        )
-        .find(
-          (item) =>
-            item.role === "OWNER",
-        )
-      ??
-      null;
+          (
+            left,
+            right,
+          ) => {
+
+            const leftOwned =
+              (
+                left.role === "OWNER"
+                &&
+                left.workspace.ownerId
+                  === user.id
+              )
+                ? 1
+                : 0;
+
+
+            const rightOwned =
+              (
+                right.role === "OWNER"
+                &&
+                right.workspace.ownerId
+                  === user.id
+              )
+                ? 1
+                : 0;
+
+
+            if(leftOwned !== rightOwned){
+
+              return rightOwned - leftOwned;
+
+            }
+
+
+            return (
+              left.createdAt.getTime()
+              -
+              right.createdAt.getTime()
+            );
+
+          },
+        )[0];
+
 
 
     const workspace =
@@ -370,6 +636,50 @@ export class WorkspaceService {
         "User workspace not found",
         404,
       );
+
+    }
+
+
+    if(
+      activeMembership?.role
+        !== "OWNER"
+      ||
+      workspace.ownerId
+        !== user.id
+    ){
+
+      throw new AppError(
+        "ADMIN_INHERITED_PACKAGE_READ_ONLY",
+        "Inherited Family or Business access cannot replace an owned workspace package",
+        409,
+      );
+
+    }
+
+
+
+    if(
+      packageType === "PERSONAL_PRO"
+    ){
+
+      const familyMembership =
+        user.memberships.find(
+          (item:any)=>
+            item.workspace?.type === "FAMILY"
+            &&
+            item.role !== "OWNER"
+        );
+
+
+      if(familyMembership){
+
+        throw new AppError(
+          "USER_STILL_IN_FAMILY",
+          "User must leave Family workspace first",
+          403,
+        );
+
+      }
 
     }
 
@@ -727,6 +1037,95 @@ export class WorkspaceService {
 
 
 
+  async removeMember(
+    input:{
+      actorUserId:string;
+      memberId:string;
+    },
+  ){
+
+    const member =
+      await this.app.prisma.workspaceMember.findUnique({
+        where:{
+          id:
+            input.memberId,
+        },
+      });
+
+
+    if(!member){
+
+      throw new AppError(
+        "MEMBER_NOT_FOUND",
+        "Member not found",
+        404,
+      );
+
+    }
+
+
+    const actor =
+      await this.app.prisma.workspaceMember.findUnique({
+        where:{
+          userId_workspaceId:{
+            userId:
+              input.actorUserId,
+
+            workspaceId:
+              member.workspaceId,
+          },
+        },
+      });
+
+
+    if(
+      !actor
+      ||
+      (
+        actor.role !== "OWNER"
+        &&
+        actor.role !== "ADMIN"
+      )
+    ){
+
+      throw new AppError(
+        "MEMBER_REMOVE_FORBIDDEN",
+        "Only owner or admin can remove member",
+        403,
+      );
+
+    }
+
+
+    if(member.role === "OWNER"){
+
+      throw new AppError(
+        "OWNER_REMOVE_BLOCKED",
+        "Workspace owner cannot be removed",
+        400,
+      );
+
+    }
+
+
+    await this.app.prisma.workspaceMember.delete({
+      where:{
+        id:
+          input.memberId,
+      },
+    });
+
+
+    return {
+      success:true,
+      removedMemberId:
+        input.memberId,
+    };
+
+  }
+
+
+
   async createInvite(
     input:{
       actorUserId:string;
@@ -904,7 +1303,53 @@ export class WorkspaceService {
         },
       });
 
-    if(!invite || invite.status !== "PENDING"){
+    if(!invite){
+      throw new AppError(
+        "INVITE_NOT_FOUND",
+        "Invite is not valid",
+        404,
+      );
+    }
+
+    if(invite.status !== "PENDING"){
+      if(
+        invite.status === "ACCEPTED"
+        &&
+        invite.acceptedById === input.userId
+        &&
+        invite.email.toLowerCase() === email
+      ){
+        const existingMember =
+          await this.app.prisma.workspaceMember.findUnique({
+            where:{
+              userId_workspaceId:{
+                userId:
+                  input.userId,
+                workspaceId:
+                  invite.workspaceId,
+              },
+            },
+          });
+
+        if(existingMember){
+          const authToken =
+            await this.tokenService.generate(
+              input.userId,
+              email,
+              invite.workspaceId,
+              existingMember.role,
+            );
+
+          return {
+            success:true,
+            token:authToken,
+            workspaceId:invite.workspaceId,
+            memberId:existingMember.id,
+            role:existingMember.role,
+          };
+        }
+      }
+
       throw new AppError(
         "INVITE_NOT_FOUND",
         "Invite is not valid",
@@ -1271,6 +1716,23 @@ export class WorkspaceService {
         isSuperAdminEmail(
           user.email,
         ),
+
+      status:
+        user.status
+        ??
+        "ACTIVE",
+
+      bannedAt:
+        user.bannedAt
+          ?.toISOString()
+        ??
+        null,
+
+      deactivatedAt:
+        user.deactivatedAt
+          ?.toISOString()
+        ??
+        null,
 
       package:
         this.resolveUserPackage(

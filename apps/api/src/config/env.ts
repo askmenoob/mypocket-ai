@@ -71,6 +71,50 @@ const EnvSchema = z.object({
   GOOGLE_TEMPLATE_ROOT_FOLDER_ID:
     z.string()
       .optional(),
+
+  HITPAY_ENVIRONMENT:
+    z.enum([
+      "sandbox",
+      "production",
+    ]),
+
+  HITPAY_API_BASE_URL:
+    z.string()
+      .url(),
+
+  HITPAY_API_KEY:
+    z.string()
+      .min(40),
+
+  HITPAY_SALT:
+    z.string()
+      .min(32),
+
+  HITPAY_WEBHOOK_SALT:
+    z.string()
+      .min(32)
+      .optional(),
+
+  HITPAY_WEBHOOK_URL:
+    z.string()
+      .url(),
+
+  HITPAY_RETURN_URL:
+    z.string()
+      .url(),
+
+  HITPAY_PLAN_PERSONAL_PRO_ID:
+    z.string()
+      .uuid(),
+
+  HITPAY_PLAN_FAMILY_ID:
+    z.string()
+      .uuid(),
+
+  HITPAY_PLAN_BUSINESS_ID:
+    z.string()
+      .uuid(),
+
 });
 
 export const env = EnvSchema.parse(process.env);

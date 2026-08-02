@@ -77,6 +77,16 @@ export type WhatsAppInstance = Prisma.WhatsAppInstanceModel
  */
 export type Subscription = Prisma.SubscriptionModel
 /**
+ * Model WorkspaceBillingSubscription
+ * 
+ */
+export type WorkspaceBillingSubscription = Prisma.WorkspaceBillingSubscriptionModel
+/**
+ * Model BillingWebhookEvent
+ * 
+ */
+export type BillingWebhookEvent = Prisma.BillingWebhookEventModel
+/**
  * Model WorkspaceMember
  * 
  */
@@ -106,3 +116,23 @@ export type PaymentMethod = Prisma.PaymentMethodModel
  * 
  */
 export type WorkspaceInvite = Prisma.WorkspaceInviteModel
+/**
+ * Model WorkspaceBotSettings
+ * 
+ */
+export type WorkspaceBotSettings = Prisma.WorkspaceBotSettingsModel
+/**
+ * Model Commitment
+ * 
+ */
+export type Commitment = Prisma.CommitmentModel
+/**
+ * Model MonthlyCommitmentInstance
+ * 
+ */
+export type MonthlyCommitmentInstance = Prisma.MonthlyCommitmentInstanceModel
+/**
+ * Model CommitmentReminderDelivery
+ * 
+ */
+export type CommitmentReminderDelivery = Prisma.CommitmentReminderDeliveryModel

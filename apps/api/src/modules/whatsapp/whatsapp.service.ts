@@ -772,6 +772,135 @@ export class WhatsAppService {
 
 
 
+  async updateWorkspaceWhatsAppBotAlias(
+    input:{
+      actorUserId:string;
+
+      workspaceId:string;
+
+      botAlias:string;
+    },
+  ){
+
+    const actorMember =
+      await this.app.prisma.workspaceMember
+        .findFirst({
+          where:{
+            workspaceId:
+              input.workspaceId,
+
+            userId:
+              input.actorUserId,
+          },
+        });
+
+
+    if(
+      !actorMember
+      ||
+      (
+        actorMember.role !== "OWNER"
+        &&
+        actorMember.role !== "ADMIN"
+      )
+    ){
+
+      throw new AppError(
+        "WHATSAPP_BOT_ALIAS_FORBIDDEN",
+        "Only Owner/Admin can update WhatsApp bot alias",
+        403,
+      );
+
+    }
+
+
+    const botAlias =
+      input.botAlias
+        .trim()
+        .replace(
+          /^@+/,
+          "",
+        )
+        .toLowerCase();
+
+
+    if(
+      botAlias.length < 2
+      ||
+      botAlias.length > 32
+      ||
+      !/^[a-z0-9._-]+$/.test(
+        botAlias,
+      )
+    ){
+
+      throw new AppError(
+        "WHATSAPP_BOT_ALIAS_INVALID",
+        "Bot alias must contain 2 to 32 letters, numbers, dot, underscore or dash",
+        400,
+      );
+
+    }
+
+
+    const instance =
+      await this.getOrCreateWorkspaceWhatsAppInstance(
+        input.workspaceId,
+      );
+
+
+    const updated =
+      await this.app.prisma.whatsAppInstance
+        .update({
+          where:{
+            id:
+              instance.id,
+          },
+
+          data:{
+            botAlias,
+          },
+
+          select:{
+            id:true,
+
+            instanceName:true,
+
+            botAlias:true,
+
+            updatedAt:true,
+          },
+        });
+
+
+    return {
+      message:
+        "WhatsApp bot alias updated",
+
+      botAlias:
+        updated.botAlias,
+
+      groupTrigger:
+        `@${updated.botAlias}`,
+
+      instance:{
+        id:
+          updated.id,
+
+        instanceName:
+          updated.instanceName,
+
+        updatedAt:
+          updated.updatedAt,
+      },
+    };
+
+  }
+
+
+
+
+
   async getWorkspaceWhatsAppStatus(
     input:{
       actorUserId:string;
@@ -920,6 +1049,11 @@ export class WhatsAppService {
 
             instanceName:
               refreshedInstance.instanceName,
+
+            botAlias:
+              instance?.botAlias
+              ??
+              "mypocket",
 
             phoneNumber:
               refreshedInstance.phoneNumber,
@@ -1777,6 +1911,161 @@ export class WhatsAppService {
     }
 
 
+    const instance =
+      await this.app.prisma.whatsAppInstance
+        .findUnique({
+          where:{
+            instanceName:
+              normalized.instanceName!,
+          },
+        });
+
+
+    if(!instance){
+
+      return {
+
+        message:
+          "WhatsApp webhook ignored",
+
+        source:
+          "EVOLUTION",
+
+        normalized:{
+          ...normalized,
+
+          reason:
+            "WHATSAPP_INSTANCE_NOT_REGISTERED",
+        },
+
+      };
+
+    }
+
+
+    const isGroupMessage =
+      normalized.remoteJid
+        ?.endsWith(
+          "@g.us",
+        )
+      ??
+      false;
+
+
+    if(isGroupMessage){
+
+      const originalText =
+        (
+          normalized.text
+          ??
+          ""
+        )
+          .trim();
+
+
+      const botAlias =
+        instance.botAlias
+          .trim()
+          .replace(
+            /^@+/,
+            "",
+          )
+          .toLowerCase();
+
+
+      const aliasToken =
+        botAlias
+          ?
+          `@${botAlias}`
+          :
+          "";
+
+
+      const lowerText =
+        originalText
+          .toLowerCase();
+
+
+      let triggeredText:
+        | string
+        | null =
+          null;
+
+
+      if(
+        originalText.startsWith(
+          "!",
+        )
+      ){
+
+        triggeredText =
+          originalText
+            .slice(
+              1,
+            )
+            .trim();
+
+      }
+      else if(
+        aliasToken
+        &&
+        (
+          lowerText.startsWith(
+            `${aliasToken} `,
+          )
+          ||
+          lowerText.startsWith(
+            `${aliasToken},`,
+          )
+          ||
+          lowerText.startsWith(
+            `${aliasToken}:`,
+          )
+        )
+      ){
+
+        triggeredText =
+          originalText
+            .slice(
+              aliasToken.length,
+            )
+            .replace(
+              /^[\s,:]+/,
+              "",
+            )
+            .trim();
+
+      }
+
+
+      if(!triggeredText){
+
+        return {
+
+          message:
+            "WhatsApp webhook ignored",
+
+          source:
+            "EVOLUTION",
+
+          normalized:{
+            ...normalized,
+
+            reason:
+              "GROUP_TRIGGER_REQUIRED",
+          },
+
+        };
+
+      }
+
+
+      normalized.text =
+        triggeredText;
+
+    }
+
+
     if(
       WhatsAppCommandParser
         .isHelp(
@@ -1788,7 +2077,11 @@ export class WhatsAppService {
 
       await this.safeSendWebhookReply(
         normalized,
-        this.buildHelpReply(),
+        this.buildHelpReply(
+          instance.botAlias
+          ??
+          "mypocket",
+        ),
       );
 
 
@@ -1912,42 +2205,38 @@ export class WhatsAppService {
       });
 
 
-    const instance =
-      await this.app.prisma.whatsAppInstance
-        .findUnique({
-          where:{
-            instanceName:
-              normalized.instanceName!,
-          },
-        });
+    const actorRemoteJidIsGroup =
+      (
+        normalized.remoteJid
+        ??
+        ""
+      )
+        .toLowerCase()
+        .endsWith(
+          "@g.us",
+        );
 
 
-    if(!instance){
-
-      return {
-
-        message:
-          "WhatsApp webhook ignored",
-
-        source:
-          "EVOLUTION",
-
-        normalized:{
-          ...normalized,
-
-          reason:
-            "WHATSAPP_INSTANCE_NOT_REGISTERED",
-        },
-
-      };
-
-    }
+    const actorJid =
+      actorRemoteJidIsGroup
+        ?
+        (
+          normalized.participantJid
+          ??
+          normalized.remoteJid
+        )
+        :
+        (
+          normalized.remoteJid
+          ??
+          normalized.participantJid
+        );
 
 
     const actorMember =
       await this.findWebhookActorMember(
         instance.workspaceId,
-        normalized.remoteJid,
+        actorJid,
       );
 
 
@@ -4886,15 +5175,16 @@ export class WhatsAppService {
 
 
 
-  private buildHelpReply(){
+  private buildHelpReply(
+    botAlias:string,
+  ){
 
     return WhatsAppReplyBuilder
-      .help();
+      .help(
+        botAlias,
+      );
 
   }
-
-
-
 
 
   private async safeParseWebhookTransaction(
@@ -5028,10 +5318,23 @@ export class WhatsAppService {
     }
 
 
+    const normalizedRemoteJid =
+      remoteJid
+        .trim();
+
+
     const number =
-      this.extractPhoneNumber(
-        remoteJid,
-      );
+      normalizedRemoteJid
+        .toLowerCase()
+        .endsWith(
+          "@g.us",
+        )
+        ?
+        normalizedRemoteJid
+        :
+        this.extractPhoneNumber(
+          normalizedRemoteJid,
+        );
 
 
     if(!number){
@@ -5463,6 +5766,27 @@ export class WhatsAppService {
           key.remoteJid
           ??
           data.remoteJid,
+        ),
+
+      participantJid:
+        this.asString(
+          key.participantAlt,
+        )
+        ||
+        this.asString(
+          data.participantAlt,
+        )
+        ||
+        this.asString(
+          key.participant,
+        )
+        ||
+        this.asString(
+          data.participant,
+        )
+        ||
+        this.asString(
+          data.sender,
         ),
 
       pushName:

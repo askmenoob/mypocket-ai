@@ -11,6 +11,7 @@ import {
 import {
   CreateWorkspaceSchema,
   UpdateUserPackageSchema,
+  UpdateWorkspaceNameSchema,
 } from "./workspace.schemas.js";
 
 
@@ -252,6 +253,33 @@ export class WorkspaceController {
 
 
 
+  updateName = async (
+    request:
+      FastifyRequest,
+  ) => {
+
+    await request.jwtVerify();
+
+
+    const body =
+      UpdateWorkspaceNameSchema
+        .parse(
+          request.body,
+        );
+
+
+    return this.service
+      .updateWorkspaceName(
+        request.user.userId,
+        request.user.workspaceId,
+        body.name,
+      );
+
+  };
+
+
+
+
   create = async (
     request:
       FastifyRequest,
@@ -355,6 +383,29 @@ export class WorkspaceController {
       return reply.send(result);
 
     };
+
+
+
+  removeMember = async (
+    request:
+      FastifyRequest<{
+        Params:{
+          memberId:string;
+        };
+      }>,
+  ) => {
+
+    await request.jwtVerify();
+
+    return this.service.removeMember({
+      actorUserId:
+        request.user.userId,
+
+      memberId:
+        request.params.memberId,
+    });
+
+  };
 
 
 

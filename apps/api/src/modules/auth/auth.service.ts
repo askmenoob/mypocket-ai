@@ -171,6 +171,7 @@ export class AuthService {
 
   async getCurrentSession(
     userId: string,
+    workspaceId?: string,
   ) {
 
     const user =
@@ -189,7 +190,24 @@ export class AuthService {
 
 
     const membership =
-      user.memberships[0];
+      workspaceId
+        ? user.memberships.find(
+          (item) =>
+            item.workspaceId === workspaceId,
+        )
+        : (
+          user.memberships.find(
+            (item) =>
+              item.workspace?.type === "BUSINESS",
+          )
+          ??
+          user.memberships.find(
+            (item) =>
+              item.workspace?.type === "FAMILY",
+          )
+          ??
+          user.memberships[0]
+        );
 
 
     if (!membership) {

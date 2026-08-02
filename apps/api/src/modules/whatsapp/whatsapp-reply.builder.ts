@@ -141,10 +141,42 @@ export class WhatsAppReplyBuilder {
 
 
 
-  static help(){
+  static help(
+    botAlias:string,
+  ){
+
+    const normalizedBotAlias =
+      botAlias
+        .trim()
+        .replace(
+          /^@+/,
+          "",
+        )
+        .toLowerCase()
+      ||
+      "mypocket";
+
+
+    const aliasTrigger =
+      `@${normalizedBotAlias}`;
+
 
     return [
       "👋 MyPocket AI",
+      "",
+      "📣 *Cara guna dalam WhatsApp group:*",
+      `• Mulakan mesej dengan *!* atau *${aliasTrigger}*`,
+      "• Mesej tanpa trigger akan diabaikan oleh bot.",
+      "",
+      "*Contoh dalam group:*",
+      "• !makan kedai mamak rm7.80 tng",
+      `• ${aliasTrigger} petrol shell rm50 cash`,
+      "• !today",
+      `• ${aliasTrigger} help`,
+      "",
+      "💬 *Dalam private chat:*",
+      "• Tidak perlu ! atau alias.",
+      "• Contoh: makan kedai mamak rm7.80 tng",
       "",
       "Hantar transaksi dalam format ringkas:",
       "• makan kedai mamak rm7.80 tng",
@@ -157,7 +189,8 @@ export class WhatsAppReplyBuilder {
       "• week — ringkasan minggu ini",
       "• month — ringkasan bulan ini",
       "• undo — batalkan transaksi terakhir",
-      "• categories — senarai kategori auto\n• members — senarai ahli WhatsApp",
+      "• categories — senarai kategori auto",
+      "• members — senarai ahli WhatsApp",
       "• methods — senarai payment method",
       "• commands — senarai semua command",
       "• status — semak sambungan bot",
@@ -169,9 +202,6 @@ export class WhatsAppReplyBuilder {
     );
 
   }
-
-
-
 
 
   static parseFailed(

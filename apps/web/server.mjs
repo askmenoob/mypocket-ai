@@ -29,6 +29,20 @@ createServer((req, res) => {
 
   if (
     isPublicDomain &&
+    [
+      "/privacy",
+      "/terms",
+      "/blog",
+      "/help",
+      "/guides",
+      "/updates",
+    ].includes(safePath)
+  ) {
+    filePath = join(root, "index.html");
+  }
+
+  if (
+    isPublicDomain &&
     (
       safePath === "/" ||
       safePath === "/index.html"

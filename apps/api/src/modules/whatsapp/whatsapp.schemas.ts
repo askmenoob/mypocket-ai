@@ -53,3 +53,20 @@ z.object({
       .min(6),
 
 });
+
+
+
+export const whatsappBotAliasSchema =
+z.object({
+
+  botAlias:
+    z.string()
+      .trim()
+      .min(2)
+      .max(32)
+      .regex(
+        /^@?[A-Za-z0-9._-]+$/,
+        "Bot alias may only contain letters, numbers, dot, underscore and dash",
+      ),
+
+});

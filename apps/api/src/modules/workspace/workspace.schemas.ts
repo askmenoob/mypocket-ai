@@ -52,6 +52,29 @@ export type WorkspaceResponse =
 
 
 
+export const UpdateWorkspaceNameSchema =
+  z.object({
+
+    name:
+      z.string()
+        .trim()
+        .min(
+          3,
+          "Workspace name must contain at least 3 characters",
+        )
+        .max(
+          80,
+          "Workspace name cannot exceed 80 characters",
+        )
+        .regex(
+          /^[^\r\n\t]+$/u,
+          "Workspace name contains invalid characters",
+        ),
+
+  });
+
+
+
 export const CreateWorkspaceSchema =
   z.object({
 
