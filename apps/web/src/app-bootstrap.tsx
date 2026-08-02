@@ -15,6 +15,7 @@ const STORAGE = {
   onboarding: "imai_onboarding_completed",
   wizardStep: "imai_setup_wizard_step",
   invite: "imai_pending_invite_token",
+  dashboardLanguage: "imai_dashboard_language",
 };
 
 function googleLoginUrl(){
@@ -44,6 +45,10 @@ type WorkspaceType =
 type WorkspacePackage =
   | WorkspaceType
   | "PERSONAL_PRO";
+
+type DashboardLanguage =
+  | "ms"
+  | "en";
 
 type AdminUser = {
   userId:string;
@@ -591,28 +596,213 @@ function resolveTransactionFilterRange(
 }
 
 
+function normalizeDashboardLanguage(
+  value:string | null | undefined,
+):DashboardLanguage{
+
+  return value === "ms"
+    ? "ms"
+    : "en";
+
+}
+
+
+const DASHBOARD_TEXT = {
+  en:{
+    navDashboard:"Dashboard",
+    navTransactions:"Transactions",
+    navCommitments:"Commitments",
+    navWhatsApp:"WhatsApp",
+    navGoogleSheet:"Google Sheet",
+    navAdmin:"Admin",
+    navBotSettings:"Bot Settings",
+    navSettings:"Settings",
+    apiHealthy:"● API Healthy",
+    install:"Install",
+    setup:"Setup",
+    logout:"Logout",
+    managePlan:"Manage plan",
+    dashboardLanguage:"Dashboard language",
+    dashboardLanguageHelp:"Controls dashboard labels on this device. WhatsApp reply language remains in Bot Settings.",
+    languageSaved:"Dashboard language changed to English.",
+    transactions:"Transactions",
+    recentTransactions:"Recent Transactions",
+    transactionPeriod:"Transaction period",
+    record:"record",
+    records:"records",
+    date:"Date",
+    type:"Type",
+    category:"Category",
+    merchant:"Merchant",
+    amount:"Amount",
+    source:"Source",
+    recordedBy:"Recorded by",
+    addTransaction:"Add Transaction",
+    refreshTransactions:"Refresh transactions",
+    commitments:"Commitments & Reminders",
+    unpaid:"Unpaid",
+    paid:"Paid",
+    overdue:"Overdue",
+    all:"All",
+    inactive:"Inactive",
+    refresh:"Refresh",
+    currentMonth:"Current month",
+    totalUnpaid:"Total unpaid",
+    commitmentName:"Commitment name",
+    commitmentAmount:"Amount RM",
+    paymentDay:"Payment day",
+    earlyReminder:"Early reminder",
+    time:"Time",
+    addCommitment:"Add commitment",
+    due:"due",
+    nextReminder:"Next reminder",
+    markPaid:"Mark paid",
+    deactivate:"Deactivate",
+    activate:"Activate",
+    archive:"Archive",
+    botEnabled:"Bot enabled",
+    replyLanguage:"Reply language",
+    timezone:"Timezone",
+    defaultReminderDaysBefore:"Default reminder days before",
+    defaultReminderTime:"Default reminder time",
+    quietHoursStart:"Quiet hours start",
+    quietHoursEnd:"Quiet hours end",
+    saveBotSettings:"Save bot settings",
+    botSettingsHelp:"Reply language controls WhatsApp reminder and bot help replies. If the bot is disabled, scheduled reminders are not sent. Dashboard can still be used.",
+    workspace:"Workspace",
+    workspaceType:"Workspace type",
+    yourRole:"Your role",
+    api:"API",
+    healthy:"Healthy",
+    checking:"Checking",
+    connected:"Connected",
+    notConnected:"Not connected",
+    dashboardActions:"Dashboard actions",
+    installApp:"Install app",
+    openSetupWizard:"Open setup wizard",
+    refreshDashboard:"Refresh dashboard",
+    today:"Today",
+    thisWeek:"This Week",
+    thisMonth:"This Month",
+    thisYear:"This Year",
+    allTime:"All Time",
+    customRange:"Custom Range",
+    from:"From",
+    until:"Until",
+    to:"to",
+  },
+  ms:{
+    navDashboard:"Papan Pemuka",
+    navTransactions:"Transaksi",
+    navCommitments:"Komitmen",
+    navWhatsApp:"WhatsApp",
+    navGoogleSheet:"Google Sheet",
+    navAdmin:"Admin",
+    navBotSettings:"Tetapan Bot",
+    navSettings:"Tetapan",
+    apiHealthy:"● API Sihat",
+    install:"Pasang",
+    setup:"Setup",
+    logout:"Log keluar",
+    managePlan:"Urus plan",
+    dashboardLanguage:"Bahasa dashboard",
+    dashboardLanguageHelp:"Mengawal label dashboard pada device ini. Bahasa reply WhatsApp kekal di Tetapan Bot.",
+    languageSaved:"Bahasa dashboard ditukar kepada Bahasa Melayu.",
+    transactions:"Transaksi",
+    recentTransactions:"Transaksi Terkini",
+    transactionPeriod:"Tempoh transaksi",
+    record:"rekod",
+    records:"rekod",
+    date:"Tarikh",
+    type:"Jenis",
+    category:"Kategori",
+    merchant:"Merchant",
+    amount:"Jumlah",
+    source:"Sumber",
+    recordedBy:"Direkod oleh",
+    addTransaction:"Tambah Transaksi",
+    refreshTransactions:"Refresh transaksi",
+    commitments:"Komitmen & Reminder",
+    unpaid:"Belum dibayar",
+    paid:"Sudah dibayar",
+    overdue:"Lewat",
+    all:"Semua",
+    inactive:"Tidak aktif",
+    refresh:"Refresh",
+    currentMonth:"Bulan semasa",
+    totalUnpaid:"Jumlah belum dibayar",
+    commitmentName:"Nama komitmen",
+    commitmentAmount:"Jumlah RM",
+    paymentDay:"Hari bayaran",
+    earlyReminder:"Reminder awal",
+    time:"Waktu",
+    addCommitment:"Tambah komitmen",
+    due:"tarikh bayar",
+    nextReminder:"Reminder seterusnya",
+    markPaid:"Tanda dibayar",
+    deactivate:"Nyahaktifkan",
+    activate:"Aktifkan",
+    archive:"Arkib",
+    botEnabled:"Bot aktif",
+    replyLanguage:"Bahasa reply",
+    timezone:"Zon masa",
+    defaultReminderDaysBefore:"Default hari reminder awal",
+    defaultReminderTime:"Default waktu reminder",
+    quietHoursStart:"Waktu senyap mula",
+    quietHoursEnd:"Waktu senyap tamat",
+    saveBotSettings:"Simpan tetapan bot",
+    botSettingsHelp:"Bahasa reply mengawal WhatsApp reminder dan bantuan bot. Jika bot disabled, scheduled reminder tidak akan dihantar. Dashboard masih boleh digunakan.",
+    workspace:"Workspace",
+    workspaceType:"Jenis workspace",
+    yourRole:"Role anda",
+    api:"API",
+    healthy:"Sihat",
+    checking:"Menyemak",
+    connected:"Connected",
+    notConnected:"Belum connected",
+    dashboardActions:"Tindakan dashboard",
+    installApp:"Pasang app",
+    openSetupWizard:"Buka setup wizard",
+    refreshDashboard:"Refresh dashboard",
+    today:"Hari Ini",
+    thisWeek:"Minggu Ini",
+    thisMonth:"Bulan Ini",
+    thisYear:"Tahun Ini",
+    allTime:"Sepanjang Masa",
+    customRange:"Julat Tersuai",
+    from:"Dari",
+    until:"Sehingga",
+    to:"hingga",
+  },
+} as const;
+
+
 function transactionFilterDisplayLabel(
   mode:TransactionFilterMode,
   range:TransactionFilterRange,
+  language:DashboardLanguage = "en",
 ){
+
+  const text =
+    DASHBOARD_TEXT[language];
 
   const labels:
     Record<string, string> =
     {
       TODAY:
-        "Today",
+        text.today,
 
       WEEK:
-        "This Week",
+        text.thisWeek,
 
       MONTH:
-        "This Month",
+        text.thisMonth,
 
       YEAR:
-        "This Year",
+        text.thisYear,
 
       ALL:
-        "All Time",
+        text.allTime,
     };
 
 
@@ -620,7 +810,7 @@ function transactionFilterDisplayLabel(
 
     return labels[mode]
     ||
-    "Transactions";
+    text.transactions;
 
   }
 
@@ -631,7 +821,7 @@ function transactionFilterDisplayLabel(
     ) =>
       date
         ? date.toLocaleDateString(
-          "en-MY",
+          language === "ms" ? "ms-MY" : "en-MY",
           {
             day:
               "numeric",
@@ -679,19 +869,19 @@ function transactionFilterDisplayLabel(
 
   if(startLabel){
 
-    return `From ${startLabel}`;
+    return `${text.from} ${startLabel}`;
 
   }
 
 
   if(endLabel){
 
-    return `Until ${endLabel}`;
+    return `${text.until} ${endLabel}`;
 
   }
 
 
-  return "Custom Range";
+  return text.customRange;
 
 }
 
@@ -2938,11 +3128,15 @@ function TransactionFilterControls(
     customFrom:string;
     customTo:string;
     transactionCount:number;
+    language:DashboardLanguage;
     onModeChange:(mode:TransactionFilterMode) => void;
     onCustomFromChange:(value:string) => void;
     onCustomToChange:(value:string) => void;
   },
 ){
+
+  const text =
+    DASHBOARD_TEXT[props.language];
 
   const controlStyle:React.CSSProperties =
     {
@@ -3010,7 +3204,7 @@ function TransactionFilterControls(
         }}
       >
         <strong>
-          Transaction period
+          {text.transactionPeriod}
         </strong>
 
         <span
@@ -3022,11 +3216,7 @@ function TransactionFilterControls(
               12,
           }}
         >
-          {props.label} · {props.transactionCount} record{
-            props.transactionCount === 1
-              ? ""
-              : "s"
-          }
+          {props.label} · {props.transactionCount} {props.transactionCount === 1 ? text.record : text.records}
         </span>
       </div>
 
@@ -3056,27 +3246,27 @@ function TransactionFilterControls(
           }
         >
           <option value="TODAY">
-            Today
+            {text.today}
           </option>
 
           <option value="WEEK">
-            This Week
+            {text.thisWeek}
           </option>
 
           <option value="MONTH">
-            This Month
+            {text.thisMonth}
           </option>
 
           <option value="YEAR">
-            This Year
+            {text.thisYear}
           </option>
 
           <option value="ALL">
-            All Time
+            {text.allTime}
           </option>
 
           <option value="CUSTOM">
-            Custom Range
+            {text.customRange}
           </option>
         </select>
 
@@ -3103,7 +3293,7 @@ function TransactionFilterControls(
                   12,
               }}
             >
-              to
+              {text.to}
             </span>
 
             <input
@@ -3154,6 +3344,18 @@ function Dashboard(
 
   const [actionMessage, setActionMessage] =
     useState("");
+
+  const [dashboardLanguage, setDashboardLanguage] =
+    useState<DashboardLanguage>(() =>
+      normalizeDashboardLanguage(
+        localStorage.getItem(
+          STORAGE.dashboardLanguage,
+        ),
+      )
+    );
+
+  const dashboardText =
+    DASHBOARD_TEXT[dashboardLanguage];
 
   const [billingOpen, setBillingOpen] =
     useState(false);
@@ -3455,6 +3657,7 @@ function Dashboard(
     transactionFilterDisplayLabel(
       transactionFilter,
       transactionDateRange,
+      dashboardLanguage,
     );
 
   const today =
@@ -3827,29 +4030,29 @@ function Dashboard(
     [
       {
         icon:"home",
-        label:"Dashboard",
+        label:dashboardText.navDashboard,
         view:"dashboard",
       },
       {
         icon:"transactions",
-        label:"Transactions",
+        label:dashboardText.navTransactions,
         view:"transactions",
       },
       {
         icon:"reminder",
-        label:"Commitments",
+        label:dashboardText.navCommitments,
         view:"commitments",
       },
       ...(canViewWorkspaceSettings
         ? [
           {
             icon:"whatsapp",
-            label:"WhatsApp",
+            label:dashboardText.navWhatsApp,
             view:"whatsapp" as DashboardView,
           },
           {
             icon:"sheet",
-            label:"Google Sheet",
+            label:dashboardText.navGoogleSheet,
             view:"google" as DashboardView,
           },
         ]
@@ -3858,7 +4061,7 @@ function Dashboard(
         ? [
           {
             icon:"users",
-            label:"Admin",
+            label:dashboardText.navAdmin,
             view:"admin" as DashboardView,
           },
         ]
@@ -3867,12 +4070,12 @@ function Dashboard(
         ? [
           {
             icon:"settings",
-            label:"Bot Settings",
+            label:dashboardText.navBotSettings,
             view:"bot-settings" as DashboardView,
           },
           {
             icon:"settings",
-            label:"Settings",
+            label:dashboardText.navSettings,
             view:"settings" as DashboardView,
           },
         ]
@@ -3945,6 +4148,31 @@ function Dashboard(
     setActionMessage("");
 
   }
+
+  function updateDashboardLanguage(
+    value:DashboardLanguage,
+  ){
+
+    const normalized =
+      normalizeDashboardLanguage(
+        value,
+      );
+
+    setDashboardLanguage(
+      normalized,
+    );
+
+    localStorage.setItem(
+      STORAGE.dashboardLanguage,
+      normalized,
+    );
+
+    setActionMessage(
+      DASHBOARD_TEXT[normalized].languageSaved,
+    );
+
+  }
+
 
   function showActionMessage(
     message:string,
@@ -4502,7 +4730,7 @@ function Dashboard(
             </span>
 
             <small>
-              Manage plan
+              {dashboardText.managePlan}
             </small>
           </button>
         </nav>
@@ -4535,25 +4763,25 @@ function Dashboard(
 
           <div className="topActions">
             <span className="status">
-              ● API Healthy
+              {dashboardText.apiHealthy}
             </span>
             <button
               className="ghost"
               onClick={props.installApp}
             >
-              Install
+              {dashboardText.install}
             </button>
             <button
               className="ghost"
               onClick={props.resetWizard}
             >
-              Setup
+              {dashboardText.setup}
             </button>
             <button
               className="ghost"
               onClick={props.signOut}
             >
-              Logout
+              {dashboardText.logout}
             </button>
           </div>
         </header>
@@ -4622,9 +4850,12 @@ function Dashboard(
             onSaveWhatsAppAlias={
               saveWhatsAppBotAlias
             }
+            language={dashboardLanguage}
             onAddTransaction={() =>
               showActionMessage(
-                "Untuk tambah transaksi, hantar mesej kepada WhatsApp bot seperti: makan nasi RM8 TNG.",
+                dashboardLanguage === "ms"
+                  ? "Untuk tambah transaksi, hantar mesej kepada WhatsApp bot seperti: makan nasi RM8 TNG."
+                  : "To add a transaction, send a WhatsApp bot message like: lunch mamak RM8 TNG.",
               )
             }
           />
@@ -4640,7 +4871,7 @@ function Dashboard(
           }
         >
           {(activeView === "dashboard" || activeView === "transactions") && (
-            <Panel title={activeView === "transactions" ? "Transactions" : "Recent Transactions"} wide>
+            <Panel title={activeView === "transactions" ? dashboardText.transactions : dashboardText.recentTransactions} wide>
               {activeView === "transactions" && (
                 <TransactionFilterControls
                   mode={transactionFilter}
@@ -4648,6 +4879,7 @@ function Dashboard(
                   customFrom={transactionCustomFrom}
                   customTo={transactionCustomTo}
                   transactionCount={filteredTransactions.length}
+                  language={dashboardLanguage}
                   onModeChange={setTransactionFilter}
                   onCustomFromChange={setTransactionCustomFrom}
                   onCustomToChange={setTransactionCustomTo}
@@ -4658,13 +4890,13 @@ function Dashboard(
               <table>
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Category</th>
-                    <th>Merchant</th>
-                    <th>Amount</th>
-                    <th>Source</th>
-                    <th>Recorded by</th>
+                    <th>{dashboardText.date}</th>
+                    <th>{dashboardText.type}</th>
+                    <th>{dashboardText.category}</th>
+                    <th>{dashboardText.merchant}</th>
+                    <th>{dashboardText.amount}</th>
+                    <th>{dashboardText.source}</th>
+                    <th>{dashboardText.recordedBy}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -4737,14 +4969,14 @@ function Dashboard(
                       "Untuk tambah transaksi sekarang, hantar mesej ke WhatsApp bot seperti: makan nasi rm8 tng. Form transaksi manual web akan dibuat dalam batch seterusnya.",
                     )}
                   >
-                    Add Transaction
+                    {dashboardText.addTransaction}
                   </button>
 
                   <button
                     className="ghost"
                     onClick={props.refresh}
                   >
-                    Refresh transactions
+                    {dashboardText.refreshTransactions}
                   </button>
                 </div>
               )}
@@ -4752,7 +4984,7 @@ function Dashboard(
           )}
 
           {activeView === "commitments" && (
-            <Panel title="Commitments & Reminders" wide>
+            <Panel title={dashboardText.commitments} wide>
               <div className="commitmentToolbar">
                 <select
                   value={commitmentFilter}
@@ -4762,43 +4994,43 @@ function Dashboard(
                     await reloadCommitments(value);
                   }}
                 >
-                  <option value="unpaid">Belum dibayar</option>
-                  <option value="paid">Sudah dibayar</option>
-                  <option value="overdue">Lewat</option>
-                  <option value="all">Semua</option>
-                  <option value="inactive">Tidak aktif</option>
+                  <option value="unpaid">{dashboardText.unpaid}</option>
+                  <option value="paid">{dashboardText.paid}</option>
+                  <option value="overdue">{dashboardText.overdue}</option>
+                  <option value="all">{dashboardText.all}</option>
+                  <option value="inactive">{dashboardText.inactive}</option>
                 </select>
                 <button className="ghost" onClick={() => reloadCommitments()}>
-                  Refresh
+                  {dashboardText.refresh}
                 </button>
                 <span>
-                  {commitmentsViewData?.period.label || "Bulan semasa"} · Jumlah belum dibayar RM{commitmentsViewData?.summary.totalUnpaid || "0.00"}
+                  {commitmentsViewData?.period.label || dashboardText.currentMonth} · {dashboardText.totalUnpaid} RM{commitmentsViewData?.summary.totalUnpaid || "0.00"}
                 </span>
               </div>
 
               <div className="commitmentForm">
                 <label className="field">
-                  Nama komitmen
+                  {dashboardText.commitmentName}
                   <input value={commitmentName} onChange={(event) => setCommitmentName(event.target.value)} placeholder="Bayaran kereta" />
                 </label>
                 <label className="field">
-                  Jumlah RM
+                  {dashboardText.commitmentAmount}
                   <input value={commitmentAmount} onChange={(event) => setCommitmentAmount(event.target.value)} placeholder="1000" />
                 </label>
                 <label className="field">
-                  Hari bayaran
+                  {dashboardText.paymentDay}
                   <input type="number" min="1" max="31" value={commitmentDueDay} onChange={(event) => setCommitmentDueDay(event.target.value)} />
                 </label>
                 <label className="field">
-                  Reminder awal
+                  {dashboardText.earlyReminder}
                   <input type="number" min="0" max="30" value={commitmentReminderDays} onChange={(event) => setCommitmentReminderDays(event.target.value)} />
                 </label>
                 <label className="field">
-                  Waktu
+                  {dashboardText.time}
                   <input type="time" value={commitmentReminderTime} onChange={(event) => setCommitmentReminderTime(event.target.value)} />
                 </label>
                 <button className="primary" onClick={createCommitment}>
-                  Add commitment
+                  {dashboardText.addCommitment}
                 </button>
               </div>
 
@@ -4807,20 +5039,20 @@ function Dashboard(
                   <div className="commitmentRow" key={item.id}>
                     <div>
                       <strong>{item.name}</strong>
-                      <span>RM{Number(item.amount).toLocaleString("ms-MY")} · due {new Date(item.currentMonth.dueDate).toLocaleDateString("ms-MY")} · {item.currentMonth.status}</span>
-                      <small>Reminder seterusnya: {new Date(item.nextReminderAt).toLocaleString("ms-MY")}</small>
+                      <span>RM{Number(item.amount).toLocaleString("ms-MY")} · {dashboardText.due} {new Date(item.currentMonth.dueDate).toLocaleDateString("ms-MY")} · {item.currentMonth.status}</span>
+                      <small>{dashboardText.nextReminder}: {new Date(item.nextReminderAt).toLocaleString("ms-MY")}</small>
                     </div>
                     <div className="commitmentActions">
                       {item.currentMonth.status !== "PAID" && (
                         <button className="primary" onClick={() => markCommitmentPaid(item.id)} disabled={!item.canManage}>
-                          Mark paid
+                          {dashboardText.markPaid}
                         </button>
                       )}
                       <button className="ghost" onClick={() => updateCommitmentStatus(item.id, { isActive:!item.isActive }, item.isActive ? "Commitment dinyahaktifkan." : "Commitment diaktifkan.")} disabled={!item.canManage}>
-                        {item.isActive ? "Deactivate" : "Activate"}
+                        {item.isActive ? dashboardText.deactivate : dashboardText.activate}
                       </button>
                       <button className="ghost danger" onClick={() => archiveCommitment(item.id)} disabled={!item.canManage || Boolean(item.archivedAt)}>
-                        Archive
+                        {dashboardText.archive}
                       </button>
                     </div>
                   </div>
@@ -4830,51 +5062,51 @@ function Dashboard(
           )}
 
           {activeView === "bot-settings" && (
-            <Panel title="Bot Settings" wide>
+            <Panel title={dashboardText.navBotSettings} wide>
               <div className="commitmentForm botSettingsForm">
                 <label className="field checkboxField">
                   <input type="checkbox" checked={botEnabled} onChange={(event) => setBotEnabled(event.target.checked)} />
-                  Bot enabled
+                  {dashboardText.botEnabled}
                 </label>
                 <label className="field">
-                  Reply language
+                  {dashboardText.replyLanguage}
                   <select value={botReplyLanguage} onChange={(event) => setBotReplyLanguage(event.target.value)}>
                     <option value="ms">Bahasa Melayu</option>
                     <option value="en">English</option>
                   </select>
                 </label>
                 <label className="field">
-                  Timezone
+                  {dashboardText.timezone}
                   <input value={botTimezone} onChange={(event) => setBotTimezone(event.target.value)} />
                 </label>
                 <label className="field">
-                  Default reminder days before
+                  {dashboardText.defaultReminderDaysBefore}
                   <input type="number" min="0" max="30" value={botReminderDays} onChange={(event) => setBotReminderDays(event.target.value)} />
                 </label>
                 <label className="field">
-                  Default reminder time
+                  {dashboardText.defaultReminderTime}
                   <input type="time" value={botReminderTime} onChange={(event) => setBotReminderTime(event.target.value)} />
                 </label>
                 <label className="field">
-                  Quiet hours start
+                  {dashboardText.quietHoursStart}
                   <input type="time" value={botQuietStart} onChange={(event) => setBotQuietStart(event.target.value)} />
                 </label>
                 <label className="field">
-                  Quiet hours end
+                  {dashboardText.quietHoursEnd}
                   <input type="time" value={botQuietEnd} onChange={(event) => setBotQuietEnd(event.target.value)} />
                 </label>
                 <button className="primary" onClick={saveBotSettings}>
-                  Save bot settings
+                  {dashboardText.saveBotSettings}
                 </button>
               </div>
               <p className="helperText">
-                Pilihan bahasa mengawal reply WhatsApp reminder dan bantuan bot. Jika bot disabled, scheduled reminder tidak akan dihantar. Dashboard masih boleh digunakan.
+                {dashboardText.botSettingsHelp}
               </p>
             </Panel>
           )}
 
           {canViewWorkspaceSettings && (activeView === "dashboard" || activeView === "whatsapp") && (
-            <Panel title="WhatsApp">
+            <Panel title={dashboardText.navWhatsApp}>
             <StatusGrid
               rows={[
                 ["Instance", props.data.whatsapp?.instance?.instanceName || "imai-dev"],
@@ -4932,7 +5164,7 @@ function Dashboard(
           )}
 
           {canViewWorkspaceSettings && (activeView === "dashboard" || activeView === "google") && (
-            <Panel title="Google Sheet">
+            <Panel title={dashboardText.navGoogleSheet}>
               <StatusGrid
                 rows={[
                   ["Workspace package", workspaceType],
@@ -5031,11 +5263,11 @@ function Dashboard(
           )}
 
           {activeView === "dashboard" && canViewWorkspaceSettings && (
-            <Panel title="Quick Actions" wide>
+            <Panel title={dashboardText.dashboardActions} wide>
             <div className="actions">
               <Action
-                title="Add Transaction"
-                desc="Use WhatsApp message command."
+                title={dashboardText.addTransaction}
+                desc={dashboardLanguage === "ms" ? "Guna command mesej WhatsApp." : "Use WhatsApp message command."}
                 icon="+"
                 onClick={() => showActionMessage(
                   "Hantar transaksi ke WhatsApp bot. Contoh: makan kedai mamak rm7.80 tng",
@@ -5046,7 +5278,7 @@ function Dashboard(
                 ? (
                   <Action
                     title="Disconnect WhatsApp"
-                    desc="Putuskan bot semasa sebelum pair semula."
+                    desc={dashboardLanguage === "ms" ? "Putuskan bot semasa sebelum pair semula." : "Disconnect the current bot before pairing again."}
                     icon="⏻"
                     onClick={() => props.resetWhatsAppInstance()}
                   />
@@ -5054,12 +5286,12 @@ function Dashboard(
                 : (
                   <Action
                     title="Open WhatsApp QR"
-                    desc="Pair bot sekali dengan nombor WhatsApp anda."
+                    desc={dashboardLanguage === "ms" ? "Pair bot sekali dengan nombor WhatsApp anda." : "Pair the bot once with your WhatsApp number."}
                     icon="☏"
                     onClick={() => props.openWhatsAppQr("dashboard")}
                   />
                 )}
-              <Action title="Setup Wizard" desc="Review onboarding steps." icon="⚙" onClick={props.resetWizard} />
+              <Action title={dashboardText.openSetupWizard} desc={dashboardLanguage === "ms" ? "Semak langkah onboarding." : "Review onboarding steps."} icon="⚙" onClick={props.resetWizard} />
             </div>
             </Panel>
           )}
@@ -5292,18 +5524,38 @@ function Dashboard(
           )}
 
           {activeView === "settings" && (
-            <Panel title="Settings" wide>
+            <Panel title={dashboardText.navSettings} wide>
               <StatusGrid
                 rows={[
-                  ["Workspace", props.data.me?.workspace?.name || "-"],
-                  ["Workspace type", props.data.me?.workspace?.type || "PERSONAL"],
-                  ["Your role", actorRole],
+                  [dashboardText.workspace, props.data.me?.workspace?.name || "-"],
+                  [dashboardText.workspaceType, props.data.me?.workspace?.type || "PERSONAL"],
+                  [dashboardText.yourRole, actorRole],
                   ["Email", props.data.me?.user?.email || "-"],
-                  ["API", props.data.health ? "Healthy" : "Checking"],
-                  ["Google Sheet", props.data.google?.spreadsheetId ? "Connected" : "Not connected"],
-                  ["WhatsApp", props.data.whatsapp?.instance?.status || "-"],
+                  [dashboardText.api, props.data.health ? dashboardText.healthy : dashboardText.checking],
+                  [dashboardText.navGoogleSheet, props.data.google?.spreadsheetId ? dashboardText.connected : dashboardText.notConnected],
+                  [dashboardText.navWhatsApp, props.data.whatsapp?.instance?.status || "-"],
                 ]}
               />
+
+              <div className="languageSettingsCard">
+                <label className="field">
+                  {dashboardText.dashboardLanguage}
+                  <select
+                    value={dashboardLanguage}
+                    onChange={(event) =>
+                      updateDashboardLanguage(
+                        event.target.value as DashboardLanguage,
+                      )
+                    }
+                  >
+                    <option value="ms">Bahasa Melayu</option>
+                    <option value="en">English</option>
+                  </select>
+                </label>
+                <p className="hint">
+                  {dashboardText.dashboardLanguageHelp}
+                </p>
+              </div>
 
               {isSharedWorkspace && canChangeWorkspaceSettings && (
                 <div
@@ -5456,19 +5708,19 @@ function Dashboard(
 
               <div className="panelActions">
                 <button className="primary" onClick={props.installApp}>
-                  Install app
+                  {dashboardText.installApp}
                 </button>
 
                 <button className="ghost" onClick={props.resetWizard}>
-                  Open setup wizard
+                  {dashboardText.openSetupWizard}
                 </button>
 
                 <button className="ghost" onClick={props.refresh}>
-                  Refresh dashboard
+                  {dashboardText.refreshDashboard}
                 </button>
 
                 <button className="ghost danger" onClick={props.signOut}>
-                  Logout
+                  {dashboardText.logout}
                 </button>
               </div>
             </Panel>
@@ -5479,7 +5731,7 @@ function Dashboard(
           className="floating"
           onClick={props.refresh}
         >
-          Refresh
+          {dashboardText.refresh}
         </button>
 
         {billingOpen && (

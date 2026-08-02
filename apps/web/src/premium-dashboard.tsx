@@ -11,12 +11,17 @@ type TransactionFilterMode =
   | "ALL"
   | "CUSTOM";
 
+type DashboardLanguage =
+  | "ms"
+  | "en";
+
 
 type PremiumDashboardProps = {
   transactionFilter:TransactionFilterMode;
   transactionFilterLabel:string;
   transactionCustomFrom:string;
   transactionCustomTo:string;
+  language?:DashboardLanguage;
   filterStart:number | null;
   filterEnd:number | null;
   onTransactionFilterChange:(value:TransactionFilterMode) => void;
@@ -59,7 +64,10 @@ const sameDay = (
 
 const statusLabel = (
   value:unknown,
+  language:DashboardLanguage = "en",
 ) => {
+  const text =
+    PREMIUM_DASHBOARD_TEXT[language];
   const status =
     String(value || "")
       .trim()
@@ -70,25 +78,48 @@ const statusLabel = (
     status === "READY" ||
     status === "OPEN"
   ){
-    return "Connected";
+    return text.connected;
   }
 
   if (
     status.includes("DISCONNECT") ||
     status.includes("CLOSE")
   ){
-    return "Disconnected";
+    return text.disconnected;
   }
 
   return value
     ? String(value)
-    : "Checking";
+    : text.checking;
 };
 
 const dashboardImageIcons:Record<string, string> = {
   whatsapp:"/dashboard-icons/whatsapp-logo.png",
   sheet:"/dashboard-icons/google-sheets-logo.png",
 };
+
+const PREMIUM_DASHBOARD_TEXT = {
+  en:{
+    transactionPeriod:"Transaction period", record:"record", records:"records", today:"Today", thisWeek:"This Week", thisMonth:"This Month", thisYear:"This Year", allTime:"All Time", customRange:"Custom Range", to:"to",
+    expense:"Expense", income:"Income", filteredTransaction:"filtered transaction", filteredTransactions:"filtered transactions", balance:"Balance", membersLinked:"members linked", healthy:"Healthy", live:"Live", connected:"Connected", disconnected:"Disconnected", checking:"Checking", notConnected:"Not connected", myPocketWorkspace:"MyPocket workspace",
+    expenseTrend:"Expense Trend", spendingByCategory:"Spending by Category", total:"Total", recentTransactions:"Recent Transactions", viewAll:"View all",
+    date:"Date", type:"Type", category:"Category", merchant:"Merchant", amount:"Amount", source:"Source", recordedBy:"Recorded by",
+    whatsappIntegration:"WhatsApp Integration", manage:"Manage", instance:"Instance", status:"Status", trigger:"Trigger", members:"Members", lastSync:"Last Sync", notLinked:"not linked",
+    aliasLabel:"WhatsApp group bot alias", saving:"Saving...", saveAlias:"Save Alias", aliasHelp:"In groups, start messages with ! or @{alias}. Private chat does not need a trigger.",
+    disconnectWhatsApp:"Disconnect WhatsApp", recheckStatus:"Recheck status", googleSheet:"Google Sheet", workspacePackage:"Workspace package", template:"Template", title:"Title", mode:"Mode", lastUpdated:"Last Updated",
+    sheetNotConnected:"Google Sheet is not connected", openGoogleSheet:"Open Google Sheet", relinkGoogleAccess:"Relink Google Access", recreateGoogleSheet:"Recreate Google Sheet", upgradeGoogleSheetTo:"Upgrade Google Sheet to", quickActions:"Quick Actions", addTransaction:"Add Transaction", useWhatsAppCommand:"Use WhatsApp message command.", setupWizard:"Setup Wizard", reviewOnboarding:"Review onboarding steps.",
+  },
+  ms:{
+    transactionPeriod:"Tempoh transaksi", record:"rekod", records:"rekod", today:"Hari Ini", thisWeek:"Minggu Ini", thisMonth:"Bulan Ini", thisYear:"Tahun Ini", allTime:"Sepanjang Masa", customRange:"Julat Tersuai", to:"hingga",
+    expense:"Belanja", income:"Income", filteredTransaction:"transaksi ditapis", filteredTransactions:"transaksi ditapis", balance:"Baki", membersLinked:"ahli dipautkan", healthy:"Sihat", live:"Live", connected:"Connected", disconnected:"Disconnected", checking:"Menyemak", notConnected:"Belum connected", myPocketWorkspace:"Workspace MyPocket",
+    expenseTrend:"Trend Belanja", spendingByCategory:"Belanja Mengikut Kategori", total:"Jumlah", recentTransactions:"Transaksi Terkini", viewAll:"Lihat semua",
+    date:"Tarikh", type:"Jenis", category:"Kategori", merchant:"Merchant", amount:"Jumlah", source:"Sumber", recordedBy:"Direkod oleh",
+    whatsappIntegration:"Integrasi WhatsApp", manage:"Urus", instance:"Instance", status:"Status", trigger:"Trigger", members:"Ahli", lastSync:"Sync terakhir", notLinked:"belum linked",
+    aliasLabel:"Alias bot WhatsApp group", saving:"Menyimpan...", saveAlias:"Simpan Alias", aliasHelp:"Dalam group, mula mesej dengan ! atau @{alias}. Private chat tidak perlu trigger.",
+    disconnectWhatsApp:"Disconnect WhatsApp", recheckStatus:"Semak semula status", googleSheet:"Google Sheet", workspacePackage:"Pakej workspace", template:"Template", title:"Tajuk", mode:"Mode", lastUpdated:"Terakhir dikemaskini",
+    sheetNotConnected:"Google Sheet belum connected", openGoogleSheet:"Buka Google Sheet", relinkGoogleAccess:"Paut semula akses Google", recreateGoogleSheet:"Cipta semula Google Sheet", upgradeGoogleSheetTo:"Upgrade Google Sheet ke", quickActions:"Tindakan Pantas", addTransaction:"Tambah Transaksi", useWhatsAppCommand:"Guna command mesej WhatsApp.", setupWizard:"Setup Wizard", reviewOnboarding:"Semak langkah onboarding.",
+  },
+} as const;
 
 function DashboardIcon(
   props:{
@@ -448,6 +479,17 @@ function DashboardPanel(
 export function PremiumDashboard(
   props:PremiumDashboardProps,
 ){
+  const language =
+    props.language ?? "en";
+
+  const text =
+    PREMIUM_DASHBOARD_TEXT[language];
+
+  const locale =
+    language === "ms"
+      ? "ms-MY"
+      : "en-MY";
+
   const transactions =
     Array.isArray(props.data?.transactions)
       ? props.data.transactions
@@ -700,7 +742,7 @@ export function PremiumDashboard(
 
           label:
             cursor.toLocaleDateString(
-              "en-MY",
+              locale,
               {
                 day:
                   "numeric",
@@ -715,7 +757,7 @@ export function PremiumDashboard(
 
           shortLabel:
             cursor.toLocaleDateString(
-              "en-MY",
+              locale,
               {
                 day:
                   "numeric",
@@ -782,7 +824,7 @@ export function PremiumDashboard(
 
           label:
             cursor.toLocaleDateString(
-              "en-MY",
+              locale,
               {
                 month:
                   "long",
@@ -794,7 +836,7 @@ export function PremiumDashboard(
 
           shortLabel:
             cursor.toLocaleDateString(
-              "en-MY",
+              locale,
               {
                 month:
                   "short",
@@ -932,7 +974,7 @@ export function PremiumDashboard(
 
         label:
           `${start.toLocaleTimeString(
-            "en-MY",
+            locale,
             {
               hour:
                 "numeric",
@@ -941,7 +983,7 @@ export function PremiumDashboard(
                 "2-digit",
             },
           )} – ${end.toLocaleTimeString(
-            "en-MY",
+            locale,
             {
               hour:
                 "numeric",
@@ -953,7 +995,7 @@ export function PremiumDashboard(
 
         shortLabel:
           start.toLocaleTimeString(
-            "en-MY",
+            locale,
             {
               hour:
                 "numeric",
@@ -1176,10 +1218,10 @@ export function PremiumDashboard(
         String(
           item?.category?.name
           ||
-          "Others",
+          (language === "ms" ? "Lain-lain" : "Others"),
         ).trim()
         ||
-        "Others";
+        (language === "ms" ? "Lain-lain" : "Others");
 
       categoryMap.set(
         name,
@@ -1234,7 +1276,7 @@ export function PremiumDashboard(
 
     visibleCategories.push({
       name:
-        "Others",
+        language === "ms" ? "Lain-lain" : "Others",
 
       amount:
         categories
@@ -1481,6 +1523,7 @@ export function PremiumDashboard(
   const whatsappStatus =
     statusLabel(
       props.data?.whatsapp?.instance?.status,
+      language,
     );
 
   async function handleSaveBotAlias(){
@@ -1509,7 +1552,9 @@ export function PremiumDashboard(
     ){
 
       setAliasMessage(
-        "Alias mesti 2 hingga 32 aksara: huruf, nombor, titik, underscore atau dash.",
+        language === "ms"
+          ? "Alias mesti 2 hingga 32 aksara: huruf, nombor, titik, underscore atau dash."
+          : "Alias must be 2 to 32 characters: letters, numbers, dot, underscore or dash.",
       );
 
       return;
@@ -1530,7 +1575,9 @@ export function PremiumDashboard(
       );
 
       setAliasMessage(
-        `Alias berjaya disimpan. Group trigger: @${normalized}`,
+        language === "ms"
+          ? `Alias berjaya disimpan. Group trigger: @${normalized}`
+          : `Alias saved. Group trigger: @${normalized}`,
       );
 
     }catch(error){
@@ -1538,7 +1585,9 @@ export function PremiumDashboard(
       setAliasMessage(
         error instanceof Error
           ? error.message
-          : "Alias WhatsApp gagal disimpan.",
+          : language === "ms"
+            ? "Alias WhatsApp gagal disimpan."
+            : "WhatsApp alias could not be saved.",
       );
 
     }finally{
@@ -1713,15 +1762,11 @@ export function PremiumDashboard(
       <section className="pd-filter-bar">
         <div className="pd-filter-copy">
           <strong>
-            Transaction period
+            {text.transactionPeriod}
           </strong>
 
           <span>
-            {props.transactionFilterLabel} · {transactions.length} record{
-              transactions.length === 1
-                ? ""
-                : "s"
-            }
+            {props.transactionFilterLabel} · {transactions.length} {transactions.length === 1 ? text.record : text.records}
           </span>
         </div>
 
@@ -1737,27 +1782,27 @@ export function PremiumDashboard(
             }
           >
             <option value="TODAY">
-              Today
+              {text.today}
             </option>
 
             <option value="WEEK">
-              This Week
+              {text.thisWeek}
             </option>
 
             <option value="MONTH">
-              This Month
+              {text.thisMonth}
             </option>
 
             <option value="YEAR">
-              This Year
+              {text.thisYear}
             </option>
 
             <option value="ALL">
-              All Time
+              {text.allTime}
             </option>
 
             <option value="CUSTOM">
-              Custom Range
+              {text.customRange}
             </option>
           </select>
 
@@ -1798,18 +1843,18 @@ export function PremiumDashboard(
       <section className="pd-metrics">
         <MetricCard
           icon="wallet"
-          label={`${props.transactionFilterLabel} Expense`}
+          label={`${props.transactionFilterLabel} ${text.expense}`}
           value={currency(periodExpense)}
-          subtitle={`${transactions.length} filtered transaction${transactions.length === 1 ? "" : "s"}`}
+          subtitle={`${transactions.length} ${transactions.length === 1 ? text.filteredTransaction : text.filteredTransactions}`}
           trend={null}
           sparklineData={todaySparklineData}
         />
 
         <MetricCard
           icon="calendar"
-          label={`${props.transactionFilterLabel} Income`}
+          label={`${props.transactionFilterLabel} ${text.income}`}
           value={currency(periodIncome)}
-          subtitle={`Balance ${currency(periodBalance)}`}
+          subtitle={`${text.balance} ${currency(periodBalance)}`}
           trend={null}
           sparklineData={monthSparklineData}
         />
@@ -1818,10 +1863,10 @@ export function PremiumDashboard(
           icon="whatsapp"
           label="WhatsApp"
           value={whatsappStatus}
-          subtitle={`${linkedMembers} / ${members.length} members linked`}
+          subtitle={`${linkedMembers} / ${members.length} ${text.membersLinked}`}
           status={
-            whatsappStatus === "Connected"
-              ? "Healthy"
+            whatsappStatus === text.connected
+              ? text.healthy
               : undefined
           }
         />
@@ -1831,16 +1876,16 @@ export function PremiumDashboard(
           label="Google Sheet"
           value={
             google.spreadsheetId
-              ? "Connected"
-              : "Not connected"
+              ? text.connected
+              : text.notConnected
           }
           subtitle={
             google.spreadsheetTitle ||
-            "MyPocket workspace"
+            text.myPocketWorkspace
           }
           status={
             google.spreadsheetId
-              ? "Live"
+              ? text.live
               : undefined
           }
         />
@@ -1848,13 +1893,13 @@ export function PremiumDashboard(
 
       <section className="pd-chart-grid">
         <DashboardPanel
-          title={`Expense Trend · ${props.transactionFilterLabel}`}
+          title={`${text.expenseTrend} · ${props.transactionFilterLabel}`}
         >
           <svg
             className="pd-chart"
             viewBox={`0 0 ${chartWidth} ${chartHeight}`}
             role="img"
-            aria-label={`Expense trend for ${props.transactionFilterLabel}`}
+            aria-label={`${text.expenseTrend} ${props.transactionFilterLabel}`}
           >
             <defs>
               <linearGradient
@@ -1987,7 +2032,7 @@ export function PremiumDashboard(
         </DashboardPanel>
 
         <DashboardPanel
-          title={`Spending by Category · ${props.transactionFilterLabel}`}
+          title={`${text.spendingByCategory} · ${props.transactionFilterLabel}`}
         >
           <div className="pd-donut-layout">
             <div
@@ -2000,13 +2045,13 @@ export function PremiumDashboard(
                 <span>RM</span>
                 <strong>
                   {monthExpense.toLocaleString(
-                    "en-MY",
+                    locale,
                     {
                       minimumFractionDigits:2,
                     },
                   )}
                 </strong>
-                <span>Total</span>
+                <span>{text.total}</span>
               </div>
             </div>
 
@@ -2051,7 +2096,7 @@ export function PremiumDashboard(
               )}
 
               <div className="pd-total">
-                <span>Total</span>
+                <span>{text.total}</span>
                 <span>{currency(monthExpense)}</span>
               </div>
             </div>
@@ -2061,9 +2106,9 @@ export function PremiumDashboard(
 
       <section className="pd-content-grid">
         <DashboardPanel
-          title={`Recent Transactions · ${props.transactionFilterLabel}`}
+          title={`${text.recentTransactions} · ${props.transactionFilterLabel}`}
           action={{
-            label:"View all",
+            label:text.viewAll,
             onClick:props.onOpenTransactions,
           }}
         >
@@ -2071,13 +2116,13 @@ export function PremiumDashboard(
             <table className="pd-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Category</th>
-                  <th>Merchant</th>
-                  <th>Amount</th>
-                  <th>Source</th>
-                  <th>Recorded by</th>
+                  <th>{text.date}</th>
+                  <th>{text.type}</th>
+                  <th>{text.category}</th>
+                  <th>{text.merchant}</th>
+                  <th>{text.amount}</th>
+                  <th>{text.source}</th>
+                  <th>{text.recordedBy}</th>
                 </tr>
               </thead>
 
@@ -2230,17 +2275,17 @@ export function PremiumDashboard(
         </DashboardPanel>
 
         <DashboardPanel
-          title="WhatsApp Integration"
+          title={text.whatsappIntegration}
           titleImage="/dashboard-icons/whatsapp-logo.png"
           action={{
-            label:"Manage",
+            label:text.manage,
             onClick:props.onOpenWhatsApp,
           }}
         >
           <div className="pd-wa-layout">
             <div className="pd-status-list">
               <div className="pd-status-row">
-                <span>Instance</span>
+                <span>{text.instance}</span>
                 <strong>
                   {props.data?.whatsapp?.instance?.instanceName ||
                     "imai.dev"}
@@ -2248,11 +2293,11 @@ export function PremiumDashboard(
               </div>
 
               <div className="pd-status-row">
-                <span>Status</span>
+                <span>{text.status}</span>
                 <strong>● {whatsappStatus}</strong>
               </div>
               <div className="pd-status-row">
-                <span>Trigger</span>
+                <span>{text.trigger}</span>
                 <strong>
                   @{currentBotAlias} / !
                 </strong>
@@ -2260,14 +2305,14 @@ export function PremiumDashboard(
 
 
               <div className="pd-status-row">
-                <span>Members</span>
+                <span>{text.members}</span>
                 <strong>
-                  {linkedMembers} / {members.length} linked
+                  {linkedMembers} / {members.length} {text.membersLinked}
                 </strong>
               </div>
 
               <div className="pd-status-row">
-                <span>Last Sync</span>
+                <span>{text.lastSync}</span>
                 <strong>
                   {new Date().toLocaleString("en-MY")}
                 </strong>
@@ -2298,7 +2343,7 @@ export function PremiumDashboard(
 
                       <span>
                         {member.whatsappPhoneNumber ||
-                          "belum linked"}
+                          text.notLinked}
                       </span>
                     </div>
                   </div>
@@ -2315,7 +2360,7 @@ export function PremiumDashboard(
                 }}
               >
                 <label htmlFor="pd-whatsapp-bot-alias">
-                  WhatsApp group bot alias
+                  {text.aliasLabel}
                 </label>
 
                 <div className="pd-alias-row">
@@ -2327,7 +2372,7 @@ export function PremiumDashboard(
                     autoComplete="off"
                     spellCheck={false}
                     placeholder="mypocket"
-                    aria-label="WhatsApp group bot alias"
+                    aria-label={text.aliasLabel}
                     onChange={(event) =>
                       setBotAlias(
                         event.target.value,
@@ -2345,22 +2390,16 @@ export function PremiumDashboard(
                     }
                   >
                     {aliasSaving
-                      ? "Saving..."
-                      : "Save Alias"}
+                      ? text.saving
+                      : text.saveAlias}
                   </button>
                 </div>
 
                 <span className="pd-alias-help">
-                  Dalam group, mulakan mesej dengan
-                  {" "}
-                  <strong>!</strong>
-                  {" "}
-                  atau
-                  {" "}
-                  <strong>
-                    @{botAlias.trim() || currentBotAlias}
-                  </strong>.
-                  Private chat kekal tanpa trigger.
+                  {text.aliasHelp.replace(
+                    "{alias}",
+                    botAlias.trim() || currentBotAlias,
+                  )}
                 </span>
 
                 {aliasMessage && (
@@ -2386,7 +2425,7 @@ export function PremiumDashboard(
                 aria-hidden="true"
               />
 
-              Disconnect WhatsApp
+              {text.disconnectWhatsApp}
             </button>
 
             <button
@@ -2398,7 +2437,7 @@ export function PremiumDashboard(
                 size={14}
                 strokeWidth={2}
               />
-              Recheck status
+              {text.recheckStatus}
             </button>
           </div>
         </DashboardPanel>
@@ -2406,30 +2445,30 @@ export function PremiumDashboard(
 
       <section className="pd-bottom-grid">
         <DashboardPanel
-          title="Google Sheet"
+          title={text.googleSheet}
           titleImage="/dashboard-icons/google-sheets-logo.png"
         >
           <div className="pd-sheet">
             <div className="pd-sheet-info">
-              <span>Workspace package</span>
+              <span>{text.workspacePackage}</span>
               <strong>{workspaceType}</strong>
-              <span>Template</span>
+              <span>{text.template}</span>
               <strong>
                 {google.templateType ||
-                  "Not connected"}
+                  text.notConnected}
               </strong>
 
-              <span>Title</span>
+              <span>{text.title}</span>
               <strong>
                 {google.spreadsheetTitle ||
                   "-"}
               </strong>
-              <span>Mode</span>
+              <span>{text.mode}</span>
               <strong>
                 {google.mode || "AUTO_CREATED"}
               </strong>
 
-              <span>Last Updated</span>
+              <span>{text.lastUpdated}</span>
               <strong>
                 {new Date().toLocaleString("en-MY")}
               </strong>
@@ -2447,7 +2486,7 @@ export function PremiumDashboard(
 
               <div className="pd-url">
                 {sheetUrl ||
-                  "Google Sheet is not connected"}
+                  text.sheetNotConnected}
               </div>
 
               <div className="pd-actions">
@@ -2468,7 +2507,7 @@ export function PremiumDashboard(
                     name="external"
                     size={14}
                   />
-                  Open Google Sheet
+                  {text.openGoogleSheet}
                 </button>
 
                 <button
@@ -2479,7 +2518,7 @@ export function PremiumDashboard(
                     name="link"
                     size={14}
                   />
-                  Relink Google Access
+                  {text.relinkGoogleAccess}
                 </button>
 
                 <button
@@ -2494,16 +2533,16 @@ export function PremiumDashboard(
 
                   google.templateType !== workspaceType
 
-                    ? `Upgrade Google Sheet to ${workspaceType}`
+                    ? `${text.upgradeGoogleSheetTo} ${workspaceType}`
 
-                    : "Recreate Google Sheet"}
+                    : text.recreateGoogleSheet}
                 </button>
               </div>
             </div>
           </div>
         </DashboardPanel>
 
-        <DashboardPanel title="Quick Actions">
+        <DashboardPanel title={text.quickActions}>
           <div className="pd-quick-grid">
             <button
               className="pd-quick"
@@ -2513,12 +2552,12 @@ export function PremiumDashboard(
               <span className="pd-quick-icon pd-quick-image">
                 <img
                   src="/dashboard-icons/add-transaction.png"
-                  alt="Add Transaction"
+                  alt={text.addTransaction}
                 />
               </span>
-              <strong>Add Transaction</strong>
+              <strong>{text.addTransaction}</strong>
               <span>
-                Use WhatsApp message command.
+                {text.useWhatsAppCommand}
               </span>
             </button>
 
@@ -2530,12 +2569,12 @@ export function PremiumDashboard(
               <span className="pd-quick-icon pd-quick-image">
                 <img
                   src="/dashboard-icons/disconnect-whatsapp.png"
-                  alt="Disconnect WhatsApp"
+                  alt={text.disconnectWhatsApp}
                 />
               </span>
-              <strong>Disconnect WhatsApp</strong>
+              <strong>{text.disconnectWhatsApp}</strong>
               <span>
-                Putuskan bot semasa sebelum pair semula.
+                {language === "ms" ? "Putuskan bot semasa sebelum pair semula." : "Disconnect the current bot before pairing again."}
               </span>
             </button>
 
@@ -2547,12 +2586,12 @@ export function PremiumDashboard(
               <span className="pd-quick-icon pd-quick-image">
                 <img
                   src="/dashboard-icons/setup-wizard.png"
-                  alt="Setup Wizard"
+                  alt={text.setupWizard}
                 />
               </span>
-              <strong>Setup Wizard</strong>
+              <strong>{text.setupWizard}</strong>
               <span>
-                Review onboarding steps.
+                {text.reviewOnboarding}
               </span>
             </button>
           </div>
