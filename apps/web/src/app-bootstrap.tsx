@@ -132,6 +132,58 @@ type BillingSubscriptionData = {
 };
 
 
+type CommitmentItem = {
+  id:string;
+  name:string;
+  amount:string;
+  currency:string;
+  dueDay:number;
+  reminderDaysBefore:number;
+  reminderTime:string;
+  timezone:string;
+  isActive:boolean;
+  archivedAt:string | null;
+  canManage:boolean;
+  currentMonth:{
+    instanceId:string | null;
+    dueDate:string;
+    status:
+      | "PENDING"
+      | "PAID"
+      | "OVERDUE"
+      | "SKIPPED";
+    paidAt:string | null;
+  };
+  nextReminderAt:string;
+};
+
+type CommitmentListData = {
+  period:{
+    year:number;
+    month:number;
+    label:string;
+  };
+  filter:string;
+  items:CommitmentItem[];
+  summary:{
+    total:number;
+    totalUnpaid:string;
+    currency:string;
+  };
+};
+
+type BotSettingsData = {
+  botEnabled:boolean;
+  replyLanguage:string;
+  timezone:string;
+  defaultReminderDaysBefore:number;
+  defaultReminderTime:string;
+  quietHoursStart:string;
+  quietHoursEnd:string;
+  overdueReminderEnabled:boolean;
+  whatsappNotificationEnabled:boolean;
+};
+
 type DashboardData = {
   health:any | null;
   me:any | null;
@@ -141,6 +193,8 @@ type DashboardData = {
   members:Member[];
   adminUsers:AdminUser[];
   transactions:Transaction[];
+  commitments:CommitmentListData | null;
+  botSettings:BotSettingsData | null;
 };
 
 
@@ -271,6 +325,8 @@ type DashboardView =
   | "transactions"
   | "whatsapp"
   | "google"
+  | "commitments"
+  | "bot-settings"
   | "admin"
   | "settings"
   | "super-admin";
@@ -696,6 +752,8 @@ const DASHBOARD_VIEWS:DashboardView[] =
     "transactions",
     "whatsapp",
     "google",
+    "commitments",
+    "bot-settings",
     "admin",
     "settings",
   ];
@@ -746,6 +804,10 @@ function readInitialDashboardView():DashboardView{
     hash === "whatsapp"
     ||
     hash === "google"
+    ||
+    hash === "commitments"
+    ||
+    hash === "bot-settings"
     ||
     hash === "admin"
     ||
@@ -1071,6 +1133,8 @@ function App(){
       members:[],
       adminUsers:[],
       transactions:[],
+      commitments:null,
+      botSettings:null,
     });
 
   const [notice, setNotice] =
@@ -1516,6 +1580,8 @@ function App(){
         whatsapp,
         members,
         transactions,
+        commitments,
+        botSettings,
       ] =
         await Promise.all([
           api<any>("/auth/me", activeToken),
@@ -1528,6 +1594,8 @@ function App(){
           optionalApi<any | null>("/whatsapp/status", activeToken, null),
           optionalApi<Member[]>("/whatsapp/members", activeToken, []),
           optionalApi<any>("/transactions/sheet", activeToken, null),
+          optionalApi<CommitmentListData | null>("/commitments?status=unpaid", activeToken, null),
+          optionalApi<BotSettingsData | null>("/bot-settings", activeToken, null),
         ]);
 
       const fallbackTransactions =
@@ -1559,6 +1627,8 @@ function App(){
           listFrom<AdminUser>(adminUsers),
         transactions:
           listFrom<Transaction>(fallbackTransactions),
+        commitments,
+        botSettings,
       });
 
       setState({
@@ -3158,6 +3228,42 @@ function Dashboard(
         ),
     );
 
+  const [commitmentName, setCommitmentName] =
+    useState("");
+
+  const [commitmentAmount, setCommitmentAmount] =
+    useState("");
+
+  const [commitmentDueDay, setCommitmentDueDay] =
+    useState("10");
+
+  const [commitmentReminderDays, setCommitmentReminderDays] =
+    useState("2");
+
+  const [commitmentReminderTime, setCommitmentReminderTime] =
+    useState("09:00");
+
+  const [commitmentFilter, setCommitmentFilter] =
+    useState("unpaid");
+
+  const [botEnabled, setBotEnabled] =
+    useState(true);
+
+  const [botTimezone, setBotTimezone] =
+    useState("Asia/Kuala_Lumpur");
+
+  const [botReminderDays, setBotReminderDays] =
+    useState("2");
+
+  const [botReminderTime, setBotReminderTime] =
+    useState("09:00");
+
+  const [botQuietStart, setBotQuietStart] =
+    useState("22:00");
+
+  const [botQuietEnd, setBotQuietEnd] =
+    useState("08:00");
+
   const actorRole =
     (
       props.data.me?.workspace?.role ||
@@ -3226,6 +3332,23 @@ function Dashboard(
 
   const canUseAdmin =
     canManageMembers;
+
+  useEffect(
+    () => {
+      if(!props.data.botSettings){
+        return;
+      }
+
+      setBotEnabled(props.data.botSettings.botEnabled);
+      setBotTimezone(props.data.botSettings.timezone);
+      setBotReminderDays(String(props.data.botSettings.defaultReminderDaysBefore));
+      setBotReminderTime(props.data.botSettings.defaultReminderTime);
+      setBotQuietStart(props.data.botSettings.quietHoursStart);
+      setBotQuietEnd(props.data.botSettings.quietHoursEnd);
+    },
+    [props.data.botSettings],
+  );
+
 
   useEffect(
     () => {
@@ -3504,6 +3627,166 @@ function Dashboard(
 
   }
 
+  async function reloadCommitments(
+    status = commitmentFilter,
+  ){
+    const activeToken =
+      localStorage.getItem(
+        STORAGE.token,
+      )
+      ||
+      "";
+
+    if(!activeToken){
+      setActionMessage("Session telah tamat. Sila log masuk semula.");
+      return;
+    }
+
+    const result =
+      await api<CommitmentListData>(
+        `/commitments?status=${encodeURIComponent(status)}`,
+        activeToken,
+      );
+
+    props.data.commitments = result;
+    setActionMessage("Commitments refreshed.");
+    await props.refresh();
+  }
+
+  async function createCommitment(){
+    const activeToken =
+      localStorage.getItem(
+        STORAGE.token,
+      )
+      ||
+      "";
+
+    if(!activeToken){
+      setActionMessage("Session telah tamat. Sila log masuk semula.");
+      return;
+    }
+
+    if(!commitmentName.trim() || !commitmentAmount.trim()){
+      setActionMessage("Nama dan jumlah komitmen diperlukan.");
+      return;
+    }
+
+    await api(
+      "/commitments",
+      activeToken,
+      {
+        method:"POST",
+        body:JSON.stringify({
+          name:commitmentName.trim(),
+          amount:commitmentAmount.trim(),
+          dueDay:Number(commitmentDueDay),
+          reminderDaysBefore:Number(commitmentReminderDays),
+          reminderTime:commitmentReminderTime,
+        }),
+      },
+    );
+
+    setCommitmentName("");
+    setCommitmentAmount("");
+    setActionMessage("Commitment berjaya ditambah.");
+    await props.refresh();
+  }
+
+  async function updateCommitmentStatus(
+    id:string,
+    body:Record<string, unknown>,
+    message:string,
+  ){
+    const activeToken =
+      localStorage.getItem(
+        STORAGE.token,
+      )
+      ||
+      "";
+
+    if(!activeToken){
+      setActionMessage("Session telah tamat. Sila log masuk semula.");
+      return;
+    }
+
+    await api(
+      `/commitments/${id}`,
+      activeToken,
+      {
+        method:"PATCH",
+        body:JSON.stringify(body),
+      },
+    );
+
+    setActionMessage(message);
+    await props.refresh();
+  }
+
+  async function archiveCommitment(
+    id:string,
+  ){
+    const activeToken =
+      localStorage.getItem(
+        STORAGE.token,
+      )
+      ||
+      "";
+
+    await api(
+      `/commitments/${id}/archive`,
+      activeToken,
+      { method:"POST" },
+    );
+    setActionMessage("Commitment diarchive. Sejarah tidak dipadam.");
+    await props.refresh();
+  }
+
+  async function markCommitmentPaid(
+    id:string,
+  ){
+    const activeToken =
+      localStorage.getItem(
+        STORAGE.token,
+      )
+      ||
+      "";
+
+    await api(
+      `/commitments/${id}/pay-current`,
+      activeToken,
+      { method:"POST" },
+    );
+    setActionMessage("Commitment bulan semasa ditanda PAID.");
+    await props.refresh();
+  }
+
+  async function saveBotSettings(){
+    const activeToken =
+      localStorage.getItem(
+        STORAGE.token,
+      )
+      ||
+      "";
+
+    await api(
+      "/bot-settings",
+      activeToken,
+      {
+        method:"PATCH",
+        body:JSON.stringify({
+          botEnabled,
+          timezone:botTimezone,
+          defaultReminderDaysBefore:Number(botReminderDays),
+          defaultReminderTime:botReminderTime,
+          quietHoursStart:botQuietStart,
+          quietHoursEnd:botQuietEnd,
+        }),
+      },
+    );
+    setActionMessage("Bot settings disimpan.");
+    await props.refresh();
+  }
+
   const navItems:Array<{
     icon:string;
     label:string;
@@ -3519,6 +3802,11 @@ function Dashboard(
         icon:"transactions",
         label:"Transactions",
         view:"transactions",
+      },
+      {
+        icon:"reminder",
+        label:"Commitments",
+        view:"commitments",
       },
       ...(canViewWorkspaceSettings
         ? [
@@ -3545,6 +3833,11 @@ function Dashboard(
         : []),
       ...(canViewWorkspaceSettings
         ? [
+          {
+            icon:"settings",
+            label:"Bot Settings",
+            view:"bot-settings" as DashboardView,
+          },
           {
             icon:"settings",
             label:"Settings",
@@ -4423,6 +4716,121 @@ function Dashboard(
                   </button>
                 </div>
               )}
+            </Panel>
+          )}
+
+          {activeView === "commitments" && (
+            <Panel title="Commitments & Reminders" wide>
+              <div className="commitmentToolbar">
+                <select
+                  value={commitmentFilter}
+                  onChange={async (event) => {
+                    const value = event.target.value;
+                    setCommitmentFilter(value);
+                    await reloadCommitments(value);
+                  }}
+                >
+                  <option value="unpaid">Belum dibayar</option>
+                  <option value="paid">Sudah dibayar</option>
+                  <option value="overdue">Lewat</option>
+                  <option value="all">Semua</option>
+                  <option value="inactive">Tidak aktif</option>
+                </select>
+                <button className="ghost" onClick={() => reloadCommitments()}>
+                  Refresh
+                </button>
+                <span>
+                  {props.data.commitments?.period.label || "Bulan semasa"} · Jumlah belum dibayar RM{props.data.commitments?.summary.totalUnpaid || "0.00"}
+                </span>
+              </div>
+
+              <div className="commitmentForm">
+                <label className="field">
+                  Nama komitmen
+                  <input value={commitmentName} onChange={(event) => setCommitmentName(event.target.value)} placeholder="Bayaran kereta" />
+                </label>
+                <label className="field">
+                  Jumlah RM
+                  <input value={commitmentAmount} onChange={(event) => setCommitmentAmount(event.target.value)} placeholder="1000" />
+                </label>
+                <label className="field">
+                  Hari bayaran
+                  <input type="number" min="1" max="31" value={commitmentDueDay} onChange={(event) => setCommitmentDueDay(event.target.value)} />
+                </label>
+                <label className="field">
+                  Reminder awal
+                  <input type="number" min="0" max="30" value={commitmentReminderDays} onChange={(event) => setCommitmentReminderDays(event.target.value)} />
+                </label>
+                <label className="field">
+                  Waktu
+                  <input type="time" value={commitmentReminderTime} onChange={(event) => setCommitmentReminderTime(event.target.value)} />
+                </label>
+                <button className="primary" onClick={createCommitment}>
+                  Add commitment
+                </button>
+              </div>
+
+              <div className="commitmentList">
+                {(props.data.commitments?.items || []).map((item) => (
+                  <div className="commitmentRow" key={item.id}>
+                    <div>
+                      <strong>{item.name}</strong>
+                      <span>RM{Number(item.amount).toLocaleString("ms-MY")} · due {new Date(item.currentMonth.dueDate).toLocaleDateString("ms-MY")} · {item.currentMonth.status}</span>
+                      <small>Reminder seterusnya: {new Date(item.nextReminderAt).toLocaleString("ms-MY")}</small>
+                    </div>
+                    <div className="commitmentActions">
+                      {item.currentMonth.status !== "PAID" && (
+                        <button className="primary" onClick={() => markCommitmentPaid(item.id)} disabled={!item.canManage}>
+                          Mark paid
+                        </button>
+                      )}
+                      <button className="ghost" onClick={() => updateCommitmentStatus(item.id, { isActive:!item.isActive }, item.isActive ? "Commitment dinyahaktifkan." : "Commitment diaktifkan.")} disabled={!item.canManage}>
+                        {item.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                      <button className="ghost danger" onClick={() => archiveCommitment(item.id)} disabled={!item.canManage || Boolean(item.archivedAt)}>
+                        Archive
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
+
+          {activeView === "bot-settings" && (
+            <Panel title="Bot Settings" wide>
+              <div className="commitmentForm botSettingsForm">
+                <label className="field checkboxField">
+                  <input type="checkbox" checked={botEnabled} onChange={(event) => setBotEnabled(event.target.checked)} />
+                  Bot enabled
+                </label>
+                <label className="field">
+                  Timezone
+                  <input value={botTimezone} onChange={(event) => setBotTimezone(event.target.value)} />
+                </label>
+                <label className="field">
+                  Default reminder days before
+                  <input type="number" min="0" max="30" value={botReminderDays} onChange={(event) => setBotReminderDays(event.target.value)} />
+                </label>
+                <label className="field">
+                  Default reminder time
+                  <input type="time" value={botReminderTime} onChange={(event) => setBotReminderTime(event.target.value)} />
+                </label>
+                <label className="field">
+                  Quiet hours start
+                  <input type="time" value={botQuietStart} onChange={(event) => setBotQuietStart(event.target.value)} />
+                </label>
+                <label className="field">
+                  Quiet hours end
+                  <input type="time" value={botQuietEnd} onChange={(event) => setBotQuietEnd(event.target.value)} />
+                </label>
+                <button className="primary" onClick={saveBotSettings}>
+                  Save bot settings
+                </button>
+              </div>
+              <p className="helperText">
+                Jika bot disabled, scheduled reminder tidak akan dihantar. Dashboard masih boleh digunakan.
+              </p>
             </Panel>
           )}
 

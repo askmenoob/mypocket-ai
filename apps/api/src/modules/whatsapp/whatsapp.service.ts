@@ -12,6 +12,10 @@ import {
   TransactionService,
 } from "../transaction/transaction.service.js";
 
+import {
+  CommitmentService,
+} from "../commitment/commitment.service.js";
+
 
 import {
   AppError,
@@ -58,6 +62,9 @@ export class WhatsAppService {
   private readonly transactionService:
     TransactionService;
 
+  private readonly commitmentService:
+    CommitmentService;
+
 
   private readonly sheetSyncService:
     WhatsAppSheetSyncService;
@@ -70,6 +77,11 @@ export class WhatsAppService {
 
     this.transactionService =
       new TransactionService(
+        app,
+      );
+
+    this.commitmentService =
+      new CommitmentService(
         app,
       );
 
@@ -2190,6 +2202,14 @@ export class WhatsAppService {
         );
 
 
+    const reminderCommand =
+      this.parseReminderCommand(
+        normalized.text
+        ??
+        "",
+      );
+
+
     const commandKind =
       this.resolveWebhookCommandKind({
         editCommand,
@@ -2201,6 +2221,7 @@ export class WhatsAppService {
         isMembers,
         infoCommand,
         listCommand,
+        reminderCommand,
         summaryPeriod,
       });
 
@@ -2394,6 +2415,19 @@ export class WhatsAppService {
       return this.handleInfoCommand(
         normalized,
         infoCommand,
+      );
+
+    }
+
+
+    if(reminderCommand){
+
+      return this.handleReminderCommand(
+        instance.workspaceId,
+        normalized,
+        actorMember.userId,
+        actorMember.role,
+        reminderCommand,
       );
 
     }
@@ -2679,6 +2713,10 @@ export class WhatsAppService {
         | WhatsAppListCommand
         | null;
 
+      reminderCommand:
+        | ReturnType<WhatsAppService["parseReminderCommand"]>
+        | null;
+
       summaryPeriod:
         | "today"
         | "week"
@@ -2750,6 +2788,13 @@ export class WhatsAppService {
     }
 
 
+    if(input.reminderCommand){
+
+      return "reminder";
+
+    }
+
+
     if(input.summaryPeriod){
 
       return "summary";
@@ -2805,6 +2850,7 @@ export class WhatsAppService {
       return [
         ...readOnlyCommands,
         "transaction",
+        "reminder",
       ].includes(
         commandKind,
       );
@@ -2855,6 +2901,18 @@ export class WhatsAppService {
     }
 
 
+    if(commandKind === "reminder"){
+
+      return [
+        "🔒 Command reminder tidak dibenarkan untuk akaun anda.",
+        "Sila hubungi admin workspace.",
+      ].join(
+        "\n",
+      );
+
+    }
+
+
     if(commandKind === "transaction"){
 
       return [
@@ -2876,6 +2934,481 @@ export class WhatsAppService {
 
   }
 
+
+
+
+
+
+  private parseReminderCommand(
+    text:string,
+  ):
+    | {
+        action:
+          | "list_unpaid"
+          | "list_all"
+          | "list_paid"
+          | "create"
+          | "update_due_day"
+          | "deactivate"
+          | "activate"
+          | "archive"
+          | "mark_paid";
+        name?:string;
+        amount?:string;
+        dueDay?:number;
+      }
+    | null {
+
+    const trimmed =
+      text
+        .trim();
+
+    const normalized =
+      trimmed
+        .toLowerCase();
+
+    if([
+      "reminder",
+      "peringatan",
+    ].includes(normalized)){
+      return {
+        action:
+          "list_unpaid",
+      };
+    }
+
+    if([
+      "reminder semua",
+      "senarai komitmen",
+      "komitmen",
+    ].includes(normalized)){
+      return {
+        action:
+          "list_all",
+      };
+    }
+
+    if([
+      "reminder selesai",
+      "komitmen selesai",
+    ].includes(normalized)){
+      return {
+        action:
+          "list_paid",
+      };
+    }
+
+    const createMatch =
+      trimmed.match(
+        /^(?:ingatkan|tambah\s+reminder|bil)\s+(.+?)\s+rm\s*([0-9]+(?:[.,][0-9]{1,2})?)\s+(?:setiap\s+)?([0-9]{1,2})\s*(?:hb|haribulan)?$/i,
+      );
+
+    if(createMatch){
+      return {
+        action:
+          "create",
+        name:
+          createMatch[1].trim(),
+        amount:
+          createMatch[2].replace(
+            ",",
+            ".",
+          ),
+        dueDay:
+          Number(createMatch[3]),
+      };
+    }
+
+    const updateMatch =
+      trimmed.match(
+        /^ubah\s+reminder\s+(.+?)\s+ke\s+([0-9]{1,2})\s*(?:hb|haribulan)?$/i,
+      );
+
+    if(updateMatch){
+      return {
+        action:
+          "update_due_day",
+        name:
+          updateMatch[1].trim(),
+        dueDay:
+          Number(updateMatch[2]),
+      };
+    }
+
+    const deactivateMatch =
+      trimmed.match(
+        /^(?:tutup|nyahaktifkan)\s+reminder\s+(.+)$/i,
+      );
+
+    if(deactivateMatch){
+      return {
+        action:
+          "deactivate",
+        name:
+          deactivateMatch[1].trim(),
+      };
+    }
+
+    const activateMatch =
+      trimmed.match(
+        /^aktifkan\s+reminder\s+(.+)$/i,
+      );
+
+    if(activateMatch){
+      return {
+        action:
+          "activate",
+        name:
+          activateMatch[1].trim(),
+      };
+    }
+
+    const archiveMatch =
+      trimmed.match(
+        /^padam\s+komitmen\s+(.+)$/i,
+      );
+
+    if(archiveMatch){
+      return {
+        action:
+          "archive",
+        name:
+          archiveMatch[1].trim(),
+      };
+    }
+
+    const paidMatch =
+      trimmed.match(
+        /^(?:bayar|paid|selesai)\s+(?:reminder\s+|komitmen\s+)?(.+)$/i,
+      );
+
+    if(paidMatch){
+      return {
+        action:
+          "mark_paid",
+        name:
+          paidMatch[1].trim(),
+      };
+    }
+
+    return null;
+
+  }
+
+
+
+
+  private async handleReminderCommand(
+    workspaceId:string,
+    normalized:NormalizedEvolutionMessage,
+    actorUserId:string,
+    role:
+      | "OWNER"
+      | "ADMIN"
+      | "MEMBER"
+      | "VIEWER",
+    command:NonNullable<ReturnType<WhatsAppService["parseReminderCommand"]>>,
+  ){
+
+    const actor = {
+      userId:
+        actorUserId,
+      workspaceId,
+      role,
+    };
+
+    if(command.action === "create"){
+      if(!command.name || !command.amount || !command.dueDay){
+        await this.safeSendWebhookReply(
+          normalized,
+          "Format reminder tidak lengkap. Contoh: Ingatkan bayaran kereta RM1000 setiap 10hb",
+        );
+        return {
+          message:"WhatsApp reminder create invalid",
+          source:"EVOLUTION",
+          normalized,
+        };
+      }
+
+      const result =
+        await this.commitmentService.createCommitment(
+          actor,
+          {
+            name:
+              command.name,
+            amount:
+              command.amount,
+            dueDay:
+              command.dueDay,
+          },
+        );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        [
+          "✅ Reminder ditambah",
+          "",
+          `${result.name} — RM${result.amount} — setiap ${result.dueDay}hb`,
+        ].join("\n"),
+      );
+
+      return {
+        message:"WhatsApp reminder created",
+        source:"EVOLUTION",
+        normalized,
+        commitment:result,
+      };
+    }
+
+    if(command.action === "update_due_day"){
+      const commitment =
+        await this.findCommitmentByNameForWhatsApp(
+          actor,
+          command.name,
+        );
+
+      const result =
+        await this.commitmentService.updateCommitment(
+          actor,
+          commitment.id,
+          {
+            dueDay:
+              command.dueDay,
+          },
+        );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        `✅ Reminder ${result.name} dikemas kini ke ${result.dueDay}hb.`,
+      );
+
+      return {
+        message:"WhatsApp reminder updated",
+        source:"EVOLUTION",
+        normalized,
+        commitment:result,
+      };
+    }
+
+    if([
+      "deactivate",
+      "activate",
+    ].includes(command.action)){
+      const commitment =
+        await this.findCommitmentByNameForWhatsApp(
+          actor,
+          command.name,
+        );
+
+      const active =
+        command.action === "activate";
+
+      const result =
+        await this.commitmentService.updateCommitment(
+          actor,
+          commitment.id,
+          {
+            isActive:
+              active,
+          },
+        );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        active
+          ? `✅ Reminder ${result.name} diaktifkan.`
+          : `✅ Reminder ${result.name} dinyahaktifkan.`,
+      );
+
+      return {
+        message:"WhatsApp reminder active state updated",
+        source:"EVOLUTION",
+        normalized,
+        commitment:result,
+      };
+    }
+
+    if(command.action === "archive"){
+      const commitment =
+        await this.findCommitmentByNameForWhatsApp(
+          actor,
+          command.name,
+        );
+
+      const result =
+        await this.commitmentService.archiveCommitment(
+          actor,
+          commitment.id,
+        );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        "✅ Komitmen diarchive. Sejarah bulanan tidak dipadam.",
+      );
+
+      return {
+        message:"WhatsApp reminder archived",
+        source:"EVOLUTION",
+        normalized,
+        result,
+      };
+    }
+
+    if(command.action === "mark_paid"){
+      const commitment =
+        await this.findCommitmentByNameForWhatsApp(
+          actor,
+          command.name,
+        );
+
+      const result =
+        await this.commitmentService.markCurrentMonthPaid(
+          actor,
+          commitment.id,
+        );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        "✅ Komitmen bulan semasa ditanda sudah dibayar.",
+      );
+
+      return {
+        message:"WhatsApp reminder paid",
+        source:"EVOLUTION",
+        normalized,
+        result,
+      };
+    }
+
+    const status =
+      command.action === "list_all"
+        ? "all"
+        : command.action === "list_paid"
+          ? "paid"
+          : "unpaid";
+
+    const result =
+      await this.commitmentService.listCommitments(
+        actor,
+        status,
+      );
+
+    await this.safeSendWebhookReply(
+      normalized,
+      this.buildReminderListReply(
+        result,
+      ),
+    );
+
+    return {
+      message:"WhatsApp reminder list sent",
+      source:"EVOLUTION",
+      normalized,
+      result,
+    };
+
+  }
+
+
+
+
+  private async findCommitmentByNameForWhatsApp(
+    actor:{
+      userId:string;
+      workspaceId:string;
+      role:string;
+    },
+    name?:string,
+  ){
+
+    if(!name){
+      throw new AppError(
+        "REMINDER_NAME_REQUIRED",
+        "Reminder name is required",
+        400,
+      );
+    }
+
+    const result =
+      await this.commitmentService.listCommitments(
+        actor,
+        "all",
+      );
+
+    const normalizedName =
+      name
+        .trim()
+        .toLowerCase();
+
+    const matches =
+      result.items.filter((item:any) =>
+        item.name
+          .toLowerCase()
+          .includes(
+            normalizedName,
+          )
+      );
+
+    if(matches.length !== 1){
+      throw new AppError(
+        "REMINDER_NOT_FOUND_OR_AMBIGUOUS",
+        matches.length === 0
+          ? "Reminder not found"
+          : "Reminder name is ambiguous",
+        404,
+      );
+    }
+
+    return matches[0];
+
+  }
+
+
+
+
+  private buildReminderListReply(
+    result:any,
+  ){
+
+    const title =
+      result.filter === "paid"
+        ? `✅ Komitmen selesai — ${result.period.label}`
+        : result.filter === "all"
+          ? `📋 Semua komitmen — ${result.period.label}`
+          : `🔔 Komitmen belum dibayar — ${result.period.label}`;
+
+    if(!result.items.length){
+      return [
+        title,
+        "",
+        "Tiada rekod untuk paparan ini.",
+      ].join("\n");
+    }
+
+    const lines =
+      result.items.map((item:any) => {
+        const dueDate =
+          new Date(
+            item.currentMonth.dueDate,
+          );
+        const icon =
+          item.currentMonth.status === "PAID"
+            ? "✅"
+            : item.currentMonth.status === "OVERDUE"
+              ? "⚠️"
+              : "⬜";
+        return `${icon} ${item.name} — RM${Number(item.amount).toLocaleString("ms-MY")} — ${dueDate.getDate()} ${result.period.label.split(" ")[0]}`;
+      });
+
+    return [
+      title,
+      "",
+      ...lines,
+      "",
+      `Jumlah belum dibayar: RM${Number(result.summary.totalUnpaid).toLocaleString("ms-MY")}`,
+    ].join("\n");
+
+  }
 
 
 

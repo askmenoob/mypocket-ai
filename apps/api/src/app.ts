@@ -13,6 +13,7 @@ import transactionModule from "./modules/transaction/index.js";
 import whatsappModule from "./modules/whatsapp/index.js";
 import googleModule from "./modules/google/index.js";
 import billingModule from "./modules/billing/index.js";
+import commitmentModule from "./modules/commitment/index.js";
 
 
 export function buildApp() {
@@ -107,6 +108,14 @@ export function buildApp() {
 
   app.register(
     googleModule,
+    {
+      prefix: "/api/v1",
+    },
+  );
+
+
+  app.register(
+    commitmentModule,
     {
       prefix: "/api/v1",
     },

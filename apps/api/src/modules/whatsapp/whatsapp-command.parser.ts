@@ -10,6 +10,7 @@ export type WhatsAppCommandKind =
   | "list"
   | "edit"
   | "undo"
+  | "reminder"
   | "transaction";
 
 
