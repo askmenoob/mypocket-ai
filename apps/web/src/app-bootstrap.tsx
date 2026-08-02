@@ -3254,6 +3254,9 @@ function Dashboard(
   const [botEnabled, setBotEnabled] =
     useState(true);
 
+  const [botReplyLanguage, setBotReplyLanguage] =
+    useState("ms");
+
   const [botTimezone, setBotTimezone] =
     useState("Asia/Kuala_Lumpur");
 
@@ -3355,6 +3358,7 @@ function Dashboard(
       }
 
       setBotEnabled(props.data.botSettings.botEnabled);
+      setBotReplyLanguage(props.data.botSettings.replyLanguage || "ms");
       setBotTimezone(props.data.botSettings.timezone);
       setBotReminderDays(String(props.data.botSettings.defaultReminderDaysBefore));
       setBotReminderTime(props.data.botSettings.defaultReminderTime);
@@ -3802,6 +3806,7 @@ function Dashboard(
         method:"PATCH",
         body:JSON.stringify({
           botEnabled,
+          replyLanguage:botReplyLanguage,
           timezone:botTimezone,
           defaultReminderDaysBefore:Number(botReminderDays),
           defaultReminderTime:botReminderTime,
@@ -4832,6 +4837,13 @@ function Dashboard(
                   Bot enabled
                 </label>
                 <label className="field">
+                  Reply language
+                  <select value={botReplyLanguage} onChange={(event) => setBotReplyLanguage(event.target.value)}>
+                    <option value="ms">Bahasa Melayu</option>
+                    <option value="en">English</option>
+                  </select>
+                </label>
+                <label className="field">
                   Timezone
                   <input value={botTimezone} onChange={(event) => setBotTimezone(event.target.value)} />
                 </label>
@@ -4856,7 +4868,7 @@ function Dashboard(
                 </button>
               </div>
               <p className="helperText">
-                Jika bot disabled, scheduled reminder tidak akan dihantar. Dashboard masih boleh digunakan.
+                Pilihan bahasa mengawal reply WhatsApp reminder dan bantuan bot. Jika bot disabled, scheduled reminder tidak akan dihantar. Dashboard masih boleh digunakan.
               </p>
             </Panel>
           )}

@@ -2087,12 +2087,18 @@ export class WhatsAppService {
         )
     ){
 
+      const replyLanguage =
+        await this.getWorkspaceReplyLanguage(
+          instance.workspaceId,
+        );
+
       await this.safeSendWebhookReply(
         normalized,
         this.buildHelpReply(
           instance.botAlias
           ??
           "mypocket",
+          replyLanguage,
         ),
       );
 
@@ -2969,6 +2975,13 @@ export class WhatsAppService {
 
     if([
       "reminder",
+      "reminders",
+      "pending reminder",
+      "pending reminders",
+      "unpaid reminder",
+      "unpaid reminders",
+      "show reminders",
+      "list reminders",
       "peringatan",
     ].includes(normalized)){
       return {
@@ -2979,6 +2992,10 @@ export class WhatsAppService {
 
     if([
       "reminder semua",
+      "all reminders",
+      "all commitments",
+      "list commitments",
+      "commitments",
       "senarai komitmen",
       "komitmen",
     ].includes(normalized)){
@@ -2991,6 +3008,12 @@ export class WhatsAppService {
     if([
       "reminder selesai",
       "komitmen selesai",
+      "paid reminder",
+      "paid reminders",
+      "completed reminder",
+      "completed reminders",
+      "done reminder",
+      "done reminders",
     ].includes(normalized)){
       return {
         action:
@@ -3001,6 +3024,10 @@ export class WhatsAppService {
     const createMatch =
       trimmed.match(
         /^(?:ingatkan|tambah\s+reminder|bil)\s+(.+?)\s+rm\s*([0-9]+(?:[.,][0-9]{1,2})?)\s+(?:setiap\s+)?([0-9]{1,2})\s*(?:hb|haribulan)?$/i,
+      )
+      ??
+      trimmed.match(
+        /^(?:remind\s+me(?:\s+to\s+pay)?|add\s+reminder|add\s+commitment|bill)\s+(.+?)\s+rm\s*([0-9]+(?:[.,][0-9]{1,2})?)\s+(?:(?:on|every|due)\s+)?(?:day\s*)?([0-9]{1,2})(?:st|nd|rd|th)?$/i,
       );
 
     if(createMatch){
@@ -3022,6 +3049,10 @@ export class WhatsAppService {
     const updateMatch =
       trimmed.match(
         /^ubah\s+reminder\s+(.+?)\s+ke\s+([0-9]{1,2})\s*(?:hb|haribulan)?$/i,
+      )
+      ??
+      trimmed.match(
+        /^(?:change|update|edit)\s+reminder\s+(.+?)\s+(?:to|on)\s+([0-9]{1,2})(?:st|nd|rd|th)?$/i,
       );
 
     if(updateMatch){
@@ -3038,6 +3069,10 @@ export class WhatsAppService {
     const deactivateMatch =
       trimmed.match(
         /^(?:tutup|nyahaktifkan)\s+reminder\s+(.+)$/i,
+      )
+      ??
+      trimmed.match(
+        /^(?:turn\s+off|disable|deactivate)\s+reminder\s+(.+)$/i,
       );
 
     if(deactivateMatch){
@@ -3052,6 +3087,10 @@ export class WhatsAppService {
     const activateMatch =
       trimmed.match(
         /^aktifkan\s+reminder\s+(.+)$/i,
+      )
+      ??
+      trimmed.match(
+        /^(?:enable|activate)\s+reminder\s+(.+)$/i,
       );
 
     if(activateMatch){
@@ -3066,6 +3105,10 @@ export class WhatsAppService {
     const archiveMatch =
       trimmed.match(
         /^padam\s+komitmen\s+(.+)$/i,
+      )
+      ??
+      trimmed.match(
+        /^(?:delete|archive)\s+(?:commitment|reminder)\s+(.+)$/i,
       );
 
     if(archiveMatch){
@@ -3080,6 +3123,10 @@ export class WhatsAppService {
     const paidMatch =
       trimmed.match(
         /^(?:bayar|paid|selesai)\s+(?:reminder\s+|komitmen\s+)?(.+)$/i,
+      )
+      ??
+      trimmed.match(
+        /^(?:pay|done|complete|mark\s+paid)\s+(?:reminder\s+|commitment\s+)?(.+)$/i,
       );
 
     if(paidMatch){
@@ -3092,6 +3139,29 @@ export class WhatsAppService {
     }
 
     return null;
+
+  }
+
+
+
+
+  private async getWorkspaceReplyLanguage(
+    workspaceId:string,
+  ):Promise<"ms" | "en">{
+
+    const settings =
+      await this.app.prisma.workspaceBotSettings.findUnique({
+        where:{
+          workspaceId,
+        },
+        select:{
+          replyLanguage:true,
+        },
+      });
+
+    return settings?.replyLanguage === "en"
+      ? "en"
+      : "ms";
 
   }
 
@@ -3117,11 +3187,18 @@ export class WhatsAppService {
       role,
     };
 
+    const replyLanguage =
+      await this.getWorkspaceReplyLanguage(
+        workspaceId,
+      );
+
     if(command.action === "create"){
       if(!command.name || !command.amount || !command.dueDay){
         await this.safeSendWebhookReply(
           normalized,
-          "Format reminder tidak lengkap. Contoh: Ingatkan bayaran kereta RM1000 setiap 10hb",
+          replyLanguage === "en"
+            ? "Reminder format is incomplete. Example: Remind me to pay car RM1000 every 10th"
+            : "Format reminder tidak lengkap. Contoh: Ingatkan bayaran kereta RM1000 setiap 10hb",
         );
         return {
           message:"WhatsApp reminder create invalid",
@@ -3145,11 +3222,17 @@ export class WhatsAppService {
 
       await this.safeSendWebhookReply(
         normalized,
-        [
-          "✅ Reminder ditambah",
-          "",
-          `${result.name} — RM${result.amount} — setiap ${result.dueDay}hb`,
-        ].join("\n"),
+        replyLanguage === "en"
+          ? [
+              "✅ Reminder added",
+              "",
+              `${result.name} — RM${result.amount} — every ${result.dueDay}${this.englishDaySuffix(result.dueDay)}`,
+            ].join("\n")
+          : [
+              "✅ Reminder ditambah",
+              "",
+              `${result.name} — RM${result.amount} — setiap ${result.dueDay}hb`,
+            ].join("\n"),
       );
 
       return {
@@ -3179,7 +3262,9 @@ export class WhatsAppService {
 
       await this.safeSendWebhookReply(
         normalized,
-        `✅ Reminder ${result.name} dikemas kini ke ${result.dueDay}hb.`,
+        replyLanguage === "en"
+          ? `✅ Reminder ${result.name} updated to ${result.dueDay}${this.englishDaySuffix(result.dueDay)}.`
+          : `✅ Reminder ${result.name} dikemas kini ke ${result.dueDay}hb.`,
       );
 
       return {
@@ -3215,9 +3300,13 @@ export class WhatsAppService {
 
       await this.safeSendWebhookReply(
         normalized,
-        active
-          ? `✅ Reminder ${result.name} diaktifkan.`
-          : `✅ Reminder ${result.name} dinyahaktifkan.`,
+        replyLanguage === "en"
+          ? active
+            ? `✅ Reminder ${result.name} activated.`
+            : `✅ Reminder ${result.name} deactivated.`
+          : active
+            ? `✅ Reminder ${result.name} diaktifkan.`
+            : `✅ Reminder ${result.name} dinyahaktifkan.`,
       );
 
       return {
@@ -3243,7 +3332,9 @@ export class WhatsAppService {
 
       await this.safeSendWebhookReply(
         normalized,
-        "✅ Komitmen diarchive. Sejarah bulanan tidak dipadam.",
+        replyLanguage === "en"
+          ? "✅ Commitment archived. Monthly history was not deleted."
+          : "✅ Komitmen diarchive. Sejarah bulanan tidak dipadam.",
       );
 
       return {
@@ -3269,7 +3360,9 @@ export class WhatsAppService {
 
       await this.safeSendWebhookReply(
         normalized,
-        "✅ Komitmen bulan semasa ditanda sudah dibayar.",
+        replyLanguage === "en"
+          ? "✅ Current month commitment marked as paid."
+          : "✅ Komitmen bulan semasa ditanda sudah dibayar.",
       );
 
       return {
@@ -3297,6 +3390,7 @@ export class WhatsAppService {
       normalized,
       this.buildReminderListReply(
         result,
+        replyLanguage,
       ),
     );
 
@@ -3368,20 +3462,32 @@ export class WhatsAppService {
 
   private buildReminderListReply(
     result:any,
+    language:"ms" | "en" = "ms",
   ){
 
+    const isEnglish =
+      language === "en";
+
     const title =
-      result.filter === "paid"
-        ? `✅ Komitmen selesai — ${result.period.label}`
-        : result.filter === "all"
-          ? `📋 Semua komitmen — ${result.period.label}`
-          : `🔔 Komitmen belum dibayar — ${result.period.label}`;
+      isEnglish
+        ? result.filter === "paid"
+          ? `✅ Completed commitments — ${result.period.label}`
+          : result.filter === "all"
+            ? `📋 All commitments — ${result.period.label}`
+            : `🔔 Unpaid commitments — ${result.period.label}`
+        : result.filter === "paid"
+          ? `✅ Komitmen selesai — ${result.period.label}`
+          : result.filter === "all"
+            ? `📋 Semua komitmen — ${result.period.label}`
+            : `🔔 Komitmen belum dibayar — ${result.period.label}`;
 
     if(!result.items.length){
       return [
         title,
         "",
-        "Tiada rekod untuk paparan ini.",
+        isEnglish
+          ? "No records for this view."
+          : "Tiada rekod untuk paparan ini.",
       ].join("\n");
     }
 
@@ -3405,8 +3511,40 @@ export class WhatsAppService {
       "",
       ...lines,
       "",
-      `Jumlah belum dibayar: RM${Number(result.summary.totalUnpaid).toLocaleString("ms-MY")}`,
+      isEnglish
+        ? `Total unpaid: RM${Number(result.summary.totalUnpaid).toLocaleString("ms-MY")}`
+        : `Jumlah belum dibayar: RM${Number(result.summary.totalUnpaid).toLocaleString("ms-MY")}`,
     ].join("\n");
+
+  }
+
+
+
+
+  private englishDaySuffix(
+    day:number,
+  ){
+
+    if(day >= 11 && day <= 13){
+      return "th";
+    }
+
+    const lastDigit =
+      day % 10;
+
+    if(lastDigit === 1){
+      return "st";
+    }
+
+    if(lastDigit === 2){
+      return "nd";
+    }
+
+    if(lastDigit === 3){
+      return "rd";
+    }
+
+    return "th";
 
   }
 
@@ -5710,7 +5848,63 @@ export class WhatsAppService {
 
   private buildHelpReply(
     botAlias:string,
+    language:"ms" | "en" = "ms",
   ){
+
+    if(language === "en"){
+      const normalizedBotAlias =
+        botAlias
+          .trim()
+          .replace(
+            /^@+/,
+            "",
+          )
+          .toLowerCase()
+        ||
+        "mypocket";
+
+      const aliasTrigger =
+        `@${normalizedBotAlias}`;
+
+      return [
+        "👋 MyPocket AI",
+        "",
+        "📣 *How to use in a WhatsApp group:*",
+        `• Start the message with *!* or *${aliasTrigger}*`,
+        "• Messages without a trigger are ignored by the bot.",
+        "",
+        "*Group examples:*",
+        "• !lunch mamak rm7.80 tng",
+        `• ${aliasTrigger} petrol shell rm50 cash`,
+        "• !Remind me to pay car RM1000 every 10th",
+        "• !paid car",
+        "• !paid reminders",
+        `• ${aliasTrigger} help`,
+        "",
+        "💬 *Private chat:*",
+        "• No ! or alias is required.",
+        "• Example: lunch mamak rm7.80 tng",
+        "",
+        "Commands:",
+        "• today — today summary",
+        "• week — this week summary",
+        "• month — this month summary",
+        "• undo — undo last transaction",
+        "• categories — auto category list",
+        "• members — WhatsApp member list",
+        "• methods — payment method list",
+        "• commands — all commands",
+        "• reminder — unpaid commitments",
+        "• all reminders — all commitments",
+        "• paid reminders — completed commitments",
+        "• status — check bot connection",
+        "• help — format guide",
+        "",
+        "Category, merchant, and payment method are detected automatically.",
+      ].join(
+        "\n",
+      );
+    }
 
     return WhatsAppReplyBuilder
       .help(

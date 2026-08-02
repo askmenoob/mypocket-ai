@@ -58,7 +58,7 @@ All routes derive workspace context from the authenticated token. The frontend d
 
 ## WhatsApp commands
 
-Supported Sprint A commands:
+Supported Sprint A commands in Bahasa Melayu and English:
 
 ```text
 reminder
@@ -74,7 +74,22 @@ aktifkan reminder kereta
 padam komitmen kereta
 bayar kereta
 selesai kereta
+
+reminders
+all reminders
+paid reminders
+Remind me to pay car RM1000 every 10th
+Bill internet RM240 on 5th
+Add reminder electricity RM200 every 25th
+change reminder car to 15th
+disable reminder car
+enable reminder car
+delete commitment car
+paid car
+mark paid car
 ```
+
+Workspace bot settings include `replyLanguage` with `ms` as the default. Users can choose Bahasa Melayu or English from Bot Settings. The selected language controls WhatsApp reminder replies and the help text.
 
 WhatsApp commands call `CommitmentService`; they do not write directly to separate reminder logic.
 
@@ -97,6 +112,7 @@ The commitments screen supports:
 Bot Settings supports:
 
 - bot enabled
+- reply language: Bahasa Melayu or English
 - timezone
 - default reminder days before
 - default reminder time
