@@ -5851,23 +5851,24 @@ export class WhatsAppService {
     language:"ms" | "en" = "ms",
   ){
 
+    const normalizedBotAlias =
+      botAlias
+        .trim()
+        .replace(
+          /^@+/,
+          "",
+        )
+        .toLowerCase()
+      ||
+      "mypocket";
+
+    const aliasTrigger =
+      `@${normalizedBotAlias}`;
+
     if(language === "en"){
-      const normalizedBotAlias =
-        botAlias
-          .trim()
-          .replace(
-            /^@+/,
-            "",
-          )
-          .toLowerCase()
-        ||
-        "mypocket";
-
-      const aliasTrigger =
-        `@${normalizedBotAlias}`;
-
       return [
         "👋 MyPocket AI — Quick help",
+        "Help version: 2026-08-03",
         "",
         "📣 *In WhatsApp groups:*",
         `• Start messages with *!* or *${aliasTrigger}*`,
@@ -5911,10 +5912,50 @@ export class WhatsAppService {
       );
     }
 
-    return WhatsAppReplyBuilder
-      .help(
-        botAlias,
-      );
+    return [
+      "👋 MyPocket AI — Bantuan ringkas",
+      "Versi bantuan: 2026-08-03",
+      "",
+      "📣 *Dalam WhatsApp group:*",
+      `• Mula mesej dengan *!* atau *${aliasTrigger}*`,
+      "• Mesej tanpa trigger akan diabaikan.",
+      "",
+      "💬 *Private chat:*",
+      "• Tidak perlu ! atau alias.",
+      "",
+      "🧾 *Rekod transaksi:*",
+      "• !makan kedai mamak rm7.80 tng",
+      `• ${aliasTrigger} petrol shell rm50 cash`,
+      "• bill unifi rm129 bank",
+      "• gaji rm3000",
+      "",
+      "🔔 *Komitmen & reminder:*",
+      "• !reminder — senarai belum dibayar",
+      "• !reminder semua — semua komitmen",
+      "• !reminder selesai — sudah dibayar",
+      "• !Ingatkan bayaran kereta RM1000 setiap 10hb",
+      "• !ubah reminder kereta ke 15hb",
+      "• !bayar kereta / !selesai kereta",
+      "• !tutup reminder kereta / !aktifkan reminder kereta",
+      "• !padam komitmen kereta",
+      "",
+      "📊 *Ringkasan & kawalan:*",
+      "• !today — ringkasan hari ini",
+      "• !week — ringkasan minggu ini",
+      "• !month — ringkasan bulan ini",
+      "• !last — transaksi terakhir",
+      "• !undo — batalkan transaksi terakhir",
+      "• !categories — senarai kategori",
+      "• !methods — payment method",
+      "• !members — ahli WhatsApp",
+      "• !status — status bot",
+      "• !commands — semua command",
+      "",
+      "🌐 Bahasa reply boleh ditukar di Dashboard → Bot Settings.",
+      "Kategori, merchant dan payment method akan dikesan automatik.",
+    ].join(
+      "\n",
+    );
 
   }
 
