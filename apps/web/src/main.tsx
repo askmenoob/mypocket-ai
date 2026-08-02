@@ -11,7 +11,7 @@ if (pathname === "/terms") {
   renderTermsPage();
 } else if (pathname === "/privacy") {
   renderPrivacyPage();
-} else if (["/blog", "/help", "/guides", "/updates"].includes(pathname)) {
+} else if (["/blog", "/help", "/guides", "/guides/whatsapp-bot", "/updates"].includes(pathname)) {
   renderResourcePage(pathname);
 } else {
   void import("./app-bootstrap");

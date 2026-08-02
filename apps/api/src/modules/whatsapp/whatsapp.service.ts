@@ -2481,6 +2481,169 @@ export class WhatsAppService {
     }
 
 
+    const transactionTexts =
+      this.splitWebhookTransactionTexts(
+        normalized.text!,
+      );
+
+
+    if(transactionTexts.length > 1){
+
+      const recordedTransactions:{
+        parsed:ParsedWhatsAppTransaction;
+        transaction:unknown;
+        text:string;
+      }[] = [];
+
+
+      const failedTransactions:{
+        text:string;
+        reason:string;
+      }[] = [];
+
+
+      let duplicateCount =
+        0;
+
+
+      for(const transactionText of transactionTexts){
+
+        const itemNormalized:NormalizedEvolutionMessage =
+          {
+            ...normalized,
+
+            text:
+              transactionText,
+          };
+
+
+        const parseCheck =
+          await this.safeParseWebhookTransaction(
+            itemNormalized,
+            commandReplyLanguage,
+            false,
+          );
+
+
+        if(!parseCheck.parsed){
+
+          failedTransactions.push({
+            text:
+              transactionText,
+
+            reason:
+              parseCheck.reason
+              ??
+              "WHATSAPP_PARSE_FAILED",
+          });
+
+          continue;
+
+        }
+
+
+        const duplicate =
+          await this.findDuplicateTransaction(
+            instance.workspaceId,
+            transactionText,
+            normalized.timestamp,
+          );
+
+
+        if(duplicate){
+
+          duplicateCount +=
+            1;
+
+          continue;
+
+        }
+
+
+        const result =
+          await this.createDevTransaction({
+
+            text:
+              transactionText,
+
+            transactionDate:
+              normalized.timestamp,
+
+            source:
+              "WHATSAPP",
+
+            user:{
+              userId:
+                actorMember.userId,
+
+              workspaceId:
+                instance.workspaceId,
+
+              role:
+                actorMember.role,
+            },
+
+          });
+
+
+        recordedTransactions.push({
+          parsed:
+            result.parsed,
+
+          transaction:
+            result.transaction,
+
+          text:
+            transactionText,
+        });
+
+      }
+
+
+      await this.safeSendWebhookReply(
+        normalized,
+        this.buildMultiTransactionReply(
+          recordedTransactions.map(
+            (item) => item.parsed,
+          ),
+          duplicateCount,
+          failedTransactions,
+          commandReplyLanguage,
+        ),
+      );
+
+
+      return {
+
+        message:
+          recordedTransactions.length > 0
+            ? "WhatsApp webhook multi transactions recorded"
+            : "WhatsApp webhook multi transactions not recorded",
+
+        source:
+          "EVOLUTION",
+
+        normalized,
+
+        parsed:
+          recordedTransactions.map(
+            (item) => item.parsed,
+          ),
+
+        transactions:
+          recordedTransactions.map(
+            (item) => item.transaction,
+          ),
+
+        duplicateCount,
+
+        failedTransactions,
+
+      };
+
+    }
+
+
     const parseCheck =
       await this.safeParseWebhookTransaction(
         normalized,
@@ -6074,6 +6237,8 @@ export class WhatsAppService {
     normalized:NormalizedEvolutionMessage,
 
     language:"ms" | "en" = "ms",
+
+    sendFailureReply = true,
   ){
 
     try{
@@ -6098,13 +6263,17 @@ export class WhatsAppService {
           "WHATSAPP_PARSE_FAILED";
 
 
-      await this.safeSendWebhookReply(
-        normalized,
-        this.buildParseFailedReply(
-          reason,
-          language,
-        ),
-      );
+      if(sendFailureReply){
+
+        await this.safeSendWebhookReply(
+          normalized,
+          this.buildParseFailedReply(
+            reason,
+            language,
+          ),
+        );
+
+      }
 
 
       return {
@@ -6293,6 +6462,263 @@ export class WhatsAppService {
         parsed,
         language,
       );
+
+  }
+
+
+
+  private buildMultiTransactionReply(
+    recorded:ParsedWhatsAppTransaction[],
+
+    duplicateCount:number,
+
+    failed:{
+      text:string;
+      reason:string;
+    }[],
+
+    language:"ms" | "en" = "ms",
+  ){
+
+    const lines =
+      language === "en"
+        ? [
+          `✅ ${recorded.length} transaction${recorded.length === 1 ? "" : "s"} recorded`,
+        ]
+        : [
+          `✅ ${recorded.length} transaksi direkod`,
+        ];
+
+
+    for(const parsed of recorded.slice(0, 10)){
+
+      lines.push(
+        `• ${parsed.description} — RM${parsed.amount}`,
+      );
+
+    }
+
+
+    if(recorded.length > 10){
+
+      lines.push(
+        language === "en"
+          ? `• +${recorded.length - 10} more`
+          : `• +${recorded.length - 10} lagi`,
+      );
+
+    }
+
+
+    if(duplicateCount > 0){
+
+      lines.push(
+        language === "en"
+          ? `ℹ️ ${duplicateCount} duplicate skipped`
+          : `ℹ️ ${duplicateCount} duplikasi dilangkau`,
+      );
+
+    }
+
+
+    if(failed.length > 0){
+
+      lines.push(
+        language === "en"
+          ? `⚠️ ${failed.length} item failed`
+          : `⚠️ ${failed.length} item gagal`,
+      );
+
+      for(const item of failed.slice(0, 5)){
+
+        lines.push(
+          `• ${item.text} (${item.reason})`,
+        );
+
+      }
+
+    }
+
+
+    return lines.join(
+      "\n",
+    );
+
+  }
+
+
+
+  private splitWebhookTransactionTexts(
+    text:string,
+  ){
+
+    const rawText =
+      text.trim();
+
+
+    if(!rawText){
+
+      return [];
+
+    }
+
+
+    const parts =
+      rawText
+        .split(
+          /\s*,\s+/,
+        )
+        .map(
+          (part) => part.trim(),
+        )
+        .filter(
+          Boolean,
+        );
+
+
+    if(parts.length <= 1){
+
+      return [
+        rawText,
+      ];
+
+    }
+
+
+    const inheritedPrefix =
+      this.getInheritedTransactionPrefix(
+        parts[0],
+      );
+
+
+    return parts.map(
+      (part, index) => index === 0
+        ? part
+        : this.applyInheritedTransactionPrefix(
+          part,
+          inheritedPrefix,
+        ),
+    );
+
+  }
+
+
+
+  private getInheritedTransactionPrefix(
+    text:string,
+  ){
+
+    const firstWord =
+      this.firstTransactionWord(
+        text,
+      );
+
+
+    return firstWord
+      &&
+      this.isTransactionLeadWord(
+        firstWord,
+      )
+      ? firstWord
+      : null;
+
+  }
+
+
+
+  private applyInheritedTransactionPrefix(
+    text:string,
+
+    inheritedPrefix:string | null,
+  ){
+
+    if(!inheritedPrefix){
+
+      return text;
+
+    }
+
+
+    const firstWord =
+      this.firstTransactionWord(
+        text,
+      );
+
+
+    if(
+      firstWord
+      &&
+      this.isTransactionLeadWord(
+        firstWord,
+      )
+    ){
+
+      return text;
+
+    }
+
+
+    return `${inheritedPrefix} ${text}`;
+
+  }
+
+
+
+  private firstTransactionWord(
+    text:string,
+  ){
+
+    return text
+      .trim()
+      .split(
+        /\s+/,
+      )[0]
+      ?.toLowerCase()
+      .replace(
+        /^[!/@]+/,
+        "",
+      )
+      .replace(
+        /[^a-z0-9]+$/i,
+        "",
+      )
+      ??
+      "";
+
+  }
+
+
+
+  private isTransactionLeadWord(
+    word:string,
+  ){
+
+    return [
+      "beli",
+      "buy",
+      "bayar",
+      "pay",
+      "makan",
+      "eat",
+      "minum",
+      "drink",
+      "gaji",
+      "salary",
+      "income",
+      "dapat",
+      "terima",
+      "receive",
+      "received",
+      "petrol",
+      "fuel",
+      "isi",
+      "topup",
+      "tambah",
+      "bill",
+      "bil",
+    ].includes(
+      word,
+    );
 
   }
 

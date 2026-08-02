@@ -78,19 +78,26 @@ export class SheetInitializerService {
           input.spreadsheetId,
 
         range:
-          "Transactions!A1:H1",
+          "Transactions!A1:O1",
 
         values:[
 
           [
+            "Transaction ID",
             "Date",
+            "Time",
             "Type",
             "Category",
             "Merchant",
             "Description",
             "Amount",
-            "Currency",
-            "Transaction ID",
+            "Payment Method",
+            "Source",
+            "AI Confidence",
+            "Receipt URL",
+            "Created At",
+            "Created By ID",
+            "Created By Email",
           ],
 
         ],
@@ -120,38 +127,98 @@ export class SheetInitializerService {
           input.spreadsheetId,
 
         range:
-          "Dashboard!A1:B6",
+          "Dashboard!A1:F10",
 
         values:[
 
           [
-            "MyPocket Dashboard",
+            "MyPocket AI Dashboard",
+            "",
+            "",
+            "",
+            "",
             "",
           ],
 
           [
+            "Live summary from Transactions!A:O",
             "",
+            "",
+            "",
+            "",
+            "",
+          ],
+
+          [
+            "Metric",
+            "Value",
+            "",
+            "System",
+            "Value",
             "",
           ],
 
           [
             "Total Income",
-            "0",
+            "=IFERROR(SUMIF(Transactions!D:D,\"INCOME\",Transactions!H:H),0)",
+            "",
+            "Transaction Range",
+            "Transactions!A:O",
+            "",
           ],
 
           [
             "Total Expense",
-            "0",
+            "=IFERROR(SUMIF(Transactions!D:D,\"EXPENSE\",Transactions!H:H),0)",
+            "",
+            "Amount Column",
+            "H",
+            "",
           ],
 
           [
             "Balance",
-            "0",
+            "=IFERROR(SUMIF(Transactions!D:D,\"INCOME\",Transactions!H:H)-SUMIF(Transactions!D:D,\"EXPENSE\",Transactions!H:H),0)",
+            "",
+            "Timezone",
+            "Asia/Kuala_Lumpur",
+            "",
           ],
 
           [
-            "Transaction Count",
-            "0",
+            "Transactions",
+            "=MAX(COUNTA(Transactions!A:A)-1,0)",
+            "",
+            "Template Version",
+            "1.0",
+            "",
+          ],
+
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+          ],
+
+          [
+            "Usage",
+            "Do not rename sheet names or Transactions columns. Backend sync writes A:O.",
+            "",
+            "",
+            "",
+            "",
+          ],
+
+          [
+            "Last Updated",
+            new Date().toISOString(),
+            "",
+            "",
+            "",
+            "",
           ],
 
         ],

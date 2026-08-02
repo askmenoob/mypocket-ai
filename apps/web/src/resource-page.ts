@@ -79,6 +79,101 @@ const pages: Record<string, ResourcePageContent> = {
       },
     ],
   },
+  "/guides/whatsapp-bot": {
+    title: "WhatsApp Bot Guide",
+    eyebrow: "User Guide",
+    description:
+      "Learn the correct WhatsApp command format so every transaction is recorded into the right MyPocket AI columns.",
+    sections: [
+      {
+        heading: "Where to send commands",
+        body:
+          "In WhatsApp groups, start every bot message with ! or @mypocket. In private chat with the bot, the trigger is optional.",
+        items: [
+          "Group example: !beli buku RM50 cash",
+          "Group alias example: @mypocket beli buku RM50 cash",
+          "Private chat example: beli buku RM50 cash",
+          "Messages without the group trigger are ignored to avoid recording normal group conversation.",
+        ],
+      },
+      {
+        heading: "Basic transaction format",
+        body:
+          "Use natural language, but keep the amount and payment method clear. MyPocket AI reads the command, merchant, amount, and payment method from your message.",
+        items: [
+          "Expense: !beli buku RM50 cash",
+          "Expense: !makan nasi lemak RM8 tng",
+          "Bill: !bayar internet unifi RM129 bank",
+          "Income: !gaji RM3000",
+          "Income: !income freelance RM800 bank",
+        ],
+      },
+      {
+        heading: "How your message maps to Google Sheet columns",
+        body:
+          "Each accepted command creates a row in the Transactions tab. These are the important mappings.",
+        items: [
+          "Type: beli, makan, bayar, petrol, bill create EXPENSE; gaji, salary, income create INCOME.",
+          "Category: detected from the command and merchant, such as Food, Shopping, Bills, Transport, Salary, or Others.",
+          "Merchant: the item or payee, for example buku, internet unifi, nasi lemak, telefon, or laptop.",
+          "Description: the original cleaned command text, kept for audit and review.",
+          "Amount: the RM value in the message, for example RM50, rm129, or RM3,000.",
+          "Payment Method: cash, bank, tng, card, or other detected payment method.",
+          "Source: WhatsApp transactions are saved as WHATSAPP.",
+          "Created By: Family and Business workspaces use the linked WhatsApp number to map the member.",
+        ],
+      },
+      {
+        heading: "Record multiple transactions in one message",
+        body:
+          "Separate transactions with a comma. The bot will create one row for each transaction.",
+        items: [
+          "!beli jam tangan RM500 cash, beli telefon RM2000 bank, beli laptop RM3000 bank",
+          "Expected result: 3 separate rows in Transactions and Google Sheet.",
+          "Do not use commas inside amounts. Prefer RM1000 instead of RM1,000 when sending WhatsApp commands.",
+        ],
+      },
+      {
+        heading: "Summaries and checks",
+        body:
+          "Use command words to check your bot status, summaries, and available commands.",
+        items: [
+          "!help — quick help",
+          "!commands — full command list",
+          "!status — bot and workspace status",
+          "!today — today's summary",
+          "!week — this week summary",
+          "!month — this month summary",
+          "!members — linked WhatsApp members",
+        ],
+      },
+      {
+        heading: "Commitments and reminders",
+        body:
+          "Commitment commands help track repeating payments and reminders.",
+        items: [
+          "!reminder — unpaid commitments",
+          "!all reminders — all commitments",
+          "!paid reminders — completed commitments",
+          "!Remind me to pay car RM1000 every 10th",
+          "!paid car or !mark paid car — mark as paid",
+          "!disable reminder car — disable reminder",
+        ],
+      },
+      {
+        heading: "Best practices for clean data",
+        body:
+          "Short, consistent messages produce cleaner Google Sheet rows and better reports.",
+        items: [
+          "Always include RM amount.",
+          "Include payment method when you know it: cash, bank, tng, card.",
+          "Use one comma only to separate multiple transactions.",
+          "For receipts and LHDN review, later verify supplier, receipt URL, and e-Invoice details in Google Sheet.",
+        ],
+      },
+    ],
+  },
+
   "/updates": {
     title: "Updates",
     eyebrow: "Changelog",

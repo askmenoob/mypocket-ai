@@ -35,6 +35,7 @@ createServer((req, res) => {
       "/blog",
       "/help",
       "/guides",
+      "/guides/whatsapp-bot",
       "/updates",
     ].includes(safePath)
   ) {
