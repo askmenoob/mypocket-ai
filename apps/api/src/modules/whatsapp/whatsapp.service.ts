@@ -2377,6 +2377,7 @@ export class WhatsAppService {
         instance.workspaceId,
         normalized,
         instance.instanceName,
+        commandReplyLanguage,
       );
 
     }
