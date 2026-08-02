@@ -102,6 +102,25 @@ Bot Settings supports:
 - default reminder time
 - quiet hours start/end
 
+
+## Paid commitment transaction sync
+
+A pending commitment is not a transaction and is not written to the Transactions sheet.
+
+When the user marks the current monthly commitment as paid from dashboard or WhatsApp, the backend now creates one idempotent `EXPENSE` transaction through `TransactionService`. That transaction uses the existing Google Sheet sync flow.
+
+Default synced transaction values:
+
+```text
+Type: EXPENSE
+Category: Commitment
+Merchant: commitment name
+Description: commitment name
+Source: COMMITMENT
+```
+
+Duplicate prevention uses the monthly commitment instance id stored internally as the transaction `receiptUrl` marker.
+
 ## Scheduler
 
 `CommitmentScheduler` runs inside the API process as a polling runner. The timer is only the trigger; durable state and idempotency are stored in the database through `CommitmentReminderDelivery`.

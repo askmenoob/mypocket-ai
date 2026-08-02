@@ -12,6 +12,10 @@ import type {
   UpdateCommitmentBody,
 } from "./commitment.schemas.js";
 
+import {
+  TransactionService,
+} from "../transaction/transaction.service.js";
+
 type Actor = {
   userId:string;
   email?:string;
@@ -43,9 +47,16 @@ const MONTH_NAMES_MS = [
 
 export class CommitmentService {
 
+  private readonly transactionService:TransactionService;
+
   constructor(
     private readonly app:FastifyInstance,
-  ){}
+  ){
+    this.transactionService =
+      new TransactionService(
+        app,
+      );
+  }
 
   async listCommitments(
     actor:Actor,
@@ -442,9 +453,16 @@ export class CommitmentService {
           status:
             "PAID",
           paidAt:
-            now,
+            instance.paidAt ?? now,
         },
       });
+
+    const transaction =
+      await this.ensurePaidCommitmentTransaction(
+        actor,
+        commitment,
+        updated,
+      );
 
     return {
       commitmentId:
@@ -455,8 +473,164 @@ export class CommitmentService {
         updated.status,
       paidAt:
         updated.paidAt,
+      transactionId:
+        transaction.id,
     };
   }
+
+  private async ensurePaidCommitmentTransaction(
+    actor:Actor,
+    commitment:{
+      id:string;
+      name:string;
+      amount:any;
+      currency:string;
+    },
+    instance:{
+      id:string;
+      dueDate:Date;
+      paidAt:Date | null;
+    },
+  ){
+    const marker =
+      `commitment:${instance.id}`;
+
+    const transactionDate =
+      instance.paidAt
+      ??
+      new Date();
+
+    const existing =
+      await this.app.prisma.transaction.findFirst({
+        where:{
+          workspaceId:
+            actor.workspaceId,
+          createdById:
+            actor.userId,
+          type:
+            "EXPENSE",
+          amount:
+            commitment.amount,
+          receiptUrl:
+            marker,
+        },
+        include:{
+          category:true,
+          merchant:true,
+          paymentMethod:true,
+        },
+      });
+
+    if(existing){
+      return existing;
+    }
+
+    const category =
+      await this.findOrCreateCategory(
+        actor.workspaceId,
+        "Commitment",
+      );
+
+    const merchant =
+      await this.findOrCreateMerchant(
+        actor.workspaceId,
+        commitment.name,
+      );
+
+    return this.transactionService.createTransaction(
+      actor.role as
+        | "OWNER"
+        | "ADMIN"
+        | "MEMBER"
+        | "VIEWER",
+      {
+        workspaceId:
+          actor.workspaceId,
+        createdById:
+          actor.userId,
+        amount:
+          commitment.amount.toString(),
+        currency:
+          commitment.currency,
+        type:
+          "EXPENSE",
+        description:
+          commitment.name,
+        transactionDate,
+        categoryId:
+          category.id,
+        merchantId:
+          merchant.id,
+        receiptUrl:
+          marker,
+        source:
+          "COMMITMENT",
+      },
+    );
+  }
+
+
+
+
+  private async findOrCreateCategory(
+    workspaceId:string,
+    name:string,
+  ){
+    const existing =
+      await this.app.prisma.category.findFirst({
+        where:{
+          workspaceId,
+          name:{
+            equals:name,
+            mode:"insensitive",
+          },
+        },
+      });
+
+    if(existing){
+      return existing;
+    }
+
+    return this.app.prisma.category.create({
+      data:{
+        workspaceId,
+        name,
+      },
+    });
+  }
+
+
+
+
+  private async findOrCreateMerchant(
+    workspaceId:string,
+    name:string,
+  ){
+    const existing =
+      await this.app.prisma.merchant.findFirst({
+        where:{
+          workspaceId,
+          name:{
+            equals:name,
+            mode:"insensitive",
+          },
+        },
+      });
+
+    if(existing){
+      return existing;
+    }
+
+    return this.app.prisma.merchant.create({
+      data:{
+        workspaceId,
+        name,
+      },
+    });
+  }
+
+
+
 
   async getBotSettings(
     actor:Actor,
