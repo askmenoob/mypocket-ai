@@ -6839,13 +6839,47 @@ export class WhatsAppService {
       text.trim();
 
 
-    const amountMatch =
+    const explicitAmountMatch =
       rawText.match(
-        /(?:rm\s*)?(\d+(?:[.,]\d{1,2})?)/i,
+        /\b(?:rm|myr)\s*(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?)/i,
+      )
+      ??
+      rawText.match(
+        /(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?)\s*(?:ringgit|myr)\b/i,
       );
 
 
-    if(!amountMatch){
+    const fallbackAmountMatches =
+      rawText.match(
+        /\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?/g,
+      )
+      ??
+      [];
+
+
+    const fallbackAmount =
+      fallbackAmountMatches[
+        fallbackAmountMatches.length - 1
+      ];
+
+
+    const amountText =
+      explicitAmountMatch?.[1]
+      ??
+      fallbackAmount;
+
+
+    const amountToken =
+      explicitAmountMatch?.[0]
+      ??
+      fallbackAmount;
+
+
+    if(
+      !amountText
+      ||
+      !amountToken
+    ){
 
       throw new AppError(
         "WHATSAPP_AMOUNT_NOT_FOUND",
@@ -6857,8 +6891,26 @@ export class WhatsAppService {
 
 
     const amount =
-      amountMatch[1]
-        .replace(
+      amountText.includes(
+        ",",
+      )
+      &&
+      (
+        amountText.includes(
+          ".",
+        )
+        ||
+        /^\d{1,3}(?:,\d{3})+$/.test(
+          amountText,
+        )
+      )
+        ?
+        amountText.replace(
+          /,/g,
+          "",
+        )
+        :
+        amountText.replace(
           ",",
           ".",
         );
@@ -6927,7 +6979,7 @@ export class WhatsAppService {
           :
           this.guessMerchant(
             rawText,
-            amountMatch[0],
+            amountToken,
           ),
 
       paymentMethodName:
@@ -7233,23 +7285,59 @@ export class WhatsAppService {
 
 
 
+  private hasKeyword(
+    text:string,
+
+    keyword:string,
+  ){
+
+    const escaped =
+      keyword
+        .replace(
+          /[.*+?^${}()|[\]\\]/g,
+          "\\$&",
+        )
+        .replace(
+          /\s+/g,
+          "\\s+",
+        );
+
+
+    return new RegExp(
+      `(^|[^a-z0-9])${escaped}(?=$|[^a-z0-9])`,
+      "i",
+    ).test(
+      text,
+    );
+
+  }
+
+
+
+
   private guessPaymentMethod(
     text:string,
   ){
+
+    const normalized =
+      text.trim();
+
 
     const methods:
       Array<{
         name:string;
         keywords:string[];
+        branded?:boolean;
       }> =
       [
         {
           name:"TNG",
+          branded:true,
           keywords:[
-            "tng",
+            "touch 'n go",
             "touch n go",
             "touchngo",
-            "touch 'n go",
+            "tng",
           ],
         },
         {
@@ -7262,58 +7350,147 @@ export class WhatsAppService {
         {
           name:"Bank",
           keywords:[
-            "bank",
-            "transfer",
-            "ibg",
             "instant transfer",
+            "transfer",
+            "bank",
+            "ibg",
             "fpx",
           ],
         },
         {
           name:"Card",
           keywords:[
-            "card",
-            "kad",
             "credit card",
             "debit card",
-            "visa",
             "mastercard",
+            "card",
+            "kad",
+            "visa",
           ],
         },
         {
           name:"DuitNow",
+          branded:true,
           keywords:[
+            "duit now",
             "duitnow",
             "qr",
-            "duit now",
           ],
         },
         {
           name:"GrabPay",
+          branded:true,
           keywords:[
-            "grabpay",
             "grab pay",
+            "grabpay",
           ],
         },
       ];
 
 
-    const match =
-      methods.find(
-        (method) =>
-          method.keywords.some(
-            (keyword) =>
-              text.includes(
-                keyword,
-              ),
-          ),
-      );
+    for(const method of methods){
+
+      for(const keyword of method.keywords){
+
+        const escaped =
+          keyword
+            .replace(
+              /[.*+?^${}()|[\]\\]/g,
+              "\\$&",
+            )
+            .replace(
+              /\s+/g,
+              "\\s+",
+            );
 
 
-    return match?.name;
+        const matches =
+          normalized.matchAll(
+            new RegExp(
+              `(^|[^a-z0-9])(${escaped})(?=$|[^a-z0-9])`,
+              "ig",
+            ),
+          );
+
+
+        for(const match of matches){
+
+          const prefix =
+            match[1]
+            ??
+            "";
+
+          const matchedKeyword =
+            match[2]
+            ??
+            "";
+
+          const keywordStart =
+            (
+              match.index
+              ??
+              0
+            )
+            +
+            prefix.length;
+
+          const keywordEnd =
+            keywordStart
+            +
+            matchedKeyword.length;
+
+          const before =
+            normalized
+              .slice(
+                0,
+                keywordStart,
+              )
+              .trim();
+
+          const after =
+            normalized
+              .slice(
+                keywordEnd,
+              )
+              .trim();
+
+
+          const keywordBeforeAmount =
+            /^(?:rm|myr)?\s*(?:\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?:\s|[.,;:()\-])*$/i.test(
+              after,
+            );
+
+
+          const keywordAfterAmount =
+            /(?:rm|myr)?\s*(?:\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?:\s|[.,;:()\-])*$/i.test(
+              before,
+            );
+
+
+          if(
+            method.branded
+            ||
+            after.length === 0
+            ||
+            keywordBeforeAmount
+            ||
+            keywordAfterAmount
+          ){
+
+            return method.name;
+
+          }
+
+        }
+
+      }
+
+    }
+
+
+    return undefined;
 
   }
-
 
 
 
@@ -7324,24 +7501,66 @@ export class WhatsAppService {
     amountToken:string,
   ){
 
-    const beforeAmount =
+    const amountIndex =
       rawText
-        .slice(
-          0,
-          rawText.toLowerCase()
-            .indexOf(
-              amountToken.toLowerCase(),
-            ),
+        .toLowerCase()
+        .indexOf(
+          amountToken.toLowerCase(),
+        );
+
+
+    const beforeAmount =
+      (
+        amountIndex >= 0
+          ?
+          rawText.slice(
+            0,
+            amountIndex,
+          )
+          :
+          rawText
+      )
+        .trim();
+
+
+    const withoutLead =
+      beforeAmount
+        .replace(
+          /^[!/@]+\s*/,
+          "",
+        )
+        .replace(
+          /^(?:makan|minum|eat|drink|food|petrol|minyak|fuel|grab|taxi|tol|toll|parking|bill|bil|belanja|beli|buy|bayar|pay|shopping|gaji|salary|income|dapat|terima|receive|received|isi|topup|tambah)\s+/i,
+          "",
         )
         .trim();
 
 
-    const cleaned =
-      beforeAmount
+    const withoutTrailingPayment =
+      withoutLead
         .replace(
-          /^(makan|minum|food|petrol|minyak|grab|taxi|tol|toll|parking|bill|bil|belanja|beli|shopping|gaji|salary|income)\s+/i,
+          /(?:^|\s)(?:instant transfer|credit card|debit card|touch 'n go|touch n go|grab pay|duit now|mastercard|grabpay|touchngo|duitnow|transfer|tunai|cash|bank|ibg|fpx|card|kad|visa|tng|qr)\s*$/i,
           "",
         )
+        .replace(
+          /[,:;\-]+\s*$/,
+          "",
+        )
+        .trim();
+
+
+    const explicitMerchant =
+      withoutTrailingPayment.match(
+        /(?:^|\s)(?:di|at|daripada|from)\s+(.+)$/i,
+      )?.[1];
+
+
+    const cleaned =
+      (
+        explicitMerchant
+        ??
+        withoutTrailingPayment
+      )
         .replace(
           /\s+/g,
           " ",
@@ -7369,36 +7588,63 @@ export class WhatsAppService {
 
 
 
-
   private isIncomeText(
     text:string,
   ){
 
-    return [
-      "income",
-      "gaji",
-      "salary",
-      "bonus",
-      "komisen",
-      "commission",
-      "masuk",
-      "upah",
-      "terima",
-      "dapat",
-      "received",
-      "payment received",
-      "bayaran masuk",
-      "refund",
-      "cashback",
-    ].some(
-      (keyword) =>
-        text.includes(
-          keyword,
-        ),
+    const normalized =
+      text
+        .trim()
+        .toLowerCase();
+
+
+    const strongIncomeKeywords =
+      [
+        "gaji",
+        "salary",
+        "bonus",
+        "komisen",
+        "commission",
+        "upah",
+        "payment received",
+        "bayaran masuk",
+        "duit masuk",
+        "refund",
+        "cashback",
+      ];
+
+
+    if(
+      strongIncomeKeywords.some(
+        (keyword) =>
+          this.hasKeyword(
+            normalized,
+            keyword,
+          ),
+      )
+    ){
+
+      return true;
+
+    }
+
+
+    if(
+      /^(?:income)\s+(?:rm|myr)?\s*\d/i.test(
+        normalized,
+      )
+    ){
+
+      return true;
+
+    }
+
+
+    return /^(?:terima|dapat|receive|received|masuk)\s+(?:(?:bayaran|payment|gaji|salary|bonus|komisen|commission|upah)\s+)?(?:rm|myr)?\s*\d/i.test(
+      normalized,
     );
 
   }
-
 
 
 
@@ -7448,20 +7694,38 @@ export class WhatsAppService {
             "parking",
             "train",
             "bas",
+            "airasia",
+            "flight",
+            "penerbangan",
+            "kereta",
+            "car",
+            "motor",
+            "motorcycle",
+            "bengkel",
+            "workshop",
+            "tayar",
+            "tyre",
+            "servis kereta",
+            "car service",
           ],
         },
         {
           name:"Bills",
           keywords:[
             "bill",
+            "bills",
             "bil",
             "electric",
+            "electricity",
             "elektrik",
-            "air",
-            "water",
             "internet",
-            "phone",
             "telco",
+            "phone bill",
+            "bil telefon",
+            "bil air",
+            "water bill",
+            "utility",
+            "utilities",
           ],
         },
         {
@@ -7472,6 +7736,10 @@ export class WhatsAppService {
             "shopee",
             "lazada",
             "beli",
+            "buku",
+            "bookstore",
+            "stationery",
+            "alat tulis",
           ],
         },
         {
@@ -7489,7 +7757,8 @@ export class WhatsAppService {
         (category) =>
           category.keywords.some(
             (keyword) =>
-              text.includes(
+              this.hasKeyword(
+                text,
                 keyword,
               ),
           ),
@@ -7501,7 +7770,6 @@ export class WhatsAppService {
       "Others";
 
   }
-
 
 
 
