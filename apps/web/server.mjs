@@ -58,6 +58,6 @@ createServer((req, res) => {
 
   res.setHeader("Content-Type", types[extname(filePath)] || "application/octet-stream");
   createReadStream(filePath).pipe(res);
-}).listen(port, "0.0.0.0", () => {
+}).listen(port, "127.0.0.1", () => {
   console.log(`MyPocket web listening on ${port}`);
 });
