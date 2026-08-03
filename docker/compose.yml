@@ -20,7 +20,7 @@ services:
       TZ: ${TZ}
 
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
     volumes:
       - ./volumes/postgres:/var/lib/postgresql/data
@@ -46,7 +46,7 @@ services:
       - ${REDIS_PASSWORD}
 
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
 
     volumes:
       - ./volumes/redis:/data
@@ -87,7 +87,7 @@ services:
       TZ: ${TZ}
 
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
     volumes:
       - ./volumes/evolution:/evolution/instances
