@@ -2831,14 +2831,14 @@ function SetupWizard(
           {current === "Welcome" && (
             <WizardCard
               title="Selamat datang ke MyPocket AI"
-              text="Platform ini membantu anda merekod transaksi melalui WhatsApp bot, sync ke Google Sheet milik anda, dan memantau ringkasan kewangan melalui dashboard."
+              text="Mulakan dengan 3 perkara penting: sambung Google Sheet, pair WhatsApp bot jika digunakan, kemudian rekod transaksi pertama supaya dashboard mula hidup."
             >
               <Checklist
                 items={[
-                  "Dashboard web untuk pantau transaksi",
-                  "WhatsApp bot untuk rekod perbelanjaan dan income",
-                  "Google Sheet template sebagai workspace kewangan",
-                  "PWA support untuk buka seperti app di phone",
+                  "Sambung Google Sheet sebagai tempat data kewangan anda",
+                  "Pair WhatsApp bot untuk rekod expense dan income dari chat",
+                  "Semak workspace dan akses ahli sebelum mula digunakan",
+                  "Install PWA supaya dashboard mudah dibuka di phone",
                 ]}
               />
             </WizardCard>
@@ -2879,13 +2879,14 @@ function SetupWizard(
           {current === "Google" && (
             <WizardCard
               title="Google Sheet setup"
-              text="Semak sambungan Google Workspace dan template sheet."
+              text="Pastikan Google Sheet sudah connected. Jika belum, sambung dahulu supaya transaksi dan workspace boleh sync dengan betul."
             >
               <StatusGrid
                 rows={[
                   ["Status", props.data.google?.spreadsheetId ? "Connected" : "Not connected"],
                   ["Template", props.data.google?.templateType || "PERSONAL"],
                   ["Spreadsheet", props.data.google?.spreadsheetTitle || "-"],
+                  ["Next action", props.data.google?.spreadsheetId ? "Review dashboard or record first transaction" : "Connect Google Sheet before continuing"],
                 ]}
               />
 
@@ -3072,6 +3073,16 @@ function SetupWizard(
                         : whatsappRequired
                           ? "Open WhatsApp QR and pair bot"
                           : "WhatsApp pairing can be completed later",
+                  },
+
+                  {
+                    done:
+                      setupReady,
+
+                    text:
+                      setupReady
+                        ? "Ready to record first transaction"
+                        : "Complete setup before first transaction",
                   },
                 ]}
               />
