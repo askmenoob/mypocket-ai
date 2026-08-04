@@ -1,0 +1,9 @@
+services:
+  postgres:
+    volumes:
+      - /etc/imai/postgres-tls/server.crt:/run/imai-postgresql-tls/server.crt:ro
+      - /etc/imai/postgres-tls/server.key:/run/imai-postgresql-tls/server.key:ro
+      - /etc/imai/postgres-tls/ca.crt:/run/imai-postgresql-tls/ca.crt:ro
+  evolution:
+    volumes:
+      - /etc/imai/postgres-tls/ca.crt:/run/tls/postgres-ca.crt:ro
