@@ -40,6 +40,9 @@ services:
 
     restart: unless-stopped
 
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
     command:
       - redis-server
       - --requirepass
@@ -52,7 +55,7 @@ services:
       - ./volumes/redis:/data
 
     healthcheck:
-      test: ["CMD","redis-cli","ping"]
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$${REDIS_PASSWORD}\" redis-cli --no-auth-warning ping"]
       interval: 10s
       timeout: 5s
       retries: 5
