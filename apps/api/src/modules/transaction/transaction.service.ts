@@ -211,6 +211,164 @@ export class TransactionService {
       );
 
 
+
+    const sheetRecencyByTransactionId =
+
+
+      new Map<
+
+
+        string,
+
+
+        {
+
+
+          createdAtTimestamp:number;
+
+
+          sourceRowIndex:number;
+
+
+        }
+
+
+      >();
+
+
+
+    rows
+
+
+      .slice(
+
+
+        1,
+
+
+      )
+
+
+      .forEach(
+
+
+        (
+
+
+          row,
+
+
+          sourceIndex,
+
+
+        ) => {
+
+
+          const transactionId =
+
+
+            String(
+
+
+              row[0]
+
+
+              ??
+
+
+              "",
+
+
+            )
+
+
+              .trim();
+
+
+
+          if(!transactionId){
+
+
+            return;
+
+
+          }
+
+
+
+          const createdAtValue =
+
+
+            String(
+
+
+              row[12]
+
+
+              ??
+
+
+              "",
+
+
+            )
+
+
+              .trim();
+
+
+
+          sheetRecencyByTransactionId
+
+
+            .set(
+
+
+              transactionId,
+
+
+              {
+
+
+                createdAtTimestamp:
+
+
+                  Date.parse(
+
+
+                    createdAtValue,
+
+
+                  ),
+
+
+
+                sourceRowIndex:
+
+
+                  sourceIndex
+
+
+                  +
+
+
+                  2,
+
+
+              },
+
+
+            );
+
+
+        },
+
+
+      );
+
+
+
+
     return transactions
       .map(
         (transaction) => {
@@ -255,14 +413,146 @@ export class TransactionService {
         },
       )
       .sort(
-        (first, second) =>
-          new Date(
-            second.transactionDate,
-          ).getTime()
-          -
-          new Date(
-            first.transactionDate,
-          ).getTime(),
+        (
+          first,
+          second,
+        ) => {
+          const firstRecency =
+            sheetRecencyByTransactionId
+              .get(
+                String(
+                  first.id
+                  ??
+                  "",
+                ),
+              );
+
+          const secondRecency =
+            sheetRecencyByTransactionId
+              .get(
+                String(
+                  second.id
+                  ??
+                  "",
+                ),
+              );
+
+          const firstCreatedAt =
+            firstRecency
+              ?.createdAtTimestamp;
+
+          const secondCreatedAt =
+            secondRecency
+              ?.createdAtTimestamp;
+
+          const firstHasCreatedAt =
+            typeof firstCreatedAt
+              ===
+              "number"
+            &&
+            Number.isFinite(
+              firstCreatedAt,
+            );
+
+          const secondHasCreatedAt =
+            typeof secondCreatedAt
+              ===
+              "number"
+            &&
+            Number.isFinite(
+              secondCreatedAt,
+            );
+
+          if(
+            firstHasCreatedAt
+            !==
+            secondHasCreatedAt
+          ){
+            return firstHasCreatedAt
+              ? -1
+              : 1;
+          }
+
+          if(
+            firstHasCreatedAt
+            &&
+            secondHasCreatedAt
+            &&
+            firstCreatedAt
+              !==
+              secondCreatedAt
+          ){
+            return (
+              secondCreatedAt
+              -
+              firstCreatedAt
+            );
+          }
+
+          const firstTransactionDate =
+            new Date(
+              first.transactionDate,
+            ).getTime();
+
+          const secondTransactionDate =
+            new Date(
+              second.transactionDate,
+            ).getTime();
+
+          const firstHasTransactionDate =
+            Number.isFinite(
+              firstTransactionDate,
+            );
+
+          const secondHasTransactionDate =
+            Number.isFinite(
+              secondTransactionDate,
+            );
+
+          if(
+            firstHasTransactionDate
+            !==
+            secondHasTransactionDate
+          ){
+            return firstHasTransactionDate
+              ? -1
+              : 1;
+          }
+
+          if(
+            firstHasTransactionDate
+            &&
+            secondHasTransactionDate
+            &&
+            firstTransactionDate
+              !==
+              secondTransactionDate
+          ){
+            return (
+              secondTransactionDate
+              -
+              firstTransactionDate
+            );
+          }
+
+          const firstSourceRow =
+            firstRecency
+              ?.sourceRowIndex
+            ??
+            Number.NEGATIVE_INFINITY;
+
+          const secondSourceRow =
+            secondRecency
+              ?.sourceRowIndex
+            ??
+            Number.NEGATIVE_INFINITY;
+
+          return (
+            secondSourceRow
+            -
+            firstSourceRow
+          );
+        },
       );
 
   }
