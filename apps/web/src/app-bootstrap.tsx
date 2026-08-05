@@ -2827,7 +2827,12 @@ function SetupWizard(
 
         <div className="wizardMain">
           {props.notice && (
-            <div className="notice">
+            <div
+              className="notice"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
               {props.notice}
             </div>
           )}
@@ -3001,6 +3006,16 @@ function SetupWizard(
               text="Family/Business perlu link nombor WhatsApp kepada ahli supaya command tidak digunakan oleh user yang salah."
             >
               <div className="memberList">
+                {props.data.members.length === 0 && (
+                  <div
+                    className="hint"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    Tiada ahli lagi / No members have been added yet.
+                  </div>
+                )}
+
                 {props.data.members.map((member) => (
                   <div
                     className="member"
@@ -3125,7 +3140,12 @@ function SetupWizard(
           </div>
 
           {props.state.error && (
-            <div className="errorBox">
+            <div
+              className="errorBox"
+              role="alert"
+              aria-live="assertive"
+              aria-atomic="true"
+            >
               {props.state.error}
             </div>
           )}
@@ -4835,19 +4855,34 @@ function Dashboard(
         </header>
 
         {props.notice && (
-          <div className="notice">
+          <div
+            className="notice"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {props.notice}
           </div>
         )}
 
         {actionMessage && (
-          <div className="notice">
+          <div
+            className="notice"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {actionMessage}
           </div>
         )}
 
         {props.state.error && (
-          <div className="errorBox">
+          <div
+            className="errorBox"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+          >
             {props.state.error}
           </div>
         )}
@@ -4948,6 +4983,23 @@ function Dashboard(
                   </tr>
                 </thead>
                 <tbody>
+                  {filteredTransactions.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="hint"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        {
+                          dashboardLanguage === "ms"
+                            ? "Tiada transaksi untuk tempoh dipilih."
+                            : "No transactions for the selected period."
+                        }
+                      </td>
+                    </tr>
+                  )}
+
                   {filteredTransactions.map((item) => (
                     <tr key={item.id}>
                       <td>{new Date(item.transactionDate).toLocaleString("en-MY")}</td>
@@ -5164,6 +5216,20 @@ function Dashboard(
             />
 
             <div className="memberList">
+              {props.data.members.length === 0 && (
+                <div
+                  className="hint"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {
+                    dashboardLanguage === "ms"
+                      ? "Tiada ahli workspace untuk dipaparkan."
+                      : "No workspace members to display."
+                  }
+                </div>
+              )}
+
               {props.data.members.slice(0, 6).map((member) => (
                 <div className="member" key={member.memberId}>
                   <div>
@@ -5394,6 +5460,20 @@ function Dashboard(
               </div>
 
               <div className="memberTable">
+                {props.data.members.length === 0 && (
+                  <div
+                    className="hint"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {
+                      dashboardLanguage === "ms"
+                        ? "Tiada ahli workspace lagi."
+                        : "No workspace members have been added yet."
+                    }
+                  </div>
+                )}
+
                 {props.data.members.map((member) => {
                   const isOwner =
                     member.role === "OWNER";
@@ -6007,7 +6087,12 @@ function BillingPlanModal(
         )}
 
         {props.error && (
-          <div className="billingModalError">
+          <div
+            className="billingModalError"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+          >
             {props.error}
           </div>
         )}
@@ -6243,13 +6328,23 @@ function WhatsAppQrPanel(
         </div>
 
         {props.qr.loading && (
-          <div className="qrState">
+          <div
+            className="qrState"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             Sedang dapatkan QR daripada Evolution...
           </div>
         )}
 
         {props.qr.error && !props.qr.loading && (
-          <div className="qrState warning">
+          <div
+            className="qrState warning"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+          >
             <strong>QR belum tersedia.</strong>
             <span>{props.qr.error}</span>
           </div>
@@ -6266,14 +6361,24 @@ function WhatsAppQrPanel(
         )}
 
         {props.qr.imageSrc && !props.qr.loading && expired && (
-          <div className="qrState warning">
+          <div
+            className="qrState warning"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+          >
             <strong>QR expired.</strong>
             <span>Generate QR baru sebelum scan untuk elak QR lama digunakan.</span>
           </div>
         )}
 
         {props.qr.expiresAt && !props.qr.loading && (
-          <div className={expired ? "qrTimer expired" : "qrTimer"}>
+          <div
+            className={expired ? "qrTimer expired" : "qrTimer"}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {expired
               ? "Expired"
               : `Expired dalam ${props.secondsLeft}s`}

@@ -1745,6 +1745,8 @@ export function PremiumDashboard(
         .pd-status-row{display:grid;grid-template-columns:74px minmax(0,1fr);gap:8px;font-size:10px}
         .pd-status-row span{color:#748986}.pd-status-row strong{color:#193c3c}
         .pd-members{display:flex;flex-direction:column;gap:8px}
+        .pd-empty-state{padding:16px;border:1px dashed #cfe2de;border-radius:8px;background:#f8fbfa;color:#748986;font-size:10px;text-align:center}
+        .pd-empty-table-cell{padding:22px!important;color:#748986!important;text-align:center}
         .pd-member{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid #d7e9e5;border-radius:7px;background:#eef9f6}
         .pd-member-check{display:grid;width:19px;height:19px;place-items:center;border-radius:50%;background:#079b6e;color:#fff;font-size:10px}
         .pd-member strong{display:block;color:#173b3b;font-size:10px}.pd-member span{display:block;margin-top:2px;color:#77908d;font-size:8px}
@@ -2196,6 +2198,23 @@ export function PremiumDashboard(
               </thead>
 
               <tbody>
+                {transactions.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="pd-empty-table-cell"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      {
+                        language === "ms"
+                          ? "Tiada transaksi untuk tempoh dipilih."
+                          : "No transactions for the selected period."
+                      }
+                    </td>
+                  </tr>
+                )}
+
                 {transactions
                   .slice(0, 10)
                   .map((item:any) => {
@@ -2389,6 +2408,20 @@ export function PremiumDashboard(
             </div>
 
             <div className="pd-members">
+              {members.length === 0 && (
+                <div
+                  className="pd-empty-state"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {
+                    language === "ms"
+                      ? "Tiada ahli workspace untuk dipaparkan."
+                      : "No workspace members to display."
+                  }
+                </div>
+              )}
+
               {members
                 .slice(0, 4)
                 .map((member:any) => (
