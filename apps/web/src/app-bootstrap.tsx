@@ -1735,7 +1735,7 @@ function App(){
 
   async function loadAll(
     activeToken = token,
-  ){
+  ):Promise<boolean>{
 
     setState({
       loading:true,
@@ -1759,7 +1759,7 @@ function App(){
           error:null,
         });
 
-        return;
+        return true;
 
       }
 
@@ -1826,6 +1826,8 @@ function App(){
         error:null,
       });
 
+      return true;
+
     }catch(error){
 
       setState({
@@ -1835,6 +1837,8 @@ function App(){
             ? error.message
             : "Dashboard request failed",
       });
+
+      return false;
 
     }
 
@@ -3333,7 +3337,7 @@ function Dashboard(
     data:DashboardData;
     state:LoadState;
     notice:string;
-    refresh:() => void;
+    refresh:() => Promise<boolean>;
     resetWizard:() => void;
     installApp:() => void;
     connectGoogleSheet:() => void;
@@ -3711,6 +3715,35 @@ function Dashboard(
     isWhatsAppInstanceConnected(
       props.data.whatsapp?.instance?.status,
     );
+
+  const hasDashboardGoogleSheet =
+    Boolean(
+      props.data.google?.spreadsheetId,
+    );
+
+  const isDashboardSetupComplete =
+    hasDashboardGoogleSheet
+    &&
+    isWhatsAppConnected;
+
+  async function refreshDashboard(){
+
+    setActionMessage("");
+
+    const refreshed =
+      await props.refresh();
+
+    setActionMessage(
+      refreshed
+        ? dashboardLanguage === "ms"
+          ? "Dashboard berjaya disegarkan."
+          : "Dashboard refreshed successfully."
+        : dashboardLanguage === "ms"
+          ? "Dashboard gagal disegarkan. Semak mesej ralat."
+          : "Dashboard refresh failed. Check the error message.",
+    );
+
+  }
 
   async function saveWorkspaceName(){
 
@@ -4776,18 +4809,22 @@ function Dashboard(
             <span className="status">
               {dashboardText.apiHealthy}
             </span>
-            <button
-              className="ghost"
-              onClick={props.installApp}
-            >
-              {dashboardText.install}
-            </button>
-            <button
-              className="ghost"
-              onClick={props.resetWizard}
-            >
-              {dashboardText.setup}
-            </button>
+            {!isDashboardSetupComplete && (
+              <>
+                <button
+                  className="ghost"
+                  onClick={props.installApp}
+                >
+                  {dashboardText.install}
+                </button>
+                <button
+                  className="ghost"
+                  onClick={props.resetWizard}
+                >
+                  {dashboardText.setup}
+                </button>
+              </>
+            )}
             <button
               className="ghost"
               onClick={props.signOut}
@@ -5740,9 +5777,17 @@ function Dashboard(
 
         <button
           className="floating"
-          onClick={props.refresh}
+          onClick={refreshDashboard}
+          disabled={props.state.loading}
+          aria-busy={props.state.loading}
         >
-          {dashboardText.refresh}
+          {
+            props.state.loading
+              ? dashboardLanguage === "ms"
+                ? "Menyegarkan..."
+                : "Refreshing..."
+              : dashboardText.refresh
+          }
         </button>
 
         {billingOpen && (
