@@ -2219,6 +2219,91 @@ function App(){
   }
 
 
+  async function updateGoogleSheetTemplate(){
+
+    const currentVersion =
+      data.google?.currentTemplateVersion
+      ||
+      "-";
+
+    const latestVersion =
+      data.google?.latestTemplateVersion
+      ||
+      "-";
+
+    if(!data.google?.templateUpdateAvailable){
+
+      setNotice(
+        "Google Sheet sudah menggunakan template terkini.",
+      );
+
+      return;
+
+    }
+
+    if(!data.google?.templateUpdateSupported){
+
+      setNotice(
+        data.google?.templateUpdateMessage
+        ||
+        "Template baharu memerlukan migration tambahan sebelum boleh digunakan.",
+      );
+
+      return;
+
+    }
+
+    const confirmed =
+      window.confirm(
+        `Update Google Sheet daripada Version ${currentVersion} kepada ${latestVersion}? Backup penuh akan dibuat dahulu dan rekod transaksi tidak akan dipadam.`,
+      );
+
+    if(!confirmed){
+      return;
+    }
+
+    try{
+
+      setNotice(
+        `Sedang backup dan update Google Sheet kepada Version ${latestVersion}...`,
+      );
+
+      const result =
+        await api<any>(
+          "/google/settings/template-update",
+          token,
+          {
+            method:
+              "POST",
+
+            body:
+              JSON.stringify({}),
+          },
+        );
+
+      setNotice(
+        result.updated
+          ? `Google Sheet berjaya dikemas kini kepada Version ${result.currentTemplateVersion}. ${result.preservedTransactions} transaksi dikekalkan.`
+          : result.message
+            ||
+            "Google Sheet sudah menggunakan template terkini.",
+      );
+
+      await loadAll();
+
+    }catch(error){
+
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Google Sheet template update failed.",
+      );
+
+    }
+
+  }
+
+
   async function openWhatsAppQr(
     mode:WhatsAppQrMode = "dashboard",
   ){
@@ -2477,6 +2562,7 @@ function App(){
       installApp={installApp}
       connectGoogleSheet={connectGoogleSheet}
       recreateGoogleSheet={recreateGoogleSheet}
+      updateGoogleSheetTemplate={updateGoogleSheetTemplate}
       openWhatsAppQr={openWhatsAppQr}
       resetWhatsAppInstance={resetWhatsAppInstance}
       whatsAppQr={whatsAppQr}
@@ -3362,6 +3448,7 @@ function Dashboard(
     installApp:() => void;
     connectGoogleSheet:() => void;
     recreateGoogleSheet:() => void;
+    updateGoogleSheetTemplate:() => void;
     openWhatsAppQr:(mode?:WhatsAppQrMode) => void;
     resetWhatsAppInstance:(mode?:WhatsAppQrMode) => void;
     whatsAppQr:WhatsAppQrState;
@@ -4921,6 +5008,10 @@ function Dashboard(
             onSetup={props.resetWizard}
             onRelinkGoogle={props.connectGoogleSheet}
             onRecreateGoogle={props.recreateGoogleSheet}
+            onUpdateGoogle={props.updateGoogleSheetTemplate}
+            canUpdateGoogleTemplate={
+              actorRole === "OWNER"
+            }
             onOpenTransactions={() =>
               setActiveView("transactions")
             }
@@ -5286,6 +5377,20 @@ function Dashboard(
                   ["Title", props.data.google?.spreadsheetTitle || "-"],
                   ["Backup", props.data.google?.backupSpreadsheetTitle || "-"],
                   ["Mode", props.data.google?.mode || "-"],
+                  [
+                    "Current Template",
+                    props.data.google?.currentTemplateVersion || "-",
+                  ],
+                  [
+                    "Latest Template",
+                    props.data.google?.latestTemplateVersion || "-",
+                  ],
+                  [
+                    "Update Status",
+                    props.data.google?.templateUpdateAvailable
+                      ? "Update Available"
+                      : props.data.google?.templateUpdateStatus || "-",
+                  ],
                 ]}
               />
 
@@ -5303,6 +5408,20 @@ function Dashboard(
                   yang tersambung masih menggunakan template {googleTemplateType}.
                   Jika mahu sheet ikut package semasa, recreate atau connect
                   semula Google Sheet.
+                </div>
+              )}
+
+              {props.data.google?.templateUpdateAvailable && (
+                <div className="sheetWarning">
+                  Current Template: Version {
+                    props.data.google?.currentTemplateVersion || "-"
+                  }. Latest Template: Version {
+                    props.data.google?.latestTemplateVersion || "-"
+                  }. {
+                    props.data.google?.templateUpdateSupported
+                      ? "Update tersedia tanpa memadam rekod transaksi."
+                      : props.data.google?.templateUpdateMessage
+                  }
                 </div>
               )}
 
@@ -5334,6 +5453,27 @@ function Dashboard(
 
             {props.data.google?.spreadsheetId && (
               <div className="panelActions sheetActions">
+                {
+                  actorRole === "OWNER"
+                  &&
+                  props.data.google?.templateUpdateAvailable
+                  &&
+                  (
+                    <button
+                      type="button"
+                      className="primary"
+                      disabled={
+                        !props.data.google?.templateUpdateSupported
+                      }
+                      onClick={
+                        props.updateGoogleSheetTemplate
+                      }
+                    >
+                      Update Google Sheet
+                    </button>
+                  )
+                }
+
                 <button
                   className="primary"
                   onClick={openGoogleSheet}

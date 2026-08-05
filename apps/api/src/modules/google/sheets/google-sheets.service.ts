@@ -128,6 +128,42 @@ export class GoogleSheetsService {
 
 
 
+  async getSheetTitles(
+    workspaceId:string,
+    spreadsheetId:string,
+  ):Promise<string[]>{
+
+    const sheets =
+      await this.getClient(
+        workspaceId,
+      );
+
+    const response =
+      await sheets
+        .spreadsheets
+        .get({
+          spreadsheetId,
+
+          fields:
+            "sheets.properties.title",
+        });
+
+    return (
+      response.data.sheets
+      ??
+      []
+    )
+      .map(
+        (sheet) =>
+          sheet.properties?.title
+          ??
+          "",
+      )
+      .filter(Boolean);
+
+  }
+
+
   async appendRow(
     workspaceId:string,
     input:AppendRowInput,

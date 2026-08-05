@@ -95,8 +95,22 @@ export class GoogleSettingsController {
         },
       });
 
-    return sharedMembership?.workspace.googleSetting
-      ?? setting;
+    if(
+      sharedMembership
+        ?.workspace
+        .googleSetting
+    ){
+
+      return this.service
+        .getSettings(
+          sharedMembership
+            .workspace
+            .id,
+        );
+
+    }
+
+    return setting;
 
   }
 
@@ -169,6 +183,21 @@ export class GoogleSettingsController {
 
   };
 
+
+
+  updateTemplate = async (
+    request:
+      FastifyRequest,
+  ) => {
+
+    await request.jwtVerify();
+
+    return this.service
+      .updateTemplate(
+        request.user.workspaceId,
+      );
+
+  };
 
 
   delete = async (

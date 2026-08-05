@@ -72,6 +72,19 @@ export default async function googleSettingsRoutes(
 
 
 
+  app.post(
+    "/settings/template-update",
+    {
+      preHandler:[
+        requireRole(
+          Roles.OWNER,
+        ),
+      ],
+    },
+    controller.updateTemplate,
+  );
+
+
   app.delete(
     "/settings",
     {

@@ -32,6 +32,8 @@ type PremiumDashboardProps = {
   onSetup:() => void;
   onRelinkGoogle:() => void;
   onRecreateGoogle:() => void;
+  onUpdateGoogle:() => void;
+  canUpdateGoogleTemplate:boolean;
   onOpenTransactions:() => void;
   onOpenWhatsApp:() => void;
   onAddTransaction:() => void;
@@ -107,7 +109,7 @@ const PREMIUM_DASHBOARD_TEXT = {
     whatsappIntegration:"WhatsApp Integration", manage:"Manage", instance:"Instance", status:"Status", trigger:"Trigger", members:"Members", lastSync:"Last Sync", notLinked:"not linked",
     aliasLabel:"WhatsApp group bot alias", saving:"Saving...", saveAlias:"Save Alias", aliasHelp:"In groups, start messages with ! or @{alias}. Private chat does not need a trigger.",
     disconnectWhatsApp:"Disconnect WhatsApp", recheckStatus:"Recheck status", googleSheet:"Google Sheet", workspacePackage:"Workspace package", template:"Template", title:"Title", mode:"Mode", lastUpdated:"Last Updated",
-    sheetNotConnected:"Google Sheet is not connected", openGoogleSheet:"Open Google Sheet", relinkGoogleAccess:"Relink Google Access", recreateGoogleSheet:"Recreate Google Sheet", upgradeGoogleSheetTo:"Upgrade Google Sheet to", quickActions:"Quick Actions", addTransaction:"Add Transaction", useWhatsAppCommand:"Use WhatsApp message command.", setupWizard:"Setup Wizard", reviewOnboarding:"Review onboarding steps.",
+    sheetNotConnected:"Google Sheet is not connected", openGoogleSheet:"Open Google Sheet", relinkGoogleAccess:"Relink Google Access", recreateGoogleSheet:"Recreate Google Sheet", upgradeGoogleSheetTo:"Upgrade Google Sheet to", currentTemplate:"Current template", latestTemplate:"Latest template", updateAvailable:"Update available", upToDate:"Up to date", updateGoogleSheet:"Update Google Sheet", migrationRequired:"Migration preparation required", quickActions:"Quick Actions", addTransaction:"Add Transaction", useWhatsAppCommand:"Use WhatsApp message command.", setupWizard:"Setup Wizard", reviewOnboarding:"Review onboarding steps.",
   },
   ms:{
     transactionPeriod:"Tempoh transaksi", record:"rekod", records:"rekod", today:"Hari Ini", thisWeek:"Minggu Ini", thisMonth:"Bulan Ini", thisYear:"Tahun Ini", allTime:"Sepanjang Masa", customRange:"Julat Tersuai", to:"hingga",
@@ -117,7 +119,7 @@ const PREMIUM_DASHBOARD_TEXT = {
     whatsappIntegration:"Integrasi WhatsApp", manage:"Urus", instance:"Instance", status:"Status", trigger:"Trigger", members:"Ahli", lastSync:"Sync terakhir", notLinked:"belum linked",
     aliasLabel:"Alias bot WhatsApp group", saving:"Menyimpan...", saveAlias:"Simpan Alias", aliasHelp:"Dalam group, mula mesej dengan ! atau @{alias}. Private chat tidak perlu trigger.",
     disconnectWhatsApp:"Disconnect WhatsApp", recheckStatus:"Semak semula status", googleSheet:"Google Sheet", workspacePackage:"Pakej workspace", template:"Template", title:"Tajuk", mode:"Mode", lastUpdated:"Terakhir dikemaskini",
-    sheetNotConnected:"Google Sheet belum connected", openGoogleSheet:"Buka Google Sheet", relinkGoogleAccess:"Paut semula akses Google", recreateGoogleSheet:"Cipta semula Google Sheet", upgradeGoogleSheetTo:"Upgrade Google Sheet ke", quickActions:"Tindakan Pantas", addTransaction:"Tambah Transaksi", useWhatsAppCommand:"Guna command mesej WhatsApp.", setupWizard:"Setup Wizard", reviewOnboarding:"Semak langkah onboarding.",
+    sheetNotConnected:"Google Sheet belum connected", openGoogleSheet:"Buka Google Sheet", relinkGoogleAccess:"Paut semula akses Google", recreateGoogleSheet:"Cipta semula Google Sheet", upgradeGoogleSheetTo:"Upgrade Google Sheet ke", currentTemplate:"Template semasa", latestTemplate:"Template terkini", updateAvailable:"Update tersedia", upToDate:"Sudah terkini", updateGoogleSheet:"Update Google Sheet", migrationRequired:"Persediaan migration diperlukan", quickActions:"Tindakan Pantas", addTransaction:"Tambah Transaksi", useWhatsAppCommand:"Guna command mesej WhatsApp.", setupWizard:"Setup Wizard", reviewOnboarding:"Semak langkah onboarding.",
   },
 } as const;
 
@@ -2560,6 +2562,27 @@ export function PremiumDashboard(
                   text.notConnected}
               </strong>
 
+              <span>{text.currentTemplate}</span>
+              <strong>
+                {google.currentTemplateVersion || "-"}
+              </strong>
+
+              <span>{text.latestTemplate}</span>
+              <strong>
+                {google.latestTemplateVersion || "-"}
+              </strong>
+
+              <span>Status</span>
+              <strong>
+                {
+                  google.templateUpdateAvailable
+                    ? text.updateAvailable
+                    : google.templateUpdateStatus === "UP_TO_DATE"
+                      ? text.upToDate
+                      : google.templateUpdateStatus || "-"
+                }
+              </strong>
+
               <span>{text.title}</span>
               <strong>
                 {google.spreadsheetTitle ||
@@ -2586,6 +2609,23 @@ export function PremiumDashboard(
                   </div>
                 )}
 
+              {google.templateUpdateAvailable && (
+                <div className="pd-warning">
+                  Version {
+                    google.currentTemplateVersion || "-"
+                  } → {
+                    google.latestTemplateVersion || "-"
+                  }. {
+                    google.templateUpdateSupported
+                      ? language === "ms"
+                        ? "Backup penuh akan dibuat dan transaksi sedia ada akan dikekalkan."
+                        : "A full backup will be created and existing transactions will be preserved."
+                      : google.templateUpdateMessage
+                      || text.migrationRequired
+                  }
+                </div>
+              )}
+
               <div className="pd-url">
                 {sheetUrl ||
                   text.sheetNotConnected}
@@ -2611,6 +2651,30 @@ export function PremiumDashboard(
                   />
                   {text.openGoogleSheet}
                 </button>
+
+                {
+                  props.canUpdateGoogleTemplate
+                  &&
+                  google.templateUpdateAvailable
+                  &&
+                  (
+                    <button
+                      className="pd-button"
+                      disabled={
+                        !google.templateUpdateSupported
+                      }
+                      onClick={
+                        props.onUpdateGoogle
+                      }
+                    >
+                      <AppIcon
+                        name="rotate"
+                        size={14}
+                      />
+                      {text.updateGoogleSheet}
+                    </button>
+                  )
+                }
 
                 <button
                   className="pd-button"
