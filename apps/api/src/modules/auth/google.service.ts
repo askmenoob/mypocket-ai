@@ -65,12 +65,7 @@ export class GoogleService {
       response_type:
         "code",
 
-      scope:
-        [
-          "openid",
-          "email",
-          "profile",
-        ].join(" "),
+      scope: googleConfig.scopes.join(" "),
 
       access_type:
         "online",
