@@ -7560,34 +7560,63 @@ export class WhatsAppService {
         .trim();
 
 
-    const withoutLead =
-      beforeAmount
-        .replace(
-          /^[!/@]+\s*/,
-          "",
-        )
-        .replace(
-          /^(?:makan|minum|eat|drink|food|petrol|minyak|fuel|grab|taxi|tol|toll|parking|bill|bil|belanja|beli|buy|bayar|pay|shopping|gaji|salary|income|dapat|terima|receive|received|isi|topup|tambah)\s+/i,
-          "",
-        )
+    const afterAmount =
+      (
+        amountIndex >= 0
+          ?
+          rawText.slice(
+            amountIndex
+            +
+            amountToken.length,
+          )
+          :
+          ""
+      )
         .trim();
 
 
-    const withoutTrailingPayment =
-      withoutLead
-        .replace(
-          /(?:^|\s)(?:instant transfer|credit card|debit card|touch 'n go|touch n go|grab pay|duit now|mastercard|grabpay|touchngo|duitnow|transfer|tunai|cash|bank|ibg|fpx|card|kad|visa|tng|qr)\s*$/i,
-          "",
-        )
-        .replace(
-          /[,:;\-]+\s*$/,
-          "",
-        )
-        .trim();
+    const cleanMerchantSegment =
+      (
+        value:string,
+      ) =>
+        value
+          .replace(
+            /^[!/@]+\s*/,
+            "",
+          )
+          .replace(
+            /^(?:makan|minum|eat|drink|food|petrol|minyak|fuel|grab|taxi|tol|toll|parking|bill|bil|belanja|beli|buy|bayar|pay|shopping|gaji|salary|income|dapat|terima|receive|received|isi|topup|tambah)(?:\s+|$)/i,
+            "",
+          )
+          .replace(
+            /(?:^|\s)(?:(?:guna|pakai|use|using|via)\s+)?(?:instant transfer|credit card|debit card|touch 'n go|touch n go|grab pay|duit now|mastercard|grabpay|touchngo|duitnow|transfer|tunai|cash|bank|ibg|fpx|card|kad|visa|tng|qr)\s*$/i,
+            "",
+          )
+          .replace(
+            /[,:;\-]+\s*$/,
+            "",
+          )
+          .trim();
+
+
+    const beforeCandidate =
+      cleanMerchantSegment(
+        beforeAmount,
+      );
+
+
+    const afterCandidate =
+      cleanMerchantSegment(
+        afterAmount,
+      );
 
 
     const explicitMerchant =
-      withoutTrailingPayment.match(
+      beforeCandidate.match(
+        /(?:^|\s)(?:di|at|daripada|from)\s+(.+)$/i,
+      )?.[1]
+      ??
+      afterCandidate.match(
         /(?:^|\s)(?:di|at|daripada|from)\s+(.+)$/i,
       )?.[1];
 
@@ -7596,7 +7625,7 @@ export class WhatsAppService {
       (
         explicitMerchant
         ??
-        withoutTrailingPayment
+        beforeCandidate
       )
         .replace(
           /\s+/g,

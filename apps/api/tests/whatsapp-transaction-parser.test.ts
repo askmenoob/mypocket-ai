@@ -229,6 +229,40 @@ test("merchant extraction removes command and payment tokens", () => {
 });
 
 
+test("merchant extraction supports explicit merchant after amount", () => {
+
+  const parsed =
+    parse(
+      "belanja RM1.23 di E2TEST180137 guna tunai",
+    );
+
+
+  assert.equal(
+    parsed.amount,
+    "1.23",
+  );
+
+
+  assert.equal(
+    parsed.categoryName,
+    "Shopping",
+  );
+
+
+  assert.equal(
+    parsed.merchantName,
+    "E2TEST180137",
+  );
+
+
+  assert.equal(
+    parsed.paymentMethodName,
+    "Cash",
+  );
+
+});
+
+
 test("multi-input prefix inheritance remains deterministic", () => {
 
   const parts =
