@@ -55,6 +55,11 @@ import {
 } from "./whatsapp-command.parser.js";
 
 
+import {
+  AIProviderRouter,
+} from "../intelligence/index.js";
+
+
 
 export class WhatsAppService {
 
@@ -68,6 +73,10 @@ export class WhatsAppService {
 
   private readonly sheetSyncService:
     WhatsAppSheetSyncService;
+
+
+  private readonly aiProviderRouter:
+    AIProviderRouter<ParsedWhatsAppTransaction>;
 
 
 
@@ -89,6 +98,14 @@ export class WhatsAppService {
     this.sheetSyncService =
       new WhatsAppSheetSyncService(
         app,
+      );
+
+
+    this.aiProviderRouter =
+      new AIProviderRouter<
+        ParsedWhatsAppTransaction
+      >(
+        [],
       );
 
   }
@@ -6243,14 +6260,34 @@ export class WhatsAppService {
 
     try{
 
+      const routed =
+        await this.aiProviderRouter
+          .parseTransaction(
+            {
+              text:
+                normalized.text
+                ??
+                "",
+
+              transactionDate:
+                normalized.timestamp,
+
+              currency:
+                "MYR",
+            },
+            () =>
+              this.parseTransactionText(
+                normalized.text
+                ??
+                "",
+                normalized.timestamp,
+              ),
+          );
+
+
       return {
         parsed:
-          this.parseTransactionText(
-            normalized.text
-            ??
-            "",
-            normalized.timestamp,
-          ),
+          routed.value,
       };
 
     }catch(error){
