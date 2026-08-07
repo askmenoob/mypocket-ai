@@ -751,6 +751,288 @@ export class TransactionService {
 
 
 
+  async bulkDeleteSheetTransactions(
+    actorRole:
+      "OWNER"
+      | "ADMIN"
+      | "MEMBER"
+      | "VIEWER",
+
+    workspaceId:string,
+
+    transactionIds:string[],
+  ){
+
+    if(
+      actorRole !== "OWNER"
+      &&
+      actorRole !== "ADMIN"
+    ){
+
+      throw new AppError(
+        "INSUFFICIENT_ROLE",
+        "Not allowed to delete transactions",
+        403,
+      );
+
+    }
+
+
+    const normalizedIds =
+      Array.from(
+        new Set(
+          transactionIds
+            .map(
+              (id) =>
+                String(
+                  id,
+                )
+                  .trim(),
+            )
+            .filter(
+              Boolean,
+            ),
+        ),
+      );
+
+
+    if(
+      normalizedIds.length === 0
+      ||
+      normalizedIds.length > 100
+    ){
+
+      throw new AppError(
+        "INVALID_TRANSACTION_IDS",
+        "Between 1 and 100 transaction IDs are required",
+        400,
+      );
+
+    }
+
+
+    const setting =
+      await this.googleSettingsRepository
+        .findByWorkspaceId(
+          workspaceId,
+        );
+
+
+    if(!setting?.spreadsheetId){
+
+      throw new AppError(
+        "GOOGLE_SHEET_NOT_CONFIGURED",
+        "Google Sheet is not configured",
+        409,
+      );
+
+    }
+
+
+    const spreadsheetIds =
+      [
+        setting.spreadsheetId,
+        setting.backupSpreadsheetId,
+      ]
+        .filter(
+          Boolean,
+        )
+        .filter(
+          (
+            spreadsheetId,
+            index,
+            values,
+          ) =>
+            values.indexOf(
+              spreadsheetId,
+            )
+            ===
+            index,
+        ) as string[];
+
+
+    const matchedIds =
+      new Set<string>();
+
+
+    for(
+      const spreadsheetId
+      of spreadsheetIds
+    ){
+
+      const rows =
+        await this.sheetsService
+          .readRange(
+            workspaceId,
+            {
+              spreadsheetId,
+
+              range:
+                "Transactions!A:O",
+            },
+          );
+
+
+      const rowIndexById =
+        new Map<
+          string,
+          number
+        >();
+
+
+      for(
+        let rowIndex = 1;
+        rowIndex < rows.length;
+        rowIndex += 1
+      ){
+
+        const transactionId =
+          String(
+            rows[rowIndex]?.[0]
+            ??
+            "",
+          )
+            .trim();
+
+
+        if(
+          transactionId
+          &&
+          !rowIndexById.has(
+            transactionId,
+          )
+        ){
+
+          rowIndexById.set(
+            transactionId,
+            rowIndex,
+          );
+
+        }
+
+      }
+
+
+      for(
+        const transactionId
+        of normalizedIds
+      ){
+
+        const rowIndex =
+          rowIndexById.get(
+            transactionId,
+          );
+
+
+        if(
+          rowIndex === undefined
+          ||
+          rowIndex < 1
+        ){
+
+          continue;
+
+        }
+
+
+        matchedIds.add(
+          transactionId,
+        );
+
+
+        const row =
+          rows[rowIndex]
+          ??
+          [];
+
+
+        const description =
+          String(
+            row[6]
+            ??
+            "",
+          );
+
+
+        if(
+          description.startsWith(
+            "[DELETED]",
+          )
+        ){
+
+          continue;
+
+        }
+
+
+        const rowNumber =
+          rowIndex
+          +
+          1;
+
+
+        await this.sheetsService
+          .updateRange(
+            workspaceId,
+            {
+              spreadsheetId,
+
+              range:
+                `Transactions!G${rowNumber}:G${rowNumber}`,
+
+              values:[
+                [
+                  `[DELETED] ${description}`
+                    .trim(),
+                ],
+              ],
+            },
+          );
+
+      }
+
+    }
+
+
+    const deletedIds =
+      normalizedIds
+        .filter(
+          (transactionId) =>
+            matchedIds.has(
+              transactionId,
+            ),
+        );
+
+
+    const missingIds =
+      normalizedIds
+        .filter(
+          (transactionId) =>
+            !matchedIds.has(
+              transactionId,
+            ),
+        );
+
+
+    return {
+      requestedCount:
+        normalizedIds.length,
+
+      deletedCount:
+        deletedIds.length,
+
+      deletedIds,
+
+      missingIds,
+
+      marker:
+        "[DELETED]",
+    };
+
+  }
+
+
+
   async deleteTransaction(
     actorRole:
       "OWNER"
@@ -1037,6 +1319,10 @@ export class TransactionService {
       ||
       description.startsWith(
         "[CANCELLED]",
+      )
+      ||
+      description.startsWith(
+        "[DELETED]",
       )
     ){
 

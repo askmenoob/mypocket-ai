@@ -3526,6 +3526,16 @@ function Dashboard(
       "MONTH",
     );
 
+  const [selectedTransactionIds, setSelectedTransactionIds] =
+    useState<string[]>(
+      [],
+    );
+
+  const [bulkDeleteBusy, setBulkDeleteBusy] =
+    useState(
+      false,
+    );
+
   const [transactionCustomFrom, setTransactionCustomFrom] =
     useState(
       () => {
@@ -3632,6 +3642,11 @@ function Dashboard(
 
   const canManageBilling =
     actorRole === "OWNER";
+
+  const canBulkDeleteTransactions =
+    actorRole === "OWNER"
+    ||
+    actorRole === "ADMIN";
 
   const isSuperAdmin =
     Boolean(
@@ -3782,6 +3797,39 @@ function Dashboard(
       dashboardLanguage,
     );
 
+  const visibleTransactionIds =
+    filteredTransactions
+      .map(
+        (transaction) =>
+          String(
+            transaction.id
+            ||
+            "",
+          )
+            .trim(),
+      )
+      .filter(
+        Boolean,
+      );
+
+  const selectedVisibleTransactionIds =
+    visibleTransactionIds
+      .filter(
+        (transactionId) =>
+          selectedTransactionIds.includes(
+            transactionId,
+          ),
+      );
+
+  const allVisibleTransactionsSelected =
+    visibleTransactionIds.length > 0
+    &&
+    visibleTransactionIds.length <= 100
+    &&
+    selectedVisibleTransactionIds.length
+      ===
+      visibleTransactionIds.length;
+
   const today =
     new Date()
       .toISOString()
@@ -3832,6 +3880,305 @@ function Dashboard(
     hasDashboardGoogleSheet
     &&
     isWhatsAppConnected;
+
+  useEffect(
+    () => {
+
+      setSelectedTransactionIds(
+        [],
+      );
+
+    },
+    [
+      transactionFilter,
+      transactionCustomFrom,
+      transactionCustomTo,
+    ],
+  );
+
+
+  function toggleTransactionSelection(
+    transactionId:string,
+  ){
+
+    const normalizedId =
+      String(
+        transactionId
+        ||
+        "",
+      )
+        .trim();
+
+
+    if(!normalizedId){
+      return;
+    }
+
+
+    if(
+      selectedTransactionIds.includes(
+        normalizedId,
+      )
+    ){
+
+      setSelectedTransactionIds(
+        selectedTransactionIds.filter(
+          (id) =>
+            id !== normalizedId,
+        ),
+      );
+
+      return;
+
+    }
+
+
+    if(
+      selectedTransactionIds.length
+      >=
+      100
+    ){
+
+      setActionMessage(
+        dashboardLanguage === "ms"
+          ? "Maksimum 100 transaksi boleh dipilih dalam satu operasi."
+          : "A maximum of 100 transactions can be selected in one operation.",
+      );
+
+      return;
+
+    }
+
+
+    setSelectedTransactionIds([
+      ...selectedTransactionIds,
+      normalizedId,
+    ]);
+
+  }
+
+
+  function toggleSelectAllVisibleTransactions(){
+
+    if(
+      allVisibleTransactionsSelected
+    ){
+
+      setSelectedTransactionIds(
+        [],
+      );
+
+      return;
+
+    }
+
+
+    const nextIds =
+      visibleTransactionIds
+        .slice(
+          0,
+          100,
+        );
+
+
+    setSelectedTransactionIds(
+      nextIds,
+    );
+
+
+    if(
+      visibleTransactionIds.length
+      >
+      100
+    ){
+
+      setActionMessage(
+        dashboardLanguage === "ms"
+          ? "100 transaksi pertama dipilih. Had maksimum setiap operasi ialah 100."
+          : "The first 100 transactions were selected. The maximum per operation is 100.",
+      );
+
+    }
+
+  }
+
+
+  async function bulkDeleteSelectedTransactions(){
+
+    if(
+      !canBulkDeleteTransactions
+      ||
+      bulkDeleteBusy
+    ){
+
+      return;
+
+    }
+
+
+    const transactionIds =
+      selectedVisibleTransactionIds
+        .slice(
+          0,
+          100,
+        );
+
+
+    if(
+      transactionIds.length === 0
+    ){
+
+      setActionMessage(
+        dashboardLanguage === "ms"
+          ? "Pilih sekurang-kurangnya satu transaksi untuk dipadam."
+          : "Select at least one transaction to delete.",
+      );
+
+      return;
+
+    }
+
+
+    const confirmed =
+      window.confirm(
+        dashboardLanguage === "ms"
+          ? `Padam ${transactionIds.length} transaksi dipilih? Rekod Google Sheet akan ditanda [DELETED] dan tidak dipadam secara kekal.`
+          : `Delete ${transactionIds.length} selected transactions? Google Sheet rows will be marked [DELETED] and will not be permanently removed.`,
+      );
+
+
+    if(!confirmed){
+      return;
+    }
+
+
+    const activeToken =
+      localStorage.getItem(
+        STORAGE.token,
+      )
+      ||
+      "";
+
+
+    if(!activeToken){
+
+      setActionMessage(
+        dashboardLanguage === "ms"
+          ? "Session telah tamat. Sila log masuk semula."
+          : "Your session has expired. Please sign in again.",
+      );
+
+      return;
+
+    }
+
+
+    setBulkDeleteBusy(
+      true,
+    );
+
+    setActionMessage(
+      "",
+    );
+
+
+    try{
+
+      const result =
+        await api<{
+          requestedCount:number;
+          deletedCount:number;
+          deletedIds:string[];
+          missingIds:string[];
+          marker:string;
+        }>(
+          "/transactions/bulk-delete",
+          activeToken,
+          {
+            method:
+              "POST",
+
+            body:
+              JSON.stringify({
+                transactionIds,
+              }),
+          },
+        );
+
+
+      setSelectedTransactionIds(
+        [],
+      );
+
+
+      const refreshed =
+        await props.refresh();
+
+
+      const missingCount =
+        Array.isArray(
+          result.missingIds,
+        )
+          ? result.missingIds.length
+          : 0;
+
+
+      setActionMessage(
+        dashboardLanguage === "ms"
+          ?
+          [
+            `${result.deletedCount} transaksi berjaya ditanda [DELETED].`,
+            missingCount > 0
+              ? `${missingCount} transaksi tidak lagi ditemui.`
+              : "",
+            refreshed
+              ? ""
+              : "Transaksi telah dipadam tetapi refresh dashboard gagal; tekan Refresh.",
+          ]
+            .filter(
+              Boolean,
+            )
+            .join(
+              " ",
+            )
+          :
+          [
+            `${result.deletedCount} transactions were marked [DELETED].`,
+            missingCount > 0
+              ? `${missingCount} transactions were no longer found.`
+              : "",
+            refreshed
+              ? ""
+              : "Deletion succeeded but dashboard refresh failed; press Refresh.",
+          ]
+            .filter(
+              Boolean,
+            )
+            .join(
+              " ",
+            ),
+      );
+
+    }catch(error){
+
+      setActionMessage(
+        error instanceof Error
+          ? error.message
+          : dashboardLanguage === "ms"
+            ? "Bulk delete transaksi gagal."
+            : "Bulk transaction delete failed.",
+      );
+
+    }finally{
+
+      setBulkDeleteBusy(
+        false,
+      );
+
+    }
+
+  }
+
 
   async function refreshDashboard(){
 
@@ -5064,6 +5411,33 @@ function Dashboard(
               <table>
                 <thead>
                   <tr>
+                    {
+                      activeView === "transactions"
+                      &&
+                      canBulkDeleteTransactions
+                      &&
+                      (
+                        <th>
+                          <input
+                            type="checkbox"
+                            checked={allVisibleTransactionsSelected}
+                            disabled={
+                              bulkDeleteBusy
+                              ||
+                              filteredTransactions.length === 0
+                            }
+                            aria-label={
+                              dashboardLanguage === "ms"
+                                ? "Pilih semua transaksi dipaparkan"
+                                : "Select all displayed transactions"
+                            }
+                            onChange={
+                              toggleSelectAllVisibleTransactions
+                            }
+                          />
+                        </th>
+                      )
+                    }
                     <th>{dashboardText.date}</th>
                     <th>{dashboardText.type}</th>
                     <th>{dashboardText.category}</th>
@@ -5077,7 +5451,13 @@ function Dashboard(
                   {filteredTransactions.length === 0 && (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={
+                          activeView === "transactions"
+                          &&
+                          canBulkDeleteTransactions
+                            ? 8
+                            : 7
+                        }
                         className="hint"
                         role="status"
                         aria-live="polite"
@@ -5093,6 +5473,46 @@ function Dashboard(
 
                   {filteredTransactions.map((item) => (
                     <tr key={item.id}>
+                      {
+                        activeView === "transactions"
+                        &&
+                        canBulkDeleteTransactions
+                        &&
+                        (
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={
+                                selectedTransactionIds.includes(
+                                  item.id,
+                                )
+                              }
+                              disabled={
+                                bulkDeleteBusy
+                                ||
+                                (
+                                  !selectedTransactionIds.includes(
+                                    item.id,
+                                  )
+                                  &&
+                                  selectedTransactionIds.length >= 100
+                                )
+                              }
+                              aria-label={
+                                dashboardLanguage === "ms"
+                                  ? `Pilih transaksi ${item.id}`
+                                  : `Select transaction ${item.id}`
+                              }
+                              onChange={
+                                () =>
+                                  toggleTransactionSelection(
+                                    item.id,
+                                  )
+                              }
+                            />
+                          </td>
+                        )
+                      }
                       <td>{new Date(item.transactionDate).toLocaleString("en-MY")}</td>
                       <td>
                         <span className={`type ${item.type.toLowerCase()}`}>
@@ -5154,6 +5574,34 @@ function Dashboard(
             </div>
               {activeView === "transactions" && (
                 <div className="panelActions">
+                  {
+                    canBulkDeleteTransactions
+                    &&
+                    (
+                      <button
+                        className="ghost danger"
+                        onClick={
+                          bulkDeleteSelectedTransactions
+                        }
+                        disabled={
+                          bulkDeleteBusy
+                          ||
+                          selectedVisibleTransactionIds.length === 0
+                        }
+                      >
+                        {
+                          bulkDeleteBusy
+                            ? dashboardLanguage === "ms"
+                              ? "Memadam..."
+                              : "Deleting..."
+                            : dashboardLanguage === "ms"
+                              ? `Delete Selected (${selectedVisibleTransactionIds.length})`
+                              : `Delete Selected (${selectedVisibleTransactionIds.length})`
+                        }
+                      </button>
+                    )
+                  }
+
                   <button
                     className="primary"
                     onClick={() => showActionMessage(

@@ -11,6 +11,7 @@ import {
 
 
 import {
+  bulkDeleteTransactionsSchema,
   createTransactionSchema,
   updateTransactionSchema,
 } from "./transaction.schemas.js";
@@ -193,6 +194,41 @@ export class TransactionController {
 
   }
 
+
+
+
+
+  bulkDeleteTransactions =
+  async (
+    request:FastifyRequest,
+    reply:FastifyReply,
+  ) => {
+
+    const user =
+      request.user as any;
+
+
+    const body =
+      bulkDeleteTransactionsSchema
+        .parse(
+          request.body,
+        );
+
+
+    const result =
+      await this.service
+        .bulkDeleteSheetTransactions(
+          user.role,
+          user.workspaceId,
+          body.transactionIds,
+        );
+
+
+    return reply.send(
+      result,
+    );
+
+  };
 
 
 

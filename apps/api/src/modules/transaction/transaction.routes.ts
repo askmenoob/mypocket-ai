@@ -56,6 +56,18 @@ export default async function transactionRoutes(
 
 
 
+  app.post(
+    "/transactions/bulk-delete",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    controller.bulkDeleteTransactions,
+  );
+
+
+
   app.patch(
     "/transactions/:id",
     {
