@@ -851,8 +851,21 @@ export class TransactionService {
         ) as string[];
 
 
-    const matchedIds =
-      new Set<string>();
+    const rowsBySheet =
+      new Map<
+        string,
+        unknown[][]
+      >();
+
+
+    const rowIndexesBySheet =
+      new Map<
+        string,
+        Map<
+          string,
+          number
+        >
+      >();
 
 
     for(
@@ -913,9 +926,73 @@ export class TransactionService {
       }
 
 
+      rowsBySheet.set(
+        spreadsheetId,
+        rows,
+      );
+
+
+      rowIndexesBySheet.set(
+        spreadsheetId,
+        rowIndexById,
+      );
+
+    }
+
+
+    const deletedIds =
+      normalizedIds
+        .filter(
+          (transactionId) =>
+            spreadsheetIds
+              .every(
+                (spreadsheetId) =>
+                  rowIndexesBySheet
+                    .get(
+                      spreadsheetId,
+                    )
+                    ?.has(
+                      transactionId,
+                    )
+                  ===
+                  true,
+              ),
+        );
+
+
+    const deletedIdSet =
+      new Set<string>(
+        deletedIds,
+      );
+
+
+    for(
+      const spreadsheetId
+      of spreadsheetIds
+    ){
+
+      const rows =
+        rowsBySheet.get(
+          spreadsheetId,
+        )
+        ??
+        [];
+
+
+      const rowIndexById =
+        rowIndexesBySheet.get(
+          spreadsheetId,
+        )
+        ??
+        new Map<
+          string,
+          number
+        >();
+
+
       for(
         const transactionId
-        of normalizedIds
+        of deletedIds
       ){
 
         const rowIndex =
@@ -933,11 +1010,6 @@ export class TransactionService {
           continue;
 
         }
-
-
-        matchedIds.add(
-          transactionId,
-        );
 
 
         const row =
@@ -994,25 +1066,14 @@ export class TransactionService {
     }
 
 
-    const deletedIds =
-      normalizedIds
-        .filter(
-          (transactionId) =>
-            matchedIds.has(
-              transactionId,
-            ),
-        );
-
-
     const missingIds =
       normalizedIds
         .filter(
           (transactionId) =>
-            !matchedIds.has(
+            !deletedIdSet.has(
               transactionId,
             ),
         );
-
 
     return {
       requestedCount:

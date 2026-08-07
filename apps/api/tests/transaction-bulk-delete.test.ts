@@ -516,3 +516,138 @@ test(
 
   },
 );
+
+test(
+  "does not mutate primary when selected id is absent from configured backup replica",
+  async () => {
+
+    const harness =
+      createHarness({
+        primaryRows:[
+          headerRow(),
+          transactionRow(
+            "cm-one",
+            "coffee",
+          ),
+        ],
+        backupRows:[
+          headerRow(),
+        ],
+      });
+
+
+    const result =
+      await harness.service
+        .bulkDeleteSheetTransactions(
+          "OWNER",
+          "workspace-a",
+          [
+            "cm-one",
+          ],
+        );
+
+
+    assert.equal(
+      result.deletedCount,
+      0,
+    );
+
+    assert.deepEqual(
+      result.deletedIds,
+      [],
+    );
+
+    assert.deepEqual(
+      result.missingIds,
+      [
+        "cm-one",
+      ],
+    );
+
+
+    const primaryRows =
+      harness.rowsBySheet.get(
+        "sheet-primary",
+      )!;
+
+
+    assert.equal(
+      primaryRows[1][6],
+      "coffee",
+    );
+
+    assert.equal(
+      harness.updateCount(),
+      0,
+    );
+
+  },
+);
+
+
+test(
+  "does not mutate backup when selected id is absent from configured primary replica",
+  async () => {
+
+    const harness =
+      createHarness({
+        primaryRows:[
+          headerRow(),
+        ],
+        backupRows:[
+          headerRow(),
+          transactionRow(
+            "cm-one",
+            "coffee",
+          ),
+        ],
+      });
+
+
+    const result =
+      await harness.service
+        .bulkDeleteSheetTransactions(
+          "ADMIN",
+          "workspace-a",
+          [
+            "cm-one",
+          ],
+        );
+
+
+    assert.equal(
+      result.deletedCount,
+      0,
+    );
+
+    assert.deepEqual(
+      result.deletedIds,
+      [],
+    );
+
+    assert.deepEqual(
+      result.missingIds,
+      [
+        "cm-one",
+      ],
+    );
+
+
+    const backupRows =
+      harness.rowsBySheet.get(
+        "sheet-backup",
+      )!;
+
+
+    assert.equal(
+      backupRows[1][6],
+      "coffee",
+    );
+
+    assert.equal(
+      harness.updateCount(),
+      0,
+    );
+
+  },
+);

@@ -1766,10 +1766,10 @@ function App(){
       const [
         me,
         billing,
-        google,
+        googleSettingsResult,
         whatsapp,
         members,
-        transactions,
+        sheetTransactionsResult,
         commitments,
         botSettings,
       ] =
@@ -1780,22 +1780,83 @@ function App(){
             activeToken,
             null,
           ),
-          optionalApi<any | null>("/google/settings", activeToken, null),
+          api<any | null>(
+            "/google/settings",
+            activeToken,
+          )
+            .then(
+              (value) => ({
+                ok:true as const,
+                value,
+              }),
+            )
+            .catch(
+              (error:unknown) => ({
+                ok:false as const,
+                error,
+              }),
+            ),
           optionalApi<any | null>("/whatsapp/status", activeToken, null),
           optionalApi<Member[]>("/whatsapp/members", activeToken, []),
-          optionalApi<any>("/transactions/sheet", activeToken, null),
+          api<any>(
+            "/transactions/sheet",
+            activeToken,
+          )
+            .then(
+              (value) => ({
+                ok:true as const,
+                value,
+              }),
+            )
+            .catch(
+              (error:unknown) => ({
+                ok:false as const,
+                error,
+              }),
+            ),
           optionalApi<CommitmentListData | null>("/commitments?status=unpaid", activeToken, null),
           optionalApi<BotSettingsData | null>("/bot-settings", activeToken, null),
         ]);
 
-      const fallbackTransactions =
-        transactions === null
-          ? await optionalApi<any>(
+      if(
+        !googleSettingsResult.ok
+      ){
+
+        throw googleSettingsResult.error;
+
+      }
+
+
+      const google =
+        googleSettingsResult.value;
+
+
+      let resolvedTransactions:any;
+
+
+      if(
+        sheetTransactionsResult.ok
+      ){
+
+        resolvedTransactions =
+          sheetTransactionsResult.value;
+
+      }else if(
+        !google?.spreadsheetId
+      ){
+
+        resolvedTransactions =
+          await optionalApi<any>(
             "/transactions?limit=12",
             activeToken,
             [],
-          )
-          : transactions;
+          );
+
+      }else{
+
+        throw sheetTransactionsResult.error;
+
+      }
 
 
       const adminUsers =
@@ -1816,7 +1877,7 @@ function App(){
         adminUsers:
           listFrom<AdminUser>(adminUsers),
         transactions:
-          listFrom<Transaction>(fallbackTransactions),
+          listFrom<Transaction>(resolvedTransactions),
         commitments,
         botSettings,
       });
