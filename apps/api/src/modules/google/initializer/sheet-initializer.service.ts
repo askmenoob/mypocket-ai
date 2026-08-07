@@ -248,7 +248,7 @@ export class SheetInitializerService {
           input.spreadsheetId,
 
         range:
-          "Settings!A1:B5",
+          "Settings!A1:B7",
 
         values:[
 
@@ -275,6 +275,16 @@ export class SheetInitializerService {
           [
             "System",
             "MyPocket AI",
+          ],
+
+          [
+            "Version",
+            "1.0.0",
+          ],
+
+          [
+            "Status",
+            "ACTIVE",
           ],
 
         ],

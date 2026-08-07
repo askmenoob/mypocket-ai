@@ -27,3 +27,39 @@ z.object({
       .min(1),
 
 });
+
+
+
+export const ManualGoogleStorageSchema =
+z.object({
+
+  rootFolderUrl:
+    z.string()
+      .url()
+      .min(1),
+
+  spreadsheetUrl:
+    z.string()
+      .url()
+      .min(1),
+
+  backupSpreadsheetUrl:
+    z.string()
+      .url()
+      .min(1)
+      .optional(),
+
+})
+  .strict();
+
+
+export const ManualGoogleTemplateInstallSchema =
+z.object({
+
+  spreadsheetUrl:
+    z.string()
+      .url()
+      .min(1),
+
+})
+  .strict();

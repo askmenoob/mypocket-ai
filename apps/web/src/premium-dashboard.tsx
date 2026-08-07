@@ -30,10 +30,10 @@ type PremiumDashboardProps = {
   data:any;
   onRefresh:() => void;
   onSetup:() => void;
-  onRelinkGoogle:() => void;
   onRecreateGoogle:() => void;
   onUpdateGoogle:() => void;
   canUpdateGoogleTemplate:boolean;
+  canManageGoogleStorage:boolean;
   onOpenTransactions:() => void;
   onOpenWhatsApp:() => void;
   onAddTransaction:() => void;
@@ -109,7 +109,7 @@ const PREMIUM_DASHBOARD_TEXT = {
     whatsappIntegration:"WhatsApp Integration", manage:"Manage", instance:"Instance", status:"Status", trigger:"Trigger", members:"Members", lastSync:"Last Sync", notLinked:"not linked",
     aliasLabel:"WhatsApp group bot alias", saving:"Saving...", saveAlias:"Save Alias", aliasHelp:"In groups, start messages with ! or @{alias}. Private chat does not need a trigger.",
     disconnectWhatsApp:"Disconnect WhatsApp", recheckStatus:"Recheck status", googleSheet:"Google Sheet", workspacePackage:"Workspace package", template:"Template", title:"Title", mode:"Mode", lastUpdated:"Last Updated",
-    sheetNotConnected:"Google Sheet is not connected", openGoogleSheet:"Open Google Sheet", relinkGoogleAccess:"Relink Google Access", recreateGoogleSheet:"Recreate Google Sheet", upgradeGoogleSheetTo:"Upgrade Google Sheet to", currentTemplate:"Current template", latestTemplate:"Latest template", updateAvailable:"Update available", upToDate:"Up to date", updateGoogleSheet:"Update Google Sheet", migrationRequired:"Migration preparation required", quickActions:"Quick Actions", addTransaction:"Add Transaction", useWhatsAppCommand:"Use WhatsApp message command.", setupWizard:"Setup Wizard", reviewOnboarding:"Review onboarding steps.",
+    sheetNotConnected:"Google Sheet is not connected", openGoogleSheet:"Open Google Sheet", recreateGoogleSheet:"Recreate Google Sheet", upgradeGoogleSheetTo:"Upgrade Google Sheet to", currentTemplate:"Current template", latestTemplate:"Latest template", updateAvailable:"Update available", upToDate:"Up to date", updateGoogleSheet:"Update Google Sheet", migrationRequired:"Migration preparation required", quickActions:"Quick Actions", addTransaction:"Add Transaction", useWhatsAppCommand:"Use WhatsApp message command.", setupWizard:"Setup Wizard", reviewOnboarding:"Review onboarding steps.",
   },
   ms:{
     transactionPeriod:"Tempoh transaksi", record:"rekod", records:"rekod", today:"Hari Ini", thisWeek:"Minggu Ini", thisMonth:"Bulan Ini", thisYear:"Tahun Ini", allTime:"Sepanjang Masa", customRange:"Julat Tersuai", to:"hingga",
@@ -119,7 +119,7 @@ const PREMIUM_DASHBOARD_TEXT = {
     whatsappIntegration:"Integrasi WhatsApp", manage:"Urus", instance:"Instance", status:"Status", trigger:"Trigger", members:"Ahli", lastSync:"Sync terakhir", notLinked:"belum linked",
     aliasLabel:"Alias bot WhatsApp group", saving:"Menyimpan...", saveAlias:"Simpan Alias", aliasHelp:"Dalam group, mula mesej dengan ! atau @{alias}. Private chat tidak perlu trigger.",
     disconnectWhatsApp:"Disconnect WhatsApp", recheckStatus:"Semak semula status", googleSheet:"Google Sheet", workspacePackage:"Pakej workspace", template:"Template", title:"Tajuk", mode:"Mode", lastUpdated:"Terakhir dikemaskini",
-    sheetNotConnected:"Google Sheet belum connected", openGoogleSheet:"Buka Google Sheet", relinkGoogleAccess:"Paut semula akses Google", recreateGoogleSheet:"Cipta semula Google Sheet", upgradeGoogleSheetTo:"Upgrade Google Sheet ke", currentTemplate:"Template semasa", latestTemplate:"Template terkini", updateAvailable:"Update tersedia", upToDate:"Sudah terkini", updateGoogleSheet:"Update Google Sheet", migrationRequired:"Persediaan migration diperlukan", quickActions:"Tindakan Pantas", addTransaction:"Tambah Transaksi", useWhatsAppCommand:"Guna command mesej WhatsApp.", setupWizard:"Setup Wizard", reviewOnboarding:"Semak langkah onboarding.",
+    sheetNotConnected:"Google Sheet belum connected", openGoogleSheet:"Buka Google Sheet", recreateGoogleSheet:"Cipta semula Google Sheet", upgradeGoogleSheetTo:"Upgrade Google Sheet ke", currentTemplate:"Template semasa", latestTemplate:"Template terkini", updateAvailable:"Update tersedia", upToDate:"Sudah terkini", updateGoogleSheet:"Update Google Sheet", migrationRequired:"Persediaan migration diperlukan", quickActions:"Tindakan Pantas", addTransaction:"Tambah Transaksi", useWhatsAppCommand:"Guna command mesej WhatsApp.", setupWizard:"Setup Wizard", reviewOnboarding:"Semak langkah onboarding.",
   },
 } as const;
 
@@ -1673,6 +1673,369 @@ export function PremiumDashboard(
     props.data?.me?.workspace?.type ||
     "PERSONAL";
 
+  const currentRootFolderUrl =
+    google.rootFolderId
+      ? `https://drive.google.com/drive/folders/${google.rootFolderId}`
+      : "";
+
+  const currentBackupSheetUrl =
+    google.backupSpreadsheetId
+      ? `https://docs.google.com/spreadsheets/d/${google.backupSpreadsheetId}`
+      : "";
+
+  const [
+    manualRootFolderUrl,
+    setManualRootFolderUrl,
+  ] =
+    useState("");
+
+  const [
+    manualWorkingSheetUrl,
+    setManualWorkingSheetUrl,
+  ] =
+    useState("");
+
+  const [
+    manualBackupSheetUrl,
+    setManualBackupSheetUrl,
+  ] =
+    useState("");
+
+  const [
+    manualGoogleValidation,
+    setManualGoogleValidation,
+  ] =
+    useState<any | null>(
+      null,
+    );
+
+  const [
+    manualGoogleBusy,
+    setManualGoogleBusy,
+  ] =
+    useState<
+      "validate"
+      |
+      "save"
+      |
+      "install"
+      |
+      null
+    >(
+      null,
+    );
+
+  const [
+    manualGoogleMessage,
+    setManualGoogleMessage,
+  ] =
+    useState("");
+
+  useEffect(
+    () => {
+
+      setManualRootFolderUrl(
+        currentRootFolderUrl,
+      );
+
+      setManualWorkingSheetUrl(
+        sheetUrl,
+      );
+
+      setManualBackupSheetUrl(
+        currentBackupSheetUrl,
+      );
+
+      setManualGoogleValidation(
+        null,
+      );
+
+    },
+    [
+      currentRootFolderUrl,
+      currentBackupSheetUrl,
+      sheetUrl,
+    ],
+  );
+
+  function clearManualGoogleValidation(){
+
+    setManualGoogleValidation(
+      null,
+    );
+
+    setManualGoogleMessage(
+      "",
+    );
+  }
+
+  function manualGooglePayload(){
+
+    const backup =
+      manualBackupSheetUrl
+        .trim();
+
+    return {
+      rootFolderUrl:
+        manualRootFolderUrl
+          .trim(),
+
+      spreadsheetUrl:
+        manualWorkingSheetUrl
+          .trim(),
+
+      ...(backup
+        ? {
+            backupSpreadsheetUrl:
+              backup,
+          }
+        : {}),
+    };
+  }
+
+  async function manualGoogleRequest(
+    path:string,
+    body:unknown,
+  ):Promise<any>{
+
+    const token =
+      localStorage.getItem(
+        "imai_dashboard_token",
+      );
+
+    if(!token){
+
+      throw new Error(
+        language === "ms"
+          ? "Sesi login tidak dijumpai. Sila login semula."
+          : "Login session was not found. Please sign in again.",
+      );
+    }
+
+    const apiBase =
+      import.meta.env
+        .VITE_API_BASE_URL
+      ||
+      "https://api.imai.my/api/v1";
+
+    const response =
+      await fetch(
+        `${apiBase}${path}`,
+        {
+          method:
+            "POST",
+
+          headers:{
+            Authorization:
+              `Bearer ${token}`,
+
+            "Content-Type":
+              "application/json",
+          },
+
+          body:
+            JSON.stringify(
+              body,
+            ),
+        },
+      );
+
+    let result:any =
+      null;
+
+    try{
+
+      result =
+        await response.json();
+
+    }catch{
+
+      result =
+        null;
+    }
+
+    if(!response.ok){
+
+      throw new Error(
+        result?.message
+        ||
+        (
+          language === "ms"
+            ? "Tetapan Google gagal diproses."
+            : "Google settings could not be processed."
+        ),
+      );
+    }
+
+    return result;
+  }
+
+  async function validateManualGoogleStorage(){
+
+    setManualGoogleBusy(
+      "validate",
+    );
+
+    setManualGoogleMessage(
+      "",
+    );
+
+    try{
+
+      const result =
+        await manualGoogleRequest(
+          "/google/settings/manual/validate",
+          manualGooglePayload(),
+        );
+
+      setManualGoogleValidation(
+        result,
+      );
+
+      setManualGoogleMessage(
+        result.canSave
+          ?
+          (
+            language === "ms"
+              ? "Semua link Google sah dan sedia untuk disimpan."
+              : "All Google links are valid and ready to save."
+          )
+          :
+          result.installRequired
+            ?
+            (
+              language === "ms"
+                ? "Google Sheet kosong dikesan. Pasang template MyPocket dahulu."
+                : "An empty Google Sheet was detected. Install the MyPocket template first."
+            )
+            :
+            (
+              language === "ms"
+                ? "Google Sheet tidak serasi dengan template MyPocket dan tidak akan diubah."
+                : "The Google Sheet is not compatible with MyPocket and will not be modified."
+            ),
+      );
+
+    }catch(error){
+
+      setManualGoogleValidation(
+        null,
+      );
+
+      setManualGoogleMessage(
+        error instanceof Error
+          ? error.message
+          : language === "ms"
+            ? "Validation Google gagal."
+            : "Google validation failed.",
+      );
+
+    }finally{
+
+      setManualGoogleBusy(
+        null,
+      );
+    }
+  }
+
+  async function installManualGoogleTemplate(
+    spreadsheetUrl:string,
+  ){
+
+    setManualGoogleBusy(
+      "install",
+    );
+
+    setManualGoogleMessage(
+      "",
+    );
+
+    try{
+
+      await manualGoogleRequest(
+        "/google/settings/manual/install-template",
+        {
+          spreadsheetUrl,
+        },
+      );
+
+      const validation =
+        await manualGoogleRequest(
+          "/google/settings/manual/validate",
+          manualGooglePayload(),
+        );
+
+      setManualGoogleValidation(
+        validation,
+      );
+
+      setManualGoogleMessage(
+        language === "ms"
+          ? "Template MyPocket berjaya dipasang. Semak status dan simpan link Google."
+          : "MyPocket template installed successfully. Review the status and save the Google links.",
+      );
+
+    }catch(error){
+
+      setManualGoogleMessage(
+        error instanceof Error
+          ? error.message
+          : language === "ms"
+            ? "Template MyPocket gagal dipasang."
+            : "MyPocket template could not be installed.",
+      );
+
+    }finally{
+
+      setManualGoogleBusy(
+        null,
+      );
+    }
+  }
+
+  async function saveManualGoogleStorage(){
+
+    setManualGoogleBusy(
+      "save",
+    );
+
+    setManualGoogleMessage(
+      "",
+    );
+
+    try{
+
+      await manualGoogleRequest(
+        "/google/settings/manual/save",
+        manualGooglePayload(),
+      );
+
+      setManualGoogleMessage(
+        language === "ms"
+          ? "Google Folder dan Google Sheet berjaya disimpan sebagai sumber MyPocket workspace."
+          : "Google Folder and Google Sheets were saved as the MyPocket workspace source.",
+      );
+
+      props.onRefresh();
+
+    }catch(error){
+
+      setManualGoogleMessage(
+        error instanceof Error
+          ? error.message
+          : language === "ms"
+            ? "Google links gagal disimpan."
+            : "Google links could not be saved.",
+      );
+
+    }finally{
+
+      setManualGoogleBusy(
+        null,
+      );
+    }
+  }
+
   const monthLabel =
     now.toLocaleDateString(
       "en-MY",
@@ -2631,6 +2994,273 @@ export function PremiumDashboard(
                   text.sheetNotConnected}
               </div>
 
+              {props.canManageGoogleStorage && (
+              <div className="pd-manual-google">
+                <div className="pd-manual-google-title">
+                  {
+                    language === "ms"
+                      ? "Tetapan Google Manual"
+                      : "Manual Google Settings"
+                  }
+                </div>
+
+                <label className="pd-manual-google-field">
+                  <span>
+                    {
+                      language === "ms"
+                        ? "Google Drive Folder URL"
+                        : "Google Drive Folder URL"
+                    }
+                  </span>
+                  <input
+                    type="url"
+                    value={manualRootFolderUrl}
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    onChange={(event) => {
+                      setManualRootFolderUrl(
+                        event.target.value,
+                      );
+                      clearManualGoogleValidation();
+                    }}
+                  />
+                </label>
+
+                <label className="pd-manual-google-field">
+                  <span>
+                    {
+                      language === "ms"
+                        ? "Working Google Sheet URL"
+                        : "Working Google Sheet URL"
+                    }
+                  </span>
+                  <input
+                    type="url"
+                    value={manualWorkingSheetUrl}
+                    placeholder="https://docs.google.com/spreadsheets/d/..."
+                    onChange={(event) => {
+                      setManualWorkingSheetUrl(
+                        event.target.value,
+                      );
+                      clearManualGoogleValidation();
+                    }}
+                  />
+                </label>
+
+                <label className="pd-manual-google-field">
+                  <span>
+                    {
+                      language === "ms"
+                        ? "Backup Google Sheet URL (optional)"
+                        : "Backup Google Sheet URL (optional)"
+                    }
+                  </span>
+                  <input
+                    type="url"
+                    value={manualBackupSheetUrl}
+                    placeholder="https://docs.google.com/spreadsheets/d/..."
+                    onChange={(event) => {
+                      setManualBackupSheetUrl(
+                        event.target.value,
+                      );
+                      clearManualGoogleValidation();
+                    }}
+                  />
+                </label>
+
+                {
+                  manualGoogleValidation
+                  &&
+                  (
+                    <div className="pd-manual-google-status">
+                      <div>
+                        <strong>
+                          Folder:
+                        </strong>{" "}
+                        {
+                          manualGoogleValidation
+                            .folder
+                            ?.name
+                          ||
+                          "OK"
+                        }
+                      </div>
+
+                      <div>
+                        <strong>
+                          Working:
+                        </strong>{" "}
+                        {
+                          manualGoogleValidation
+                            .working
+                            ?.classification
+                          ||
+                          "-"
+                        }
+                      </div>
+
+                      {
+                        manualGoogleValidation
+                          .backup
+                        &&
+                        (
+                          <div>
+                            <strong>
+                              Backup:
+                            </strong>{" "}
+                            {
+                              manualGoogleValidation
+                                .backup
+                                ?.classification
+                              ||
+                              "-"
+                            }
+                          </div>
+                        )
+                      }
+                    </div>
+                  )
+                }
+
+                {
+                  manualGoogleMessage
+                  &&
+                  (
+                    <div
+                      className={
+                        manualGoogleValidation
+                          ?.canSave
+                          ? "pd-manual-google-message success"
+                          : "pd-manual-google-message"
+                      }
+                    >
+                      {manualGoogleMessage}
+                    </div>
+                  )
+                }
+
+                <div className="pd-actions">
+                  <button
+                    className="pd-button"
+                    disabled={
+                      manualGoogleBusy !== null
+                      ||
+                      !manualRootFolderUrl.trim()
+                      ||
+                      !manualWorkingSheetUrl.trim()
+                    }
+                    onClick={
+                      validateManualGoogleStorage
+                    }
+                  >
+                    <AppIcon
+                      name="rotate"
+                      size={14}
+                    />
+                    {
+                      manualGoogleBusy === "validate"
+                        ? language === "ms"
+                          ? "Menyemak..."
+                          : "Validating..."
+                        : language === "ms"
+                          ? "Validate Google Links"
+                          : "Validate Google Links"
+                    }
+                  </button>
+
+                  {
+                    manualGoogleValidation
+                      ?.working
+                      ?.classification
+                    ===
+                    "EMPTY"
+                    &&
+                    (
+                      <button
+                        className="pd-button"
+                        disabled={
+                          manualGoogleBusy !== null
+                        }
+                        onClick={() =>
+                          installManualGoogleTemplate(
+                            manualWorkingSheetUrl
+                              .trim(),
+                          )
+                        }
+                      >
+                        <AppIcon
+                          name="rotate"
+                          size={14}
+                        />
+                        {
+                          language === "ms"
+                            ? "Install Template - Working"
+                            : "Install Template - Working"
+                        }
+                      </button>
+                    )
+                  }
+
+                  {
+                    manualGoogleValidation
+                      ?.backup
+                      ?.classification
+                    ===
+                    "EMPTY"
+                    &&
+                    (
+                      <button
+                        className="pd-button"
+                        disabled={
+                          manualGoogleBusy !== null
+                        }
+                        onClick={() =>
+                          installManualGoogleTemplate(
+                            manualBackupSheetUrl
+                              .trim(),
+                          )
+                        }
+                      >
+                        <AppIcon
+                          name="rotate"
+                          size={14}
+                        />
+                        {
+                          language === "ms"
+                            ? "Install Template - Backup"
+                            : "Install Template - Backup"
+                        }
+                      </button>
+                    )
+                  }
+
+                  <button
+                    className="pd-button primary"
+                    disabled={
+                      manualGoogleBusy !== null
+                      ||
+                      !manualGoogleValidation
+                        ?.canSave
+                    }
+                    onClick={
+                      saveManualGoogleStorage
+                    }
+                  >
+                    <AppIcon
+                      name="link"
+                      size={14}
+                    />
+                    {
+                      manualGoogleBusy === "save"
+                        ? language === "ms"
+                          ? "Menyimpan..."
+                          : "Saving..."
+                        : "Save Google Links"
+                    }
+                  </button>
+                </div>
+              </div>
+              )}
+
               <div className="pd-actions">
                 <button
                   className="pd-button primary"
@@ -2676,17 +3306,7 @@ export function PremiumDashboard(
                   )
                 }
 
-                <button
-                  className="pd-button"
-                  onClick={props.onRelinkGoogle}
-                >
-                  <AppIcon
-                    name="link"
-                    size={14}
-                  />
-                  {text.relinkGoogleAccess}
-                </button>
-
+                {props.canManageGoogleStorage && (
                 <button
                   className="pd-button"
                   onClick={props.onRecreateGoogle}
@@ -2703,6 +3323,7 @@ export function PremiumDashboard(
 
                     : text.recreateGoogleSheet}
                 </button>
+                )}
               </div>
             </div>
           </div>

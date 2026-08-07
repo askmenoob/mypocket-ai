@@ -5414,11 +5414,15 @@ function Dashboard(
             }
             onRefresh={props.refresh}
             onSetup={props.resetWizard}
-            onRelinkGoogle={props.connectGoogleSheet}
             onRecreateGoogle={props.recreateGoogleSheet}
             onUpdateGoogle={props.updateGoogleSheetTemplate}
             canUpdateGoogleTemplate={
               actorRole === "OWNER"
+            }
+            canManageGoogleStorage={
+              actorRole === "OWNER"
+              ||
+              actorRole === "ADMIN"
             }
             onOpenTransactions={() =>
               setActiveView("transactions")
@@ -5988,13 +5992,6 @@ function Dashboard(
                   onClick={openGoogleSheet}
                 >
                   Open Google Sheet
-                </button>
-
-                <button
-                  className="ghost"
-                  onClick={props.connectGoogleSheet}
-                >
-                  Relink Google Access
                 </button>
 
                 <button

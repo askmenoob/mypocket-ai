@@ -113,6 +113,66 @@ export class GoogleDriveService {
 
 
 
+
+  async getFileMetadata(
+    workspaceId:string,
+    fileId:string,
+  ){
+
+    const drive =
+      await this.getClient(
+        workspaceId,
+      );
+
+    const response =
+      await drive.files
+        .get({
+          fileId,
+
+          fields:
+            "id,name,mimeType,trashed,capabilities(canAddChildren,canEdit)",
+        });
+
+    return {
+      id:
+        response.data.id
+        ??
+        fileId,
+
+      name:
+        response.data.name
+        ??
+        "",
+
+      mimeType:
+        response.data.mimeType
+        ??
+        "",
+
+      trashed:
+        response.data.trashed
+        ??
+        false,
+
+      capabilities:{
+        canAddChildren:
+          response.data
+            .capabilities
+            ?.canAddChildren
+          ??
+          false,
+
+        canEdit:
+          response.data
+            .capabilities
+            ?.canEdit
+          ??
+          false,
+      },
+    };
+  }
+
+
   async createFolder(
     workspaceId:string,
 

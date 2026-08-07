@@ -4933,3 +4933,63 @@ button.successGhost:hover:not(:disabled) {
     width:100%;
   }
 }
+
+
+/* Manual Google Storage V1 */
+.pd-manual-google {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+}
+
+.pd-manual-google-title {
+  font-weight: 700;
+}
+
+.pd-manual-google-field {
+  display: grid;
+  gap: 6px;
+}
+
+.pd-manual-google-field span {
+  font-size: 12px;
+  opacity: 0.78;
+}
+
+.pd-manual-google-field input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.28);
+  color: inherit;
+  font: inherit;
+}
+
+.pd-manual-google-field input:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 1px;
+}
+
+.pd-manual-google-status {
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+}
+
+.pd-manual-google-message {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.12);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.pd-manual-google-message.success {
+  background: rgba(34, 197, 94, 0.12);
+}

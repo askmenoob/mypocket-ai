@@ -56,6 +56,49 @@ export default async function googleSettingsRoutes(
 
 
 
+
+  app.post(
+    "/settings/manual/validate",
+    {
+      preHandler:[
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
+      ],
+    },
+    controller.validateManual,
+  );
+
+
+  app.post(
+    "/settings/manual/save",
+    {
+      preHandler:[
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
+      ],
+    },
+    controller.saveManual,
+  );
+
+
+  app.post(
+    "/settings/manual/install-template",
+    {
+      preHandler:[
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
+      ],
+    },
+    controller.installManualTemplate,
+  );
+
+
   app.post(
     "/settings/auto-create",
     {

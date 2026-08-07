@@ -57,8 +57,8 @@ export class GoogleSettingsRepository {
       workspaceId:string;
       spreadsheetId:string;
       spreadsheetTitle?:string;
-      backupSpreadsheetId?:string;
-      backupSpreadsheetTitle?:string;
+      backupSpreadsheetId?:string | null;
+      backupSpreadsheetTitle?:string | null;
 
       templateType?:string;
 
@@ -127,8 +127,8 @@ export class GoogleSettingsRepository {
       workspaceId:string;
       spreadsheetId:string;
       spreadsheetTitle?:string;
-      backupSpreadsheetId?:string;
-      backupSpreadsheetTitle?:string;
+      backupSpreadsheetId?:string | null;
+      backupSpreadsheetTitle?:string | null;
 
       templateType?:string;
 
@@ -265,9 +265,9 @@ export class GoogleSettingsRepository {
 
       spreadsheetTitle?:string;
 
-      backupSpreadsheetId?:string;
+      backupSpreadsheetId?:string | null;
 
-      backupSpreadsheetTitle?:string;
+      backupSpreadsheetTitle?:string | null;
 
       transactionSheet?:string;
 

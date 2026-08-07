@@ -12,6 +12,8 @@ import {
 import {
   GoogleSettingsSchema,
   AutoCreateGoogleSheetSchema,
+  ManualGoogleStorageSchema,
+  ManualGoogleTemplateInstallSchema,
 } from "./google-settings.schemas.js";
 
 
@@ -155,6 +157,70 @@ export class GoogleSettingsController {
 
 
 
+
+
+
+  validateManual = async (
+    request:
+      FastifyRequest,
+  ) => {
+
+    await request.jwtVerify();
+
+    const body =
+      ManualGoogleStorageSchema
+        .parse(
+          request.body,
+        );
+
+    return this.service
+      .validateManualStorage(
+        request.user.workspaceId,
+        body,
+      );
+  };
+
+
+  saveManual = async (
+    request:
+      FastifyRequest,
+  ) => {
+
+    await request.jwtVerify();
+
+    const body =
+      ManualGoogleStorageSchema
+        .parse(
+          request.body,
+        );
+
+    return this.service
+      .saveManualStorage(
+        request.user.workspaceId,
+        body,
+      );
+  };
+
+
+  installManualTemplate = async (
+    request:
+      FastifyRequest,
+  ) => {
+
+    await request.jwtVerify();
+
+    const body =
+      ManualGoogleTemplateInstallSchema
+        .parse(
+          request.body,
+        );
+
+    return this.service
+      .installManualTemplate(
+        request.user.workspaceId,
+        body,
+      );
+  };
 
 
   autoCreate = async (

@@ -19,6 +19,11 @@ import {
 
 
 import {
+  SheetInitializerService,
+} from "../initializer/sheet-initializer.service.js";
+
+
+import {
   GoogleTemplateService,
 } from "../templates/google-template.service.js";
 
@@ -73,6 +78,10 @@ export class GoogleSettingsService {
     GoogleDriveService;
 
 
+  private readonly sheetInitializer:
+    SheetInitializerService;
+
+
   private readonly templateService:
     GoogleTemplateService;
 
@@ -112,6 +121,12 @@ export class GoogleSettingsService {
 
     this.driveService =
       new GoogleDriveService(
+        app,
+      );
+
+
+    this.sheetInitializer =
+      new SheetInitializerService(
         app,
       );
 
@@ -176,40 +191,836 @@ export class GoogleSettingsService {
   async connectExistingSheet(
     input:{
       workspaceId:string;
-
       spreadsheetId:string;
-
       spreadsheetTitle?:string;
-
     },
   ){
 
+    void input;
 
-    return this.repository
-      .upsert({
+    throw new AppError(
+      "GOOGLE_MANUAL_STORAGE_LEGACY_CONNECT_DISABLED",
+      "Direct Google Sheet connection is disabled. Validate and save Google links through the Manual Google Storage flow.",
+      410,
+    );
+  }
 
-        workspaceId:
-          input.workspaceId,
+  async validateManualStorage(
+    workspaceId:string,
 
+    input:{
+      rootFolderUrl:string;
+      spreadsheetUrl:string;
+      backupSpreadsheetUrl?:string;
+    },
+  ){
 
-        spreadsheetId:
-          input.spreadsheetId,
+    const folderId =
+      this.parseManualFolderId(
+        input.rootFolderUrl,
+      );
 
+    const spreadsheetId =
+      this.parseManualSpreadsheetId(
+        input.spreadsheetUrl,
+      );
 
-        spreadsheetTitle:
-          input.spreadsheetTitle,
+    const backupSpreadsheetId =
+      input.backupSpreadsheetUrl
+        ?
+        this.parseManualSpreadsheetId(
+          input.backupSpreadsheetUrl,
+        )
+        :
+        null;
 
+    if(
+      backupSpreadsheetId
+      &&
+      backupSpreadsheetId
+      ===
+      spreadsheetId
+    ){
 
-        mode:
-          "EXISTING_SHEET",
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_DUPLICATE_SHEET",
+        "Working Google Sheet and Backup Google Sheet must be different spreadsheets.",
+        409,
+      );
+    }
 
-      });
+    const workspace =
+      await this.workspaceRepository
+        .findWorkspaceById(
+          workspaceId,
+        );
 
+    if(!workspace){
+
+      throw new AppError(
+        "WORKSPACE_NOT_FOUND",
+        "Workspace was not found.",
+        404,
+      );
+    }
+
+    const workspaceType =
+      workspace.type as
+        WorkspaceTemplateType;
+
+    let folderMetadata;
+
+    try{
+
+      folderMetadata =
+        await this.driveService
+          .getFileMetadata(
+            workspaceId,
+            folderId,
+          );
+
+    }catch(error){
+
+      if(error instanceof AppError){
+        throw error;
+      }
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_FOLDER_ACCESS_FAILED",
+        "The selected Google Drive folder could not be accessed with the current Google connection.",
+        409,
+      );
+    }
+
+    if(
+      folderMetadata.trashed
+      ||
+      folderMetadata.mimeType
+      !==
+      "application/vnd.google-apps.folder"
+    ){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_FOLDER_INVALID",
+        "The supplied Google Drive URL must point to an accessible folder.",
+        409,
+      );
+    }
+
+    if(
+      folderMetadata.capabilities
+        ?.canAddChildren
+      ===
+      false
+    ){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_FOLDER_NOT_WRITABLE",
+        "MyPocket does not have permission to add files to the selected Google Drive folder.",
+        409,
+      );
+    }
+
+    const working =
+      await this.classifyManualSpreadsheet(
+        workspaceId,
+        spreadsheetId,
+        workspaceType,
+      );
+
+    const backup =
+      backupSpreadsheetId
+        ?
+        await this.classifyManualSpreadsheet(
+          workspaceId,
+          backupSpreadsheetId,
+          workspaceType,
+        )
+        :
+        null;
+
+    const canSave =
+      working.classification
+      ===
+      "COMPATIBLE"
+      &&
+      (
+        !backup
+        ||
+        backup.classification
+        ===
+        "COMPATIBLE"
+      );
+
+    const installRequired =
+      working.classification
+      ===
+      "EMPTY"
+      ||
+      (
+        backup
+        ?.classification
+        ===
+        "EMPTY"
+      );
+
+    return {
+      workspaceType,
+
+      folder:{
+        id:
+          folderId,
+
+        name:
+          folderMetadata.name
+          ??
+          "",
+      },
+
+      working,
+
+      backup,
+
+      canSave,
+
+      installRequired,
+    };
   }
 
 
+  async saveManualStorage(
+    workspaceId:string,
+
+    input:{
+      rootFolderUrl:string;
+      spreadsheetUrl:string;
+      backupSpreadsheetUrl?:string;
+    },
+  ){
+
+    const validation =
+      await this.validateManualStorage(
+        workspaceId,
+        input,
+      );
+
+    if(!validation.canSave){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_NOT_READY",
+        validation.installRequired
+          ?
+          "Install the MyPocket template into each empty spreadsheet before saving these Google links."
+          :
+          "The selected Google Sheet is not compatible with MyPocket and was not connected.",
+        409,
+      );
+    }
+
+    const reconciliation =
+      await this
+        .reconcileManualStorageTransactions(
+          workspaceId,
+          [
+            validation.working.id,
+
+            validation.backup
+              ?.id
+            ??
+            null,
+          ],
+        );
+
+    const setting =
+      await this.repository
+        .upsert({
+
+        workspaceId,
+
+        spreadsheetId:
+          validation.working.id,
+
+        spreadsheetTitle:
+          validation.working.title,
+
+        backupSpreadsheetId:
+          validation.backup
+            ?.id
+          ??
+          null,
+
+        backupSpreadsheetTitle:
+          validation.backup
+            ?.title
+          ??
+          null,
+
+        templateType:
+          validation.workspaceType,
+
+        rootFolderId:
+          validation.folder.id,
+
+        reportsFolderId:
+          validation.folder.id,
+
+        receiptsFolderId:
+          validation.folder.id,
+
+        exportsFolderId:
+          validation.folder.id,
+
+        transactionSheet:
+          "Transactions",
+
+        dashboardSheet:
+          "Dashboard",
+
+        mode:
+          "EXISTING_SHEET",
+      });
+
+    return {
+      ...setting,
+
+      reconciledTransactions:
+        reconciliation.count,
+    };
+  }
 
 
+  async installManualTemplate(
+    workspaceId:string,
+
+    input:{
+      spreadsheetUrl:string;
+    },
+  ){
+
+    const spreadsheetId =
+      this.parseManualSpreadsheetId(
+        input.spreadsheetUrl,
+      );
+
+    const workspace =
+      await this.workspaceRepository
+        .findWorkspaceById(
+          workspaceId,
+        );
+
+    if(!workspace){
+
+      throw new AppError(
+        "WORKSPACE_NOT_FOUND",
+        "Workspace was not found.",
+        404,
+      );
+    }
+
+    const workspaceType =
+      workspace.type as
+        WorkspaceTemplateType;
+
+    const before =
+      await this.classifyManualSpreadsheet(
+        workspaceId,
+        spreadsheetId,
+        workspaceType,
+      );
+
+    if(
+      before.classification
+      !==
+      "EMPTY"
+    ){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_INSTALL_NOT_ALLOWED",
+        "MyPocket template installation is allowed only on a demonstrably empty spreadsheet.",
+        409,
+      );
+    }
+
+    await this.sheetsService
+      .createMissingSheets(
+        workspaceId,
+        {
+          spreadsheetId,
+
+          titles:[
+            "Transactions",
+            "Dashboard",
+            "Settings",
+          ],
+        },
+      );
+
+    await this.sheetInitializer
+      .initialize({
+        workspaceId,
+        spreadsheetId,
+        workspaceType,
+      });
+
+    const after =
+      await this.classifyManualSpreadsheet(
+        workspaceId,
+        spreadsheetId,
+        workspaceType,
+      );
+
+    if(
+      after.classification
+      !==
+      "COMPATIBLE"
+    ){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_INSTALL_VALIDATION_FAILED",
+        "MyPocket template installation completed but compatibility validation failed.",
+        500,
+      );
+    }
+
+    return after;
+  }
+
+
+  private parseManualFolderId(
+    value:string,
+  ){
+
+    let parsed:URL;
+
+    try{
+
+      parsed =
+        new URL(
+          value,
+        );
+
+    }catch{
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_FOLDER_URL_INVALID",
+        "Google Drive folder URL is invalid.",
+        400,
+      );
+    }
+
+    if(
+      parsed.protocol
+      !==
+      "https:"
+      ||
+      parsed.hostname
+      !==
+      "drive.google.com"
+    ){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_FOLDER_URL_INVALID",
+        "Google Drive folder URL is invalid.",
+        400,
+      );
+    }
+
+    const match =
+      parsed.pathname
+        .match(
+          /\/folders\/([A-Za-z0-9_-]+)/,
+        );
+
+    const folderId =
+      match?.[1]
+      ??
+      "";
+
+    if(!folderId){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_FOLDER_URL_INVALID",
+        "Google Drive folder URL is invalid.",
+        400,
+      );
+    }
+
+    return folderId;
+  }
+
+
+  private parseManualSpreadsheetId(
+    value:string,
+  ){
+
+    let parsed:URL;
+
+    try{
+
+      parsed =
+        new URL(
+          value,
+        );
+
+    }catch{
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_SPREADSHEET_URL_INVALID",
+        "Google Sheet URL is invalid.",
+        400,
+      );
+    }
+
+    if(
+      parsed.protocol
+      !==
+      "https:"
+      ||
+      parsed.hostname
+      !==
+      "docs.google.com"
+    ){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_SPREADSHEET_URL_INVALID",
+        "Google Sheet URL is invalid.",
+        400,
+      );
+    }
+
+    const match =
+      parsed.pathname
+        .match(
+          /^\/spreadsheets\/d\/([A-Za-z0-9_-]+)/,
+        );
+
+    const spreadsheetId =
+      match?.[1]
+      ??
+      "";
+
+    if(!spreadsheetId){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_SPREADSHEET_URL_INVALID",
+        "Google Sheet URL is invalid.",
+        400,
+      );
+    }
+
+    return spreadsheetId;
+  }
+
+
+  private async classifyManualSpreadsheet(
+    workspaceId:string,
+    spreadsheetId:string,
+    workspaceType:
+      WorkspaceTemplateType,
+  ){
+
+    let metadata;
+
+    try{
+
+      metadata =
+        await this.sheetsService
+          .getSpreadsheetMetadata(
+            workspaceId,
+            spreadsheetId,
+          );
+
+    }catch{
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_SPREADSHEET_ACCESS_FAILED",
+        "The selected Google Sheet could not be accessed with the current Google connection.",
+        409,
+      );
+    }
+
+    let spreadsheetDriveMetadata;
+
+    try{
+
+      spreadsheetDriveMetadata =
+        await this.driveService
+          .getFileMetadata(
+            workspaceId,
+            spreadsheetId,
+          );
+
+    }catch{
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_SPREADSHEET_ACCESS_FAILED",
+        "The selected Google Sheet could not be inspected through Google Drive.",
+        409,
+      );
+    }
+
+    if(
+      spreadsheetDriveMetadata
+        .trashed
+    ){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_SPREADSHEET_ACCESS_FAILED",
+        "The selected Google Sheet is trashed or unavailable.",
+        409,
+      );
+    }
+
+    if(
+      spreadsheetDriveMetadata
+        .capabilities
+        ?.canEdit
+      ===
+      false
+    ){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_SPREADSHEET_NOT_WRITABLE",
+        "MyPocket does not have edit permission for the selected Google Sheet.",
+        409,
+      );
+    }
+
+
+    let hasAnyValues:boolean;
+
+    try{
+
+      hasAnyValues =
+        await this.sheetsService
+          .hasAnyValues(
+            workspaceId,
+            spreadsheetId,
+          );
+
+    }catch{
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_SPREADSHEET_ACCESS_FAILED",
+        "The selected Google Sheet could not be inspected with the current Google connection.",
+        409,
+      );
+    }
+
+    if(!hasAnyValues){
+
+      return {
+        id:
+          spreadsheetId,
+
+        title:
+          metadata.title
+          ??
+          "",
+
+        classification:
+          "EMPTY" as const,
+
+        sheetTitles:
+          metadata.sheetTitles,
+      };
+    }
+
+    const requiredTabs = [
+      "Transactions",
+      "Dashboard",
+      "Settings",
+    ];
+
+    const hasRequiredTabs =
+      requiredTabs.every(
+        (title) =>
+          metadata.sheetTitles
+            .includes(
+              title,
+            ),
+      );
+
+    if(!hasRequiredTabs){
+
+      return {
+        id:
+          spreadsheetId,
+
+        title:
+          metadata.title
+          ??
+          "",
+
+        classification:
+          "INCOMPATIBLE" as const,
+
+        sheetTitles:
+          metadata.sheetTitles,
+      };
+    }
+
+    let headerRows:unknown[][];
+    let settingsRows:unknown[][];
+
+    try{
+
+      [
+        headerRows,
+        settingsRows,
+      ] =
+        await Promise.all([
+
+          this.sheetsService
+            .readRange(
+              workspaceId,
+              {
+                spreadsheetId,
+
+                range:
+                  "Transactions!A1:O1",
+              },
+            ),
+
+          this.sheetsService
+            .readRange(
+              workspaceId,
+              {
+                spreadsheetId,
+
+                range:
+                  "Settings!A1:B12",
+              },
+            ),
+        ]);
+
+    }catch{
+
+      return {
+        id:
+          spreadsheetId,
+
+        title:
+          metadata.title
+          ??
+          "",
+
+        classification:
+          "INCOMPATIBLE" as const,
+
+        sheetTitles:
+          metadata.sheetTitles,
+      };
+    }
+
+    const expectedHeader = [
+      "Transaction ID",
+      "Date",
+      "Time",
+      "Type",
+      "Category",
+      "Merchant",
+      "Description",
+      "Amount",
+      "Payment Method",
+      "Source",
+      "AI Confidence",
+      "Receipt URL",
+      "Created At",
+      "Created By ID",
+      "Created By Email",
+    ];
+
+    const currentHeader =
+      normalizeSheetRow(
+        headerRows[0]
+        ??
+        [],
+        15,
+      );
+
+    const normalizedExpectedHeader =
+      normalizeSheetRow(
+        expectedHeader,
+        15,
+      );
+
+    const settings =
+      parseTemplateSettings(
+        settingsRows,
+      );
+
+    const sheetWorkspaceType =
+      (
+        settings[
+          "workspace type"
+        ]
+        ??
+        ""
+      )
+        .trim()
+        .toUpperCase();
+
+    const system =
+      (
+        settings.system
+        ??
+        ""
+      )
+        .trim()
+        .toUpperCase();
+
+    const sheetWorkspaceId =
+      (
+        settings[
+          "workspace id"
+        ]
+        ??
+        ""
+      )
+        .trim();
+
+    const compatible =
+      JSON.stringify(
+        currentHeader,
+      )
+      ===
+      JSON.stringify(
+        normalizedExpectedHeader,
+      )
+      &&
+      sheetWorkspaceType
+      ===
+      workspaceType
+      &&
+      sheetWorkspaceId
+      ===
+      workspaceId
+      &&
+      system
+      ===
+      "MYPOCKET AI";
+
+    return {
+      id:
+        spreadsheetId,
+
+      title:
+        metadata.title
+        ??
+        "",
+
+      classification:
+        compatible
+          ?
+          "COMPATIBLE" as const
+          :
+          "INCOMPATIBLE" as const,
+
+      sheetTitles:
+        metadata.sheetTitles,
+    };
+  }
 
 
   async autoCreateSheet(
@@ -1104,6 +1915,327 @@ export class GoogleSettingsService {
   }
 
 
+
+
+  private async reconcileManualStorageTransactions(
+    workspaceId:string,
+    spreadsheetIds:Array<string | null>,
+  ){
+
+    const app =
+      this.app as
+        FastifyInstance | undefined;
+
+    if(
+      !app
+      ||
+      !app.prisma
+      ||
+      !app.prisma.transaction
+    ){
+
+      return {
+        count:
+          0,
+      };
+    }
+
+    const transactions =
+      await app.prisma
+        .transaction
+        .findMany({
+
+          where:{
+            workspaceId,
+
+            status:{
+              not:
+                "CANCELLED",
+            },
+          },
+
+          include:{
+            category:true,
+
+            merchant:true,
+
+            paymentMethod:true,
+          },
+
+          orderBy:{
+            transactionDate:
+              "asc",
+          },
+
+        });
+
+    const currentSetting =
+      await this.repository
+        .findByWorkspaceId(
+          workspaceId,
+        );
+
+    const excludedTransactionIds =
+      new Set<string>();
+
+    const currentSpreadsheetIds =
+      Array.from(
+        new Set(
+          [
+            currentSetting
+              ?.spreadsheetId
+            ??
+            null,
+
+            currentSetting
+              ?.backupSpreadsheetId
+            ??
+            null,
+          ]
+            .filter(
+              (
+                spreadsheetId,
+              ):
+                spreadsheetId is string =>
+                  Boolean(
+                    spreadsheetId,
+                  ),
+            ),
+        ),
+      );
+
+    for(
+      const currentSpreadsheetId
+      of currentSpreadsheetIds
+    ){
+
+      const currentRows =
+        await this.sheetsService
+          .readRange(
+            workspaceId,
+            {
+              spreadsheetId:
+                currentSpreadsheetId,
+
+              range:
+                "Transactions!A:O",
+            },
+          );
+
+      for(
+        const row
+        of currentRows.slice(
+          1,
+        )
+      ){
+
+        const transactionId =
+          String(
+            row[0]
+            ??
+            "",
+          )
+            .trim();
+
+        const description =
+          String(
+            row[6]
+            ??
+            "",
+          )
+            .trim()
+            .toUpperCase();
+
+        if(!transactionId){
+          continue;
+        }
+
+        if(
+          description
+            .startsWith(
+              "[DELETED]",
+            )
+          ||
+          description
+            .startsWith(
+              "[CANCELLED]",
+            )
+        ){
+
+          excludedTransactionIds
+            .add(
+              transactionId,
+            );
+        }
+      }
+    }
+
+    let count =
+      0;
+
+    const targets =
+      Array.from(
+        new Set(
+          spreadsheetIds
+            .filter(
+              (
+                spreadsheetId,
+              ):
+                spreadsheetId is string =>
+                  Boolean(
+                    spreadsheetId,
+                  ),
+            ),
+        ),
+      );
+
+    for(
+      const spreadsheetId
+      of targets
+    ){
+
+      const idRows =
+        await this.sheetsService
+          .readRange(
+            workspaceId,
+            {
+              spreadsheetId,
+
+              range:
+                "Transactions!A:A",
+            },
+          );
+
+      const existingIds =
+        new Set(
+          idRows
+            .slice(
+              1,
+            )
+            .map(
+              (row) =>
+                String(
+                  row[0]
+                  ??
+                  "",
+                )
+                  .trim(),
+            )
+            .filter(
+              Boolean,
+            ),
+        );
+
+      for(
+        const transaction
+        of transactions
+      ){
+
+        if(
+          excludedTransactionIds
+            .has(
+              transaction.id,
+            )
+        ){
+          continue;
+        }
+
+        if(
+          existingIds.has(
+            transaction.id,
+          )
+        ){
+          continue;
+        }
+
+        const transactionIso =
+          transaction
+            .transactionDate
+            .toISOString();
+
+        const transactionDate =
+          transactionIso
+            .slice(
+              0,
+              10,
+            );
+
+        const transactionTime =
+          transactionIso
+            .slice(
+              11,
+              19,
+            );
+
+        const values = [
+
+          transaction.id,
+
+          transactionDate,
+
+          transactionTime,
+
+          transaction.type,
+
+          transaction.category
+            ?.name
+          ??
+          "Others",
+
+          transaction.merchant
+            ?.name
+          ??
+          "-",
+
+          transaction.description
+          ??
+          "",
+
+          transaction.amount
+            .toString(),
+
+          transaction.paymentMethod
+            ?.name
+          ??
+          "",
+
+          "SYSTEM",
+
+          "",
+
+          transaction.receiptUrl
+          ??
+          "",
+
+          transactionIso,
+
+        ];
+
+        await this.sheetsService
+          .appendRow(
+            workspaceId,
+            {
+              spreadsheetId,
+
+              range:
+                "Transactions!A:M",
+
+              values,
+            },
+          );
+
+        existingIds.add(
+          transaction.id,
+        );
+
+        count += 1;
+      }
+    }
+
+    return {
+      count,
+    };
+  }
 
 
   private async backfillTransactionsToSheet(
