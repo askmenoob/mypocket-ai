@@ -4993,3 +4993,115 @@ button.successGhost:hover:not(:disabled) {
 .pd-manual-google-message.success {
   background: rgba(34, 197, 94, 0.12);
 }
+
+
+/* Manual Google Storage Picker */
+.manualGoogleModeToggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.manualPickerActions {
+  align-items: center;
+}
+
+.googlePickerOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.googlePickerModal {
+  width: min(760px, 96vw);
+  max-height: min(760px, 88vh);
+  overflow: auto;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 18px;
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.22);
+}
+
+.googlePickerHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.googlePickerHeader div {
+  display: grid;
+  gap: 4px;
+}
+
+.googlePickerHeader span {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.googlePickerSearch {
+  display: flex;
+  gap: 8px;
+}
+
+.googlePickerSearch input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.42);
+  border-radius: 12px;
+  font: inherit;
+}
+
+.googlePickerList {
+  display: grid;
+  gap: 8px;
+}
+
+.googlePickerItem {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 12px;
+  background: #f8fafc;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.googlePickerItem:hover {
+  background: #eef6f4;
+}
+
+.googlePickerItem span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.googlePickerItem small,
+.googlePickerEmpty {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.googlePickerIcon {
+  font-size: 20px;
+}
+
+@media (max-width: 720px) {
+  .googlePickerSearch {
+    flex-direction: column;
+  }
+}

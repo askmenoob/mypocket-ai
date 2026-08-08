@@ -42,6 +42,32 @@ export interface WorkspaceFolderStructure {
 
 
 
+
+
+export interface GoogleDrivePickerItem {
+
+  id:
+    string;
+
+  name:
+    string;
+
+  mimeType:
+    string;
+
+  kind:
+    "folder"
+    |
+    "spreadsheet";
+
+  url:
+    string;
+
+  modifiedTime:
+    string | null;
+
+}
+
 export class GoogleDriveService {
 
 
@@ -310,6 +336,146 @@ export class GoogleDriveService {
 
 
 
+
+
+
+
+  private escapeDriveQueryValue(
+    value:string,
+  ):string{
+
+    return value
+      .replace(
+        /\\/g,
+        "\\\\",
+      )
+      .replace(
+        /'/g,
+        "\\'",
+      );
+  }
+
+
+  async listManualPickerItems(
+    workspaceId:string,
+    input:{
+      kind:
+        "folder"
+        |
+        "spreadsheet";
+      query?:string;
+    },
+  ):Promise<GoogleDrivePickerItem[]>{
+
+    const drive =
+      await this.getClient(
+        workspaceId,
+      );
+
+    const mimeType =
+      input.kind === "folder"
+        ?
+        "application/vnd.google-apps.folder"
+        :
+        "application/vnd.google-apps.spreadsheet";
+
+    const clauses =
+      [
+        `mimeType = '${mimeType}'`,
+        "trashed = false",
+        "'me' in owners",
+      ];
+
+    const query =
+      input.query
+        ?.trim();
+
+    if(query){
+
+      clauses
+        .push(
+          `name contains '${this.escapeDriveQueryValue(query)}'`,
+        );
+    }
+
+    const response =
+      await drive.files
+        .list({
+          q:
+            clauses
+              .join(
+                " and ",
+              ),
+
+          fields:
+            "files(id,name,mimeType,webViewLink,modifiedTime)",
+
+          orderBy:
+            "modifiedTime desc",
+
+          pageSize:
+            40,
+
+          spaces:
+            "drive",
+        });
+
+    const files =
+      response
+        .data
+        .files
+      ??
+      [];
+
+    return files
+      .filter(
+        (file) =>
+          Boolean(
+            file.id,
+          ),
+      )
+      .map(
+        (file) => {
+          const id =
+            file.id
+            ??
+            "";
+
+          return {
+            id,
+
+            name:
+              file.name
+              ??
+              "Untitled",
+
+            mimeType:
+              file.mimeType
+              ??
+              mimeType,
+
+            kind:
+              input.kind,
+
+            url:
+              file.webViewLink
+              ??
+              (
+                input.kind === "folder"
+                  ?
+                  `https://drive.google.com/drive/folders/${id}`
+                  :
+                  `https://docs.google.com/spreadsheets/d/${id}/edit`
+              ),
+
+            modifiedTime:
+              file.modifiedTime
+              ??
+              null,
+          };
+        },
+      );
+  }
 
 
   async createWorkspaceFolderStructure(

@@ -14,6 +14,7 @@ import {
   AutoCreateGoogleSheetSchema,
   ManualGoogleStorageSchema,
   ManualGoogleTemplateInstallSchema,
+  ManualGooglePickerListSchema,
 } from "./google-settings.schemas.js";
 
 
@@ -158,6 +159,29 @@ export class GoogleSettingsController {
 
 
 
+
+
+
+
+  listManualPickerItems = async (
+    request:
+      FastifyRequest,
+  ) => {
+
+    await request.jwtVerify();
+
+    const body =
+      ManualGooglePickerListSchema
+        .parse(
+          request.body,
+        );
+
+    return this.service
+      .listManualPickerItems(
+        request.user.workspaceId,
+        body,
+      );
+  };
 
 
   validateManual = async (

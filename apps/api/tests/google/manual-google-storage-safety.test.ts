@@ -1171,3 +1171,213 @@ test(
     );
   },
 );
+
+
+test(
+  "manual Google storage supports mode toggle and Drive picker selection",
+  async () => {
+
+    const {
+      readFileSync,
+    } =
+      await import(
+        "node:fs"
+      );
+
+    const {
+      dirname,
+      resolve,
+    } =
+      await import(
+        "node:path"
+      );
+
+    const {
+      fileURLToPath,
+    } =
+      await import(
+        "node:url"
+      );
+
+    const currentDirectory =
+      dirname(
+        fileURLToPath(
+          import.meta.url,
+        ),
+      );
+
+    const apiRoot =
+      resolve(
+        currentDirectory,
+        "../../src/modules/google",
+      );
+
+    const routeSource =
+      readFileSync(
+        resolve(
+          apiRoot,
+          "settings/google-settings.routes.ts",
+        ),
+        "utf8",
+      );
+
+    const controllerSource =
+      readFileSync(
+        resolve(
+          apiRoot,
+          "settings/google-settings.controller.ts",
+        ),
+        "utf8",
+      );
+
+    const serviceSource =
+      readFileSync(
+        resolve(
+          apiRoot,
+          "settings/google-settings.service.ts",
+        ),
+        "utf8",
+      );
+
+    const schemaSource =
+      readFileSync(
+        resolve(
+          apiRoot,
+          "settings/google-settings.schemas.ts",
+        ),
+        "utf8",
+      );
+
+    const driveSource =
+      readFileSync(
+        resolve(
+          apiRoot,
+          "drive/google-drive.service.ts",
+        ),
+        "utf8",
+      );
+
+    const webSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../../web/src/app-bootstrap.tsx",
+        ),
+        "utf8",
+      );
+
+    const styleSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../../web/src/styles.css",
+        ),
+        "utf8",
+      );
+
+    assert.match(
+      schemaSource,
+      /ManualGooglePickerListSchema/,
+    );
+
+    assert.match(
+      routeSource,
+      /\/settings\/manual\/picker\/list/,
+    );
+
+    assert.match(
+      routeSource,
+      /controller\.listManualPickerItems/,
+    );
+
+    assert.match(
+      controllerSource,
+      /listManualPickerItems/,
+    );
+
+    assert.match(
+      serviceSource,
+      /listManualPickerItems/,
+    );
+
+    assert.match(
+      driveSource,
+      /files\s*\.\s*list/,
+    );
+
+    assert.match(
+      driveSource,
+      /'me'\s+in owners/,
+    );
+
+    assert.match(
+      driveSource,
+      /application\/vnd\.google-apps\.folder/,
+    );
+
+    assert.match(
+      driveSource,
+      /application\/vnd\.google-apps\.spreadsheet/,
+    );
+
+    assert.match(
+      webSource,
+      /Auto Create by System/,
+    );
+
+    assert.match(
+      webSource,
+      /Manual Select Existing/,
+    );
+
+    assert.match(
+      webSource,
+      /MyPocket Drive Picker/,
+    );
+
+    assert.match(
+      webSource,
+      /Select Google Drive Folder/,
+    );
+
+    assert.match(
+      webSource,
+      /Select Working Google Sheet/,
+    );
+
+    assert.match(
+      webSource,
+      /Select Backup Google Sheet/,
+    );
+
+    assert.match(
+      webSource,
+      /\/google\/settings\/manual\/picker\/list/,
+    );
+
+    assert.match(
+      webSource,
+      /legacyOpenDrivePicker/,
+    );
+
+    assert.match(
+      webSource,
+      /legacySelectDrivePickerItem/,
+    );
+
+    assert.match(
+      styleSource,
+      /\.manualGoogleModeToggle/,
+    );
+
+    assert.match(
+      styleSource,
+      /\.googlePickerOverlay/,
+    );
+
+    assert.match(
+      styleSource,
+      /\.googlePickerModal/,
+    );
+  },
+);

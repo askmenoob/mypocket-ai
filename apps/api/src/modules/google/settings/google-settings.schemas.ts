@@ -30,6 +30,26 @@ z.object({
 
 
 
+
+
+export const ManualGooglePickerListSchema =
+z.object({
+
+  kind:
+    z.enum([
+      "folder",
+      "spreadsheet",
+    ]),
+
+  query:
+    z.string()
+      .trim()
+      .max(120)
+      .optional(),
+
+})
+  .strict();
+
 export const ManualGoogleStorageSchema =
 z.object({
 

@@ -58,6 +58,21 @@ export default async function googleSettingsRoutes(
 
 
   app.post(
+    "/settings/manual/picker/list",
+    {
+      preHandler:[
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
+      ],
+    },
+    controller.listManualPickerItems,
+  );
+
+
+
+  app.post(
     "/settings/manual/validate",
     {
       preHandler:[

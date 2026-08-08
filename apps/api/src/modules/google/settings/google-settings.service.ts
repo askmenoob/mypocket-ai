@@ -205,6 +205,32 @@ export class GoogleSettingsService {
     );
   }
 
+
+
+  async listManualPickerItems(
+    workspaceId:string,
+    input:{
+      kind:
+        "folder"
+        |
+        "spreadsheet";
+      query?:string;
+    },
+  ){
+
+    const items =
+      await this.driveService
+        .listManualPickerItems(
+          workspaceId,
+          input,
+        );
+
+    return {
+      items,
+    };
+  }
+
+
   async validateManualStorage(
     workspaceId:string,
 

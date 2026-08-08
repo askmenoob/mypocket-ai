@@ -3859,6 +3859,32 @@ function Dashboard(
   const [legacyManualGoogleMessage, setLegacyManualGoogleMessage] =
     useState("");
 
+
+  const [legacyManualStorageMode, setLegacyManualStorageMode] =
+    useState<"auto" | "manual">(
+      "manual",
+    );
+
+  const [legacyDrivePickerTarget, setLegacyDrivePickerTarget] =
+    useState<null | "folder" | "working" | "backup">(
+      null,
+    );
+
+  const [legacyDrivePickerQuery, setLegacyDrivePickerQuery] =
+    useState("");
+
+  const [legacyDrivePickerItems, setLegacyDrivePickerItems] =
+    useState<any[]>(
+      [],
+    );
+
+  const [legacyDrivePickerBusy, setLegacyDrivePickerBusy] =
+    useState(false);
+
+  const [legacyDrivePickerMessage, setLegacyDrivePickerMessage] =
+    useState("");
+
+
   useEffect(
     () => {
       setLegacyManualRootFolderUrl(
@@ -3991,6 +4017,169 @@ function Dashboard(
     }
 
     return result;
+  }
+
+  function legacyDrivePickerKind(
+    target:null | "folder" | "working" | "backup",
+  ){
+    return target === "folder"
+      ? "folder"
+      : "spreadsheet";
+  }
+
+  function legacyDrivePickerTitle(){
+    if(legacyDrivePickerTarget === "folder"){
+      return "Select Google Drive Folder";
+    }
+
+    if(legacyDrivePickerTarget === "backup"){
+      return "Select Backup Google Sheet";
+    }
+
+    return "Select Working Google Sheet";
+  }
+
+  async function legacyLoadDrivePickerItems(
+    target:
+      null | "folder" | "working" | "backup" =
+        legacyDrivePickerTarget,
+    query:string =
+      legacyDrivePickerQuery,
+  ){
+    if(!target){
+      return;
+    }
+
+    setLegacyDrivePickerBusy(
+      true,
+    );
+
+    setLegacyDrivePickerMessage(
+      "",
+    );
+
+    try{
+      const result =
+        await legacyManualGoogleRequest(
+          "/google/settings/manual/picker/list",
+          {
+            kind:
+              legacyDrivePickerKind(
+                target,
+              ),
+
+            query:
+              query.trim(),
+          },
+        );
+
+      setLegacyDrivePickerItems(
+        Array.isArray(
+          result?.items,
+        )
+          ? result.items
+          : [],
+      );
+
+      if(
+        Array.isArray(
+          result?.items,
+        )
+        &&
+        result.items.length === 0
+      ){
+        setLegacyDrivePickerMessage(
+          "No matching Google Drive item found.",
+        );
+      }
+    }catch(error){
+      setLegacyDrivePickerItems(
+        [],
+      );
+
+      setLegacyDrivePickerMessage(
+        error instanceof Error
+          ? error.message
+          : "Google Drive list could not be loaded.",
+      );
+    }finally{
+      setLegacyDrivePickerBusy(
+        false,
+      );
+    }
+  }
+
+  async function legacyOpenDrivePicker(
+    target:"folder" | "working" | "backup",
+  ){
+    setLegacyManualStorageMode(
+      "manual",
+    );
+
+    setLegacyDrivePickerTarget(
+      target,
+    );
+
+    setLegacyDrivePickerQuery(
+      "",
+    );
+
+    setLegacyDrivePickerItems(
+      [],
+    );
+
+    setLegacyDrivePickerMessage(
+      "",
+    );
+
+    await legacyLoadDrivePickerItems(
+      target,
+      "",
+    );
+  }
+
+  function legacyCloseDrivePicker(){
+    setLegacyDrivePickerTarget(
+      null,
+    );
+
+    setLegacyDrivePickerMessage(
+      "",
+    );
+  }
+
+  function legacySelectDrivePickerItem(
+    item:any,
+  ){
+    const url =
+      typeof item?.url === "string"
+        ? item.url
+        : "";
+
+    if(!url){
+      setLegacyDrivePickerMessage(
+        "Selected item does not have a usable Google URL.",
+      );
+
+      return;
+    }
+
+    if(legacyDrivePickerTarget === "folder"){
+      setLegacyManualRootFolderUrl(
+        url,
+      );
+    }else if(legacyDrivePickerTarget === "backup"){
+      setLegacyManualBackupSheetUrl(
+        url,
+      );
+    }else{
+      setLegacyManualWorkingSheetUrl(
+        url,
+      );
+    }
+
+    clearLegacyManualGoogleValidation();
+    legacyCloseDrivePicker();
   }
 
   async function legacyValidateManualGoogleStorage(){
@@ -6294,6 +6483,84 @@ function Dashboard(
                     }
                   </div>
 
+                  <div
+                    className="manualGoogleModeToggle"
+                    role="group"
+                    aria-label="Google storage mode"
+                  >
+                    <button
+                      type="button"
+                      className={legacyManualStorageMode === "auto" ? "primary" : "ghost"}
+                      onClick={() =>
+                        setLegacyManualStorageMode(
+                          "auto",
+                        )
+                      }
+                    >
+                      Auto Create by System
+                    </button>
+
+                    <button
+                      type="button"
+                      className={legacyManualStorageMode === "manual" ? "primary" : "ghost"}
+                      onClick={() =>
+                        setLegacyManualStorageMode(
+                          "manual",
+                        )
+                      }
+                    >
+                      Manual Select Existing
+                    </button>
+                  </div>
+
+                  {
+                    legacyManualStorageMode === "auto"
+                    &&
+                    (
+                      <div className="pd-manual-google-message">
+                        Auto Created mode will use the existing Connect/Recreate Google Sheet actions below. Use Manual Select Existing when the folder or sheet already exists in Google Drive.
+                      </div>
+                    )
+                  }
+
+                  <div className="panelActions sheetActions manualPickerActions">
+                    <button
+                      type="button"
+                      className="ghost"
+                      onClick={() =>
+                        legacyOpenDrivePicker(
+                          "folder",
+                        )
+                      }
+                    >
+                      Select Google Drive Folder
+                    </button>
+
+                    <button
+                      type="button"
+                      className="ghost"
+                      onClick={() =>
+                        legacyOpenDrivePicker(
+                          "working",
+                        )
+                      }
+                    >
+                      Select Working Google Sheet
+                    </button>
+
+                    <button
+                      type="button"
+                      className="ghost"
+                      onClick={() =>
+                        legacyOpenDrivePicker(
+                          "backup",
+                        )
+                      }
+                    >
+                      Select Backup Google Sheet
+                    </button>
+                  </div>
+
                   <label className="pd-manual-google-field">
                     <span>
                       Google Drive Folder URL
@@ -6513,6 +6780,97 @@ function Dashboard(
                           : "Save Google Links"
                       }
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {legacyDrivePickerTarget && (
+                <div
+                  className="googlePickerOverlay"
+                  role="dialog"
+                  aria-modal="true"
+                >
+                  <div className="googlePickerModal">
+                    <div className="googlePickerHeader">
+                      <div>
+                        <strong>MyPocket Drive Picker</strong>
+                        <span>{legacyDrivePickerTitle()}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="ghost"
+                        onClick={legacyCloseDrivePicker}
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    <div className="googlePickerSearch">
+                      <input
+                        value={legacyDrivePickerQuery}
+                        placeholder="Search in your Google Drive"
+                        onChange={(event) =>
+                          setLegacyDrivePickerQuery(
+                            event.target.value,
+                          )
+                        }
+                      />
+
+                      <button
+                        type="button"
+                        className="ghost"
+                        onClick={() =>
+                          legacyLoadDrivePickerItems()
+                        }
+                      >
+                        Search
+                      </button>
+                    </div>
+
+                    {legacyDrivePickerMessage && (
+                      <div className="pd-manual-google-message">
+                        {legacyDrivePickerMessage}
+                      </div>
+                    )}
+
+                    <div className="googlePickerList">
+                      {legacyDrivePickerBusy && (
+                        <div className="googlePickerEmpty">
+                          Loading Google Drive...
+                        </div>
+                      )}
+
+                      {!legacyDrivePickerBusy && legacyDrivePickerItems.length === 0 && (
+                        <div className="googlePickerEmpty">
+                          No item selected yet. Search or choose from the latest Drive items.
+                        </div>
+                      )}
+
+                      {!legacyDrivePickerBusy && legacyDrivePickerItems.map(
+                        (item) => (
+                          <button
+                            type="button"
+                            key={item.id}
+                            className="googlePickerItem"
+                            onClick={() =>
+                              legacySelectDrivePickerItem(
+                                item,
+                              )
+                            }
+                          >
+                            <span className="googlePickerIcon">
+                              {item.kind === "folder" ? "📁" : "📄"}
+                            </span>
+
+                            <span>
+                              <strong>{item.name || "Untitled"}</strong>
+                              <small>{item.kind === "folder" ? "Google Drive Folder" : "Google Sheet"}</small>
+                            </span>
+                          </button>
+                        ),
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
