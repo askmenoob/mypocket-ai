@@ -3822,6 +3822,325 @@ function Dashboard(
       :
       "";
 
+
+  const legacyGoogleStorageData =
+    props.data.google as any;
+
+  const legacyManualDefaultRootFolderUrl =
+    typeof legacyGoogleStorageData?.rootFolderUrl === "string"
+      ? legacyGoogleStorageData.rootFolderUrl
+      : "";
+
+  const [legacyManualRootFolderUrl, setLegacyManualRootFolderUrl] =
+    useState(
+      legacyManualDefaultRootFolderUrl,
+    );
+
+  const [legacyManualWorkingSheetUrl, setLegacyManualWorkingSheetUrl] =
+    useState(
+      googleSheetUrl || "",
+    );
+
+  const [legacyManualBackupSheetUrl, setLegacyManualBackupSheetUrl] =
+    useState(
+      backupGoogleSheetUrl || "",
+    );
+
+  const [legacyManualGoogleBusy, setLegacyManualGoogleBusy] =
+    useState<null | "validate" | "save" | "install">(
+      null,
+    );
+
+  const [legacyManualGoogleValidation, setLegacyManualGoogleValidation] =
+    useState<any | null>(
+      null,
+    );
+
+  const [legacyManualGoogleMessage, setLegacyManualGoogleMessage] =
+    useState("");
+
+  useEffect(
+    () => {
+      setLegacyManualRootFolderUrl(
+        legacyManualDefaultRootFolderUrl,
+      );
+
+      setLegacyManualWorkingSheetUrl(
+        googleSheetUrl || "",
+      );
+
+      setLegacyManualBackupSheetUrl(
+        backupGoogleSheetUrl || "",
+      );
+
+      setLegacyManualGoogleValidation(
+        null,
+      );
+
+      setLegacyManualGoogleMessage(
+        "",
+      );
+    },
+    [
+      legacyManualDefaultRootFolderUrl,
+      googleSheetUrl,
+      backupGoogleSheetUrl,
+    ],
+  );
+
+  function clearLegacyManualGoogleValidation(){
+    setLegacyManualGoogleValidation(
+      null,
+    );
+
+    setLegacyManualGoogleMessage(
+      "",
+    );
+  }
+
+  function legacyManualGooglePayload(){
+    const backup =
+      legacyManualBackupSheetUrl
+        .trim();
+
+    return {
+      rootFolderUrl:
+        legacyManualRootFolderUrl
+          .trim(),
+
+      spreadsheetUrl:
+        legacyManualWorkingSheetUrl
+          .trim(),
+
+      ...(backup
+        ? {
+            backupSpreadsheetUrl:
+              backup,
+          }
+        : {}),
+    };
+  }
+
+  async function legacyManualGoogleRequest(
+    path:string,
+    body:unknown,
+  ):Promise<any>{
+
+    const token =
+      localStorage.getItem(
+        STORAGE.token,
+      );
+
+    if(!token){
+      throw new Error(
+        dashboardLanguage === "ms"
+          ? "Sesi login tidak dijumpai. Sila login semula."
+          : "Login session was not found. Please sign in again.",
+      );
+    }
+
+    const apiBase =
+      import.meta.env
+        .VITE_API_BASE_URL
+      ||
+      "https://api.imai.my/api/v1";
+
+    const response =
+      await fetch(
+        `${apiBase}${path}`,
+        {
+          method:
+            "POST",
+
+          headers:{
+            Authorization:
+              `Bearer ${token}`,
+
+            "Content-Type":
+              "application/json",
+          },
+
+          body:
+            JSON.stringify(
+              body,
+            ),
+        },
+      );
+
+    let result:any =
+      null;
+
+    try{
+      result =
+        await response.json();
+    }catch{
+      result =
+        null;
+    }
+
+    if(!response.ok){
+      throw new Error(
+        result?.message
+        ||
+        (
+          dashboardLanguage === "ms"
+            ? "Tetapan Google gagal diproses."
+            : "Google settings could not be processed."
+        ),
+      );
+    }
+
+    return result;
+  }
+
+  async function legacyValidateManualGoogleStorage(){
+    setLegacyManualGoogleBusy(
+      "validate",
+    );
+
+    setLegacyManualGoogleMessage(
+      "",
+    );
+
+    try{
+      const result =
+        await legacyManualGoogleRequest(
+          "/google/settings/manual/validate",
+          legacyManualGooglePayload(),
+        );
+
+      setLegacyManualGoogleValidation(
+        result,
+      );
+
+      setLegacyManualGoogleMessage(
+        result.canSave
+          ?
+          (
+            dashboardLanguage === "ms"
+              ? "Semua link Google sah dan sedia untuk disimpan."
+              : "All Google links are valid and ready to save."
+          )
+          :
+          result.installRequired
+            ?
+            (
+              dashboardLanguage === "ms"
+                ? "Google Sheet kosong dikesan. Pasang template MyPocket dahulu."
+                : "An empty Google Sheet was detected. Install the MyPocket template first."
+            )
+            :
+            (
+              dashboardLanguage === "ms"
+                ? "Google Sheet tidak serasi dengan template MyPocket dan tidak akan diubah."
+                : "The Google Sheet is not compatible with MyPocket and will not be modified."
+            ),
+      );
+    }catch(error){
+      setLegacyManualGoogleValidation(
+        null,
+      );
+
+      setLegacyManualGoogleMessage(
+        error instanceof Error
+          ? error.message
+          : dashboardLanguage === "ms"
+            ? "Validation Google gagal."
+            : "Google validation failed.",
+      );
+    }finally{
+      setLegacyManualGoogleBusy(
+        null,
+      );
+    }
+  }
+
+  async function legacyInstallManualGoogleTemplate(
+    spreadsheetUrl:string,
+  ){
+    setLegacyManualGoogleBusy(
+      "install",
+    );
+
+    setLegacyManualGoogleMessage(
+      "",
+    );
+
+    try{
+      await legacyManualGoogleRequest(
+        "/google/settings/manual/install-template",
+        {
+          spreadsheetUrl,
+        },
+      );
+
+      const validation =
+        await legacyManualGoogleRequest(
+          "/google/settings/manual/validate",
+          legacyManualGooglePayload(),
+        );
+
+      setLegacyManualGoogleValidation(
+        validation,
+      );
+
+      setLegacyManualGoogleMessage(
+        dashboardLanguage === "ms"
+          ? "Template MyPocket berjaya dipasang. Semak status dan simpan link Google."
+          : "MyPocket template installed successfully. Review the status and save the Google links.",
+      );
+    }catch(error){
+      setLegacyManualGoogleMessage(
+        error instanceof Error
+          ? error.message
+          : dashboardLanguage === "ms"
+            ? "Template MyPocket gagal dipasang."
+            : "MyPocket template could not be installed.",
+      );
+    }finally{
+      setLegacyManualGoogleBusy(
+        null,
+      );
+    }
+  }
+
+  async function legacySaveManualGoogleStorage(){
+    setLegacyManualGoogleBusy(
+      "save",
+    );
+
+    setLegacyManualGoogleMessage(
+      "",
+    );
+
+    try{
+      await legacyManualGoogleRequest(
+        "/google/settings/manual/save",
+        legacyManualGooglePayload(),
+      );
+
+      setLegacyManualGoogleMessage(
+        dashboardLanguage === "ms"
+          ? "Google Folder dan Google Sheet berjaya disimpan sebagai sumber MyPocket workspace."
+          : "Google Folder and Google Sheets were saved as the MyPocket workspace source.",
+      );
+
+      await props.refresh();
+    }catch(error){
+      setLegacyManualGoogleMessage(
+        error instanceof Error
+          ? error.message
+          : dashboardLanguage === "ms"
+            ? "Google links gagal disimpan."
+            : "Google links could not be saved.",
+      );
+    }finally{
+      setLegacyManualGoogleBusy(
+        null,
+      );
+    }
+  }
+
   const googleTemplateType =
     props.data.google?.templateType
     ||
@@ -5961,6 +6280,240 @@ function Dashboard(
                   >
                     {backupGoogleSheetUrl}
                   </a>
+                </div>
+              )}
+
+
+              {canChangeWorkspaceSettings && (
+                <div className="pd-manual-google">
+                  <div className="pd-manual-google-title">
+                    {
+                      dashboardLanguage === "ms"
+                        ? "Tetapan Google Manual"
+                        : "Manual Google Settings"
+                    }
+                  </div>
+
+                  <label className="pd-manual-google-field">
+                    <span>
+                      Google Drive Folder URL
+                    </span>
+                    <input
+                      type="url"
+                      value={legacyManualRootFolderUrl}
+                      placeholder="https://drive.google.com/drive/folders/..."
+                      onChange={(event) => {
+                        setLegacyManualRootFolderUrl(
+                          event.target.value,
+                        );
+                        clearLegacyManualGoogleValidation();
+                      }}
+                    />
+                  </label>
+
+                  <label className="pd-manual-google-field">
+                    <span>
+                      Working Google Sheet URL
+                    </span>
+                    <input
+                      type="url"
+                      value={legacyManualWorkingSheetUrl}
+                      placeholder="https://docs.google.com/spreadsheets/d/..."
+                      onChange={(event) => {
+                        setLegacyManualWorkingSheetUrl(
+                          event.target.value,
+                        );
+                        clearLegacyManualGoogleValidation();
+                      }}
+                    />
+                  </label>
+
+                  <label className="pd-manual-google-field">
+                    <span>
+                      Backup Google Sheet URL (optional)
+                    </span>
+                    <input
+                      type="url"
+                      value={legacyManualBackupSheetUrl}
+                      placeholder="https://docs.google.com/spreadsheets/d/..."
+                      onChange={(event) => {
+                        setLegacyManualBackupSheetUrl(
+                          event.target.value,
+                        );
+                        clearLegacyManualGoogleValidation();
+                      }}
+                    />
+                  </label>
+
+                  {
+                    legacyManualGoogleValidation
+                    &&
+                    (
+                      <div className="pd-manual-google-status">
+                        <div>
+                          <strong>
+                            Folder:
+                          </strong>{" "}
+                          {
+                            legacyManualGoogleValidation
+                              .folder
+                              ?.name
+                            ||
+                            "OK"
+                          }
+                        </div>
+
+                        <div>
+                          <strong>
+                            Working:
+                          </strong>{" "}
+                          {
+                            legacyManualGoogleValidation
+                              .working
+                              ?.classification
+                            ||
+                            "-"
+                          }
+                        </div>
+
+                        {
+                          legacyManualGoogleValidation
+                            .backup
+                          &&
+                          (
+                            <div>
+                              <strong>
+                                Backup:
+                              </strong>{" "}
+                              {
+                                legacyManualGoogleValidation
+                                  .backup
+                                  ?.classification
+                                ||
+                                "-"
+                              }
+                            </div>
+                          )
+                        }
+                      </div>
+                    )
+                  }
+
+                  {
+                    legacyManualGoogleMessage
+                    &&
+                    (
+                      <div
+                        className={
+                          legacyManualGoogleValidation
+                            ?.canSave
+                            ? "pd-manual-google-message success"
+                            : "pd-manual-google-message"
+                        }
+                      >
+                        {legacyManualGoogleMessage}
+                      </div>
+                    )
+                  }
+
+                  <div className="panelActions sheetActions">
+                    <button
+                      type="button"
+                      className="ghost"
+                      disabled={
+                        legacyManualGoogleBusy !== null
+                        ||
+                        !legacyManualRootFolderUrl.trim()
+                        ||
+                        !legacyManualWorkingSheetUrl.trim()
+                      }
+                      onClick={
+                        legacyValidateManualGoogleStorage
+                      }
+                    >
+                      {
+                        legacyManualGoogleBusy === "validate"
+                          ? dashboardLanguage === "ms"
+                            ? "Menyemak..."
+                            : "Validating..."
+                          : "Validate Google Links"
+                      }
+                    </button>
+
+                    {
+                      legacyManualGoogleValidation
+                        ?.working
+                        ?.classification
+                      ===
+                      "EMPTY"
+                      &&
+                      (
+                        <button
+                          type="button"
+                          className="ghost"
+                          disabled={
+                            legacyManualGoogleBusy !== null
+                          }
+                          onClick={() =>
+                            legacyInstallManualGoogleTemplate(
+                              legacyManualWorkingSheetUrl
+                                .trim(),
+                            )
+                          }
+                        >
+                          Install Template - Working
+                        </button>
+                      )
+                    }
+
+                    {
+                      legacyManualGoogleValidation
+                        ?.backup
+                        ?.classification
+                      ===
+                      "EMPTY"
+                      &&
+                      (
+                        <button
+                          type="button"
+                          className="ghost"
+                          disabled={
+                            legacyManualGoogleBusy !== null
+                          }
+                          onClick={() =>
+                            legacyInstallManualGoogleTemplate(
+                              legacyManualBackupSheetUrl
+                                .trim(),
+                            )
+                          }
+                        >
+                          Install Template - Backup
+                        </button>
+                      )
+                    }
+
+                    <button
+                      type="button"
+                      className="primary"
+                      disabled={
+                        legacyManualGoogleBusy !== null
+                        ||
+                        !legacyManualGoogleValidation
+                          ?.canSave
+                      }
+                      onClick={
+                        legacySaveManualGoogleStorage
+                      }
+                    >
+                      {
+                        legacyManualGoogleBusy === "save"
+                          ? dashboardLanguage === "ms"
+                            ? "Menyimpan..."
+                            : "Saving..."
+                          : "Save Google Links"
+                      }
+                    </button>
+                  </div>
                 </div>
               )}
 

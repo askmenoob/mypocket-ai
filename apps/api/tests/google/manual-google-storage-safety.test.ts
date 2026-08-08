@@ -1046,3 +1046,128 @@ test(
     );
   },
 );
+
+
+test(
+  "manual Google storage controls render on the dedicated Google Sheet page",
+  async () => {
+
+    const {
+      readFileSync,
+    } =
+      await import(
+        "node:fs"
+      );
+
+    const {
+      dirname,
+      resolve,
+    } =
+      await import(
+        "node:path"
+      );
+
+    const {
+      fileURLToPath,
+    } =
+      await import(
+        "node:url"
+      );
+
+    const currentDirectory =
+      dirname(
+        fileURLToPath(
+          import.meta.url,
+        ),
+      );
+
+    const source =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../../web/src/app-bootstrap.tsx",
+        ),
+        "utf8",
+      );
+
+    const panelIndex =
+      source
+        .indexOf(
+          "Panel title={dashboardText.navGoogleSheet}",
+        );
+
+    assert.notEqual(
+      panelIndex,
+      -1,
+    );
+
+    const panelEnd =
+      source
+        .indexOf(
+          "</Panel>",
+          panelIndex,
+        );
+
+    assert.notEqual(
+      panelEnd,
+      -1,
+    );
+
+    const googlePanel =
+      source
+        .slice(
+          panelIndex,
+          panelEnd,
+        );
+
+    assert.match(
+      googlePanel,
+      /Google Drive Folder URL/,
+    );
+
+    assert.match(
+      googlePanel,
+      /Working Google Sheet URL/,
+    );
+
+    assert.match(
+      googlePanel,
+      /Backup Google Sheet URL/,
+    );
+
+    assert.match(
+      googlePanel,
+      /Validate Google Links/,
+    );
+
+    assert.match(
+      googlePanel,
+      /Save Google Links/,
+    );
+
+    assert.match(
+      googlePanel,
+      /legacyValidateManualGoogleStorage/,
+    );
+
+    assert.match(
+      googlePanel,
+      /legacySaveManualGoogleStorage/,
+    );
+
+    assert.match(
+      source,
+      /\/google\/settings\/manual\/validate/,
+    );
+
+    assert.match(
+      source,
+      /\/google\/settings\/manual\/save/,
+    );
+
+    assert.match(
+      source,
+      /\/google\/settings\/manual\/install-template/,
+    );
+  },
+);
