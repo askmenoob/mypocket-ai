@@ -1530,3 +1530,171 @@ test(
     );
   },
 );
+
+
+test(
+  "manual Google storage enforces user email folder and sheet parent boundaries",
+  async () => {
+
+    const {
+      readFileSync,
+    } =
+      await import(
+        "node:fs"
+      );
+
+    const {
+      dirname,
+      resolve,
+    } =
+      await import(
+        "node:path"
+      );
+
+    const {
+      fileURLToPath,
+    } =
+      await import(
+        "node:url"
+      );
+
+    const currentDirectory =
+      dirname(
+        fileURLToPath(
+          import.meta.url,
+        ),
+      );
+
+    const driveSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/google/drive/google-drive.service.ts",
+        ),
+        "utf8",
+      );
+
+    const serviceSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/google/settings/google-settings.service.ts",
+        ),
+        "utf8",
+      );
+
+    const controllerSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/google/settings/google-settings.controller.ts",
+        ),
+        "utf8",
+      );
+
+    const schemasSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/google/settings/google-settings.schemas.ts",
+        ),
+        "utf8",
+      );
+
+    const bootstrapSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../../web/src/app-bootstrap.tsx",
+        ),
+        "utf8",
+      );
+
+    const premiumSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../../web/src/premium-dashboard.tsx",
+        ),
+        "utf8",
+      );
+
+    assert.equal(
+      driveSource.includes("response.data.parents"),
+      true,
+      "Drive metadata must return parents.",
+    );
+
+    assert.equal(
+      driveSource.includes("id,name,mimeType,trashed,parents,capabilities"),
+      true,
+      "Drive metadata request must include parents.",
+    );
+
+    assert.equal(
+      serviceSource.includes("GOOGLE_MANUAL_STORAGE_FOLDER_NAME_INVALID"),
+      true,
+      "Manual storage must reject wrong user email folder name.",
+    );
+
+    assert.equal(
+      serviceSource.includes("GOOGLE_MANUAL_STORAGE_SHEET_OUTSIDE_FOLDER"),
+      true,
+      "Manual storage must reject sheets outside the selected user folder.",
+    );
+
+    assert.equal(
+      /validateManualStorage\([\s\S]{0,320}ownerEmail\?:string/.test(serviceSource),
+      true,
+      "validateManualStorage must accept ownerEmail.",
+    );
+
+    assert.equal(
+      /saveManualStorage\([\s\S]{0,320}ownerEmail\?:string/.test(serviceSource),
+      true,
+      "saveManualStorage must accept ownerEmail.",
+    );
+
+    assert.equal(
+      /installManualTemplate\([\s\S]{0,420}ownerEmail\?:string/.test(serviceSource),
+      true,
+      "installManualTemplate must accept ownerEmail.",
+    );
+
+    assert.equal(
+      /validateManualStorage\([\s\S]{0,360}request\.user\.email/.test(controllerSource),
+      true,
+      "Controller validate must pass request.user.email.",
+    );
+
+    assert.equal(
+      /saveManualStorage\([\s\S]{0,360}request\.user\.email/.test(controllerSource),
+      true,
+      "Controller save must pass request.user.email.",
+    );
+
+    assert.equal(
+      /installManualTemplate\([\s\S]{0,360}request\.user\.email/.test(controllerSource),
+      true,
+      "Controller install-template must pass request.user.email.",
+    );
+
+    assert.equal(
+      /ManualGoogleTemplateInstallSchema[\s\S]{0,260}rootFolderUrl/.test(schemasSource),
+      true,
+      "Install-template schema must require rootFolderUrl.",
+    );
+
+    assert.equal(
+      /install-template[\s\S]{0,520}rootFolderUrl/.test(bootstrapSource),
+      true,
+      "Dedicated Google Sheet page must send rootFolderUrl when installing template.",
+    );
+
+    assert.equal(
+      /install-template[\s\S]{0,520}rootFolderUrl/.test(premiumSource),
+      true,
+      "Premium dashboard must send rootFolderUrl when installing template.",
+    );
+  },
+);

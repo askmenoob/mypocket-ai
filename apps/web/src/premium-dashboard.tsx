@@ -1955,6 +1955,10 @@ export function PremiumDashboard(
       await manualGoogleRequest(
         "/google/settings/manual/install-template",
         {
+          rootFolderUrl:
+            manualRootFolderUrl
+              .trim(),
+
           spreadsheetUrl,
         },
       );

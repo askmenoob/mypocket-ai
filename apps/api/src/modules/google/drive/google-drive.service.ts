@@ -156,7 +156,7 @@ export class GoogleDriveService {
           fileId,
 
           fields:
-            "id,name,mimeType,trashed,capabilities(canAddChildren,canEdit)",
+            "id,name,mimeType,trashed,parents,capabilities(canAddChildren,canEdit)",
         });
 
     return {
@@ -179,6 +179,11 @@ export class GoogleDriveService {
         response.data.trashed
         ??
         false,
+
+      parents:
+        response.data.parents
+        ??
+        [],
 
       capabilities:{
         canAddChildren:

@@ -4259,6 +4259,10 @@ function Dashboard(
       await legacyManualGoogleRequest(
         "/google/settings/manual/install-template",
         {
+          rootFolderUrl:
+            legacyManualRootFolderUrl
+              .trim(),
+
           spreadsheetUrl,
         },
       );

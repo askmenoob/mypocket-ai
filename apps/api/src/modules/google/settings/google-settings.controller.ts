@@ -201,6 +201,7 @@ export class GoogleSettingsController {
       .validateManualStorage(
         request.user.workspaceId,
         body,
+        request.user.email,
       );
   };
 
@@ -222,6 +223,7 @@ export class GoogleSettingsController {
       .saveManualStorage(
         request.user.workspaceId,
         body,
+        request.user.email,
       );
   };
 
@@ -243,6 +245,7 @@ export class GoogleSettingsController {
       .installManualTemplate(
         request.user.workspaceId,
         body,
+        request.user.email,
       );
   };
 

@@ -76,6 +76,11 @@ z.object({
 export const ManualGoogleTemplateInstallSchema =
 z.object({
 
+  rootFolderUrl:
+    z.string()
+      .url()
+      .min(1),
+
   spreadsheetUrl:
     z.string()
       .url()

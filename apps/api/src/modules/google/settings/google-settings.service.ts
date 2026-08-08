@@ -231,6 +231,74 @@ export class GoogleSettingsService {
   }
 
 
+
+  private assertManualStorageFolderName(
+    folderMetadata:{
+      name?:string | null;
+    },
+    ownerEmail?:string | null,
+  ):void{
+
+    if(!ownerEmail?.trim()){
+
+      return;
+    }
+
+    const expectedName =
+      this.buildAutoCreatedRootFolderName(
+        ownerEmail,
+      );
+
+    if(
+      folderMetadata.name
+      !==
+      expectedName
+    ){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_FOLDER_NAME_INVALID",
+        "Selected Google Drive folder must match the signed-in user's MyPocket AI folder.",
+        409,
+      );
+    }
+  }
+
+
+  private assertManualSpreadsheetInsideFolder(
+    folderId:string,
+    spreadsheet:{
+      parents?:string[] | null;
+    },
+    ownerEmail?:string | null,
+  ):void{
+
+    if(!ownerEmail?.trim()){
+
+      return;
+    }
+
+    const parents =
+      Array.isArray(
+        spreadsheet.parents,
+      )
+        ? spreadsheet.parents
+        : [];
+
+    if(
+      !parents.includes(
+        folderId,
+      )
+    ){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_SHEET_OUTSIDE_FOLDER",
+        "Selected Google Sheet must be inside the signed-in user's MyPocket AI folder.",
+        409,
+      );
+    }
+  }
+
+
   async validateManualStorage(
     workspaceId:string,
 
@@ -239,6 +307,8 @@ export class GoogleSettingsService {
       spreadsheetUrl:string;
       backupSpreadsheetUrl?:string;
     },
+
+    ownerEmail?:string,
   ){
 
     const folderId =
@@ -347,12 +417,23 @@ export class GoogleSettingsService {
       );
     }
 
+    this.assertManualStorageFolderName(
+      folderMetadata,
+      ownerEmail,
+    );
+
     const working =
       await this.classifyManualSpreadsheet(
         workspaceId,
         spreadsheetId,
         workspaceType,
       );
+
+    this.assertManualSpreadsheetInsideFolder(
+      folderId,
+      working,
+      ownerEmail,
+    );
 
     const backup =
       backupSpreadsheetId
@@ -364,6 +445,15 @@ export class GoogleSettingsService {
         )
         :
         null;
+
+    if(backup){
+
+      this.assertManualSpreadsheetInsideFolder(
+        folderId,
+        backup,
+        ownerEmail,
+      );
+    }
 
     const canSave =
       working.classification
@@ -422,12 +512,15 @@ export class GoogleSettingsService {
       spreadsheetUrl:string;
       backupSpreadsheetUrl?:string;
     },
+
+    ownerEmail?:string,
   ){
 
     const validation =
       await this.validateManualStorage(
         workspaceId,
         input,
+        ownerEmail,
       );
 
     if(!validation.canSave){
@@ -519,14 +612,52 @@ export class GoogleSettingsService {
     workspaceId:string,
 
     input:{
+      rootFolderUrl?:string;
       spreadsheetUrl:string;
     },
+
+    ownerEmail?:string,
   ){
 
     const spreadsheetId =
       this.parseManualSpreadsheetId(
         input.spreadsheetUrl,
       );
+
+    const installRootFolderId =
+      input.rootFolderUrl
+        ? this.parseManualFolderId(
+            input.rootFolderUrl,
+          )
+        : null;
+
+    if(
+      ownerEmail?.trim()
+      &&
+      !installRootFolderId
+    ){
+
+      throw new AppError(
+        "GOOGLE_MANUAL_STORAGE_ROOT_FOLDER_REQUIRED",
+        "Google Drive folder URL is required for template installation.",
+        400,
+      );
+    }
+
+    if(installRootFolderId){
+
+      const installFolderMetadata =
+        await this.driveService
+          .getFileMetadata(
+            workspaceId,
+            installRootFolderId,
+          );
+
+      this.assertManualStorageFolderName(
+        installFolderMetadata,
+        ownerEmail,
+      );
+    }
 
     const workspace =
       await this.workspaceRepository
@@ -553,6 +684,15 @@ export class GoogleSettingsService {
         spreadsheetId,
         workspaceType,
       );
+
+    if(installRootFolderId){
+
+      this.assertManualSpreadsheetInsideFolder(
+        installRootFolderId,
+        before,
+        ownerEmail,
+      );
+    }
 
     if(
       before.classification
@@ -1042,6 +1182,11 @@ export class GoogleSettingsService {
           "COMPATIBLE" as const
           :
           "INCOMPATIBLE" as const,
+
+      parents:
+        spreadsheetDriveMetadata.parents
+        ??
+        [],
 
       sheetTitles:
         metadata.sheetTitles,
