@@ -1698,3 +1698,91 @@ test(
     );
   },
 );
+
+
+test(
+  "manual Google storage accepts sheets in Reports or Exports descendants of the user email folder",
+  async () => {
+
+    const {
+      readFileSync,
+    } =
+      await import(
+        "node:fs"
+      );
+
+    const {
+      dirname,
+      resolve,
+    } =
+      await import(
+        "node:path"
+      );
+
+    const {
+      fileURLToPath,
+    } =
+      await import(
+        "node:url"
+      );
+
+    const currentDirectory =
+      dirname(
+        fileURLToPath(
+          import.meta.url,
+        ),
+      );
+
+    const serviceSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/google/settings/google-settings.service.ts",
+        ),
+        "utf8",
+      );
+
+    assert.equal(
+      serviceSource.includes("isManualFileInsideFolderTree"),
+      true,
+      "Manual Google storage must walk parent folder lineage for descendant folders.",
+    );
+
+    assert.equal(
+      serviceSource.includes("visitedFolderIds"),
+      true,
+      "Folder lineage walk must guard against loops.",
+    );
+
+    assert.equal(
+      serviceSource.includes("pendingFolderIds"),
+      true,
+      "Folder lineage walk must traverse parent IDs.",
+    );
+
+    assert.match(
+      serviceSource,
+      /await this\.assertManualSpreadsheetInsideFolder\([\s\S]{0,180}workspaceId[\s\S]{0,180}folderId[\s\S]{0,180}working/,
+    );
+
+    assert.match(
+      serviceSource,
+      /await this\.assertManualSpreadsheetInsideFolder\([\s\S]{0,180}workspaceId[\s\S]{0,180}folderId[\s\S]{0,180}backup/,
+    );
+
+    assert.match(
+      serviceSource,
+      /await this\.assertManualSpreadsheetInsideFolder\([\s\S]{0,180}workspaceId[\s\S]{0,180}installRootFolderId[\s\S]{0,180}before/,
+    );
+
+    assert.match(
+      serviceSource,
+      /getFileMetadata\([\s\S]{0,140}workspaceId[\s\S]{0,140}parentFolderId/,
+    );
+
+    assert.doesNotMatch(
+      serviceSource,
+      /!\s*parents\.includes\(\s*folderId\s*\)/,
+    );
+  },
+);

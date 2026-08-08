@@ -264,13 +264,125 @@ export class GoogleSettingsService {
   }
 
 
-  private assertManualSpreadsheetInsideFolder(
+  private async isManualFileInsideFolderTree(
+    workspaceId:string,
+    initialParentIds:string[],
+    targetFolderId:string,
+  ):Promise<boolean>{
+
+    const pendingFolderIds =
+      [
+        ...new Set(
+          initialParentIds
+            .filter(
+              (parentId):parentId is string =>
+                Boolean(
+                  parentId,
+                ),
+            ),
+        ),
+      ];
+
+    const visitedFolderIds =
+      new Set<string>();
+
+    while(
+      pendingFolderIds.length
+      >
+      0
+      &&
+      visitedFolderIds.size
+      <
+      50
+    ){
+
+      const parentFolderId =
+        pendingFolderIds.shift();
+
+      if(!parentFolderId){
+
+        continue;
+      }
+
+      if(
+        parentFolderId
+        ===
+        targetFolderId
+      ){
+
+        return true;
+      }
+
+      if(
+        visitedFolderIds.has(
+          parentFolderId,
+        )
+      ){
+
+        continue;
+      }
+
+      visitedFolderIds.add(
+        parentFolderId,
+      );
+
+      let parentMetadata:
+        Awaited<
+          ReturnType<
+            typeof this.driveService.getFileMetadata
+          >
+        >;
+
+      try{
+
+        parentMetadata =
+          await this.driveService
+            .getFileMetadata(
+              workspaceId,
+              parentFolderId,
+            );
+
+      }catch{
+
+        continue;
+      }
+
+      const grandParentIds =
+        Array.isArray(
+          parentMetadata.parents,
+        )
+          ? parentMetadata.parents
+          : [];
+
+      for(const grandParentId of grandParentIds){
+
+        if(
+          grandParentId
+          &&
+          !visitedFolderIds.has(
+            grandParentId,
+          )
+        ){
+
+          pendingFolderIds.push(
+            grandParentId,
+          );
+        }
+      }
+    }
+
+    return false;
+  }
+
+
+  private async assertManualSpreadsheetInsideFolder(
+    workspaceId:string,
     folderId:string,
     spreadsheet:{
       parents?:string[] | null;
     },
     ownerEmail?:string | null,
-  ):void{
+  ):Promise<void>{
 
     if(!ownerEmail?.trim()){
 
@@ -284,11 +396,14 @@ export class GoogleSettingsService {
         ? spreadsheet.parents
         : [];
 
-    if(
-      !parents.includes(
+    const isInsideFolderTree =
+      await this.isManualFileInsideFolderTree(
+        workspaceId,
+        parents,
         folderId,
-      )
-    ){
+      );
+
+    if(!isInsideFolderTree){
 
       throw new AppError(
         "GOOGLE_MANUAL_STORAGE_SHEET_OUTSIDE_FOLDER",
@@ -297,7 +412,6 @@ export class GoogleSettingsService {
       );
     }
   }
-
 
   async validateManualStorage(
     workspaceId:string,
@@ -429,7 +543,8 @@ export class GoogleSettingsService {
         workspaceType,
       );
 
-    this.assertManualSpreadsheetInsideFolder(
+    await this.assertManualSpreadsheetInsideFolder(
+      workspaceId,
       folderId,
       working,
       ownerEmail,
@@ -448,7 +563,8 @@ export class GoogleSettingsService {
 
     if(backup){
 
-      this.assertManualSpreadsheetInsideFolder(
+      await this.assertManualSpreadsheetInsideFolder(
+        workspaceId,
         folderId,
         backup,
         ownerEmail,
@@ -687,7 +803,8 @@ export class GoogleSettingsService {
 
     if(installRootFolderId){
 
-      this.assertManualSpreadsheetInsideFolder(
+      await this.assertManualSpreadsheetInsideFolder(
+        workspaceId,
         installRootFolderId,
         before,
         ownerEmail,
