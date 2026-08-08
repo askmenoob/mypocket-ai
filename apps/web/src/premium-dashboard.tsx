@@ -95,6 +95,37 @@ const statusLabel = (
     : text.checking;
 };
 
+
+function formatManualGoogleStatus(
+  value?:string | null,
+):string{
+  const normalized =
+    String(
+      value || "",
+    )
+      .trim()
+      .toUpperCase();
+
+  if(normalized === "COMPATIBLE"){
+
+    return "Ready";
+  }
+
+  if(normalized === "EMPTY"){
+
+    return "Needs repair";
+  }
+
+  if(normalized === "INCOMPATIBLE"){
+
+    return "Use Auto Setup / Repair";
+  }
+
+  return value
+    ? String(value)
+    : "-";
+}
+
 const dashboardImageIcons:Record<string, string> = {
   whatsapp:"/dashboard-icons/whatsapp-logo.png",
   sheet:"/dashboard-icons/google-sheets-logo.png",
@@ -1912,7 +1943,7 @@ export function PremiumDashboard(
             (
               language === "ms"
                 ? "Google Sheet tidak serasi dengan template MyPocket dan tidak akan diubah."
-                : "The Google Sheet is not compatible with MyPocket and will not be modified."
+                : "Sheet ini belum sedia untuk MyPocket. Gunakan Auto Setup / Repair, atau pilih sheet MyPocket yang lain di Advanced Recovery."
             ),
       );
 
@@ -3003,8 +3034,8 @@ export function PremiumDashboard(
                 <div className="pd-manual-google-title">
                   {
                     language === "ms"
-                      ? "Tetapan Google Manual"
-                      : "Manual Google Settings"
+                      ? "Pemulihan Advanced"
+                      : "Advanced Recovery"
                   }
                 </div>
 
@@ -3012,8 +3043,8 @@ export function PremiumDashboard(
                   <span>
                     {
                       language === "ms"
-                        ? "Google Drive Folder URL"
-                        : "Google Drive Folder URL"
+                        ? "Advanced: Google Drive Folder URL"
+                        : "Advanced: Google Drive Folder URL"
                     }
                   </span>
                   <input
@@ -3033,8 +3064,8 @@ export function PremiumDashboard(
                   <span>
                     {
                       language === "ms"
-                        ? "Working Google Sheet URL"
-                        : "Working Google Sheet URL"
+                        ? "Advanced: Working Google Sheet URL"
+                        : "Advanced: Working Google Sheet URL"
                     }
                   </span>
                   <input
@@ -3054,8 +3085,8 @@ export function PremiumDashboard(
                   <span>
                     {
                       language === "ms"
-                        ? "Backup Google Sheet URL (optional)"
-                        : "Backup Google Sheet URL (optional)"
+                        ? "Advanced: Backup Google Sheet URL (optional)"
+                        : "Advanced: Backup Google Sheet URL (optional)"
                     }
                   </span>
                   <input
@@ -3166,8 +3197,8 @@ export function PremiumDashboard(
                           ? "Menyemak..."
                           : "Validating..."
                         : language === "ms"
-                          ? "Validate Google Links"
-                          : "Validate Google Links"
+                          ? "Check Existing Sheet"
+                          : "Check Existing Sheet"
                     }
                   </button>
 
@@ -3197,8 +3228,8 @@ export function PremiumDashboard(
                         />
                         {
                           language === "ms"
-                            ? "Install Template - Working"
-                            : "Install Template - Working"
+                            ? "Repair Working Sheet"
+                            : "Repair Working Sheet"
                         }
                       </button>
                     )
@@ -3230,8 +3261,8 @@ export function PremiumDashboard(
                         />
                         {
                           language === "ms"
-                            ? "Install Template - Backup"
-                            : "Install Template - Backup"
+                            ? "Repair Backup Sheet"
+                            : "Repair Backup Sheet"
                         }
                       </button>
                     )
@@ -3258,7 +3289,7 @@ export function PremiumDashboard(
                         ? language === "ms"
                           ? "Menyimpan..."
                           : "Saving..."
-                        : "Save Google Links"
+                        : "Restore This Sheet"
                     }
                   </button>
                 </div>

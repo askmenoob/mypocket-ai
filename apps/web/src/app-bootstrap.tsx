@@ -4222,7 +4222,7 @@ function Dashboard(
             (
               dashboardLanguage === "ms"
                 ? "Google Sheet tidak serasi dengan template MyPocket dan tidak akan diubah."
-                : "The Google Sheet is not compatible with MyPocket and will not be modified."
+                : "Sheet ini belum sedia untuk MyPocket. Gunakan Auto Setup / Repair, atau pilih sheet MyPocket yang lain di Advanced Recovery."
             ),
       );
     }catch(error){
@@ -6452,7 +6452,7 @@ function Dashboard(
 
               {googleSheetUrl && (
                 <div className="sheetUrlBox">
-                  <span>Working Google Sheet URL</span>
+                  <span>Advanced: Working Google Sheet URL</span>
                   <a
                     href={googleSheetUrl}
                     target="_blank"
@@ -6465,7 +6465,7 @@ function Dashboard(
 
               {backupGoogleSheetUrl && (
                 <div className="sheetUrlBox backupSheetUrlBox">
-                  <span>Backup Google Sheet URL — do not delete</span>
+                  <span>Advanced: Backup Google Sheet URL — do not delete</span>
                   <a
                     href={backupGoogleSheetUrl}
                     target="_blank"
@@ -6482,8 +6482,8 @@ function Dashboard(
                   <div className="pd-manual-google-title">
                     {
                       dashboardLanguage === "ms"
-                        ? "Tetapan Google Manual"
-                        : "Manual Google Settings"
+                        ? "Pemulihan Advanced"
+                        : "Advanced Recovery"
                     }
                   </div>
 
@@ -6501,7 +6501,7 @@ function Dashboard(
                         )
                       }
                     >
-                      Auto Create by System
+                      Auto Setup / Repair Google Sheet
                     </button>
 
                     <button
@@ -6513,7 +6513,7 @@ function Dashboard(
                         )
                       }
                     >
-                      Manual Select Existing
+                      Restore Existing MyPocket Sheet
                     </button>
                   </div>
 
@@ -6522,7 +6522,7 @@ function Dashboard(
                     &&
                     (
                       <div className="pd-manual-google-message">
-                        Auto Created mode will use the existing Connect/Recreate Google Sheet actions below. Use Manual Select Existing when the folder or sheet already exists in Google Drive.
+                        Auto Created mode will use the existing Connect/Recreate Google Sheet actions below. Use Restore Existing MyPocket Sheet when the folder or sheet already exists in Google Drive.
                       </div>
                     )
                   }
@@ -6567,7 +6567,7 @@ function Dashboard(
 
                   <label className="pd-manual-google-field">
                     <span>
-                      Google Drive Folder URL
+                      Advanced: Google Drive Folder URL
                     </span>
                     <input
                       type="url"
@@ -6584,7 +6584,7 @@ function Dashboard(
 
                   <label className="pd-manual-google-field">
                     <span>
-                      Working Google Sheet URL
+                      Advanced: Working Google Sheet URL
                     </span>
                     <input
                       type="url"
@@ -6601,7 +6601,7 @@ function Dashboard(
 
                   <label className="pd-manual-google-field">
                     <span>
-                      Backup Google Sheet URL (optional)
+                      Advanced: Backup Google Sheet URL (optional)
                     </span>
                     <input
                       type="url"
@@ -6707,7 +6707,7 @@ function Dashboard(
                           ? dashboardLanguage === "ms"
                             ? "Menyemak..."
                             : "Validating..."
-                          : "Validate Google Links"
+                          : "Check Existing Sheet"
                       }
                     </button>
 
@@ -6732,7 +6732,7 @@ function Dashboard(
                             )
                           }
                         >
-                          Install Template - Working
+                          Repair Working Sheet
                         </button>
                       )
                     }
@@ -6758,7 +6758,7 @@ function Dashboard(
                             )
                           }
                         >
-                          Install Template - Backup
+                          Repair Backup Sheet
                         </button>
                       )
                     }
@@ -6781,7 +6781,7 @@ function Dashboard(
                           ? dashboardLanguage === "ms"
                             ? "Menyimpan..."
                             : "Saving..."
-                          : "Save Google Links"
+                          : "Restore This Sheet"
                       }
                     </button>
                   </div>
