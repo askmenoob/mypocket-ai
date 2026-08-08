@@ -11,7 +11,10 @@ export interface TemplateProvisionInput {
     string;
 
 
-  workspaceType:
+
+  rootFolderName?:
+    string;
+workspaceType:
     WorkspaceTemplateType;
 
 }

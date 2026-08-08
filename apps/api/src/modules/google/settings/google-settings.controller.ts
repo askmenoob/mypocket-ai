@@ -269,6 +269,7 @@ export class GoogleSettingsController {
       .autoCreateSheet(
         request.user.workspaceId,
         body.title,
+        request.user.email,
       );
 
   };

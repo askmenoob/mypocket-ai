@@ -1049,12 +1049,42 @@ export class GoogleSettingsService {
   }
 
 
+
+  private buildAutoCreatedRootFolderName(
+    ownerEmail?:string | null,
+  ):string{
+
+    const normalizedEmail =
+      ownerEmail
+        ?.trim()
+        .toLowerCase()
+        .replace(
+          /\s+/g,
+          "",
+        );
+
+    if(!normalizedEmail){
+
+      return "MyPocket AI";
+    }
+
+    return `MyPocket AI (${normalizedEmail})`;
+  }
+
+
   async autoCreateSheet(
     workspaceId:string,
     title:string,
+
+    ownerEmail?:string,
   ){
 
     void title;
+
+    const rootFolderName =
+      this.buildAutoCreatedRootFolderName(
+        ownerEmail,
+      );
 
 
     const workspace =
@@ -1080,6 +1110,8 @@ export class GoogleSettingsService {
 
           workspaceType:
             workspaceType,
+
+          rootFolderName,
 
         });
 

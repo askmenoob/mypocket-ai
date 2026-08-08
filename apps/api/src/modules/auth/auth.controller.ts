@@ -290,6 +290,7 @@ export class AuthController {
         .autoCreateSheet(
           session.workspace.id,
           "MyPocket Workspace Template",
+          profile.email,
         );
 
 

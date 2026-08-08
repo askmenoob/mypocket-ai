@@ -480,6 +480,9 @@ export class GoogleDriveService {
 
   async createWorkspaceFolderStructure(
     workspaceId:string,
+
+    rootFolderName:string =
+      "MyPocket AI",
   ):Promise<WorkspaceFolderStructure>{
 
 
@@ -489,7 +492,7 @@ export class GoogleDriveService {
 
         workspaceId,
 
-        "MyPocket AI",
+        rootFolderName,
 
       );
 

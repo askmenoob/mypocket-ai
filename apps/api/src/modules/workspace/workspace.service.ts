@@ -769,6 +769,7 @@ export class WorkspaceService {
         .autoCreateSheet(
           workspace.id,
           `MyPocket ${workspace.type} Template`,
+          user.email,
         );
 
 

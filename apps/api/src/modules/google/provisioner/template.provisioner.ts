@@ -81,6 +81,8 @@ export class TemplateProvisioner {
       await this.driveService
         .createWorkspaceFolderStructure(
           input.workspaceId,
+
+          input.rootFolderName,
         );
 
 

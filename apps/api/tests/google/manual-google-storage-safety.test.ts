@@ -1381,3 +1381,152 @@ test(
     );
   },
 );
+
+
+test(
+  "auto-created Google folder name includes user email",
+  async () => {
+
+    const {
+      readFileSync,
+    } =
+      await import(
+        "node:fs"
+      );
+
+    const {
+      dirname,
+      resolve,
+    } =
+      await import(
+        "node:path"
+      );
+
+    const {
+      fileURLToPath,
+    } =
+      await import(
+        "node:url"
+      );
+
+    const currentDirectory =
+      dirname(
+        fileURLToPath(
+          import.meta.url,
+        ),
+      );
+
+    const driveSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/google/drive/google-drive.service.ts",
+        ),
+        "utf8",
+      );
+
+    const provisionerSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/google/provisioner/template.provisioner.ts",
+        ),
+        "utf8",
+      );
+
+    const provisionTypesSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/google/provisioner/template.types.ts",
+        ),
+        "utf8",
+      );
+
+    const settingsServiceSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/google/settings/google-settings.service.ts",
+        ),
+        "utf8",
+      );
+
+    const settingsControllerSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/google/settings/google-settings.controller.ts",
+        ),
+        "utf8",
+      );
+
+    const authControllerSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/auth/auth.controller.ts",
+        ),
+        "utf8",
+      );
+
+    const workspaceServiceSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/workspace/workspace.service.ts",
+        ),
+        "utf8",
+      );
+
+    assert.match(
+      driveSource,
+      /createWorkspaceFolderStructure\([\s\S]{0,220}rootFolderName/,
+    );
+
+    assert.match(
+      driveSource,
+      /rootFolderName[\s\S]{0,160}MyPocket AI/,
+    );
+
+    assert.match(
+      provisionTypesSource,
+      /rootFolderName\?:\s*string/,
+    );
+
+    assert.match(
+      provisionerSource,
+      /createWorkspaceFolderStructure\([\s\S]{0,220}input\.rootFolderName/,
+    );
+
+    assert.match(
+      settingsServiceSource,
+      /buildAutoCreatedRootFolderName/,
+    );
+
+    assert.match(
+      settingsServiceSource,
+      /MyPocket AI \(\$\{normalizedEmail\}\)/,
+    );
+
+    assert.match(
+      settingsServiceSource,
+      /templateProvisioner[\s\S]{0,260}rootFolderName/,
+    );
+
+    assert.match(
+      settingsControllerSource,
+      /autoCreateSheet\([\s\S]{0,220}request\.user\.email/,
+    );
+
+    assert.match(
+      authControllerSource,
+      /autoCreateSheet\([\s\S]{0,220}profile\.email/,
+    );
+
+    assert.match(
+      workspaceServiceSource,
+      /autoCreateSheet\([\s\S]{0,220}user\.email/,
+    );
+  },
+);
