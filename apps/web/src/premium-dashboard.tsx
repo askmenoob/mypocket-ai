@@ -3031,13 +3031,22 @@ export function PremiumDashboard(
 
               {props.canManageGoogleStorage && (
               <div className="pd-manual-google">
-                <div className="pd-manual-google-title">
+                <details className="pd-advanced-recovery-details">
+                  <summary className="pd-manual-google-title pd-advanced-recovery-summary">
                   {
                     language === "ms"
                       ? "Pemulihan Advanced"
                       : "Advanced Recovery"
                   }
-                </div>
+
+                    <span className="pd-advanced-recovery-summary-hint">
+                      Klik untuk buka pilihan restore sheet lama
+                    </span>
+                  </summary>
+                  <div className="pd-advanced-recovery-content">
+                  <div className="pd-manual-google-message">
+                    Untuk kebanyakan user, gunakan Auto Setup / Repair Google Sheet. Advanced Recovery hanya untuk Restore Existing MyPocket Sheet.
+                  </div>
 
                 <label className="pd-manual-google-field">
                   <span>
@@ -3293,7 +3302,10 @@ export function PremiumDashboard(
                     }
                   </button>
                 </div>
-              </div>
+
+                  </div>
+                </details>
+</div>
               )}
 
               <div className="pd-actions">
@@ -3370,7 +3382,7 @@ export function PremiumDashboard(
               className="pd-quick"
               onClick={props.onAddTransaction}
             >
-              
+
               <span className="pd-quick-icon pd-quick-image">
                 <img
                   src="/dashboard-icons/add-transaction.png"
@@ -3387,7 +3399,7 @@ export function PremiumDashboard(
               className="pd-quick"
               onClick={props.onOpenWhatsApp}
             >
-              
+
               <span className="pd-quick-icon pd-quick-image">
                 <img
                   src="/dashboard-icons/disconnect-whatsapp.png"
@@ -3404,7 +3416,7 @@ export function PremiumDashboard(
               className="pd-quick"
               onClick={props.onSetup}
             >
-              
+
               <span className="pd-quick-icon pd-quick-image">
                 <img
                   src="/dashboard-icons/setup-wizard.png"

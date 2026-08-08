@@ -6479,13 +6479,19 @@ function Dashboard(
 
               {canChangeWorkspaceSettings && (
                 <div className="pd-manual-google">
-                  <div className="pd-manual-google-title">
+                  <details className="pd-advanced-recovery-details">
+                    <summary className="pd-manual-google-title pd-advanced-recovery-summary">
                     {
                       dashboardLanguage === "ms"
                         ? "Pemulihan Advanced"
                         : "Advanced Recovery"
                     }
-                  </div>
+
+                      <span className="pd-advanced-recovery-summary-hint">
+                        Klik untuk buka pilihan restore sheet lama
+                      </span>
+                    </summary>
+                    <div className="pd-advanced-recovery-content">
 
                   <div
                     className="manualGoogleModeToggle"
@@ -6785,7 +6791,10 @@ function Dashboard(
                       }
                     </button>
                   </div>
-                </div>
+
+                    </div>
+                  </details>
+</div>
               )}
 
               {legacyDrivePickerTarget && (
