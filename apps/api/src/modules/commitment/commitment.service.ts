@@ -256,7 +256,7 @@ export class CommitmentService {
           row.currentMonth.status,
         ))
         .reduce(
-          (sum, row) => sum + Number(row.amount),
+          (sum, row) => sum + this.amountNumber(row.amount),
           0,
         );
 
@@ -1202,6 +1202,17 @@ export class CommitmentService {
       return null;
     }
 
+    const amount =
+      this.normalizeAmount(
+        valueAt(3),
+      )
+      ||
+      this.normalizeAmount(
+        valueAt(2),
+      )
+      ||
+      "0";
+
     return {
       id,
       workspaceId:
@@ -1209,7 +1220,7 @@ export class CommitmentService {
       name:
         valueAt(2),
       amount:
-        valueAt(3) || "0",
+        amount,
       frequency:
         valueAt(4) || "MONTHLY",
       dueDay:
@@ -1520,6 +1531,47 @@ export class CommitmentService {
     return Number.isFinite(parsed)
       ? parsed
       : fallback;
+  }
+
+  private normalizeAmount(
+    value:string,
+  ){
+    const match =
+      value
+        .replace(/,/g, "")
+        .match(
+          /([0-9]+(?:\.[0-9]{1,2})?)/,
+        );
+
+    if(!match?.[1]){
+      return "";
+    }
+
+    const amount =
+      Number(
+        match[1],
+      );
+
+    return Number.isFinite(amount)
+      ? amount.toFixed(2)
+      : "";
+  }
+
+  private amountNumber(
+    value:string,
+  ){
+    const amount =
+      Number(
+        this.normalizeAmount(
+          value,
+        )
+        ||
+        value,
+      );
+
+    return Number.isFinite(amount)
+      ? amount
+      : 0;
   }
 
   private async getOrCreateBotSettings(

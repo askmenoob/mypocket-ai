@@ -3725,7 +3725,7 @@ export class WhatsAppService {
             : item.currentMonth.status === "OVERDUE"
               ? "⚠️"
               : "⬜";
-        return `${icon} ${item.name} — RM${Number(item.amount).toLocaleString("ms-MY")} — ${dueDate.getDate()} ${result.period.label.split(" ")[0]}`;
+        return `${icon} ${item.name} — RM${this.formatReminderAmount(item.amount)} — ${dueDate.getDate()} ${result.period.label.split(" ")[0]}`;
       });
 
     return [
@@ -3734,10 +3734,49 @@ export class WhatsAppService {
       ...lines,
       "",
       isEnglish
-        ? `Total unpaid: RM${Number(result.summary.totalUnpaid).toLocaleString("ms-MY")}`
-        : `Jumlah belum dibayar: RM${Number(result.summary.totalUnpaid).toLocaleString("ms-MY")}`,
+        ? `Total unpaid: RM${this.formatReminderAmount(result.summary.totalUnpaid)}`
+        : `Jumlah belum dibayar: RM${this.formatReminderAmount(result.summary.totalUnpaid)}`,
     ].join("\n");
 
+  }
+
+
+
+
+  private formatReminderAmount(
+    value:unknown,
+  ){
+    const raw =
+      String(
+        value
+        ??
+        "",
+      )
+        .replace(/,/g, "");
+
+    const match =
+      raw.match(
+        /([0-9]+(?:\.[0-9]{1,2})?)/,
+      );
+
+    const amount =
+      Number(
+        match?.[1]
+        ??
+        raw,
+      );
+
+    return Number.isFinite(amount)
+      ? amount.toLocaleString(
+          "ms-MY",
+          {
+            minimumFractionDigits:
+              amount % 1 === 0 ? 0 : 2,
+            maximumFractionDigits:
+              2,
+          },
+        )
+      : "0";
   }
 
 
