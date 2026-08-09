@@ -3714,6 +3714,9 @@ function Dashboard(
   const [seenNotificationIds, setSeenNotificationIds] =
     useState<string[]>([]);
 
+  const [ignoredNotificationIds, setIgnoredNotificationIds] =
+    useState<string[]>([]);
+
   const [dashboardLanguage, setDashboardLanguage] =
     useState<DashboardLanguage>(() =>
       normalizeDashboardLanguage(
@@ -4665,6 +4668,17 @@ function Dashboard(
       "workspace"
     }`;
 
+  const ignoredNotificationStorageKey =
+    `imai_dashboard_notifications_ignored:v1:${
+      props.data.me?.user?.id
+      ||
+      "anonymous"
+    }:${
+      props.data.me?.workspace?.id
+      ||
+      "workspace"
+    }`;
+
   const dashboardNotifications =
     useMemo<DashboardNotification[]>(
       () => {
@@ -4848,8 +4862,17 @@ function Dashboard(
       ],
     );
 
-  const unreadNotificationCount =
+  const visibleDashboardNotifications =
     dashboardNotifications
+      .filter(
+        (notification) =>
+          !ignoredNotificationIds.includes(
+            notification.id,
+          ),
+      );
+
+  const unreadNotificationCount =
+    visibleDashboardNotifications
       .filter(
         (notification) =>
           !seenNotificationIds.includes(
@@ -4890,6 +4913,41 @@ function Dashboard(
     },
     [
       notificationStorageKey,
+    ],
+  );
+
+  useEffect(
+    () => {
+
+      try{
+
+        const storedIds =
+          JSON.parse(
+            localStorage.getItem(
+              ignoredNotificationStorageKey,
+            )
+            ||
+            "[]",
+          );
+
+        setIgnoredNotificationIds(
+          Array.isArray(storedIds)
+            ? storedIds.filter(
+              (value):value is string =>
+                typeof value === "string",
+            )
+            : [],
+        );
+
+      }catch{
+
+        setIgnoredNotificationIds([]);
+
+      }
+
+    },
+    [
+      ignoredNotificationStorageKey,
     ],
   );
 
@@ -4942,10 +5000,59 @@ function Dashboard(
     ],
   );
 
+  useEffect(
+    () => {
+
+      const currentIds =
+        new Set(
+          dashboardNotifications.map(
+            (notification) =>
+              notification.id,
+          ),
+        );
+
+      setIgnoredNotificationIds(
+        (current) => {
+
+          const next =
+            current.filter(
+              (id) =>
+                currentIds.has(id),
+            );
+
+          if(next.length === current.length){
+            return current;
+          }
+
+          try{
+
+            localStorage.setItem(
+              ignoredNotificationStorageKey,
+              JSON.stringify(next),
+            );
+
+          }catch{
+
+            // Notification ignored state is optional device-local data.
+
+          }
+
+          return next;
+
+        },
+      );
+
+    },
+    [
+      dashboardNotifications,
+      ignoredNotificationStorageKey,
+    ],
+  );
+
   function markNotificationsSeen(){
 
     const notificationIds =
-      dashboardNotifications.map(
+      visibleDashboardNotifications.map(
         (notification) =>
           notification.id,
       );
@@ -4990,6 +5097,27 @@ function Dashboard(
 
   }
 
+  function clearIgnoredNotifications(){
+
+    setIgnoredNotificationIds(
+      [],
+    );
+
+    try{
+
+      localStorage.setItem(
+        ignoredNotificationStorageKey,
+        JSON.stringify([]),
+      );
+
+    }catch{
+
+      // Notification ignored state is optional device-local data.
+
+    }
+
+  }
+
   function setNotificationReadState(
     notificationId:string,
     read:boolean,
@@ -5027,6 +5155,46 @@ function Dashboard(
         return next;
 
       },
+    );
+
+  }
+
+  function ignoreDashboardNotification(
+    notificationId:string,
+  ){
+
+    setIgnoredNotificationIds(
+      (current) => {
+
+        const next =
+          Array.from(
+            new Set([
+              ...current,
+              notificationId,
+            ]),
+          );
+
+        try{
+
+          localStorage.setItem(
+            ignoredNotificationStorageKey,
+            JSON.stringify(next),
+          );
+
+        }catch{
+
+          // Notification ignored state is optional device-local data.
+
+        }
+
+        return next;
+
+      },
+    );
+
+    setNotificationReadState(
+      notificationId,
+      true,
     );
 
   }
@@ -6503,8 +6671,8 @@ function Dashboard(
                       <span>
                         {
                           dashboardLanguage === "ms"
-                            ? `${dashboardNotifications.length} makluman semasa`
-                            : `${dashboardNotifications.length} current alerts`
+                            ? `${visibleDashboardNotifications.length} makluman semasa`
+                            : `${visibleDashboardNotifications.length} current alerts`
                         }
                       </span>
                     </div>
@@ -6514,7 +6682,7 @@ function Dashboard(
                         type="button"
                         className="notificationAction"
                         onClick={markNotificationsSeen}
-                        disabled={dashboardNotifications.length === 0 || unreadNotificationCount === 0}
+                        disabled={visibleDashboardNotifications.length === 0 || unreadNotificationCount === 0}
                       >
                         {dashboardLanguage === "ms" ? "Tanda semua dibaca" : "Mark all read"}
                       </button>
@@ -6523,9 +6691,18 @@ function Dashboard(
                         type="button"
                         className="notificationAction"
                         onClick={markNotificationsUnread}
-                        disabled={dashboardNotifications.length === 0 || unreadNotificationCount === dashboardNotifications.length}
+                        disabled={visibleDashboardNotifications.length === 0 || unreadNotificationCount === visibleDashboardNotifications.length}
                       >
                         {dashboardLanguage === "ms" ? "Tanda semua belum dibaca" : "Mark all unread"}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="notificationAction"
+                        onClick={clearIgnoredNotifications}
+                        disabled={ignoredNotificationIds.length === 0}
+                      >
+                        {dashboardLanguage === "ms" ? "Show ignored" : "Show ignored"}
                       </button>
 
                       <button
@@ -6540,7 +6717,7 @@ function Dashboard(
                   </header>
 
                   <div className="notificationList">
-                    {dashboardNotifications.length === 0 && (
+                    {visibleDashboardNotifications.length === 0 && (
                       <p className="notificationEmpty">
                         {
                           dashboardLanguage === "ms"
@@ -6550,7 +6727,7 @@ function Dashboard(
                       </p>
                     )}
 
-                    {dashboardNotifications.map(
+                    {visibleDashboardNotifications.map(
                       (notification) => {
 
                         const isNotificationRead =
@@ -6595,6 +6772,16 @@ function Dashboard(
                                   ? "Tanda dibaca"
                                   : "Mark read"
                             }
+                          </button>
+
+                          <button
+                            type="button"
+                            className="notificationToggle"
+                            onClick={() => ignoreDashboardNotification(
+                              notification.id,
+                            )}
+                          >
+                            {dashboardLanguage === "ms" ? "Ignore" : "Ignore"}
                           </button>
                         </div>
                       );
