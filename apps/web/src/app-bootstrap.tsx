@@ -3727,9 +3727,12 @@ function Dashboard(
     actorRole === "OWNER" ||
     actorRole === "ADMIN";
 
+  const isMemberRole =
+    actorRole === "MEMBER";
+
   const canViewWorkspaceSettings =
     canChangeWorkspaceSettings ||
-    actorRole === "MEMBER";
+    isMemberRole;
 
   const canManageMembers =
     isSuperAdmin ||
@@ -6399,28 +6402,64 @@ function Dashboard(
               <StatusGrid
                 rows={[
                   ["Workspace package", workspaceType],
-                  ["Template", googleTemplateType || workspaceType],
-                  ["Title", props.data.google?.spreadsheetTitle || "-"],
-                  ["Backup", props.data.google?.backupSpreadsheetTitle || "-"],
-                  ["Mode", props.data.google?.mode || "-"],
+                  [
+                    "Template",
+                    isMemberRole && !googleTemplateType
+                      ? "Managed by Owner/Admin"
+                      : googleTemplateType || workspaceType,
+                  ],
+                  [
+                    "Title",
+                    isMemberRole && !props.data.google?.spreadsheetTitle
+                      ? "Workspace owner Google Sheet"
+                      : props.data.google?.spreadsheetTitle || "-",
+                  ],
+                  [
+                    "Backup",
+                    isMemberRole
+                      ? "Managed by Owner/Admin"
+                      : props.data.google?.backupSpreadsheetTitle || "-",
+                  ],
+                  [
+                    "Mode",
+                    isMemberRole
+                      ? "OWNER_MANAGED"
+                      : props.data.google?.mode || "-",
+                  ],
                   [
                     "Current Template",
-                    props.data.google?.currentTemplateVersion || "-",
+                    isMemberRole
+                      ? "Managed by Owner/Admin"
+                      : props.data.google?.currentTemplateVersion || "-",
                   ],
                   [
                     "Latest Template",
-                    props.data.google?.latestTemplateVersion || "-",
+                    isMemberRole
+                      ? "Managed by Owner/Admin"
+                      : props.data.google?.latestTemplateVersion || "-",
                   ],
                   [
                     "Update Status",
-                    props.data.google?.templateUpdateAvailable
-                      ? "Update Available"
-                      : props.data.google?.templateUpdateStatus || "-",
+                    isMemberRole
+                      ? "Managed by Owner/Admin"
+                      : props.data.google?.templateUpdateAvailable
+                        ? "Update Available"
+                        : props.data.google?.templateUpdateStatus || "-",
                   ],
                 ]}
               />
 
-              {backupGoogleSheetUrl && (
+              {isMemberRole && (
+                <div className="sheetUrlBox">
+                  <span>Google Sheet workspace</span>
+                  <strong>
+                    Managed by Owner/Admin. Transaksi anda akan direkod melalui
+                    bot workspace.
+                  </strong>
+                </div>
+              )}
+
+              {backupGoogleSheetUrl && !isMemberRole && (
                 <div className="sheetWarning">
                   Backup Sheet dibuat dalam Google Drive anda untuk restore dan
                   redundancy. Jangan delete atau edit fail backup ini kecuali
@@ -6428,7 +6467,7 @@ function Dashboard(
                 </div>
               )}
 
-              {hasGoogleTemplateMismatch && (
+              {hasGoogleTemplateMismatch && canChangeWorkspaceSettings && (
                 <div className="sheetWarning">
                   Workspace sekarang ialah {workspaceType}, tetapi Google Sheet
                   yang tersambung masih menggunakan template {googleTemplateType}.
@@ -6437,7 +6476,7 @@ function Dashboard(
                 </div>
               )}
 
-              {props.data.google?.templateUpdateAvailable && (
+              {props.data.google?.templateUpdateAvailable && canChangeWorkspaceSettings && (
                 <div className="sheetWarning">
                   Current Template: Version {
                     props.data.google?.currentTemplateVersion || "-"
@@ -6451,7 +6490,7 @@ function Dashboard(
                 </div>
               )}
 
-              {googleSheetUrl && (
+              {googleSheetUrl && !isMemberRole && (
                 <div className="sheetUrlBox">
                   <span>Advanced: Working Google Sheet URL</span>
                   <a
@@ -6464,7 +6503,7 @@ function Dashboard(
                 </div>
               )}
 
-              {backupGoogleSheetUrl && (
+              {backupGoogleSheetUrl && !isMemberRole && (
                 <div className="sheetUrlBox backupSheetUrlBox">
                   <span>Advanced: Backup Google Sheet URL — do not delete</span>
                   <a
@@ -6889,7 +6928,7 @@ function Dashboard(
                 </div>
               )}
 
-            {props.data.google?.spreadsheetId && (
+            {props.data.google?.spreadsheetId && !isMemberRole && (
               <div className="panelActions sheetActions">
                 {
                   actorRole === "OWNER"
@@ -6927,7 +6966,7 @@ function Dashboard(
                 </button>
               </div>
             )}
-              {!props.data.google?.spreadsheetId && (
+              {!props.data.google?.spreadsheetId && canChangeWorkspaceSettings && (
                 <div className="panelActions sheetActions">
                   <button
                     className="primary"
