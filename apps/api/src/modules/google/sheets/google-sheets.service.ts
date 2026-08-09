@@ -366,7 +366,9 @@ export class GoogleSheetsService {
   async appendRow(
     workspaceId:string,
     input:AppendRowInput,
-  ):Promise<void>{
+  ):Promise<{
+    updatedRange:string;
+  }>{
 
 
     const sheets =
@@ -375,7 +377,8 @@ export class GoogleSheetsService {
       );
 
 
-    await sheets
+    const response =
+      await sheets
       .spreadsheets
       .values
       .append({
@@ -403,6 +406,12 @@ export class GoogleSheetsService {
         },
 
       });
+
+    return {
+      updatedRange:
+        response.data.updates?.updatedRange
+        ?? "",
+    };
 
   }
 
@@ -499,6 +508,89 @@ export class GoogleSheetsService {
       []
     );
 
+  }
+
+
+  async formatNumberRange(
+    workspaceId:string,
+    input:{
+      spreadsheetId:string;
+      sheetName:string;
+      startRowIndex:number;
+      endRowIndex:number;
+      startColumnIndex:number;
+      endColumnIndex:number;
+      pattern?:string;
+    },
+  ):Promise<void>{
+    const sheets =
+      await this.getClient(
+        workspaceId,
+      );
+
+    const metadata =
+      await sheets.spreadsheets
+        .get({
+          spreadsheetId:
+            input.spreadsheetId,
+          fields:
+            "sheets.properties(sheetId,title)",
+        });
+
+    const sheet =
+      (
+        metadata.data.sheets
+        ?? []
+      )
+        .find(
+          (item) =>
+            item.properties?.title === input.sheetName,
+        );
+
+    const sheetId =
+      sheet?.properties?.sheetId;
+
+    if(sheetId === undefined || sheetId === null){
+      return;
+    }
+
+    await sheets.spreadsheets
+      .batchUpdate({
+        spreadsheetId:
+          input.spreadsheetId,
+        requestBody:{
+          requests:[
+            {
+              repeatCell:{
+                range:{
+                  sheetId,
+                  startRowIndex:
+                    input.startRowIndex,
+                  endRowIndex:
+                    input.endRowIndex,
+                  startColumnIndex:
+                    input.startColumnIndex,
+                  endColumnIndex:
+                    input.endColumnIndex,
+                },
+                cell:{
+                  userEnteredFormat:{
+                    numberFormat:{
+                      type:
+                        "NUMBER",
+                      pattern:
+                        input.pattern
+                        ?? "0.00",
+                    },
+                  },
+                },
+                fields:
+                  "userEnteredFormat.numberFormat",
+              },
+            },
+          ],
+        },
+      });
   }
 
 

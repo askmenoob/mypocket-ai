@@ -1404,6 +1404,14 @@ export class CommitmentService {
             "RAW",
         },
       );
+
+    await this.safeFormatCommitmentAmountCell(
+      workspaceId,
+      setting.spreadsheetId,
+      COMMITMENTS_LIST_SHEET,
+      rowNumber,
+      3,
+    );
   }
 
   private async appendSheetCommitmentLog(
@@ -1417,36 +1425,52 @@ export class CommitmentService {
         actor.workspaceId,
       );
 
-    await this.sheetsService
-      .appendRow(
-        actor.workspaceId,
-        {
-          spreadsheetId:
-            setting.spreadsheetId,
-          range:
-            COMMITMENTS_LOG_RANGE,
-          values:[
-            `cl${randomUUID().replaceAll("-", "")}`,
-            commitment.id,
-            action,
-            now.toISOString(),
-            commitment.currentPeriod,
-            this.amountNumber(
-              commitment.amount,
-            ),
-            "",
-            commitment.status,
-            "DASHBOARD",
-            "",
-            actor.userId,
-            actor.email ?? "",
-            "SYNCED",
-            commitment.name,
-          ],
-          valueInputOption:
-            "RAW",
-        },
+    const appendResult =
+      await this.sheetsService
+        .appendRow(
+          actor.workspaceId,
+          {
+            spreadsheetId:
+              setting.spreadsheetId,
+            range:
+              COMMITMENTS_LOG_RANGE,
+            values:[
+              `cl${randomUUID().replaceAll("-", "")}`,
+              commitment.id,
+              action,
+              now.toISOString(),
+              commitment.currentPeriod,
+              this.amountNumber(
+                commitment.amount,
+              ),
+              "",
+              commitment.status,
+              "DASHBOARD",
+              "",
+              actor.userId,
+              actor.email ?? "",
+              "SYNCED",
+              commitment.name,
+            ],
+            valueInputOption:
+              "RAW",
+          },
+        );
+
+    const rowNumber =
+      this.rowNumberFromUpdatedRange(
+        appendResult.updatedRange,
       );
+
+    if(rowNumber){
+      await this.safeFormatCommitmentAmountCell(
+        actor.workspaceId,
+        setting.spreadsheetId,
+        COMMITMENTS_LOG_SHEET,
+        rowNumber,
+        5,
+      );
+    }
   }
 
   private async readSheetCommitmentLogAmounts(
@@ -1503,6 +1527,70 @@ export class CommitmentService {
     }
 
     return amountByCommitmentId;
+  }
+
+  private async safeFormatCommitmentAmountCell(
+    workspaceId:string,
+    spreadsheetId:string,
+    sheetName:string,
+    rowNumber:number,
+    columnIndex:number,
+  ){
+    try{
+      await this.sheetsService
+        .formatNumberRange(
+          workspaceId,
+          {
+            spreadsheetId,
+            sheetName,
+            startRowIndex:
+              rowNumber - 1,
+            endRowIndex:
+              rowNumber,
+            startColumnIndex:
+              columnIndex,
+            endColumnIndex:
+              columnIndex + 1,
+            pattern:
+              "0.00",
+          },
+        );
+    }catch(error){
+      console.error(
+        "COMMITMENT_AMOUNT_FORMAT_FAILED",
+        {
+          workspaceId,
+          spreadsheetId,
+          sheetName,
+          rowNumber,
+          columnIndex,
+          error,
+        },
+      );
+    }
+  }
+
+  private rowNumberFromUpdatedRange(
+    updatedRange:string,
+  ){
+    const match =
+      updatedRange.match(
+        /![A-Z]+(\d+):/i,
+      );
+
+    if(!match?.[1]){
+      return null;
+    }
+
+    const rowNumber =
+      Number.parseInt(
+        match[1],
+        10,
+      );
+
+    return Number.isFinite(rowNumber)
+      ? rowNumber
+      : null;
   }
 
   private sheetCommitmentValues(
