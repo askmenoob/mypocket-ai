@@ -485,10 +485,37 @@ export class CommitmentService {
     now = new Date(),
   ){
     const current =
-      await this.requireSheetCommitmentManageAccess(
-        actor,
+      await this.findSheetCommitment(
+        actor.workspaceId,
         commitmentId,
       );
+
+    if(!current?.commitment || current.commitment.status === "DELETED"){
+      return this.deleteLegacyDatabaseCommitment(
+        actor,
+        commitmentId,
+        now,
+      );
+    }
+
+    const membership =
+      await this.requireWorkspaceMember(
+        actor,
+      );
+
+    if(
+      !this.canManageCommitment(
+        membership.role,
+        current.commitment.ownerUserId,
+        actor.userId,
+      )
+    ){
+      throw new AppError(
+        "INSUFFICIENT_ROLE",
+        "You cannot manage this commitment",
+        403,
+      );
+    }
 
     const receiptMarkers =
       this.commitmentReceiptMarkers(
@@ -569,6 +596,8 @@ export class CommitmentService {
       deleted:true,
       id:
         current.commitment.id,
+      source:
+        "GOOGLE_SHEET",
       linkedTransactions,
       linkedTransactionCleanupError,
     };
@@ -708,6 +737,194 @@ export class CommitmentService {
           "COMMITMENT",
       },
     );
+  }
+
+  private async deleteLegacyDatabaseCommitment(
+    actor:Actor,
+    commitmentId:string,
+    now = new Date(),
+  ){
+    const membership =
+      await this.requireWorkspaceMember(
+        actor,
+      );
+
+    const commitment =
+      await this.app.prisma.commitment.findFirst({
+        where:{
+          id:
+            commitmentId,
+          workspaceId:
+            actor.workspaceId,
+        },
+      });
+
+    if(!commitment){
+      throw new AppError(
+        "COMMITMENT_NOT_FOUND",
+        "Commitment not found",
+        404,
+      );
+    }
+
+    if(
+      !this.canManageCommitment(
+        membership.role,
+        commitment.ownerUserId,
+        actor.userId,
+      )
+    ){
+      throw new AppError(
+        "INSUFFICIENT_ROLE",
+        "You cannot manage this commitment",
+        403,
+      );
+    }
+
+    const monthlyInstances =
+      await this.app.prisma.monthlyCommitmentInstance.findMany({
+        where:{
+          commitmentId:
+            commitment.id,
+
+          workspaceId:
+            actor.workspaceId,
+        },
+        select:{
+          id:
+            true,
+        },
+      });
+
+    const receiptMarkers =
+      monthlyInstances.map(
+        (instance) =>
+          `commitment:${instance.id}`,
+      );
+
+    let linkedTransactions:
+      Awaited<
+        ReturnType<
+          TransactionService["bulkDeleteSheetTransactionsByReceiptMarkers"]
+        >
+      >
+      |
+      null =
+        null;
+
+    let linkedTransactionCleanupError:
+      string
+      |
+      null =
+        null;
+
+    try{
+      linkedTransactions =
+        await this.transactionService
+          .bulkDeleteSheetTransactionsByReceiptMarkers(
+            actor.workspaceId,
+            receiptMarkers,
+          );
+    }catch(error){
+      linkedTransactionCleanupError =
+        error instanceof Error
+          ? error.message
+          : "Failed to cleanup linked legacy commitment transactions";
+
+      console.error(
+        "LEGACY_COMMITMENT_LINKED_TRANSACTION_CLEANUP_FAILED:",
+        {
+          workspaceId:
+            actor.workspaceId,
+          commitmentId:
+            commitment.id,
+          error,
+        },
+      );
+    }
+
+    const period =
+      this.periodFromDate(
+        now,
+      );
+
+    const deletedCommitment:SheetCommitment = {
+      id:
+        commitment.id,
+      workspaceId:
+        commitment.workspaceId,
+      ownerUserId:
+        commitment.ownerUserId,
+      ownerEmail:
+        actor.email ?? "",
+      name:
+        commitment.name,
+      amount:
+        commitment.amount.toString(),
+      currency:
+        commitment.currency,
+      frequency:
+        "MONTHLY",
+      dueDay:
+        commitment.dueDay,
+      reminderDaysBefore:
+        commitment.reminderDaysBefore,
+      reminderTime:
+        commitment.reminderTime,
+      timezone:
+        commitment.timezone,
+      status:
+        "DELETED",
+      currentPeriod:
+        this.periodKey(
+          period.year,
+          period.month,
+        ),
+      nextDueDate:
+        this.sheetDate(
+          this.dueDateForPeriod(
+            period.year,
+            period.month,
+            commitment.dueDay,
+          ),
+        ),
+      lastPaidAt:
+        "",
+      createdAt:
+        commitment.createdAt.toISOString(),
+      updatedAt:
+        now.toISOString(),
+    };
+
+    await this.appendSheetCommitment(
+      actor.workspaceId,
+      deletedCommitment,
+    );
+
+    await this.appendSheetCommitmentLog(
+      actor,
+      "DELETE",
+      deletedCommitment,
+      now,
+    );
+
+    await this.app.prisma.commitment.delete({
+      where:{
+        id:
+          commitment.id,
+      },
+    });
+
+    return {
+      deleted:
+        true,
+      id:
+        commitment.id,
+      source:
+        "LEGACY_DATABASE",
+      linkedTransactions,
+      linkedTransactionCleanupError,
+    };
   }
 
 
