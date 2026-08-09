@@ -4969,11 +4969,77 @@ function Dashboard(
 
   }
 
+  function markNotificationsUnread(){
+
+    setSeenNotificationIds(
+      [],
+    );
+
+    try{
+
+      localStorage.setItem(
+        notificationStorageKey,
+        JSON.stringify([]),
+      );
+
+    }catch{
+
+      // Notification read state is optional device-local data.
+
+    }
+
+  }
+
+  function setNotificationReadState(
+    notificationId:string,
+    read:boolean,
+  ){
+
+    setSeenNotificationIds(
+      (current) => {
+
+        const next =
+          read
+            ? Array.from(
+              new Set([
+                ...current,
+                notificationId,
+              ]),
+            )
+            : current.filter(
+              (id) =>
+                id !== notificationId,
+            );
+
+        try{
+
+          localStorage.setItem(
+            notificationStorageKey,
+            JSON.stringify(next),
+          );
+
+        }catch{
+
+          // Notification read state is optional device-local data.
+
+        }
+
+        return next;
+
+      },
+    );
+
+  }
+
   function openDashboardNotification(
     notification:DashboardNotification,
   ){
 
-    markNotificationsSeen();
+    setNotificationReadState(
+      notification.id,
+      true,
+    );
+
     setNotificationOpen(false);
     goToView(notification.view);
 
@@ -6406,10 +6472,6 @@ function Dashboard(
                     nextOpen,
                   );
 
-                  if(nextOpen){
-                    markNotificationsSeen();
-                  }
-
                 }}
               >
                 <span aria-hidden="true">
@@ -6447,14 +6509,34 @@ function Dashboard(
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      className="notificationClose"
-                      aria-label={dashboardLanguage === "ms" ? "Tutup notifikasi" : "Close notifications"}
-                      onClick={() => setNotificationOpen(false)}
-                    >
-                      ×
-                    </button>
+                    <div className="notificationHeaderActions">
+                      <button
+                        type="button"
+                        className="notificationAction"
+                        onClick={markNotificationsSeen}
+                        disabled={dashboardNotifications.length === 0 || unreadNotificationCount === 0}
+                      >
+                        {dashboardLanguage === "ms" ? "Tanda semua dibaca" : "Mark all read"}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="notificationAction"
+                        onClick={markNotificationsUnread}
+                        disabled={dashboardNotifications.length === 0 || unreadNotificationCount === dashboardNotifications.length}
+                      >
+                        {dashboardLanguage === "ms" ? "Tanda semua belum dibaca" : "Mark all unread"}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="notificationClose"
+                        aria-label={dashboardLanguage === "ms" ? "Tutup notifikasi" : "Close notifications"}
+                        onClick={() => setNotificationOpen(false)}
+                      >
+                        ×
+                      </button>
+                    </div>
                   </header>
 
                   <div className="notificationList">
@@ -6469,25 +6551,55 @@ function Dashboard(
                     )}
 
                     {dashboardNotifications.map(
-                      (notification) => (
-                        <button
-                          type="button"
-                          className={`notificationItem ${notification.level}`}
+                      (notification) => {
+
+                        const isNotificationRead =
+                          seenNotificationIds.includes(
+                            notification.id,
+                          );
+
+                        return (
+                        <div
+                          className={`notificationItem ${notification.level} ${isNotificationRead ? "read" : "unread"}`}
                           key={notification.id}
-                          onClick={() => openDashboardNotification(notification)}
                         >
                           <i aria-hidden="true" />
 
-                          <span>
+                          <button
+                            type="button"
+                            className="notificationItemMain"
+                            onClick={() => openDashboardNotification(notification)}
+                          >
                             <strong>
                               {notification.title}
                             </strong>
                             <small>
                               {notification.message}
                             </small>
-                          </span>
-                        </button>
-                      ),
+                          </button>
+
+                          <button
+                            type="button"
+                            className="notificationToggle"
+                            onClick={() => setNotificationReadState(
+                              notification.id,
+                              !isNotificationRead,
+                            )}
+                          >
+                            {
+                              isNotificationRead
+                                ? dashboardLanguage === "ms"
+                                  ? "Tanda belum dibaca"
+                                  : "Mark unread"
+                                : dashboardLanguage === "ms"
+                                  ? "Tanda dibaca"
+                                  : "Mark read"
+                            }
+                          </button>
+                        </div>
+                      );
+
+                      },
                     )}
                   </div>
                 </section>

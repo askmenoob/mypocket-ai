@@ -285,8 +285,15 @@ a{color:inherit}
   z-index:1;
 }
 
-.notificationHeader div,
-.notificationItem span{
+.notificationHeaderActions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.notificationHeader > div:first-child,
+.notificationItemMain{
   display:grid;
   gap:4px;
 }
@@ -294,6 +301,23 @@ a{color:inherit}
 .notificationHeader span{
   color:var(--muted);
   font-size:12px;
+}
+
+.notificationAction{
+  min-height:30px;
+  padding:0 10px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#fff;
+  color:var(--green);
+  cursor:pointer;
+  font-size:11px;
+  font-weight:800;
+}
+
+.notificationAction:disabled{
+  cursor:not-allowed;
+  opacity:.45;
 }
 
 .notificationClose{
@@ -317,7 +341,8 @@ a{color:inherit}
 .notificationItem{
   width:100%;
   display:grid;
-  grid-template-columns:10px minmax(0,1fr);
+  grid-template-columns:10px minmax(0,1fr) auto;
+  align-items:start;
   gap:12px;
   padding:14px;
   border:1px solid transparent;
@@ -325,13 +350,19 @@ a{color:inherit}
   background:#f8fafc;
   color:var(--text);
   text-align:left;
-  cursor:pointer;
 }
 
-.notificationItem:hover,
-.notificationItem:focus-visible{
+.notificationItem.unread{
+  border-color:rgba(20,184,166,.24);
+  background:#ecfdf5;
+}
+
+.notificationItem.read{
+  opacity:.76;
+}
+
+.notificationItem:hover{
   border-color:var(--primary);
-  outline:none;
 }
 
 .notificationItem i{
@@ -350,10 +381,44 @@ a{color:inherit}
   background:#ef4444;
 }
 
+.notificationItemMain{
+  padding:0;
+  border:0;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+
+.notificationItemMain:focus-visible,
+.notificationToggle:focus-visible,
+.notificationAction:focus-visible{
+  outline:2px solid var(--primary);
+  outline-offset:2px;
+}
+
 .notificationItem small{
   color:var(--muted);
   font-size:12px;
   line-height:1.45;
+}
+
+.notificationToggle{
+  align-self:center;
+  padding:7px 9px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#fff;
+  color:var(--muted);
+  cursor:pointer;
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.notificationToggle:hover{
+  border-color:var(--primary);
+  color:var(--green);
 }
 
 .notificationEmpty{
