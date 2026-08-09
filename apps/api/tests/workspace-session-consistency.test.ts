@@ -8,6 +8,7 @@ import {
 import test from "node:test";
 
 import {
+  AuthService,
   selectLoginMembership,
 } from "../src/modules/auth/auth.service.js";
 import {
@@ -46,6 +47,192 @@ test(
         family,
       ]),
       family,
+    );
+
+  },
+);
+
+
+test(
+  "a stale workspace token recovers to a valid shared membership",
+  async () => {
+
+    const service =
+      Object.create(
+        AuthService.prototype,
+      ) as any;
+
+    service.repository = {
+      findUserSession:
+        async () => ({
+          id:
+            "user-1",
+          email:
+            "member@example.com",
+          name:
+            "Member",
+          memberships:[
+            {
+              workspaceId:
+                "family-1",
+              role:
+                "ADMIN",
+              workspace:{
+                id:
+                  "family-1",
+                name:
+                  "Family workspace",
+                type:
+                  "FAMILY",
+                onboardingCompletedAt:
+                  new Date(),
+              },
+            },
+          ],
+        }),
+    };
+
+    service.tokenService = {
+      generate:
+        async (
+          userId:string,
+          email:string,
+          workspaceId:string,
+          role:string,
+        ) => {
+
+          assert.deepEqual(
+            {
+              userId,
+              email,
+              workspaceId,
+              role,
+            },
+            {
+              userId:
+                "user-1",
+              email:
+                "member@example.com",
+              workspaceId:
+                "family-1",
+              role:
+                "ADMIN",
+            },
+          );
+
+          return "recovered-token";
+
+        },
+    };
+
+    const result =
+      await service.getCurrentSession(
+        "user-1",
+        "removed-workspace",
+      );
+
+    assert.equal(
+      result.workspace.id,
+      "family-1",
+    );
+
+    assert.equal(
+      result.recoveredWorkspace,
+      true,
+    );
+
+    assert.equal(
+      result.sessionToken,
+      "recovered-token",
+    );
+
+  },
+);
+
+
+test(
+  "a valid selected workspace does not get replaced",
+  async () => {
+
+    const service =
+      Object.create(
+        AuthService.prototype,
+      ) as any;
+
+    service.repository = {
+      findUserSession:
+        async () => ({
+          id:
+            "user-1",
+          email:
+            "member@example.com",
+          name:
+            "Member",
+          memberships:[
+            {
+              workspaceId:
+                "personal-1",
+              role:
+                "OWNER",
+              workspace:{
+                id:
+                  "personal-1",
+                name:
+                  "Personal workspace",
+                type:
+                  "PERSONAL",
+                onboardingCompletedAt:
+                  null,
+              },
+            },
+            {
+              workspaceId:
+                "family-1",
+              role:
+                "ADMIN",
+              workspace:{
+                id:
+                  "family-1",
+                name:
+                  "Family workspace",
+                type:
+                  "FAMILY",
+                onboardingCompletedAt:
+                  new Date(),
+              },
+            },
+          ],
+        }),
+    };
+
+    service.tokenService = {
+      generate:
+        async () => {
+          throw new Error(
+            "token should not be regenerated",
+          );
+        },
+    };
+
+    const result =
+      await service.getCurrentSession(
+        "user-1",
+        "personal-1",
+      );
+
+    assert.equal(
+      result.workspace.id,
+      "personal-1",
+    );
+
+    assert.equal(
+      result.recoveredWorkspace,
+      false,
+    );
+
+    assert.equal(
+      result.sessionToken,
+      undefined,
     );
 
   },
@@ -280,6 +467,16 @@ test(
     assert.match(
       source,
       /initialDashboardToken/,
+    );
+
+    assert.match(
+      source,
+      /me\?\.recoveredWorkspace/,
+    );
+
+    assert.match(
+      source,
+      /me\?\.sessionToken/,
     );
 
   },

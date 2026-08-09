@@ -1797,8 +1797,45 @@ function App(){
 
       }
 
+      let requestToken =
+        activeToken;
+
+
+      let me =
+        await api<any>(
+          "/auth/me",
+          requestToken,
+        );
+
+
+      if(
+        me?.recoveredWorkspace
+        &&
+        me?.sessionToken
+      ){
+
+        requestToken =
+          me.sessionToken;
+
+        localStorage.setItem(
+          STORAGE.token,
+          requestToken,
+        );
+
+        setToken(
+          requestToken,
+        );
+
+        me =
+          await api<any>(
+            "/auth/me",
+            requestToken,
+          );
+
+      }
+
+
       const [
-        me,
         workspaces,
         billing,
         googleSettingsResult,
@@ -1809,19 +1846,18 @@ function App(){
         botSettings,
       ] =
         await Promise.all([
-          api<any>("/auth/me", activeToken),
           api<WorkspaceOption[]>(
             "/workspace/all",
-            activeToken,
+            requestToken,
           ),
           optionalApi<BillingSubscriptionData | null>(
             "/billing/subscription",
-            activeToken,
+            requestToken,
             null,
           ),
           api<any | null>(
             "/google/settings",
-            activeToken,
+            requestToken,
           )
             .then(
               (value) => ({
@@ -1835,11 +1871,11 @@ function App(){
                 error,
               }),
             ),
-          optionalApi<any | null>("/whatsapp/status", activeToken, null),
-          optionalApi<Member[]>("/whatsapp/members", activeToken, []),
+          optionalApi<any | null>("/whatsapp/status", requestToken, null),
+          optionalApi<Member[]>("/whatsapp/members", requestToken, []),
           api<any>(
             "/transactions/sheet",
-            activeToken,
+            requestToken,
           )
             .then(
               (value) => ({
@@ -1853,8 +1889,8 @@ function App(){
                 error,
               }),
             ),
-          optionalApi<CommitmentListData | null>("/commitments?status=unpaid", activeToken, null),
-          optionalApi<BotSettingsData | null>("/bot-settings", activeToken, null),
+          optionalApi<CommitmentListData | null>("/commitments?status=unpaid", requestToken, null),
+          optionalApi<BotSettingsData | null>("/bot-settings", requestToken, null),
         ]);
 
       if(
@@ -1887,7 +1923,7 @@ function App(){
         resolvedTransactions =
           await optionalApi<any>(
             "/transactions?limit=12",
-            activeToken,
+            requestToken,
             [],
           );
 
@@ -1901,7 +1937,7 @@ function App(){
       const adminUsers =
         me?.isSuperAdmin          ? await api<AdminUser[]>(
             "/workspace/admin/users",
-            activeToken,
+            requestToken,
           )
           : [];
 

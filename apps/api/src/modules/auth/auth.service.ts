@@ -219,31 +219,29 @@ export class AuthService {
     }
 
 
-    const membership =
+    const requestedMembership =
       workspaceId
         ? user.memberships.find(
           (item) =>
             item.workspaceId === workspaceId,
         )
-        : (
-          user.memberships.find(
-            (item) =>
-              item.workspace?.type === "BUSINESS",
-          )
-          ??
-          user.memberships.find(
-            (item) =>
-              item.workspace?.type === "FAMILY",
-          )
-          ??
-          user.memberships[0]
-        );
+        : null;
+
+
+    const membership =
+      requestedMembership
+      ??
+      selectLoginMembership(
+        user.memberships,
+      );
 
 
     if (!membership) {
 
-      throw new Error(
+      throw new AppError(
         "WORKSPACE_MEMBERSHIP_NOT_FOUND",
+        "Workspace membership not found",
+        403,
       );
 
     }
@@ -255,11 +253,32 @@ export class AuthService {
 
     if (!workspace) {
 
-      throw new Error(
+      throw new AppError(
         "WORKSPACE_NOT_FOUND",
+        "Workspace not found",
+        404,
       );
 
     }
+
+
+    const recoveredWorkspace =
+      Boolean(
+        workspaceId
+        &&
+        membership.workspaceId !== workspaceId,
+      );
+
+
+    const sessionToken =
+      recoveredWorkspace
+        ? await this.tokenService.generate(
+          user.id,
+          user.email,
+          workspace.id,
+          membership.role,
+        )
+        : undefined;
 
 
     return {
@@ -279,6 +298,12 @@ export class AuthService {
         isSuperAdminEmail(
           user.email,
         ),
+
+
+      recoveredWorkspace,
+
+
+      sessionToken,
 
 
       workspace: {
