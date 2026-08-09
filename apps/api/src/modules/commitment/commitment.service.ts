@@ -3,6 +3,10 @@ import type {
 } from "fastify";
 
 import {
+  randomUUID,
+} from "node:crypto";
+
+import {
   AppError,
 } from "../../shared/errors/index.js";
 
@@ -15,6 +19,14 @@ import type {
 import {
   TransactionService,
 } from "../transaction/transaction.service.js";
+
+import {
+  GoogleSettingsRepository,
+} from "../google/settings/google-settings.repository.js";
+
+import {
+  GoogleSheetsService,
+} from "../google/sheets/google-sheets.service.js";
 
 type Actor = {
   userId:string;
@@ -29,6 +41,33 @@ type CommitmentStatusFilter =
   | "overdue"
   | "all"
   | "inactive";
+
+type SheetCommitment = {
+  id:string;
+  workspaceId:string;
+  ownerUserId:string;
+  ownerEmail:string;
+  name:string;
+  amount:string;
+  currency:string;
+  frequency:string;
+  dueDay:number;
+  reminderDaysBefore:number;
+  reminderTime:string;
+  timezone:string;
+  status:string;
+  currentPeriod:string;
+  nextDueDate:string;
+  lastPaidAt:string;
+  createdAt:string;
+  updatedAt:string;
+};
+
+const COMMITMENTS_LIST_SHEET =
+  "Commitments List";
+
+const COMMITMENTS_LOG_SHEET =
+  "Commitments Log";
 
 const MONTH_NAMES_MS = [
   "Januari",
@@ -48,12 +87,24 @@ const MONTH_NAMES_MS = [
 export class CommitmentService {
 
   private readonly transactionService:TransactionService;
+  private readonly googleSettingsRepository:GoogleSettingsRepository;
+  private readonly sheetsService:GoogleSheetsService;
 
   constructor(
     private readonly app:FastifyInstance,
   ){
     this.transactionService =
       new TransactionService(
+        app,
+      );
+
+    this.googleSettingsRepository =
+      new GoogleSettingsRepository(
+        app.prisma,
+      );
+
+    this.sheetsService =
+      new GoogleSheetsService(
         app,
       );
   }
@@ -68,69 +119,33 @@ export class CommitmentService {
         actor,
       );
 
-    await this.ensureCurrentMonthInstances(
-      actor.workspaceId,
-      actor.userId,
-      now,
-    );
-
-    await this.markOverdue(
-      actor.workspaceId,
-      now,
-    );
-
     const period =
       this.periodFromDate(
         now,
       );
 
     const commitments =
-      await this.app.prisma.commitment.findMany({
-        where:{
-          workspaceId:
-            actor.workspaceId,
-
-          ...(filter === "inactive"
-            ? {
-                OR:[
-                  { isActive:false },
-                  { archivedAt:{ not:null } },
-                ],
-              }
-            : {}),
-
-          ...(filter !== "inactive" && filter !== "all"
-            ? {
-                archivedAt:null,
-              }
-            : {}),
-        },
-        include:{
-          monthlyInstances:{
-            where:{
-              periodYear:
-                period.year,
-              periodMonth:
-                period.month,
-            },
-            orderBy:{
-              dueDate:
-                "asc",
-            },
-          },
-        },
-        orderBy:[
-          { dueDay:"asc" },
-          { name:"asc" },
-        ],
-      });
+      await this.readSheetCommitments(
+        actor.workspaceId,
+      );
 
     const rows =
       commitments
         .map((commitment) => {
-          const instance =
-            commitment.monthlyInstances[0]
-            ?? null;
+          const status =
+            this.resolveSheetCommitmentStatus(
+              commitment,
+              now,
+            );
+
+          const isActive =
+            ![
+              "INACTIVE",
+              "ARCHIVED",
+              "DELETED",
+            ].includes(
+              commitment.status,
+            );
 
           return {
             id:
@@ -142,7 +157,7 @@ export class CommitmentService {
             name:
               commitment.name,
             amount:
-              commitment.amount.toString(),
+              commitment.amount,
             currency:
               commitment.currency,
             dueDay:
@@ -154,9 +169,11 @@ export class CommitmentService {
             timezone:
               commitment.timezone,
             isActive:
-              commitment.isActive,
+              isActive,
             archivedAt:
-              commitment.archivedAt,
+              commitment.status === "ARCHIVED"
+                ? commitment.updatedAt
+                : null,
             canManage:
               this.canManageCommitment(
                 membership.role,
@@ -174,19 +191,25 @@ export class CommitmentService {
                   period.month,
                 ),
               instanceId:
-                instance?.id ?? null,
+                `sheet:${commitment.id}:${this.periodKey(period.year, period.month)}`,
               dueDate:
-                instance?.dueDate ?? this.dueDateForPeriod(
+                this.parseSheetDate(
+                  commitment.nextDueDate,
+                )
+                ??
+                this.dueDateForPeriod(
                   period.year,
                   period.month,
                   commitment.dueDay,
                 ),
               status:
-                instance?.status ?? "PENDING",
+                status,
               paidAt:
-                instance?.paidAt ?? null,
+                commitment.lastPaidAt
+                  ? new Date(commitment.lastPaidAt)
+                  : null,
               reminderSentAt:
-                instance?.reminderSentAt ?? null,
+                null,
             },
             nextReminderAt:
               this.nextReminderDate({
@@ -274,37 +297,68 @@ export class CommitmentService {
         actor.workspaceId,
       );
 
-    const commitment =
-      await this.app.prisma.commitment.create({
-        data:{
-          workspaceId:
-            actor.workspaceId,
-          ownerUserId:
-            actor.userId,
-          name:
-            input.name,
-          amount:
-            input.amount,
-          dueDay:
-            input.dueDay,
-          reminderDaysBefore:
-            input.reminderDaysBefore ?? settings.defaultReminderDaysBefore,
-          reminderTime:
-            input.reminderTime ?? settings.defaultReminderTime,
-          timezone:
-            input.timezone ?? settings.timezone,
-          isActive:
-            input.isActive ?? true,
-          createdById:
-            actor.userId,
-          updatedById:
-            actor.userId,
-        },
-      });
+    const period =
+      this.periodFromDate(
+        now,
+      );
 
-    await this.ensureInstanceForCommitment(
-      commitment.id,
+    const commitment:SheetCommitment = {
+      id:
+        `cm${randomUUID().replaceAll("-", "")}`,
+      workspaceId:
+        actor.workspaceId,
+      ownerUserId:
+        actor.userId,
+      ownerEmail:
+        actor.email ?? "",
+      name:
+        input.name,
+      amount:
+        input.amount,
+      currency:
+        "MYR",
+      frequency:
+        "MONTHLY",
+      dueDay:
+        input.dueDay,
+      reminderDaysBefore:
+        input.reminderDaysBefore ?? settings.defaultReminderDaysBefore,
+      reminderTime:
+        input.reminderTime ?? settings.defaultReminderTime,
+      timezone:
+        input.timezone ?? settings.timezone,
+      status:
+        input.isActive === false ? "INACTIVE" : "ACTIVE",
+      currentPeriod:
+        this.periodKey(
+          period.year,
+          period.month,
+        ),
+      nextDueDate:
+        this.sheetDate(
+          this.dueDateForPeriod(
+            period.year,
+            period.month,
+            input.dueDay,
+          ),
+        ),
+      lastPaidAt:
+        "",
+      createdAt:
+        now.toISOString(),
+      updatedAt:
+        now.toISOString(),
+    };
+
+    await this.appendSheetCommitment(
       actor.workspaceId,
+      commitment,
+    );
+
+    await this.appendSheetCommitmentLog(
+      actor,
+      "CREATE",
+      commitment,
       now,
     );
 
@@ -321,68 +375,61 @@ export class CommitmentService {
     input:UpdateCommitmentBody,
     now = new Date(),
   ){
-    const commitment =
-      await this.requireCommitmentManageAccess(
+    const current =
+      await this.requireSheetCommitmentManageAccess(
         actor,
         commitmentId,
       );
-
-    const updated =
-      await this.app.prisma.commitment.update({
-        where:{
-          id:
-            commitment.id,
-        },
-        data:{
-          ...(input.name !== undefined ? { name:input.name } : {}),
-          ...(input.amount !== undefined ? { amount:input.amount } : {}),
-          ...(input.dueDay !== undefined ? { dueDay:input.dueDay } : {}),
-          ...(input.reminderDaysBefore !== undefined ? { reminderDaysBefore:input.reminderDaysBefore } : {}),
-          ...(input.reminderTime !== undefined ? { reminderTime:input.reminderTime } : {}),
-          ...(input.timezone !== undefined ? { timezone:input.timezone } : {}),
-          ...(input.isActive !== undefined ? { isActive:input.isActive } : {}),
-          updatedById:
-            actor.userId,
-        },
-      });
 
     const period =
       this.periodFromDate(
         now,
       );
 
-    if(input.dueDay !== undefined){
-      await this.app.prisma.monthlyCommitmentInstance.updateMany({
-        where:{
-          commitmentId:
-            updated.id,
-          workspaceId:
-            actor.workspaceId,
-          periodYear:
-            period.year,
-          periodMonth:
-            period.month,
-          status:{
-            in:[
-              "PENDING",
-              "OVERDUE",
-            ],
-          },
-        },
-        data:{
-          dueDate:
-            this.dueDateForPeriod(
-              period.year,
-              period.month,
-              updated.dueDay,
-            ),
-        },
-      });
-    }
+    const nextDueDay =
+      input.dueDay ?? current.commitment.dueDay;
 
-    await this.ensureInstanceForCommitment(
-      updated.id,
+    const updated:SheetCommitment = {
+      ...current.commitment,
+      ...(input.name !== undefined ? { name:input.name } : {}),
+      ...(input.amount !== undefined ? { amount:input.amount } : {}),
+      ...(input.dueDay !== undefined ? { dueDay:input.dueDay } : {}),
+      ...(input.reminderDaysBefore !== undefined ? { reminderDaysBefore:input.reminderDaysBefore } : {}),
+      ...(input.reminderTime !== undefined ? { reminderTime:input.reminderTime } : {}),
+      ...(input.timezone !== undefined ? { timezone:input.timezone } : {}),
+      ...(input.isActive !== undefined
+        ? {
+            status:
+              input.isActive ? "ACTIVE" : "INACTIVE",
+          }
+        : {}),
+      currentPeriod:
+        this.periodKey(
+          period.year,
+          period.month,
+        ),
+      nextDueDate:
+        this.sheetDate(
+          this.dueDateForPeriod(
+            period.year,
+            period.month,
+            nextDueDay,
+          ),
+        ),
+      updatedAt:
+        now.toISOString(),
+    };
+
+    await this.updateSheetCommitmentRow(
       actor.workspaceId,
+      current.rowNumber,
+      updated,
+    );
+
+    await this.appendSheetCommitmentLog(
+      actor,
+      "UPDATE",
+      updated,
       now,
     );
 
@@ -398,65 +445,55 @@ export class CommitmentService {
     commitmentId:string,
     now = new Date(),
   ){
-    const commitment =
-      await this.requireCommitmentManageAccess(
+    const current =
+      await this.requireSheetCommitmentManageAccess(
         actor,
         commitmentId,
       );
 
-    await this.app.prisma.commitment.update({
-      where:{
-        id:
-          commitment.id,
-      },
-      data:{
-        isActive:false,
-        archivedAt:
-          now,
-        updatedById:
-          actor.userId,
-      },
-    });
+    const commitment = {
+      ...current.commitment,
+      status:
+        "ARCHIVED",
+      updatedAt:
+        now.toISOString(),
+    };
+
+    await this.updateSheetCommitmentRow(
+      actor.workspaceId,
+      current.rowNumber,
+      commitment,
+    );
+
+    await this.appendSheetCommitmentLog(
+      actor,
+      "ARCHIVE",
+      commitment,
+      now,
+    );
 
     return {
       archived:true,
       id:
-        commitment.id,
+        current.commitment.id,
     };
   }
 
   async deleteCommitment(
     actor:Actor,
     commitmentId:string,
+    now = new Date(),
   ){
-    const commitment =
-      await this.requireCommitmentManageAccess(
+    const current =
+      await this.requireSheetCommitmentManageAccess(
         actor,
         commitmentId,
       );
 
-    const monthlyInstances =
-      await this.app.prisma.monthlyCommitmentInstance.findMany({
-        where:{
-          commitmentId:
-            commitment.id,
-
-          workspaceId:
-            actor.workspaceId,
-        },
-        select:{
-          id:
-            true,
-        },
-      });
-
-
     const receiptMarkers =
-      monthlyInstances
-        .map(
-          (instance) =>
-            `commitment:${instance.id}`,
-        );
+      this.commitmentReceiptMarkers(
+        current.commitment,
+      );
 
 
     let linkedTransactions:
@@ -499,7 +536,7 @@ export class CommitmentService {
           workspaceId:
             actor.workspaceId,
           commitmentId:
-            commitment.id,
+            current.commitment.id,
           error,
         },
       );
@@ -507,17 +544,31 @@ export class CommitmentService {
     }
 
 
-    await this.app.prisma.commitment.delete({
-      where:{
-        id:
-          commitment.id,
-      },
-    });
+    const commitment = {
+      ...current.commitment,
+      status:
+        "DELETED",
+      updatedAt:
+        now.toISOString(),
+    };
+
+    await this.updateSheetCommitmentRow(
+      actor.workspaceId,
+      current.rowNumber,
+      commitment,
+    );
+
+    await this.appendSheetCommitmentLog(
+      actor,
+      "DELETE",
+      commitment,
+      now,
+    );
 
     return {
       deleted:true,
       id:
-        commitment.id,
+        current.commitment.id,
       linkedTransactions,
       linkedTransactionCleanupError,
     };
@@ -528,49 +579,80 @@ export class CommitmentService {
     commitmentId:string,
     now = new Date(),
   ){
-    const commitment =
-      await this.requireCommitmentManageAccess(
+    const current =
+      await this.requireSheetCommitmentManageAccess(
         actor,
         commitmentId,
       );
 
-    const instance =
-      await this.ensureInstanceForCommitment(
-        commitment.id,
-        actor.workspaceId,
+    const period =
+      this.periodFromDate(
         now,
       );
 
-    const updated =
-      await this.app.prisma.monthlyCommitmentInstance.update({
-        where:{
-          id:
-            instance.id,
-        },
-        data:{
-          status:
-            "PAID",
-          paidAt:
-            instance.paidAt ?? now,
-        },
-      });
+    const paidAt =
+      current.commitment.lastPaidAt
+        ? new Date(current.commitment.lastPaidAt)
+        : now;
+
+    const commitment:SheetCommitment = {
+      ...current.commitment,
+      status:
+        "PAID",
+      currentPeriod:
+        this.periodKey(
+          period.year,
+          period.month,
+        ),
+      lastPaidAt:
+        paidAt.toISOString(),
+      updatedAt:
+        now.toISOString(),
+    };
+
+    await this.updateSheetCommitmentRow(
+      actor.workspaceId,
+      current.rowNumber,
+      commitment,
+    );
 
     const transaction =
       await this.ensurePaidCommitmentTransaction(
         actor,
         commitment,
-        updated,
+        {
+          id:
+            this.commitmentTransactionMarker(
+              commitment,
+            ),
+          dueDate:
+            this.dueDateForPeriod(
+              period.year,
+              period.month,
+              commitment.dueDay,
+            ),
+          paidAt,
+        },
+      );
+
+    await this.appendSheetCommitmentLog(
+      actor,
+      "PAY",
+      commitment,
+      now,
       );
 
     return {
       commitmentId:
         commitment.id,
       instanceId:
-        updated.id,
+        this.commitmentTransactionMarker(
+          commitment,
+        ),
       status:
-        updated.status,
+        commitment.status,
       paidAt:
-        updated.paidAt,
+        paidAt,
       transactionId:
         transaction.id,
     };
@@ -581,7 +663,7 @@ export class CommitmentService {
     commitment:{
       id:string;
       name:string;
-      amount:any;
+      amount:string;
       currency:string;
     },
     instance:{
@@ -591,49 +673,14 @@ export class CommitmentService {
     },
   ){
     const marker =
-      `commitment:${instance.id}`;
+      instance.id.startsWith("commitment:")
+        ? instance.id
+        : `commitment:${instance.id}`;
 
     const transactionDate =
       instance.paidAt
       ??
       new Date();
-
-    const existing =
-      await this.app.prisma.transaction.findFirst({
-        where:{
-          workspaceId:
-            actor.workspaceId,
-          createdById:
-            actor.userId,
-          type:
-            "EXPENSE",
-          amount:
-            commitment.amount,
-          receiptUrl:
-            marker,
-        },
-        include:{
-          category:true,
-          merchant:true,
-          paymentMethod:true,
-        },
-      });
-
-    if(existing){
-      return existing;
-    }
-
-    const category =
-      await this.findOrCreateCategory(
-        actor.workspaceId,
-        "Commitment",
-      );
-
-    const merchant =
-      await this.findOrCreateMerchant(
-        actor.workspaceId,
-        commitment.name,
-      );
 
     return this.transactionService.createTransaction(
       actor.role as
@@ -655,76 +702,12 @@ export class CommitmentService {
         description:
           commitment.name,
         transactionDate,
-        categoryId:
-          category.id,
-        merchantId:
-          merchant.id,
         receiptUrl:
           marker,
         source:
           "COMMITMENT",
       },
     );
-  }
-
-
-
-
-  private async findOrCreateCategory(
-    workspaceId:string,
-    name:string,
-  ){
-    const existing =
-      await this.app.prisma.category.findFirst({
-        where:{
-          workspaceId,
-          name:{
-            equals:name,
-            mode:"insensitive",
-          },
-        },
-      });
-
-    if(existing){
-      return existing;
-    }
-
-    return this.app.prisma.category.create({
-      data:{
-        workspaceId,
-        name,
-      },
-    });
-  }
-
-
-
-
-  private async findOrCreateMerchant(
-    workspaceId:string,
-    name:string,
-  ){
-    const existing =
-      await this.app.prisma.merchant.findFirst({
-        where:{
-          workspaceId,
-          name:{
-            equals:name,
-            mode:"insensitive",
-          },
-        },
-      });
-
-    if(existing){
-      return existing;
-    }
-
-    return this.app.prisma.merchant.create({
-      data:{
-        workspaceId,
-        name,
-      },
-    });
   }
 
 
@@ -801,96 +784,15 @@ export class CommitmentService {
       actor,
     );
 
-    await this.ensureInstanceForCommitment(
-      commitmentId,
-      actor.workspaceId,
-      now,
-    );
+    const current =
+      await this.findSheetCommitment(
+        actor.workspaceId,
+        commitmentId,
+      );
 
     const commitment =
-      await this.app.prisma.commitment.findFirst({
-        where:{
-          id:
-            commitmentId,
-          workspaceId:
-            actor.workspaceId,
-        },
-        include:{
-          monthlyInstances:{
-            orderBy:{
-              dueDate:
-                "desc",
-            },
-            take:3,
-          },
-        },
-      });
-
-    if(!commitment){
-      throw new AppError(
-        "COMMITMENT_NOT_FOUND",
-        "Commitment not found",
-        404,
-      );
-    }
-
-    return {
-      ...commitment,
-      amount:
-        commitment.amount.toString(),
-      monthlyInstances:
-        commitment.monthlyInstances.map((instance) => ({
-          ...instance,
-        })),
-    };
-  }
-
-  async ensureCurrentMonthInstances(
-    workspaceId:string,
-    actorUserId:string,
-    now = new Date(),
-  ){
-    const commitments =
-      await this.app.prisma.commitment.findMany({
-        where:{
-          workspaceId,
-          isActive:true,
-          archivedAt:null,
-        },
-      });
-
-    const instances = [];
-
-    for(const commitment of commitments){
-      instances.push(
-        await this.ensureInstanceForCommitment(
-          commitment.id,
-          workspaceId,
-          now,
-        ),
-      );
-    }
-
-    return {
-      createdOrExisting:
-        instances.length,
-      actorUserId,
-    };
-  }
-
-  private async ensureInstanceForCommitment(
-    commitmentId:string,
-    workspaceId:string,
-    now = new Date(),
-  ){
-    const commitment =
-      await this.app.prisma.commitment.findFirst({
-        where:{
-          id:
-            commitmentId,
-          workspaceId,
-        },
-      });
+      current?.commitment
+      ?? null;
 
     if(!commitment){
       throw new AppError(
@@ -905,57 +807,502 @@ export class CommitmentService {
         now,
       );
 
-    return this.app.prisma.monthlyCommitmentInstance.upsert({
-      where:{
-        commitmentId_periodYear_periodMonth:{
-          commitmentId:
-            commitment.id,
-          periodYear:
-            period.year,
-          periodMonth:
-            period.month,
-        },
-      },
-      create:{
-        commitmentId:
-          commitment.id,
-        workspaceId,
-        periodYear:
-          period.year,
-        periodMonth:
-          period.month,
-        dueDate:
-          this.dueDateForPeriod(
-            period.year,
-            period.month,
-            commitment.dueDay,
-          ),
-      },
-      update:{},
-    });
+    return {
+      ...commitment,
+      amount:
+        commitment.amount,
+      monthlyInstances:
+        [
+          {
+            id:
+              this.commitmentTransactionMarker(
+                commitment,
+              ),
+            workspaceId:
+              commitment.workspaceId,
+            commitmentId:
+              commitment.id,
+            periodYear:
+              period.year,
+            periodMonth:
+              period.month,
+            dueDate:
+              this.parseSheetDate(
+                commitment.nextDueDate,
+              )
+              ??
+              this.dueDateForPeriod(
+                period.year,
+                period.month,
+                commitment.dueDay,
+              ),
+            status:
+              this.resolveSheetCommitmentStatus(
+                commitment,
+                now,
+              ),
+            paidAt:
+              commitment.lastPaidAt
+                ? new Date(commitment.lastPaidAt)
+                : null,
+            reminderSentAt:
+              null,
+          },
+        ],
+    };
   }
 
-  private async markOverdue(
+  async ensureCurrentMonthInstances(
     workspaceId:string,
-    now:Date,
+    actorUserId:string,
+    now = new Date(),
   ){
-    await this.app.prisma.monthlyCommitmentInstance.updateMany({
-      where:{
+    void now;
+
+    await this.readSheetCommitments(
+      workspaceId,
+    );
+
+    return {
+      createdOrExisting:
+        0,
+      actorUserId,
+      source:
+        "GOOGLE_SHEET",
+    };
+  }
+
+  private async readSheetCommitments(
+    workspaceId:string,
+  ):Promise<SheetCommitment[]>{
+    const setting =
+      await this.googleSettingsRepository
+        .findByWorkspaceId(
+          workspaceId,
+        );
+
+    if(!setting?.spreadsheetId){
+      throw new AppError(
+        "GOOGLE_SHEET_REQUIRED",
+        "Commitments are stored in Google Sheet. Please connect Google Sheet first.",
+        400,
+      );
+    }
+
+    const rows =
+      await this.sheetsService
+        .readRange(
+          workspaceId,
+          {
+            spreadsheetId:
+              setting.spreadsheetId,
+            range:
+              `${COMMITMENTS_LIST_SHEET}!A:O`,
+          },
+        );
+
+    return rows
+      .slice(1)
+      .map((row) => this.parseSheetCommitmentRow(row))
+      .filter((row): row is SheetCommitment => Boolean(row))
+      .filter((row) =>
+        row.workspaceId === workspaceId
+        &&
+        row.status !== "DELETED",
+      )
+      .sort((left, right) =>
+        left.dueDay - right.dueDay
+        ||
+        left.name.localeCompare(right.name),
+      );
+  }
+
+  private async findSheetCommitment(
+    workspaceId:string,
+    commitmentId:string,
+  ){
+    const setting =
+      await this.googleSettingsRepository
+        .findByWorkspaceId(
+          workspaceId,
+        );
+
+    if(!setting?.spreadsheetId){
+      throw new AppError(
+        "GOOGLE_SHEET_REQUIRED",
+        "Commitments are stored in Google Sheet. Please connect Google Sheet first.",
+        400,
+      );
+    }
+
+    const rows =
+      await this.sheetsService
+        .readRange(
+          workspaceId,
+          {
+            spreadsheetId:
+              setting.spreadsheetId,
+            range:
+              `${COMMITMENTS_LIST_SHEET}!A:O`,
+          },
+        );
+
+    for(let index = 1; index < rows.length; index += 1){
+      const commitment =
+        this.parseSheetCommitmentRow(
+          rows[index],
+        );
+
+      if(
+        commitment?.id === commitmentId
+        &&
+        commitment.workspaceId === workspaceId
+      ){
+        return {
+          commitment,
+          rowNumber:
+            index + 1,
+          spreadsheetId:
+            setting.spreadsheetId,
+        };
+      }
+    }
+
+    return null;
+  }
+
+  private parseSheetCommitmentRow(
+    row:unknown[],
+  ):SheetCommitment | null{
+    const valueAt =
+      (index:number) =>
+        String(row[index] ?? "").trim();
+
+    const id =
+      valueAt(0);
+
+    if(!id.startsWith("cm")){
+      return null;
+    }
+
+    return {
+      id,
+      workspaceId:
+        valueAt(1),
+      name:
+        valueAt(2),
+      amount:
+        valueAt(3) || "0",
+      frequency:
+        valueAt(4) || "MONTHLY",
+      dueDay:
+        this.toInteger(valueAt(5), 1),
+      reminderDaysBefore:
+        this.toInteger(valueAt(6), 2),
+      reminderTime:
+        valueAt(7) || "09:00",
+      timezone:
+        valueAt(8) || "Asia/Kuala_Lumpur",
+      status:
+        (valueAt(9) || "ACTIVE").toUpperCase(),
+      currentPeriod:
+        valueAt(10),
+      nextDueDate:
+        valueAt(11),
+      lastPaidAt:
+        valueAt(12),
+      ownerUserId:
+        valueAt(13),
+      ownerEmail:
+        valueAt(14),
+      currency:
+        "MYR",
+      createdAt:
+        "",
+      updatedAt:
+        "",
+    };
+  }
+
+  private async appendSheetCommitment(
+    workspaceId:string,
+    commitment:SheetCommitment,
+  ){
+    const setting =
+      await this.requireGoogleSheetSetting(
         workspaceId,
-        status:
-          "PENDING",
-        dueDate:{
-          lt:
-            this.startOfDay(
-              now,
+      );
+
+    await this.sheetsService
+      .appendRow(
+        workspaceId,
+        {
+          spreadsheetId:
+            setting.spreadsheetId,
+          range:
+            `${COMMITMENTS_LIST_SHEET}!A:O`,
+          values:
+            this.sheetCommitmentValues(
+              commitment,
             ),
         },
-      },
-      data:{
-        status:
-          "OVERDUE",
-      },
-    });
+      );
+  }
+
+  private async updateSheetCommitmentRow(
+    workspaceId:string,
+    rowNumber:number,
+    commitment:SheetCommitment,
+  ){
+    const setting =
+      await this.requireGoogleSheetSetting(
+        workspaceId,
+      );
+
+    await this.sheetsService
+      .updateRange(
+        workspaceId,
+        {
+          spreadsheetId:
+            setting.spreadsheetId,
+          range:
+            `${COMMITMENTS_LIST_SHEET}!A${rowNumber}:O${rowNumber}`,
+          values:[
+            this.sheetCommitmentValues(
+              commitment,
+            ),
+          ],
+        },
+      );
+  }
+
+  private async appendSheetCommitmentLog(
+    actor:Actor,
+    action:string,
+    commitment:SheetCommitment,
+    now:Date,
+  ){
+    const setting =
+      await this.requireGoogleSheetSetting(
+        actor.workspaceId,
+      );
+
+    await this.sheetsService
+      .appendRow(
+        actor.workspaceId,
+        {
+          spreadsheetId:
+            setting.spreadsheetId,
+          range:
+            `${COMMITMENTS_LOG_SHEET}!A:K`,
+          values:[
+            `cl${randomUUID().replaceAll("-", "")}`,
+            now.toISOString(),
+            actor.workspaceId,
+            commitment.id,
+            action,
+            commitment.name,
+            commitment.amount,
+            commitment.status,
+            commitment.currentPeriod,
+            actor.userId,
+            actor.email ?? "",
+          ],
+        },
+      );
+  }
+
+  private sheetCommitmentValues(
+    commitment:SheetCommitment,
+  ){
+    return [
+      commitment.id,
+      commitment.workspaceId,
+      commitment.name,
+      commitment.amount,
+      commitment.frequency,
+      String(commitment.dueDay),
+      String(commitment.reminderDaysBefore),
+      commitment.reminderTime,
+      commitment.timezone,
+      commitment.status,
+      commitment.currentPeriod,
+      commitment.nextDueDate,
+      commitment.lastPaidAt,
+      commitment.ownerUserId,
+      commitment.ownerEmail,
+    ];
+  }
+
+  private async requireGoogleSheetSetting(
+    workspaceId:string,
+  ){
+    const setting =
+      await this.googleSettingsRepository
+        .findByWorkspaceId(
+          workspaceId,
+        );
+
+    if(!setting?.spreadsheetId){
+      throw new AppError(
+        "GOOGLE_SHEET_REQUIRED",
+        "Commitments are stored in Google Sheet. Please connect Google Sheet first.",
+        400,
+      );
+    }
+
+    return {
+      spreadsheetId:
+        setting.spreadsheetId,
+    };
+  }
+
+  private async requireSheetCommitmentManageAccess(
+    actor:Actor,
+    commitmentId:string,
+  ){
+    const membership =
+      await this.requireWorkspaceMember(
+        actor,
+      );
+
+    const current =
+      await this.findSheetCommitment(
+        actor.workspaceId,
+        commitmentId,
+      );
+
+    if(!current?.commitment || current.commitment.status === "DELETED"){
+      throw new AppError(
+        "COMMITMENT_NOT_FOUND",
+        "Commitment not found",
+        404,
+      );
+    }
+
+    if(
+      !this.canManageCommitment(
+        membership.role,
+        current.commitment.ownerUserId,
+        actor.userId,
+      )
+    ){
+      throw new AppError(
+        "INSUFFICIENT_ROLE",
+        "You cannot manage this commitment",
+        403,
+      );
+    }
+
+    return current;
+  }
+
+  private resolveSheetCommitmentStatus(
+    commitment:SheetCommitment,
+    now:Date,
+  ){
+    const period =
+      this.periodFromDate(
+        now,
+      );
+
+    if(
+      commitment.status === "PAID"
+      &&
+      commitment.currentPeriod === this.periodKey(
+        period.year,
+        period.month,
+      )
+    ){
+      return "PAID";
+    }
+
+    if(
+      [
+        "ARCHIVED",
+        "INACTIVE",
+        "DELETED",
+      ].includes(commitment.status)
+    ){
+      return commitment.status;
+    }
+
+    const dueDate =
+      this.parseSheetDate(
+        commitment.nextDueDate,
+      );
+
+    if(
+      dueDate
+      &&
+      dueDate.getTime() < this.startOfDay(now).getTime()
+    ){
+      return "OVERDUE";
+    }
+
+    return "PENDING";
+  }
+
+  private commitmentTransactionMarker(
+    commitment:SheetCommitment,
+  ){
+    return `commitment:${commitment.id}:${commitment.currentPeriod}`;
+  }
+
+  private commitmentReceiptMarkers(
+    commitment:SheetCommitment,
+  ){
+    return [
+      this.commitmentTransactionMarker(
+        commitment,
+      ),
+      `commitment:${commitment.id}`,
+    ];
+  }
+
+  private periodKey(
+    year:number,
+    month:number,
+  ){
+    return `${year}-${String(month).padStart(2, "0")}`;
+  }
+
+  private sheetDate(
+    date:Date,
+  ){
+    return date
+      .toISOString()
+      .slice(0, 10);
+  }
+
+  private parseSheetDate(
+    value:string,
+  ){
+    if(!value){
+      return null;
+    }
+
+    const parsed =
+      new Date(value);
+
+    return Number.isNaN(parsed.getTime())
+      ? null
+      : parsed;
+  }
+
+  private toInteger(
+    value:string,
+    fallback:number,
+  ){
+    const parsed =
+      Number.parseInt(
+        value,
+        10,
+      );
+
+    return Number.isFinite(parsed)
+      ? parsed
+      : fallback;
   }
 
   private async getOrCreateBotSettings(
@@ -970,50 +1317,6 @@ export class CommitmentService {
       },
       update:{},
     });
-  }
-
-  private async requireCommitmentManageAccess(
-    actor:Actor,
-    commitmentId:string,
-  ){
-    const membership =
-      await this.requireWorkspaceMember(
-        actor,
-      );
-
-    const commitment =
-      await this.app.prisma.commitment.findFirst({
-        where:{
-          id:
-            commitmentId,
-          workspaceId:
-            actor.workspaceId,
-        },
-      });
-
-    if(!commitment){
-      throw new AppError(
-        "COMMITMENT_NOT_FOUND",
-        "Commitment not found",
-        404,
-      );
-    }
-
-    if(
-      !this.canManageCommitment(
-        membership.role,
-        commitment.ownerUserId,
-        actor.userId,
-      )
-    ){
-      throw new AppError(
-        "INSUFFICIENT_ROLE",
-        "You cannot manage this commitment",
-        403,
-      );
-    }
-
-    return commitment;
   }
 
   private async requireWorkspaceMember(
