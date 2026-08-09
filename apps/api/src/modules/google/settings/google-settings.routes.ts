@@ -148,7 +148,10 @@ export default async function googleSettingsRoutes(
     "/settings",
     {
       preHandler:[
-        app.authenticate,
+        requireRole(
+          Roles.OWNER,
+          Roles.ADMIN,
+        ),
       ],
     },
     controller.delete,

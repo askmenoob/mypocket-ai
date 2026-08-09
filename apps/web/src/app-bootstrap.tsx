@@ -6903,7 +6903,7 @@ function Dashboard(
               setActiveView("whatsapp")
             }
             canManageWhatsApp={
-              canViewWorkspaceSettings
+              canChangeWorkspaceSettings
             }
             onSaveWhatsAppAlias={
               saveWhatsAppBotAlias
@@ -7313,7 +7313,7 @@ function Dashboard(
                     <span>{member.whatsappPhoneNumber || "belum linked"}</span>
                   </div>
 
-                  {member.whatsappPhoneNumber && (
+                  {member.whatsappPhoneNumber && canChangeWorkspaceSettings && (
                     <button
                       className="ghost danger"
                       onClick={() => unlinkMember(member.memberId)}
@@ -7325,7 +7325,7 @@ function Dashboard(
             ))}
             </div>
               <div className="panelActions">
-                {!isWhatsAppConnected && (
+                {!isWhatsAppConnected && canChangeWorkspaceSettings && (
                   <button
                     className="primary"
                     onClick={() => props.openWhatsAppQr("dashboard")}
@@ -7334,7 +7334,7 @@ function Dashboard(
                   </button>
                 )}
 
-                {isWhatsAppConnected && (
+                {isWhatsAppConnected && canChangeWorkspaceSettings && (
                   <button
                     className="ghost danger"
                     onClick={() => props.resetWhatsAppInstance()}
@@ -7954,7 +7954,7 @@ function Dashboard(
                   "transactions",
                 )}
               />
-              {isWhatsAppConnected
+              {canChangeWorkspaceSettings && isWhatsAppConnected
                 ? (
                   <Action
                     title="Disconnect WhatsApp"
@@ -7963,15 +7963,17 @@ function Dashboard(
                     onClick={() => props.resetWhatsAppInstance()}
                   />
                 )
-                : (
+                : canChangeWorkspaceSettings ? (
                   <Action
                     title="Open WhatsApp QR"
                     desc={dashboardLanguage === "ms" ? "Pair bot sekali dengan nombor WhatsApp anda." : "Pair the bot once with your WhatsApp number."}
                     icon="☏"
                     onClick={() => props.openWhatsAppQr("dashboard")}
                   />
-                )}
-              <Action title={dashboardText.openSetupWizard} desc={dashboardLanguage === "ms" ? "Semak langkah onboarding." : "Review onboarding steps."} icon="⚙" onClick={props.resetWizard} />
+                ) : null}
+              {canChangeWorkspaceSettings && (
+                <Action title={dashboardText.openSetupWizard} desc={dashboardLanguage === "ms" ? "Semak langkah onboarding." : "Review onboarding steps."} icon="⚙" onClick={props.resetWizard} />
+              )}
             </div>
             </Panel>
           )}

@@ -337,6 +337,31 @@ test(
       /Roles\.MEMBER/,
     );
 
+    const deleteRouteIndex =
+      source.indexOf(
+        "app.delete(",
+      );
+
+    assert.notEqual(
+      deleteRouteIndex,
+      -1,
+    );
+
+    const deleteRoute =
+      source.slice(
+        deleteRouteIndex,
+      );
+
+    assert.match(
+      deleteRoute,
+      /requireRole\([\s\S]*Roles\.OWNER[\s\S]*Roles\.ADMIN/,
+    );
+
+    assert.doesNotMatch(
+      deleteRoute,
+      /app\.authenticate/,
+    );
+
   },
 );
 
@@ -507,6 +532,48 @@ test(
     assert.match(
       source,
       /transaction:\$\{latestTransaction\.id\}/,
+    );
+
+  },
+);
+
+
+test(
+  "members can view workspace panels without WhatsApp management controls",
+  () => {
+
+    const source =
+      readFileSync(
+        resolve(
+          process.cwd(),
+          "../web/src/app-bootstrap.tsx",
+        ),
+        "utf8",
+      );
+
+    assert.match(
+      source,
+      /const canViewWorkspaceSettings =[\s\S]*canChangeWorkspaceSettings[\s\S]*isMemberRole/,
+    );
+
+    assert.match(
+      source,
+      /canManageWhatsApp=\{[\s\S]*canChangeWorkspaceSettings[\s\S]*\}/,
+    );
+
+    assert.match(
+      source,
+      /member\.whatsappPhoneNumber && canChangeWorkspaceSettings/,
+    );
+
+    assert.match(
+      source,
+      /!isWhatsAppConnected && canChangeWorkspaceSettings/,
+    );
+
+    assert.match(
+      source,
+      /isWhatsAppConnected && canChangeWorkspaceSettings/,
     );
 
   },
