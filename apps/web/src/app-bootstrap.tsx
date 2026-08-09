@@ -3728,7 +3728,8 @@ function Dashboard(
     actorRole === "ADMIN";
 
   const canViewWorkspaceSettings =
-    canChangeWorkspaceSettings;
+    canChangeWorkspaceSettings ||
+    actorRole === "MEMBER";
 
   const canManageMembers =
     isSuperAdmin ||
