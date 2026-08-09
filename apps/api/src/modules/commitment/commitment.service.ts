@@ -1558,7 +1558,7 @@ export class CommitmentService {
             endColumnIndex:
               columnIndex + 1,
             pattern:
-              "0.00",
+              "#,##0.00",
           },
         );
     }catch(error){
