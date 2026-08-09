@@ -2196,6 +2196,84 @@ export class WhatsAppService {
         triggeredText;
 
     }
+    else{
+
+      const originalText =
+        (
+          normalized.text
+          ??
+          ""
+        )
+          .trim();
+
+      if(
+        originalText
+        &&
+        !originalText.startsWith(
+          "!",
+        )
+      ){
+
+        const draftActorJid =
+          normalized.remoteJid
+          ??
+          normalized.participantJid
+          ??
+          "";
+
+        const draftActorMember =
+          await this.findWebhookActorMember(
+            instance.workspaceId,
+            draftActorJid,
+          );
+
+        const draftKey =
+          draftActorMember
+            ? this.commitmentDraftKey(
+                instance.workspaceId,
+                draftActorMember.userId,
+              )
+            : "";
+
+        const hasActiveDraft =
+          Boolean(
+            draftKey,
+          )
+          &&
+          (
+            this.commitmentDrafts.has(
+              draftKey,
+            )
+            ||
+            this.payCommitmentDrafts.has(
+              draftKey,
+            )
+          );
+
+        if(!hasActiveDraft){
+
+          return {
+
+            message:
+              "WhatsApp webhook ignored",
+
+            source:
+              "EVOLUTION",
+
+            normalized:{
+              ...normalized,
+
+              reason:
+                "PRIVATE_TRIGGER_REQUIRED",
+            },
+
+          };
+
+        }
+
+      }
+
+    }
 
 
     normalized.text =
@@ -8752,18 +8830,6 @@ export class WhatsAppService {
       );
 
 
-    if(fromMe){
-
-      return {
-        accepted:false,
-        reason:"MESSAGE_FROM_SELF",
-        event,
-        instanceName,
-      };
-
-    }
-
-
     const message =
       this.asRecord(
         data.message
@@ -8776,6 +8842,26 @@ export class WhatsAppService {
       this.extractMessageText(
         message,
       );
+
+
+    if(
+      fromMe
+      &&
+      !text
+        .trim()
+        .startsWith(
+          "!",
+        )
+    ){
+
+      return {
+        accepted:false,
+        reason:"MESSAGE_FROM_SELF",
+        event,
+        instanceName,
+      };
+
+    }
 
 
     if(!text){
