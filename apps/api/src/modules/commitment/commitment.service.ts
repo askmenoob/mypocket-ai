@@ -157,7 +157,9 @@ export class CommitmentService {
             name:
               commitment.name,
             amount:
-              commitment.amount,
+              this.safeAmountText(
+                commitment.amount,
+              ),
             currency:
               commitment.currency,
             dueDay:
@@ -1027,7 +1029,9 @@ export class CommitmentService {
     return {
       ...commitment,
       amount:
-        commitment.amount,
+        this.safeAmountText(
+          commitment.amount,
+        ),
       monthlyInstances:
         [
           {
@@ -1572,6 +1576,16 @@ export class CommitmentService {
     return Number.isFinite(amount)
       ? amount
       : 0;
+  }
+
+  private safeAmountText(
+    value:string,
+  ){
+    return this.normalizeAmount(
+      value,
+    )
+    ||
+    "0.00";
   }
 
   private async getOrCreateBotSettings(
