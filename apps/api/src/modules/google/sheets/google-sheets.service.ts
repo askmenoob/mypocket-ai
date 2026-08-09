@@ -499,6 +499,9 @@ export class GoogleSheetsService {
           range:
             input.range,
 
+          valueRenderOption:
+            input.valueRenderOption,
+
         });
 
 

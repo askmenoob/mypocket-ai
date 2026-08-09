@@ -1131,6 +1131,8 @@ export class CommitmentService {
                 setting.spreadsheetId,
               range:
                 COMMITMENTS_LIST_RANGE,
+              valueRenderOption:
+                "UNFORMATTED_VALUE",
             },
           ),
         this.readSheetCommitmentLogAmounts(
@@ -1236,6 +1238,8 @@ export class CommitmentService {
                 setting.spreadsheetId,
               range:
                 COMMITMENTS_LIST_RANGE,
+              valueRenderOption:
+                "UNFORMATTED_VALUE",
             },
           ),
         this.readSheetCommitmentLogAmounts(
@@ -1485,6 +1489,8 @@ export class CommitmentService {
             spreadsheetId,
             range:
               COMMITMENTS_LOG_RANGE,
+            valueRenderOption:
+              "UNFORMATTED_VALUE",
           },
         );
 

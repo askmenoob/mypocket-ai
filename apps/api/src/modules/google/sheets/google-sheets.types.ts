@@ -24,6 +24,13 @@ export interface SheetRange {
   range:
     string;
 
+  valueRenderOption?:
+    "FORMATTED_VALUE"
+    |
+    "UNFORMATTED_VALUE"
+    |
+    "FORMULA";
+
 }
 
 
