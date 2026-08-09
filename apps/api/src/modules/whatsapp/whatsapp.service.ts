@@ -105,6 +105,7 @@ type PayCommitmentDraft = {
   }>;
   selectedId?:string;
   selectedName?:string;
+  selectedIds?:string[];
   expiresAt:number;
 };
 
@@ -3833,17 +3834,31 @@ export class WhatsAppService {
 
     if(start.name){
 
-      const selected =
-        this.findPayCommitmentSelection(
+      const selections =
+        this.findPayCommitmentSelections(
           draft,
           start.name,
         );
 
-      if(selected){
-        draft.selectedId =
-          selected.id;
-        draft.selectedName =
-          selected.name;
+      if(selections?.length){
+
+        if(selections.length === 1){
+
+          draft.selectedId =
+            selections[0].id;
+
+          draft.selectedName =
+            selections[0].name;
+
+        }else{
+
+          draft.selectedIds =
+            selections.map(
+              (item) => item.id,
+            );
+
+        }
+
       }
 
     }
@@ -3855,7 +3870,7 @@ export class WhatsAppService {
 
     await this.safeSendWebhookReply(
       normalized,
-      draft.selectedId
+      (draft.selectedIds?.length || draft.selectedId)
         ? this.buildPayCommitmentConfirmReply(
             draft,
           )
@@ -3911,6 +3926,232 @@ export class WhatsAppService {
       return {
         message:
           "WhatsApp pay commitment draft cancelled",
+        source:
+          "EVOLUTION",
+        normalized,
+      };
+
+    }
+
+    if(draft.selectedIds?.length){
+
+      if([
+        "confirm",
+        "sahkan",
+        "ya",
+        "yes",
+        "ok",
+      ].includes(normalizedText)){
+
+        const actor = {
+          userId:
+            draft.actorUserId,
+          workspaceId:
+            draft.workspaceId,
+          role:
+            draft.role,
+        };
+
+        const current =
+          await this.commitmentService.listCommitments(
+            actor,
+            "unpaid",
+          );
+
+        const unpaidIds =
+          new Set<string>(
+            current.items
+              .filter(
+                (item:any) => item.canManage,
+              )
+              .map(
+                (item:any) => String(item.id),
+              ),
+          );
+
+        const selectedItems =
+          draft.items.filter(
+            (item) =>
+              draft.selectedIds?.includes(
+                item.id,
+              ),
+          );
+
+        const payableItems =
+          selectedItems.filter(
+            (item) =>
+              unpaidIds.has(
+                item.id,
+              ),
+          );
+
+        const skippedItems =
+          selectedItems.filter(
+            (item) =>
+              !unpaidIds.has(
+                item.id,
+              ),
+          );
+
+        if(payableItems.length === 0){
+
+          this.payCommitmentDrafts.delete(
+            key,
+          );
+
+          await this.safeSendWebhookReply(
+            normalized,
+            draft.language === "en"
+              ? "✅ The selected commitments are already paid or no longer unpaid."
+              : "✅ Komitmen yang dipilih sudah dibayar atau tidak lagi berstatus belum bayar.",
+          );
+
+          return {
+            message:
+              "WhatsApp multi pay commitment no longer unpaid",
+            source:
+              "EVOLUTION",
+            normalized,
+          };
+
+        }
+
+        const paidIds:string[] = [];
+        const failedIds:string[] = [];
+
+        for(const item of payableItems){
+
+          try{
+
+            await this.commitmentService.markCurrentMonthPaid(
+              actor,
+              item.id,
+            );
+
+            paidIds.push(
+              item.id,
+            );
+
+          }catch{
+
+            failedIds.push(
+              item.id,
+            );
+
+          }
+
+        }
+
+        this.payCommitmentDrafts.delete(
+          key,
+        );
+
+        const paidItems =
+          selectedItems.filter(
+            (item) =>
+              paidIds.includes(
+                item.id,
+              ),
+          );
+
+        const failedItems =
+          selectedItems.filter(
+            (item) =>
+              failedIds.includes(
+                item.id,
+              ),
+          );
+
+        const totalPaid =
+          paidItems.reduce(
+            (sum, item) => {
+
+              const amount =
+                Number(
+                  String(
+                    item.amount
+                    ?? "",
+                  )
+                    .replace(
+                      /,/g,
+                      "",
+                    ),
+                );
+
+              return sum
+                +
+                (
+                  Number.isFinite(amount)
+                    ? amount
+                    : 0
+                );
+
+            },
+            0,
+          );
+
+        const reply = [
+          failedItems.length === 0
+            ? draft.language === "en"
+              ? `✅ ${paidItems.length} commitments marked as paid.`
+              : `✅ ${paidItems.length} komitmen ditanda sudah dibayar.`
+            : draft.language === "en"
+              ? `⚠️ ${paidItems.length} paid, ${failedItems.length} failed.`
+              : `⚠️ ${paidItems.length} berjaya dibayar, ${failedItems.length} gagal.`,
+          "",
+          ...paidItems.map(
+            (item) =>
+              `• ${item.name} — RM${this.formatReminderAmount(item.amount)}`,
+          ),
+          "",
+          draft.language === "en"
+            ? `Total paid: RM${this.formatReminderAmount(totalPaid)}`
+            : `Jumlah dibayar: RM${this.formatReminderAmount(totalPaid)}`,
+          ...(skippedItems.length > 0
+            ? [
+                draft.language === "en"
+                  ? `${skippedItems.length} item skipped because it is no longer unpaid.`
+                  : `${skippedItems.length} item dilangkau kerana tidak lagi berstatus belum bayar.`,
+              ]
+            : []),
+          ...(failedItems.length > 0
+            ? [
+                draft.language === "en"
+                  ? `Failed: ${failedItems.map((item) => item.name).join(", ")}`
+                  : `Gagal: ${failedItems.map((item) => item.name).join(", ")}`,
+              ]
+            : []),
+        ].join(
+          "\n",
+        );
+
+        await this.safeSendWebhookReply(
+          normalized,
+          reply,
+        );
+
+        return {
+          message:
+            "WhatsApp multi pay commitment confirmed",
+          source:
+            "EVOLUTION",
+          normalized,
+          paidIds,
+          failedIds,
+        };
+
+      }
+
+      await this.safeSendWebhookReply(
+        normalized,
+        draft.language === "en"
+          ? "Reply !confirm to mark all selected commitments paid, or !cancel to cancel."
+          : "Reply !confirm untuk tandakan semua komitmen pilihan sudah bayar, atau !cancel untuk batal.",
+      );
+
+      return {
+        message:
+          "WhatsApp multi pay commitment confirm required",
         source:
           "EVOLUTION",
         normalized,
@@ -3982,13 +4223,13 @@ export class WhatsAppService {
 
     }
 
-    const selected =
-      this.findPayCommitmentSelection(
+    const selections =
+      this.findPayCommitmentSelections(
         draft,
         text,
       );
 
-    if(!selected){
+    if(!selections?.length){
 
       await this.safeSendWebhookReply(
         normalized,
@@ -4007,10 +4248,28 @@ export class WhatsAppService {
 
     }
 
-    draft.selectedId =
-      selected.id;
-    draft.selectedName =
-      selected.name;
+    if(selections.length === 1){
+
+      draft.selectedId =
+        selections[0].id;
+
+      draft.selectedName =
+        selections[0].name;
+
+      delete draft.selectedIds;
+
+    }else{
+
+      draft.selectedIds =
+        selections.map(
+          (item) => item.id,
+        );
+
+      delete draft.selectedId;
+      delete draft.selectedName;
+
+    }
+
     draft.expiresAt =
       Date.now() + COMMITMENT_DRAFT_TTL_MS;
 
@@ -4033,6 +4292,96 @@ export class WhatsAppService {
         "EVOLUTION",
       normalized,
     };
+
+  }
+
+
+
+
+  private findPayCommitmentSelections(
+    draft:PayCommitmentDraft,
+    text:string,
+  ){
+
+    const trimmed =
+      text
+        .trim();
+
+    const normalized =
+      trimmed
+        .toLowerCase();
+
+    if([
+      "all",
+      "semua",
+    ].includes(normalized)){
+
+      return [
+        ...draft.items,
+      ];
+
+    }
+
+    if(
+      /^\d+(?:\s*(?:,|\s)\s*\d+)*$/
+        .test(
+          trimmed,
+        )
+    ){
+
+      const numbers =
+        trimmed
+          .split(
+            /[,\s]+/,
+          )
+          .filter(Boolean)
+          .map(
+            (value) =>
+              Number(
+                value,
+              ),
+          );
+
+      if(
+        numbers.some(
+          (number) =>
+            !Number.isInteger(number)
+            ||
+            number < 1
+            ||
+            number > draft.items.length,
+        )
+      ){
+
+        return null;
+
+      }
+
+      const uniqueNumbers =
+        [
+          ...new Set(
+            numbers,
+          ),
+        ];
+
+      return uniqueNumbers.map(
+        (number) =>
+          draft.items[number - 1],
+      );
+
+    }
+
+    const selected =
+      this.findPayCommitmentSelection(
+        draft,
+        trimmed,
+      );
+
+    return selected
+      ? [
+          selected,
+        ]
+      : null;
 
   }
 
@@ -4104,9 +4453,11 @@ export class WhatsAppService {
       ...lines,
       "",
       draft.language === "en"
-        ? "Reply with number or name. Example: 1"
-        : "Reply nombor atau nama. Contoh: 1",
-      "Type !cancel to cancel.",
+        ? "Reply with number(s), name, or all. Example: 1,2,3"
+        : "Reply nombor, beberapa nombor, nama, atau semua. Contoh: 1,2,3",
+      draft.language === "en"
+        ? "Type all to select every unpaid commitment. Type !cancel to cancel."
+        : "Taip semua untuk pilih semua komitmen belum bayar. Taip !cancel untuk batal.",
     ].join(
       "\n",
     );
@@ -4119,6 +4470,78 @@ export class WhatsAppService {
   private buildPayCommitmentConfirmReply(
     draft:PayCommitmentDraft,
   ){
+
+    if(draft.selectedIds?.length){
+
+      const selectedItems =
+        draft.items.filter(
+          (item) =>
+            draft.selectedIds?.includes(
+              item.id,
+            ),
+        );
+
+      if(selectedItems.length === 0){
+
+        return draft.language === "en"
+          ? "Commitment not found. Type !paycommitment to start again."
+          : "Komitmen tidak dijumpai. Taip !paycommitment untuk mula semula.";
+
+      }
+
+      const total =
+        selectedItems.reduce(
+          (sum, item) => {
+
+            const amount =
+              Number(
+                String(
+                  item.amount
+                  ?? "",
+                )
+                  .replace(
+                    /,/g,
+                    "",
+                  ),
+              );
+
+            return sum
+              +
+              (
+                Number.isFinite(amount)
+                  ? amount
+                  : 0
+              );
+
+          },
+          0,
+        );
+
+      const lines =
+        selectedItems.map(
+          (item, index) =>
+            `${index + 1}. ${item.name} — RM${this.formatReminderAmount(item.amount)}`,
+        );
+
+      return [
+        draft.language === "en"
+          ? "✅ Confirm payments:"
+          : "✅ Sahkan bayaran:",
+        "",
+        ...lines,
+        "",
+        draft.language === "en"
+          ? `Total: RM${this.formatReminderAmount(total)}`
+          : `Jumlah: RM${this.formatReminderAmount(total)}`,
+        "",
+        draft.language === "en"
+          ? "Reply !confirm to mark all selected commitments paid or !cancel to cancel."
+          : "Reply !confirm untuk tandakan semua komitmen pilihan sudah bayar atau !cancel untuk batal.",
+      ].join(
+        "\n",
+      );
+
+    }
 
     const selected =
       draft.items.find(
