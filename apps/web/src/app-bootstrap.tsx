@@ -679,6 +679,7 @@ const DASHBOARD_TEXT = {
     deactivate:"Deactivate",
     activate:"Activate",
     archive:"Archive",
+    delete:"Delete",
     botEnabled:"Bot enabled",
     replyLanguage:"Reply language",
     timezone:"Timezone",
@@ -762,6 +763,7 @@ const DASHBOARD_TEXT = {
     deactivate:"Nyahaktifkan",
     activate:"Aktifkan",
     archive:"Arkib",
+    delete:"Padam",
     botEnabled:"Bot aktif",
     replyLanguage:"Bahasa reply",
     timezone:"Zon masa",
@@ -5803,6 +5805,42 @@ function Dashboard(
     );
   }
 
+  async function deleteCommitment(
+    id:string,
+    name:string,
+  ){
+    const activeToken =
+      localStorage.getItem(
+        STORAGE.token,
+      )
+      ||
+      "";
+
+    if(!activeToken){
+      setActionMessage("Session telah tamat. Sila log masuk semula.");
+      return;
+    }
+
+    if(
+      !window.confirm(
+        `Delete commitment "${name}"? Tindakan ini akan padam commitment dan reminder history berkaitan.`,
+      )
+    ){
+      return;
+    }
+
+    await api(
+      `/commitments/${id}`,
+      activeToken,
+      { method:"DELETE" },
+    );
+
+    await reloadCommitments(
+      commitmentFilter,
+      "Commitment telah dipadam.",
+    );
+  }
+
   async function markCommitmentPaid(
     id:string,
   ){
@@ -7229,6 +7267,9 @@ function Dashboard(
                       </button>
                       <button className="ghost danger" onClick={() => archiveCommitment(item.id)} disabled={!item.canManage || Boolean(item.archivedAt)}>
                         {dashboardText.archive}
+                      </button>
+                      <button className="ghost danger" onClick={() => deleteCommitment(item.id, item.name)} disabled={!item.canManage}>
+                        {dashboardText.delete}
                       </button>
                     </div>
                   </div>

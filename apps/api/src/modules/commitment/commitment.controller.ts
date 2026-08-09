@@ -134,6 +134,29 @@ export class CommitmentController {
     );
   };
 
+  delete =
+  async (
+    request:FastifyRequest,
+  ) => {
+    const user =
+      request.user as any;
+
+    const params =
+      request.params as {
+        id:string;
+      };
+
+    return this.service.deleteCommitment(
+      {
+        userId:user.userId,
+        email:user.email,
+        workspaceId:user.workspaceId,
+        role:user.role,
+      },
+      params.id,
+    );
+  };
+
   markPaid =
   async (
     request:FastifyRequest,

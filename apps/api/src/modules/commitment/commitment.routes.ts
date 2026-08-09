@@ -54,6 +54,16 @@ export default async function commitmentRoutes(
     controller.archive,
   );
 
+  app.delete(
+    "/commitments/:id",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    controller.delete,
+  );
+
   app.post(
     "/commitments/:id/pay-current",
     {

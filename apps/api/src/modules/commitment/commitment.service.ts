@@ -425,6 +425,30 @@ export class CommitmentService {
     };
   }
 
+  async deleteCommitment(
+    actor:Actor,
+    commitmentId:string,
+  ){
+    const commitment =
+      await this.requireCommitmentManageAccess(
+        actor,
+        commitmentId,
+      );
+
+    await this.app.prisma.commitment.delete({
+      where:{
+        id:
+          commitment.id,
+      },
+    });
+
+    return {
+      deleted:true,
+      id:
+        commitment.id,
+    };
+  }
+
   async markCurrentMonthPaid(
     actor:Actor,
     commitmentId:string,
