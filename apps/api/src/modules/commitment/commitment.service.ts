@@ -69,6 +69,12 @@ const COMMITMENTS_LIST_SHEET =
 const COMMITMENTS_LOG_SHEET =
   "Commitments Log";
 
+const COMMITMENTS_LIST_RANGE =
+  `${COMMITMENTS_LIST_SHEET}!A:Q`;
+
+const COMMITMENTS_LOG_RANGE =
+  `${COMMITMENTS_LOG_SHEET}!A:N`;
+
 const MONTH_NAMES_MS = [
   "Januari",
   "Februari",
@@ -1112,21 +1118,80 @@ export class CommitmentService {
       );
     }
 
-    const rows =
-      await this.sheetsService
-        .readRange(
+    const [
+      rows,
+      logAmountByCommitmentId,
+    ] =
+      await Promise.all([
+        this.sheetsService
+          .readRange(
+            workspaceId,
+            {
+              spreadsheetId:
+                setting.spreadsheetId,
+              range:
+                COMMITMENTS_LIST_RANGE,
+            },
+          ),
+        this.readSheetCommitmentLogAmounts(
           workspaceId,
-          {
-            spreadsheetId:
-              setting.spreadsheetId,
-            range:
-              `${COMMITMENTS_LIST_SHEET}!A:O`,
-          },
+          setting.spreadsheetId,
+        ),
+      ]);
+
+    const parsedRows =
+      rows
+        .slice(1)
+        .map((row, index) => {
+          const commitment =
+            this.parseSheetCommitmentRow(
+              row,
+              logAmountByCommitmentId,
+            );
+
+          return commitment
+            ? {
+              commitment,
+              rowNumber:
+                index + 2,
+              rawAmount:
+                String(row[3] ?? "").trim(),
+            }
+            : null;
+        })
+        .filter((row): row is {
+          commitment:SheetCommitment;
+          rowNumber:number;
+          rawAmount:string;
+        } => Boolean(row))
+        .filter((row) =>
+          row.commitment.workspaceId === workspaceId
+          &&
+          row.commitment.status !== "DELETED",
         );
 
-    return rows
-      .slice(1)
-      .map((row) => this.parseSheetCommitmentRow(row))
+    await Promise.all(
+      parsedRows
+        .filter((row) =>
+          this.isBrokenSheetAmount(
+            row.rawAmount,
+          )
+          &&
+          this.amountNumber(
+            row.commitment.amount,
+          ) > 0
+        )
+        .map((row) =>
+          this.updateSheetCommitmentRow(
+            workspaceId,
+            row.rowNumber,
+            row.commitment,
+          ),
+        ),
+    );
+
+    return parsedRows
+      .map((row) => row.commitment)
       .filter((row): row is SheetCommitment => Boolean(row))
       .filter((row) =>
         row.workspaceId === workspaceId
@@ -1158,22 +1223,32 @@ export class CommitmentService {
       );
     }
 
-    const rows =
-      await this.sheetsService
-        .readRange(
+    const [
+      rows,
+      logAmountByCommitmentId,
+    ] =
+      await Promise.all([
+        this.sheetsService
+          .readRange(
+            workspaceId,
+            {
+              spreadsheetId:
+                setting.spreadsheetId,
+              range:
+                COMMITMENTS_LIST_RANGE,
+            },
+          ),
+        this.readSheetCommitmentLogAmounts(
           workspaceId,
-          {
-            spreadsheetId:
-              setting.spreadsheetId,
-            range:
-              `${COMMITMENTS_LIST_SHEET}!A:O`,
-          },
-        );
+          setting.spreadsheetId,
+        ),
+      ]);
 
     for(let index = 1; index < rows.length; index += 1){
       const commitment =
         this.parseSheetCommitmentRow(
           rows[index],
+          logAmountByCommitmentId,
         );
 
       if(
@@ -1196,6 +1271,7 @@ export class CommitmentService {
 
   private parseSheetCommitmentRow(
     row:unknown[],
+    logAmountByCommitmentId = new Map<string, string>(),
   ):SheetCommitment | null{
     const valueAt =
       (index:number) =>
@@ -1212,6 +1288,8 @@ export class CommitmentService {
       this.normalizeAmount(
         valueAt(3),
       )
+      ||
+      logAmountByCommitmentId.get(id)
       ||
       this.normalizeAmount(
         valueAt(2),
@@ -1252,9 +1330,9 @@ export class CommitmentService {
       currency:
         "MYR",
       createdAt:
-        "",
+        valueAt(15),
       updatedAt:
-        "",
+        valueAt(16),
     };
   }
 
@@ -1274,7 +1352,7 @@ export class CommitmentService {
           spreadsheetId:
             setting.spreadsheetId,
           range:
-            `${COMMITMENTS_LIST_SHEET}!A:O`,
+            COMMITMENTS_LIST_RANGE,
           values:
             this.sheetCommitmentValues(
               commitment,
@@ -1316,7 +1394,7 @@ export class CommitmentService {
           spreadsheetId:
             setting.spreadsheetId,
           range:
-            `${COMMITMENTS_LIST_SHEET}!A${rowNumber}:O${rowNumber}`,
+            `${COMMITMENTS_LIST_SHEET}!A${rowNumber}:Q${rowNumber}`,
           values:[
             this.sheetCommitmentValues(
               commitment,
@@ -1346,22 +1424,85 @@ export class CommitmentService {
           spreadsheetId:
             setting.spreadsheetId,
           range:
-            `${COMMITMENTS_LOG_SHEET}!A:K`,
+            COMMITMENTS_LOG_RANGE,
           values:[
             `cl${randomUUID().replaceAll("-", "")}`,
-            now.toISOString(),
-            actor.workspaceId,
             commitment.id,
             action,
-            commitment.name,
-            commitment.amount,
-            commitment.status,
+            now.toISOString(),
             commitment.currentPeriod,
+            this.amountNumber(
+              commitment.amount,
+            ),
+            "",
+            commitment.status,
+            "DASHBOARD",
+            "",
             actor.userId,
             actor.email ?? "",
+            "SYNCED",
+            commitment.name,
           ],
+          valueInputOption:
+            "RAW",
         },
       );
+  }
+
+  private async readSheetCommitmentLogAmounts(
+    workspaceId:string,
+    spreadsheetId:string,
+  ){
+    const rows =
+      await this.sheetsService
+        .readRange(
+          workspaceId,
+          {
+            spreadsheetId,
+            range:
+              COMMITMENTS_LOG_RANGE,
+          },
+        );
+
+    const amountByCommitmentId =
+      new Map<string, string>();
+
+    for(const row of rows.slice(1)){
+      const valueAt =
+        (index:number) =>
+          String(row[index] ?? "").trim();
+
+      const commitmentId =
+        valueAt(1).startsWith("cm")
+          ? valueAt(1)
+          : valueAt(3);
+
+      if(!commitmentId.startsWith("cm")){
+        continue;
+      }
+
+      const amount =
+        this.normalizeAmount(
+          valueAt(5),
+        )
+        ||
+        this.normalizeAmount(
+          valueAt(6),
+        )
+        ||
+        this.normalizeAmount(
+          valueAt(7),
+        );
+
+      if(amount){
+        amountByCommitmentId.set(
+          commitmentId,
+          amount,
+        );
+      }
+    }
+
+    return amountByCommitmentId;
   }
 
   private sheetCommitmentValues(
@@ -1385,6 +1526,8 @@ export class CommitmentService {
       commitment.lastPaidAt,
       commitment.ownerUserId,
       commitment.ownerEmail,
+      commitment.createdAt,
+      commitment.updatedAt,
     ];
   }
 
@@ -1608,6 +1751,28 @@ export class CommitmentService {
     )
     ||
     "0.00";
+  }
+
+  private isBrokenSheetAmount(
+    value:string,
+  ){
+    return (
+      !this.normalizeAmount(
+        value,
+      )
+      &&
+      (
+        value === ""
+        ||
+        value.includes(
+          "#",
+        )
+        ||
+        value.toLowerCase().includes(
+          "nan",
+        )
+      )
+    );
   }
 
   private async getOrCreateBotSettings(
