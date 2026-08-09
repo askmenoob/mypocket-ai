@@ -7230,6 +7230,34 @@ function Dashboard(
 
           {canManageMembers && activeView === "admin" && (
             <Panel title="User Role Management" wide>
+              {
+                actorRole === "OWNER"
+                &&
+                isSharedWorkspace
+                &&
+                Boolean(
+                  props.data.google?.spreadsheetId,
+                )
+                &&
+                props.data.members.some(
+                  (member) =>
+                    member.role !== "OWNER",
+                )
+                &&
+                (
+                  <div
+                    className="pd-warning"
+                    role="note"
+                  >
+                    {
+                      dashboardLanguage === "ms"
+                        ? "Perhatian akses Google Sheet: Admin/Member boleh menggunakan bot workspace tanpa akses terus ke fail. Jika mereka perlu membuka Google Sheet, Owner perlu buka Google Sheet, tekan Share dan tambah email mereka sebagai Viewer atau Editor. Kebenaran ini ditentukan oleh Owner dan tidak menjejaskan akses bot."
+                        : "Google Sheet access notice: Admins and Members can use the workspace bot without direct file access. If they need to open the Google Sheet, the Owner must open the sheet, select Share, and add their email as a Viewer or Editor. This permission is controlled by the Owner and does not affect bot access."
+                    }
+                  </div>
+                )
+              }
+
               <p className="helperText">
                 Owner/Admin boleh tambah user, tukar role, remove member dan pautkan nombor WhatsApp.
                 {isSharedWorkspace

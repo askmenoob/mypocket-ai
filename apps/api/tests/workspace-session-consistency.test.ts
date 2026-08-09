@@ -479,5 +479,15 @@ test(
       /me\?\.sessionToken/,
     );
 
+    assert.match(
+      source,
+      /actorRole === "OWNER"[\s\S]*isSharedWorkspace[\s\S]*Google Sheet access notice/,
+    );
+
+    assert.match(
+      source,
+      /Kebenaran ini ditentukan oleh Owner dan tidak menjejaskan akses bot/,
+    );
+
   },
 );
