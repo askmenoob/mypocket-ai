@@ -2103,6 +2103,45 @@ export class WhatsAppService {
 
       if(!triggeredText){
 
+        const draftActorJid =
+          normalized.participantJid
+          ??
+          normalized.remoteJid
+          ??
+          "";
+
+        const draftActorMember =
+          await this.findWebhookActorMember(
+            instance.workspaceId,
+            draftActorJid,
+          );
+
+        const draftKey =
+          draftActorMember
+            ? this.commitmentDraftKey(
+                instance.workspaceId,
+                draftActorMember.userId,
+              )
+            : "";
+
+        if(
+          draftKey
+          &&
+          this.commitmentDrafts.has(
+            draftKey,
+          )
+        ){
+
+          triggeredText =
+            originalText;
+
+        }
+
+      }
+
+
+      if(!triggeredText){
+
         return {
 
           message:
