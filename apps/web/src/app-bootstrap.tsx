@@ -46,6 +46,13 @@ type WorkspacePackage =
   | WorkspaceType
   | "PERSONAL_PRO";
 
+type WorkspaceOption = {
+  id:string;
+  name:string;
+  type:WorkspaceType;
+  role:MemberRole;
+};
+
 type DashboardLanguage =
   | "ms"
   | "en";
@@ -192,6 +199,7 @@ type BotSettingsData = {
 type DashboardData = {
   health:any | null;
   me:any | null;
+  workspaces:WorkspaceOption[];
   billing:BillingSubscriptionData | null;
   google:any | null;
   whatsapp:any | null;
@@ -1026,6 +1034,24 @@ function stored(key:string){
   return localStorage.getItem(key) || "";
 }
 
+function initialDashboardToken(){
+
+  const hash =
+    new URLSearchParams(
+      window.location.hash.replace(/^#/, ""),
+    );
+
+  const callbackToken =
+    hash.get("auth") === "google"
+      ? hash.get("token")
+      : null;
+
+  return callbackToken
+    ||
+    stored(STORAGE.token);
+
+}
+
 function isStoredTrue(key:string){
   return localStorage.getItem(key) === "true";
 }
@@ -1294,7 +1320,7 @@ function App(){
 
   const [token, setToken] =
     useState(
-      stored(STORAGE.token),
+      initialDashboardToken,
     );
 
   const [termsAccepted, setTermsAccepted] =
@@ -1317,6 +1343,7 @@ function App(){
     useState<DashboardData>({
       health:null,
       me:null,
+      workspaces:[],
       billing:null,
       google:null,
       whatsapp:null,
@@ -1477,13 +1504,23 @@ function App(){
           ||
           token;
 
-        if(cancelled){
-          return;
-        }
-
         localStorage.removeItem(
           STORAGE.invite,
         );
+
+        if(inviteResult.token){
+          localStorage.setItem(
+            STORAGE.token,
+            nextToken,
+          );
+        }
+
+        if(cancelled){
+          window.location.replace(
+            "/#dashboard",
+          );
+          return;
+        }
 
         setPendingInviteToken("");
 
@@ -1504,11 +1541,6 @@ function App(){
         );
 
         if(inviteResult.token){
-          localStorage.setItem(
-            STORAGE.token,
-            nextToken,
-          );
-
           setToken(
             nextToken,
           );
@@ -1670,11 +1702,13 @@ function App(){
         window.location.pathname + window.location.search,
       );
 
-      loadAll(
-        authToken
-        ??
-        token,
-      );
+      if(!stored(STORAGE.invite)){
+        loadAll(
+          authToken
+          ??
+          token,
+        );
+      }
 
       return;
 
@@ -1765,6 +1799,7 @@ function App(){
 
       const [
         me,
+        workspaces,
         billing,
         googleSettingsResult,
         whatsapp,
@@ -1775,6 +1810,10 @@ function App(){
       ] =
         await Promise.all([
           api<any>("/auth/me", activeToken),
+          api<WorkspaceOption[]>(
+            "/workspace/all",
+            activeToken,
+          ),
           optionalApi<BillingSubscriptionData | null>(
             "/billing/subscription",
             activeToken,
@@ -1869,6 +1908,10 @@ function App(){
       setData({
         health,
         me,
+        workspaces:
+          listFrom<WorkspaceOption>(
+            workspaces,
+          ),
         billing,
         google,
         whatsapp,
@@ -1906,8 +1949,21 @@ function App(){
   }
 
   useEffect(() => {
+
+    if(
+      pendingInviteToken
+      ||
+      stored(STORAGE.invite)
+    ){
+      return;
+    }
+
     loadAll();
-  }, [token]);
+
+  }, [
+    token,
+    pendingInviteToken,
+  ]);
 
   useEffect(() => {
 
@@ -2004,6 +2060,81 @@ function App(){
 
     setToken("");
     setNotice("Signed out.");
+
+  }
+
+  async function switchWorkspace(
+    nextWorkspaceId:string,
+  ){
+
+    if(
+      !token
+      ||
+      !nextWorkspaceId
+      ||
+      nextWorkspaceId === data.me?.workspace?.id
+    ){
+      return;
+    }
+
+    setState({
+      loading:true,
+      error:null,
+    });
+
+    try{
+
+      const result =
+        await api<{
+          token:string;
+          workspaceId:string;
+          role:MemberRole;
+        }>(
+          `/workspace/${encodeURIComponent(nextWorkspaceId)}/switch`,
+          token,
+          {
+            method:
+              "POST",
+          },
+        );
+
+      localStorage.setItem(
+        STORAGE.token,
+        result.token,
+      );
+
+      setData((current) => ({
+        ...current,
+        me:null,
+        billing:null,
+        google:null,
+        whatsapp:null,
+        members:[],
+        adminUsers:[],
+        transactions:[],
+        commitments:null,
+        botSettings:null,
+      }));
+
+      setNotice(
+        "Workspace switched successfully.",
+      );
+
+      setToken(
+        result.token,
+      );
+
+    }catch(error){
+
+      setState({
+        loading:false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Workspace switch failed.",
+      });
+
+    }
 
   }
 
@@ -2629,6 +2760,7 @@ function App(){
       whatsAppQr={whatsAppQr}
       qrSecondsLeft={qrSecondsLeft}
       closeWhatsAppQr={closeWhatsAppQr}
+      switchWorkspace={switchWorkspace}
       signOut={signOut}
     />
   );
@@ -3515,6 +3647,7 @@ function Dashboard(
     whatsAppQr:WhatsAppQrState;
     qrSecondsLeft:number;
     closeWhatsAppQr:() => void;
+    switchWorkspace:(workspaceId:string) => Promise<void>;
     signOut:() => void;
   },
 ){
@@ -5828,9 +5961,37 @@ function Dashboard(
             >
               ☰
             </button>
-            <span className="workspace">
-              {props.data.me?.workspace?.name || "MyPocket Workspace"}
-            </span>
+            {props.data.workspaces.length > 1 ? (
+              <select
+                className="workspace workspaceSelect"
+                aria-label="Active workspace"
+                value={
+                  props.data.me?.workspace?.id
+                  ||
+                  ""
+                }
+                onChange={(event) =>
+                  void props.switchWorkspace(
+                    event.target.value,
+                  )
+                }
+              >
+                {props.data.workspaces.map(
+                  (workspace) => (
+                    <option
+                      value={workspace.id}
+                      key={workspace.id}
+                    >
+                      {workspace.name} — {workspace.type} ({workspace.role})
+                    </option>
+                  ),
+                )}
+              </select>
+            ) : (
+              <span className="workspace">
+                {props.data.me?.workspace?.name || "MyPocket Workspace"}
+              </span>
+            )}
             <span className="pill">
               {props.data.me?.workspace?.type || "PERSONAL"}
             </span>

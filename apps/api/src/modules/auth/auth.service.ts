@@ -15,6 +15,39 @@ import {
   AppError,
 } from "../../shared/errors/index.js";
 
+
+type LoginMembership = {
+  workspaceId:string;
+  workspace?:{
+    type:string;
+  } | null;
+};
+
+
+export function selectLoginMembership<
+  T extends LoginMembership,
+>(
+  memberships:T[] | null | undefined,
+):T | null{
+
+  const available =
+    memberships
+    ??
+    [];
+
+  return available.find(
+    (item) =>
+      item.workspace?.type === "FAMILY"
+      ||
+      item.workspace?.type === "BUSINESS",
+  )
+  ??
+  available[0]
+  ??
+  null;
+
+}
+
 export class AuthService {
 
   private readonly repository: AuthRepository;
@@ -77,11 +110,8 @@ export class AuthService {
     } else {
 
       const activeMembership =
-        user.memberships?.find(
-          (item) =>
-            Boolean(
-              item.workspace,
-            ),
+        selectLoginMembership(
+          user.memberships,
         );
 
       workspace =

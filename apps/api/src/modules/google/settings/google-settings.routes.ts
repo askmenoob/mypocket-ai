@@ -33,6 +33,7 @@ export default async function googleSettingsRoutes(
         requireRole(
           Roles.OWNER,
           Roles.ADMIN,
+          Roles.MEMBER,
         ),
       ],
     },

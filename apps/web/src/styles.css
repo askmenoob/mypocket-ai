@@ -187,6 +187,17 @@ a{color:inherit}
   margin-right:12px;
 }
 
+.workspaceSelect{
+  min-width:220px;
+  max-width:min(420px,42vw);
+  padding:10px 38px 10px 12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:white;
+  color:var(--text);
+  font:inherit;
+}
+
 .pill,
 .status{
   padding:8px 14px;
@@ -940,6 +951,15 @@ button.primaryLink{
     line-height:1.25;
     letter-spacing:-.02em;
     text-transform:capitalize;
+  }
+
+  .workspaceSelect{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    margin:0;
+    font-size:14px;
+    text-transform:none;
   }
 
   .pill,

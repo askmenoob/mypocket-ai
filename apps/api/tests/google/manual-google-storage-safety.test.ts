@@ -1137,12 +1137,12 @@ test(
 
     assert.match(
       googlePanel,
-      /Validate Google Links/,
+      /Check Existing Sheet/,
     );
 
     assert.match(
       googlePanel,
-      /Save Google Links/,
+      /Restore This Sheet/,
     );
 
     assert.match(
@@ -1322,12 +1322,12 @@ test(
 
     assert.match(
       webSource,
-      /Auto Create by System/,
+      /Auto Setup \/ Repair Google Sheet/,
     );
 
     assert.match(
       webSource,
-      /Manual Select Existing/,
+      /Restore Existing MyPocket Sheet/,
     );
 
     assert.match(
