@@ -59,6 +59,37 @@ import {
   AIProviderRouter,
 } from "../intelligence/index.js";
 
+type CommitmentDraftStep =
+  | "name"
+  | "amount"
+  | "due_date"
+  | "reminder_days"
+  | "reminder_time"
+  | "confirm";
+
+type CommitmentDraft = {
+  step:CommitmentDraftStep;
+  workspaceId:string;
+  actorUserId:string;
+  actorEmail:string;
+  role:
+    | "OWNER"
+    | "ADMIN"
+    | "MEMBER"
+    | "VIEWER";
+  language:"ms" | "en";
+  name?:string;
+  amount?:string;
+  dueDay?:number;
+  dueDateText?:string;
+  reminderDaysBefore?:number;
+  reminderTime?:string;
+  expiresAt:number;
+};
+
+const COMMITMENT_DRAFT_TTL_MS =
+  10 * 60 * 1000;
+
 
 
 export class WhatsAppService {
@@ -77,6 +108,9 @@ export class WhatsAppService {
 
   private readonly aiProviderRouter:
     AIProviderRouter<ParsedWhatsAppTransaction>;
+
+  private readonly commitmentDrafts =
+    new Map<string, CommitmentDraft>();
 
 
 
@@ -2095,6 +2129,13 @@ export class WhatsAppService {
     }
 
 
+    normalized.text =
+      this.stripBangPrefix(
+        normalized.text
+        ?? "",
+      );
+
+
     if(
       WhatsAppCommandParser
         .isHelp(
@@ -2321,6 +2362,23 @@ export class WhatsAppService {
       await this.getWorkspaceReplyLanguage(
         instance.workspaceId,
       );
+
+    const commitmentDraftResult =
+      await this.handleCommitmentDraftMessage(
+        instance.workspaceId,
+        normalized,
+        actorMember.userId,
+        actorMember.user?.email
+        ?? "",
+        actorMember.role,
+        commandReplyLanguage,
+      );
+
+    if(commitmentDraftResult){
+
+      return commitmentDraftResult;
+
+    }
 
     if(
       !this.canUseWhatsAppCommand(
@@ -3012,6 +3070,1020 @@ export class WhatsAppService {
 
   }
 
+
+  private stripBangPrefix(
+    text:string,
+  ){
+
+    return text
+      .trim()
+      .replace(
+        /^!+\s*/,
+        "",
+      );
+
+  }
+
+
+
+
+  private commitmentDraftKey(
+    workspaceId:string,
+    actorUserId:string,
+  ){
+
+    return `${workspaceId}:${actorUserId}`;
+
+  }
+
+
+
+
+
+  private async handleCommitmentDraftMessage(
+    workspaceId:string,
+    normalized:NormalizedEvolutionMessage,
+    actorUserId:string,
+    actorEmail:string,
+    role:
+      | "OWNER"
+      | "ADMIN"
+      | "MEMBER"
+      | "VIEWER",
+    language:"ms" | "en",
+  ){
+
+    const text =
+      this.stripBangPrefix(
+        normalized.text
+        ?? "",
+      );
+
+    const key =
+      this.commitmentDraftKey(
+        workspaceId,
+        actorUserId,
+      );
+
+    const existingDraft =
+      this.commitmentDrafts.get(
+        key,
+      );
+
+    if(existingDraft && existingDraft.expiresAt < Date.now()){
+
+      this.commitmentDrafts.delete(
+        key,
+      );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? "⏱️ Commitment draft expired. Type !addcommitment to start again."
+          : "⏱️ Draft komitmen tamat. Taip !addcommitment untuk mula semula.",
+      );
+
+      return {
+        message:
+          "WhatsApp commitment draft expired",
+
+        source:
+          "EVOLUTION",
+
+        normalized,
+      };
+
+    }
+
+    if(existingDraft){
+
+      return this.continueCommitmentDraft(
+        key,
+        existingDraft,
+        text,
+        normalized,
+      );
+
+    }
+
+    const start =
+      this.parseCommitmentDraftStart(
+        text,
+      );
+
+    if(!start){
+
+      return null;
+
+    }
+
+    if(
+      !this.canUseWhatsAppCommand(
+        role,
+        "reminder",
+      )
+    ){
+
+      await this.safeSendWebhookReply(
+        normalized,
+        this.buildCommandNotAllowedReply(
+          "reminder",
+          language,
+        ),
+      );
+
+      return {
+        message:
+          "WhatsApp commitment draft blocked",
+
+        source:
+          "EVOLUTION",
+
+        normalized,
+
+        role,
+      };
+
+    }
+
+    const draft:CommitmentDraft =
+      {
+        step:
+          "name",
+        workspaceId,
+        actorUserId,
+        actorEmail,
+        role,
+        language,
+        expiresAt:
+          Date.now() + COMMITMENT_DRAFT_TTL_MS,
+      };
+
+    if(start.name){
+      draft.name =
+        start.name;
+    }
+
+    if(start.amount){
+      draft.amount =
+        start.amount;
+    }
+
+    if(start.dueDay){
+      draft.dueDay =
+        start.dueDay;
+      draft.dueDateText =
+        start.dueDateText;
+    }
+
+    this.advanceCommitmentDraftStep(
+      draft,
+    );
+
+    this.commitmentDrafts.set(
+      key,
+      draft,
+    );
+
+    await this.safeSendWebhookReply(
+      normalized,
+      this.buildCommitmentDraftPrompt(
+        draft,
+      ),
+    );
+
+    return {
+      message:
+        "WhatsApp commitment draft started",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+    };
+
+  }
+
+
+
+
+  private async continueCommitmentDraft(
+    key:string,
+    draft:CommitmentDraft,
+    text:string,
+    normalized:NormalizedEvolutionMessage,
+  ){
+
+    const normalizedText =
+      text
+        .trim()
+        .toLowerCase();
+
+    if([
+      "cancel",
+      "batal",
+      "stop",
+      "tak jadi",
+    ].includes(normalizedText)){
+
+      this.commitmentDrafts.delete(
+        key,
+      );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        draft.language === "en"
+          ? "✅ Commitment draft cancelled."
+          : "✅ Draft komitmen dibatalkan.",
+      );
+
+      return {
+        message:
+          "WhatsApp commitment draft cancelled",
+
+        source:
+          "EVOLUTION",
+
+        normalized,
+      };
+
+    }
+
+    if(draft.step === "confirm"){
+
+      if([
+        "confirm",
+        "sahkan",
+        "ya",
+        "yes",
+        "ok",
+      ].includes(normalizedText)){
+
+        const result =
+          await this.commitmentService
+            .createCommitment(
+              {
+                userId:
+                  draft.actorUserId,
+                email:
+                  draft.actorEmail,
+                workspaceId:
+                  draft.workspaceId,
+                role:
+                  draft.role,
+              },
+              {
+                name:
+                  draft.name!,
+                amount:
+                  draft.amount!,
+                dueDay:
+                  draft.dueDay!,
+                reminderDaysBefore:
+                  draft.reminderDaysBefore,
+                reminderTime:
+                  draft.reminderTime,
+              },
+            );
+
+        this.commitmentDrafts.delete(
+          key,
+        );
+
+        await this.safeSendWebhookReply(
+          normalized,
+          draft.language === "en"
+            ? [
+                "✅ Commitment saved",
+                "",
+                `${result.name} — RM${this.formatReminderAmount(result.amount)} — every ${result.dueDay}${this.englishDaySuffix(result.dueDay)}`,
+              ].join("\n")
+            : [
+                "✅ Komitmen berjaya disimpan",
+                "",
+                `${result.name} — RM${this.formatReminderAmount(result.amount)} — setiap ${result.dueDay}hb`,
+              ].join("\n"),
+        );
+
+        return {
+          message:
+            "WhatsApp commitment draft confirmed",
+
+          source:
+            "EVOLUTION",
+
+          normalized,
+
+          commitment:
+            result,
+        };
+
+      }
+
+      await this.safeSendWebhookReply(
+        normalized,
+        draft.language === "en"
+          ? "Reply !confirm to save or !cancel to cancel."
+          : "Reply !confirm untuk simpan atau !cancel untuk batal.",
+      );
+
+      return {
+        message:
+          "WhatsApp commitment draft confirm required",
+
+        source:
+          "EVOLUTION",
+
+        normalized,
+      };
+
+    }
+
+    const applyError =
+      this.applyCommitmentDraftAnswer(
+        draft,
+        text,
+      );
+
+    if(applyError){
+
+      await this.safeSendWebhookReply(
+        normalized,
+        applyError,
+      );
+
+      return {
+        message:
+          "WhatsApp commitment draft invalid answer",
+
+        source:
+          "EVOLUTION",
+
+        normalized,
+      };
+
+    }
+
+    draft.expiresAt =
+      Date.now() + COMMITMENT_DRAFT_TTL_MS;
+
+    this.advanceCommitmentDraftStep(
+      draft,
+    );
+
+    this.commitmentDrafts.set(
+      key,
+      draft,
+    );
+
+    await this.safeSendWebhookReply(
+      normalized,
+      this.buildCommitmentDraftPrompt(
+        draft,
+      ),
+    );
+
+    return {
+      message:
+        "WhatsApp commitment draft continued",
+
+      source:
+        "EVOLUTION",
+
+      normalized,
+    };
+
+  }
+
+
+
+
+  private parseCommitmentDraftStart(
+    text:string,
+  ){
+
+    const trimmed =
+      text
+        .trim();
+
+    const match =
+      trimmed.match(
+        /^(?:add\s*commitments?|addcommitments?|add\s*komitmen|addkomitmen|tambah\s+komitmen|komitmen\s+baru|new\s+commitment)(?:\s+(.+))?$/i,
+      );
+
+    if(!match){
+
+      return null;
+
+    }
+
+    const detail =
+      match[1]
+        ?.trim()
+      ??
+      "";
+
+    if(!detail){
+
+      return {};
+
+    }
+
+    const amountMatch =
+      detail.match(
+        /\b(?:rm|myr)\s*(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?)/i,
+      );
+
+    const dateMatch =
+      detail.match(
+        /\b(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[/-]\d{1,2}[/-]\d{4})\b/,
+      );
+
+    const parsedDate =
+      dateMatch
+        ? this.parseCommitmentDueDate(
+            dateMatch[1],
+          )
+        : null;
+
+    const name =
+      detail
+        .replace(
+          amountMatch?.[0]
+          ?? "",
+          "",
+        )
+        .replace(
+          dateMatch?.[0]
+          ?? "",
+          "",
+        )
+        .replace(
+          /\b(?:due|on|setiap|pada|every)\b/gi,
+          "",
+        )
+        .trim();
+
+    return {
+      name:
+        name
+        || undefined,
+
+      amount:
+        amountMatch
+          ? this.parseCommitmentAmount(
+              amountMatch[1],
+            )
+            ?? undefined
+          : undefined,
+
+      dueDay:
+        parsedDate?.day,
+
+      dueDateText:
+        parsedDate?.label,
+    };
+
+  }
+
+
+
+
+  private applyCommitmentDraftAnswer(
+    draft:CommitmentDraft,
+    text:string,
+  ){
+
+    if(draft.step === "name"){
+
+      const name =
+        text
+          .trim();
+
+      if(name.length < 2){
+
+        return draft.language === "en"
+          ? "What is the commitment name? Example: Car payment"
+          : "Nama commitment apa? Contoh: Bayaran kereta";
+
+      }
+
+      draft.name =
+        name;
+
+      return "";
+
+    }
+
+    if(draft.step === "amount"){
+
+      const amount =
+        this.parseCommitmentAmount(
+          text,
+        );
+
+      if(!amount){
+
+        return draft.language === "en"
+          ? "Berapa amount? Example: RM980 or 980"
+          : "Berapa amount? Contoh: RM980 atau 980";
+
+      }
+
+      draft.amount =
+        amount;
+
+      return "";
+
+    }
+
+    if(draft.step === "due_date"){
+
+      const parsedDate =
+        this.parseCommitmentDueDate(
+          text,
+        );
+
+      if(!parsedDate){
+
+        return draft.language === "en"
+          ? "Tarikh due date? Use DD/MM/YYYY. Example: 12/08/2026"
+          : "Tarikh due date? Guna format DD/MM/YYYY. Contoh: 12/08/2026";
+
+      }
+
+      draft.dueDay =
+        parsedDate.day;
+      draft.dueDateText =
+        parsedDate.label;
+
+      return "";
+
+    }
+
+    if(draft.step === "reminder_days"){
+
+      const reminderDays =
+        this.parseCommitmentReminderDays(
+          text,
+        );
+
+      if(reminderDays === null){
+
+        return draft.language === "en"
+          ? "Reminder berapa hari sebelum due date? Reply number only, or default."
+          : "Reminder berapa hari sebelum due date? Reply nombor sahaja, atau default.";
+
+      }
+
+      draft.reminderDaysBefore =
+        reminderDays;
+
+      return "";
+
+    }
+
+    if(draft.step === "reminder_time"){
+
+      const reminderTime =
+        this.parseCommitmentReminderTime(
+          text,
+        );
+
+      if(!reminderTime){
+
+        return draft.language === "en"
+          ? "Masa reminder? Example: 09:00, or default."
+          : "Masa reminder? Contoh: 09:00, atau default.";
+
+      }
+
+      draft.reminderTime =
+        reminderTime;
+
+      return "";
+
+    }
+
+    return "";
+
+  }
+
+
+
+
+  private advanceCommitmentDraftStep(
+    draft:CommitmentDraft,
+  ){
+
+    if(!draft.name){
+      draft.step =
+        "name";
+      return;
+    }
+
+    if(!draft.amount){
+      draft.step =
+        "amount";
+      return;
+    }
+
+    if(!draft.dueDay){
+      draft.step =
+        "due_date";
+      return;
+    }
+
+    if(draft.reminderDaysBefore === undefined){
+      draft.step =
+        "reminder_days";
+      return;
+    }
+
+    if(!draft.reminderTime){
+      draft.step =
+        "reminder_time";
+      return;
+    }
+
+    draft.step =
+      "confirm";
+
+  }
+
+
+
+
+  private buildCommitmentDraftPrompt(
+    draft:CommitmentDraft,
+  ){
+
+    const isEnglish =
+      draft.language === "en";
+
+    if(draft.step === "name"){
+      return isEnglish
+        ? [
+            "🧾 New commitment",
+            "What is the commitment name?",
+            "Example: Car payment",
+            "",
+            "Type !cancel to cancel.",
+          ].join("\n")
+        : [
+            "🧾 Komitmen baru",
+            "Nama commitment apa?",
+            "Contoh: Bayaran kereta",
+            "",
+            "Taip !cancel untuk batal.",
+          ].join("\n");
+    }
+
+    if(draft.step === "amount"){
+      return isEnglish
+        ? "Berapa amount? Example: RM980 or 980"
+        : "Berapa amount? Contoh: RM980 atau 980";
+    }
+
+    if(draft.step === "due_date"){
+      return isEnglish
+        ? "Tarikh due date? Use DD/MM/YYYY. Example: 12/08/2026"
+        : "Tarikh due date? Guna format DD/MM/YYYY. Contoh: 12/08/2026";
+    }
+
+    if(draft.step === "reminder_days"){
+      return isEnglish
+        ? "Reminder berapa hari sebelum due date? Reply number only. Default: 2"
+        : "Reminder berapa hari sebelum due date? Reply nombor sahaja. Default: 2";
+    }
+
+    if(draft.step === "reminder_time"){
+      return isEnglish
+        ? "Masa reminder? Example: 09:00. Default: 09:00"
+        : "Masa reminder? Contoh: 09:00. Default: 09:00";
+    }
+
+    return this.buildCommitmentDraftConfirmation(
+      draft,
+    );
+
+  }
+
+
+
+
+  private buildCommitmentDraftConfirmation(
+    draft:CommitmentDraft,
+  ){
+
+    const amount =
+      this.formatReminderAmount(
+        draft.amount
+        ?? "0",
+      );
+
+    if(draft.language === "en"){
+
+      return [
+        "✅ Confirm commitment:",
+        `Name: ${draft.name}`,
+        `Amount: RM${amount}`,
+        `Due date: ${draft.dueDateText} monthly`,
+        `Reminder: ${draft.reminderDaysBefore} day(s) before, ${draft.reminderTime}`,
+        "",
+        "Reply !confirm to save or !cancel to cancel.",
+      ].join("\n");
+
+    }
+
+    return [
+      "✅ Sahkan commitment:",
+      `Nama: ${draft.name}`,
+      `Amount: RM${amount}`,
+      `Due date: ${draft.dueDateText} setiap bulan`,
+      `Reminder: ${draft.reminderDaysBefore} hari sebelum, ${draft.reminderTime}`,
+      "",
+      "Reply !confirm untuk simpan atau !cancel untuk batal.",
+    ].join("\n");
+
+  }
+
+
+
+
+  private parseCommitmentAmount(
+    text:string,
+  ){
+
+    const match =
+      text.match(
+        /\b(?:rm|myr)?\s*(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?)\b/i,
+      );
+
+    const raw =
+      match?.[1];
+
+    if(!raw){
+
+      return null;
+
+    }
+
+    const normalized =
+      raw.includes(",")
+      &&
+      (
+        raw.includes(".")
+        ||
+        /^\d{1,3}(?:,\d{3})+$/.test(raw)
+      )
+        ? raw.replace(/,/g, "")
+        : raw.replace(",", ".");
+
+    const amount =
+      Number(
+        normalized,
+      );
+
+    if(
+      !Number.isFinite(amount)
+      ||
+      amount <= 0
+    ){
+
+      return null;
+
+    }
+
+    return amount.toFixed(2);
+
+  }
+
+
+
+
+  private parseCommitmentDueDate(
+    text:string,
+  ){
+
+    const trimmed =
+      text
+        .trim();
+
+    const isoMatch =
+      trimmed.match(
+        /\b(\d{4})-(\d{1,2})-(\d{1,2})\b/,
+      );
+
+    if(isoMatch){
+
+      const year =
+        Number(isoMatch[1]);
+      const month =
+        Number(isoMatch[2]);
+      const day =
+        Number(isoMatch[3]);
+
+      if(this.isValidCommitmentDateParts(day, month, year)){
+        return {
+          day,
+          label:
+            `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`,
+        };
+      }
+
+      return null;
+
+    }
+
+    const slashMatch =
+      trimmed.match(
+        /\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b/,
+      );
+
+    if(!slashMatch){
+
+      return null;
+
+    }
+
+    const day =
+      Number(slashMatch[1]);
+    const month =
+      Number(slashMatch[2]);
+    const year =
+      Number(slashMatch[3]);
+
+    if(!this.isValidCommitmentDateParts(day, month, year)){
+
+      return null;
+
+    }
+
+    return {
+      day,
+      label:
+        `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`,
+    };
+
+  }
+
+
+
+
+  private isValidCommitmentDateParts(
+    day:number,
+    month:number,
+    year:number,
+  ){
+
+    if(
+      year < 2020
+      ||
+      month < 1
+      ||
+      month > 12
+      ||
+      day < 1
+      ||
+      day > 31
+    ){
+
+      return false;
+
+    }
+
+    const date =
+      new Date(
+        Date.UTC(
+          year,
+          month - 1,
+          day,
+        ),
+      );
+
+    return date.getUTCFullYear() === year
+      &&
+      date.getUTCMonth() === month - 1
+      &&
+      date.getUTCDate() === day;
+
+  }
+
+
+
+
+  private parseCommitmentReminderDays(
+    text:string,
+  ){
+
+    const normalized =
+      text
+        .trim()
+        .toLowerCase();
+
+    if([
+      "",
+      "-",
+      "default",
+      "skip",
+      "guna default",
+    ].includes(normalized)){
+
+      return 2;
+
+    }
+
+    const days =
+      Number(
+        normalized.match(/\d+/)?.[0],
+      );
+
+    if(
+      !Number.isInteger(days)
+      ||
+      days < 0
+      ||
+      days > 30
+    ){
+
+      return null;
+
+    }
+
+    return days;
+
+  }
+
+
+
+
+  private parseCommitmentReminderTime(
+    text:string,
+  ){
+
+    const normalized =
+      text
+        .trim()
+        .toLowerCase();
+
+    if([
+      "",
+      "-",
+      "default",
+      "skip",
+      "guna default",
+    ].includes(normalized)){
+
+      return "09:00";
+
+    }
+
+    const match =
+      normalized.match(
+        /^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/,
+      );
+
+    if(!match){
+
+      return null;
+
+    }
+
+    let hour =
+      Number(match[1]);
+    const minute =
+      Number(match[2] ?? "0");
+    const meridiem =
+      match[3];
+
+    if(meridiem === "pm" && hour < 12){
+      hour +=
+        12;
+    }
+
+    if(meridiem === "am" && hour === 12){
+      hour =
+        0;
+    }
+
+    if(
+      hour < 0
+      ||
+      hour > 23
+      ||
+      minute < 0
+      ||
+      minute > 59
+    ){
+
+      return null;
+
+    }
+
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+
+  }
 
 
 
@@ -6180,111 +7252,11 @@ export class WhatsAppService {
     language:"ms" | "en" = "ms",
   ){
 
-    const normalizedBotAlias =
-      botAlias
-        .trim()
-        .replace(
-          /^@+/,
-          "",
-        )
-        .toLowerCase()
-      ||
-      "mypocket";
-
-    const aliasTrigger =
-      `@${normalizedBotAlias}`;
-
-    if(language === "en"){
-      return [
-        "👋 MyPocket AI — Quick help",
-        "Help version: 2026-08-03",
-        "",
-        "📣 *In WhatsApp groups:*",
-        `• Start messages with *!* or *${aliasTrigger}*`,
-        "• Messages without a trigger are ignored.",
-        "",
-        "💬 *Private chat:*",
-        "• No ! or alias is required.",
-        "",
-        "🧾 *Record transactions:*",
-        "• !lunch mamak rm7.80 tng",
-        `• ${aliasTrigger} petrol shell rm50 cash`,
-        "• bill unifi rm129 bank",
-        "• salary rm3000",
-        "",
-        "🔔 *Commitments & reminders:*",
-        "• !reminder — unpaid commitments",
-        "• !all reminders — all commitments",
-        "• !paid reminders — completed commitments",
-        "• !Remind me to pay car RM1000 every 10th",
-        "• !change reminder car to 15th",
-        "• !paid car / !mark paid car",
-        "• !disable reminder car / !enable reminder car",
-        "• !delete commitment car",
-        "",
-        "📊 *Summaries & controls:*",
-        "• !today — today summary",
-        "• !week — this week summary",
-        "• !month — this month summary",
-        "• !last — last transaction",
-        "• !undo — undo last transaction",
-        "• !categories — category list",
-        "• !methods — payment methods",
-        "• !members — WhatsApp members",
-        "• !status — bot status",
-        "• !commands — all commands",
-        "",
-        "🌐 Reply language can be changed in Dashboard → Bot Settings.",
-        "Category, merchant, and payment method are detected automatically.",
-      ].join(
-        "\n",
+    return WhatsAppReplyBuilder
+      .help(
+        botAlias,
+        language,
       );
-    }
-
-    return [
-      "👋 MyPocket AI — Bantuan ringkas",
-      "Versi bantuan: 2026-08-03",
-      "",
-      "📣 *Dalam WhatsApp group:*",
-      `• Mula mesej dengan *!* atau *${aliasTrigger}*`,
-      "• Mesej tanpa trigger akan diabaikan.",
-      "",
-      "💬 *Private chat:*",
-      "• Tidak perlu ! atau alias.",
-      "",
-      "🧾 *Rekod transaksi:*",
-      "• !makan kedai mamak rm7.80 tng",
-      `• ${aliasTrigger} petrol shell rm50 cash`,
-      "• bill unifi rm129 bank",
-      "• gaji rm3000",
-      "",
-      "🔔 *Komitmen & reminder:*",
-      "• !reminder — senarai belum dibayar",
-      "• !reminder semua — semua komitmen",
-      "• !reminder selesai — sudah dibayar",
-      "• !Ingatkan bayaran kereta RM1000 setiap 10hb",
-      "• !ubah reminder kereta ke 15hb",
-      "• !bayar kereta / !selesai kereta",
-      "• !tutup reminder kereta / !aktifkan reminder kereta",
-      "• !padam komitmen kereta",
-      "",
-      "📊 *Ringkasan & kawalan:*",
-      "• !today — ringkasan hari ini",
-      "• !week — ringkasan minggu ini",
-      "• !month — ringkasan bulan ini",
-      "• !last — transaksi terakhir",
-      "• !undo — batalkan transaksi terakhir",
-      "• !categories — senarai kategori",
-      "• !methods — payment method",
-      "• !members — ahli WhatsApp",
-      "• !status — status bot",
-      "• !commands — semua command",
-      "",
-      "🌐 Bahasa reply boleh ditukar di Dashboard → Bot Settings.",
-      "Kategori, merchant dan payment method akan dikesan automatik.",
-    ].join(
-      "\n",
-    );
 
   }
 
@@ -6629,7 +7601,13 @@ export class WhatsAppService {
   ){
 
     const rawText =
-      text.trim();
+      text
+        .trim()
+        .replace(
+          /^(?:add|tambah|rekod|record)\s+/i,
+          "",
+        )
+        .trim();
 
 
     if(!rawText){
