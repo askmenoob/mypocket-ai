@@ -210,6 +210,17 @@ type DashboardData = {
   botSettings:BotSettingsData | null;
 };
 
+type DashboardNotification = {
+  id:string;
+  title:string;
+  message:string;
+  level:
+    | "info"
+    | "warning"
+    | "critical";
+  view:DashboardView;
+};
+
 
 const BILLING_PLAN_OPTIONS:Array<{
   plan:BillingPlan;
@@ -3697,6 +3708,12 @@ function Dashboard(
   const [actionMessage, setActionMessage] =
     useState("");
 
+  const [notificationOpen, setNotificationOpen] =
+    useState(false);
+
+  const [seenNotificationIds, setSeenNotificationIds] =
+    useState<string[]>([]);
+
   const [dashboardLanguage, setDashboardLanguage] =
     useState<DashboardLanguage>(() =>
       normalizeDashboardLanguage(
@@ -3913,6 +3930,16 @@ function Dashboard(
 
   const canUseAdmin =
     canManageMembers;
+
+  const shouldShowGoogleSheetAccessNotice =
+    actorRole === "OWNER"
+    &&
+    isSharedWorkspace
+    &&
+    props.data.members.some(
+      (member) =>
+        member.role !== "OWNER",
+    );
 
   useEffect(
     () => {
@@ -4626,6 +4653,331 @@ function Dashboard(
     hasDashboardGoogleSheet
     &&
     isWhatsAppConnected;
+
+  const notificationStorageKey =
+    `imai_dashboard_notifications_seen:v1:${
+      props.data.me?.user?.id
+      ||
+      "anonymous"
+    }:${
+      props.data.me?.workspace?.id
+      ||
+      "workspace"
+    }`;
+
+  const dashboardNotifications =
+    useMemo<DashboardNotification[]>(
+      () => {
+
+        const notifications:DashboardNotification[] =
+          [];
+
+        if(!props.data.health){
+
+          notifications.push({
+            id:
+              "system:api-unavailable",
+            title:
+              dashboardLanguage === "ms"
+                ? "Status API tidak tersedia"
+                : "API status is unavailable",
+            message:
+              dashboardLanguage === "ms"
+                ? "Refresh dashboard. Jika masalah berterusan, hubungi sokongan sistem."
+                : "Refresh the dashboard. Contact system support if the issue continues.",
+            level:
+              "critical",
+            view:
+              "dashboard",
+          });
+
+        }
+
+        if(shouldShowGoogleSheetAccessNotice){
+
+          const memberSignature =
+            props.data.members
+              .filter(
+                (member) =>
+                  member.role !== "OWNER",
+              )
+              .map(
+                (member) =>
+                  member.userId,
+              )
+              .sort()
+              .join(",");
+
+          notifications.push({
+            id:
+              `permission:google-sheet-share:${memberSignature}`,
+            title:
+              dashboardLanguage === "ms"
+                ? "Kebenaran Google Sheet"
+                : "Google Sheet permission",
+            message:
+              dashboardLanguage === "ms"
+                ? "Beri akses Viewer atau Editor kepada Admin/Member yang perlu membuka Google Sheet. Akses bot tidak terjejas."
+                : "Grant Viewer or Editor access to Admins or Members who need to open the Google Sheet. Bot access is unaffected.",
+            level:
+              "warning",
+            view:
+              "admin",
+          });
+
+        }
+
+        const latestTransaction =
+          [...props.data.transactions]
+            .sort(
+              (left, right) =>
+                new Date(
+                  right.transactionDate,
+                ).getTime()
+                -
+                new Date(
+                  left.transactionDate,
+                ).getTime(),
+            )[0];
+
+        if(latestTransaction){
+
+          const transactionLabel =
+            latestTransaction.merchant?.name
+            ||
+            latestTransaction.category?.name
+            ||
+            latestTransaction.description
+            ||
+            latestTransaction.type;
+
+          notifications.push({
+            id:
+              `transaction:${latestTransaction.id}`,
+            title:
+              dashboardLanguage === "ms"
+                ? "Transaksi terkini"
+                : "Latest transaction",
+            message:
+              `${transactionLabel} · ${
+                latestTransaction.currency
+                ||
+                "MYR"
+              } ${Number(
+                latestTransaction.amount
+                ||
+                0,
+              ).toFixed(2)}`,
+            level:
+              "info",
+            view:
+              "transactions",
+          });
+
+        }
+
+        if(
+          canChangeWorkspaceSettings
+          &&
+          !hasDashboardGoogleSheet
+        ){
+
+          notifications.push({
+            id:
+              "system:google-sheet-disconnected",
+            title:
+              dashboardLanguage === "ms"
+                ? "Google Sheet belum connected"
+                : "Google Sheet is not connected",
+            message:
+              dashboardLanguage === "ms"
+                ? "Owner/Admin perlu menyambungkan Google Sheet workspace."
+                : "An Owner or Admin must connect the workspace Google Sheet.",
+            level:
+              "critical",
+            view:
+              "google",
+          });
+
+        }
+
+        if(
+          canChangeWorkspaceSettings
+          &&
+          props.data.whatsapp
+          &&
+          !isWhatsAppConnected
+        ){
+
+          notifications.push({
+            id:
+              `system:whatsapp:${
+                props.data.whatsapp?.instance?.status
+                ||
+                "unknown"
+              }`,
+            title:
+              dashboardLanguage === "ms"
+                ? "WhatsApp tidak connected"
+                : "WhatsApp is not connected",
+            message:
+              dashboardLanguage === "ms"
+                ? "Semak status atau pair semula bot workspace."
+                : "Check the status or pair the workspace bot again.",
+            level:
+              "critical",
+            view:
+              "whatsapp",
+          });
+
+        }
+
+        return notifications;
+
+      },
+      [
+        canChangeWorkspaceSettings,
+        dashboardLanguage,
+        hasDashboardGoogleSheet,
+        isWhatsAppConnected,
+        props.data.health,
+        props.data.members,
+        props.data.transactions,
+        props.data.whatsapp,
+        shouldShowGoogleSheetAccessNotice,
+      ],
+    );
+
+  const unreadNotificationCount =
+    dashboardNotifications
+      .filter(
+        (notification) =>
+          !seenNotificationIds.includes(
+            notification.id,
+          ),
+      )
+      .length;
+
+  useEffect(
+    () => {
+
+      try{
+
+        const storedIds =
+          JSON.parse(
+            localStorage.getItem(
+              notificationStorageKey,
+            )
+            ||
+            "[]",
+          );
+
+        setSeenNotificationIds(
+          Array.isArray(storedIds)
+            ? storedIds.filter(
+              (value):value is string =>
+                typeof value === "string",
+            )
+            : [],
+        );
+
+      }catch{
+
+        setSeenNotificationIds([]);
+
+      }
+
+    },
+    [
+      notificationStorageKey,
+    ],
+  );
+
+  useEffect(
+    () => {
+
+      const currentIds =
+        new Set(
+          dashboardNotifications.map(
+            (notification) =>
+              notification.id,
+          ),
+        );
+
+      setSeenNotificationIds(
+        (current) => {
+
+          const next =
+            current.filter(
+              (id) =>
+                currentIds.has(id),
+            );
+
+          if(next.length === current.length){
+            return current;
+          }
+
+          try{
+
+            localStorage.setItem(
+              notificationStorageKey,
+              JSON.stringify(next),
+            );
+
+          }catch{
+
+            // Notification read state is optional device-local data.
+
+          }
+
+          return next;
+
+        },
+      );
+
+    },
+    [
+      dashboardNotifications,
+      notificationStorageKey,
+    ],
+  );
+
+  function markNotificationsSeen(){
+
+    const notificationIds =
+      dashboardNotifications.map(
+        (notification) =>
+          notification.id,
+      );
+
+    setSeenNotificationIds(
+      notificationIds,
+    );
+
+    try{
+
+      localStorage.setItem(
+        notificationStorageKey,
+        JSON.stringify(notificationIds),
+      );
+
+    }catch{
+
+      // Notification read state is optional device-local data.
+
+    }
+
+  }
+
+  function openDashboardNotification(
+    notification:DashboardNotification,
+  ){
+
+    markNotificationsSeen();
+    setNotificationOpen(false);
+    goToView(notification.view);
+
+  }
 
   useEffect(
     () => {
@@ -6034,6 +6386,114 @@ function Dashboard(
           </div>
 
           <div className="topActions">
+            <div className="notificationCenter">
+              <button
+                className="notificationBell"
+                type="button"
+                aria-label={
+                  dashboardLanguage === "ms"
+                    ? `Notifikasi${unreadNotificationCount ? `, ${unreadNotificationCount} belum dibaca` : ""}`
+                    : `Notifications${unreadNotificationCount ? `, ${unreadNotificationCount} unread` : ""}`
+                }
+                aria-expanded={notificationOpen}
+                aria-haspopup="dialog"
+                onClick={() => {
+
+                  const nextOpen =
+                    !notificationOpen;
+
+                  setNotificationOpen(
+                    nextOpen,
+                  );
+
+                  if(nextOpen){
+                    markNotificationsSeen();
+                  }
+
+                }}
+              >
+                <span aria-hidden="true">
+                  🔔
+                </span>
+
+                {unreadNotificationCount > 0 && (
+                  <strong className="notificationBadge">
+                    {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+                  </strong>
+                )}
+              </button>
+
+              {notificationOpen && (
+                <section
+                  className="notificationPanel"
+                  role="dialog"
+                  aria-label={
+                    dashboardLanguage === "ms"
+                      ? "Pusat notifikasi"
+                      : "Notification center"
+                  }
+                >
+                  <header className="notificationHeader">
+                    <div>
+                      <strong>
+                        {dashboardLanguage === "ms" ? "Notifikasi" : "Notifications"}
+                      </strong>
+                      <span>
+                        {
+                          dashboardLanguage === "ms"
+                            ? `${dashboardNotifications.length} makluman semasa`
+                            : `${dashboardNotifications.length} current alerts`
+                        }
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="notificationClose"
+                      aria-label={dashboardLanguage === "ms" ? "Tutup notifikasi" : "Close notifications"}
+                      onClick={() => setNotificationOpen(false)}
+                    >
+                      ×
+                    </button>
+                  </header>
+
+                  <div className="notificationList">
+                    {dashboardNotifications.length === 0 && (
+                      <p className="notificationEmpty">
+                        {
+                          dashboardLanguage === "ms"
+                            ? "Tiada notifikasi baharu."
+                            : "No new notifications."
+                        }
+                      </p>
+                    )}
+
+                    {dashboardNotifications.map(
+                      (notification) => (
+                        <button
+                          type="button"
+                          className={`notificationItem ${notification.level}`}
+                          key={notification.id}
+                          onClick={() => openDashboardNotification(notification)}
+                        >
+                          <i aria-hidden="true" />
+
+                          <span>
+                            <strong>
+                              {notification.title}
+                            </strong>
+                            <small>
+                              {notification.message}
+                            </small>
+                          </span>
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </section>
+              )}
+            </div>
+
             <span className="status">
               {dashboardText.apiHealthy}
             </span>
@@ -7231,18 +7691,7 @@ function Dashboard(
           {canManageMembers && activeView === "admin" && (
             <Panel title="User Role Management" wide>
               {
-                actorRole === "OWNER"
-                &&
-                isSharedWorkspace
-                &&
-                Boolean(
-                  props.data.google?.spreadsheetId,
-                )
-                &&
-                props.data.members.some(
-                  (member) =>
-                    member.role !== "OWNER",
-                )
+                shouldShowGoogleSheetAccessNotice
                 &&
                 (
                   <div

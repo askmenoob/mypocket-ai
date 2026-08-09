@@ -481,12 +481,32 @@ test(
 
     assert.match(
       source,
-      /actorRole === "OWNER"[\s\S]*isSharedWorkspace[\s\S]*Google Sheet access notice/,
+      /const shouldShowGoogleSheetAccessNotice =[\s\S]*actorRole === "OWNER"[\s\S]*isSharedWorkspace[\s\S]*props\.data\.members\.some/,
+    );
+
+    assert.doesNotMatch(
+      source,
+      /const shouldShowGoogleSheetAccessNotice =[\s\S]{0,500}spreadsheetId/,
     );
 
     assert.match(
       source,
       /Kebenaran ini ditentukan oleh Owner dan tidak menjejaskan akses bot/,
+    );
+
+    assert.match(
+      source,
+      /className="notificationBell"/,
+    );
+
+    assert.match(
+      source,
+      /permission:google-sheet-share/,
+    );
+
+    assert.match(
+      source,
+      /transaction:\$\{latestTransaction\.id\}/,
     );
 
   },
