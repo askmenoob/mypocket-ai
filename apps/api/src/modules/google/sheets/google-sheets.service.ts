@@ -389,6 +389,8 @@ export class GoogleSheetsService {
 
 
         valueInputOption:
+          input.valueInputOption
+          ??
           "USER_ENTERED",
 
 
@@ -413,7 +415,11 @@ export class GoogleSheetsService {
     input:{
       spreadsheetId:string;
       range:string;
-      values:string[][];
+      values:unknown[][];
+      valueInputOption?:
+        "RAW"
+        |
+        "USER_ENTERED";
     },
   ):Promise<void>{
 
@@ -439,6 +445,8 @@ export class GoogleSheetsService {
 
 
         valueInputOption:
+          input.valueInputOption
+          ??
           "USER_ENTERED",
 
 

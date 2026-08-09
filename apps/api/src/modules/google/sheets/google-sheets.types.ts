@@ -41,4 +41,9 @@ export interface AppendRowInput {
   values:
     unknown[];
 
+  valueInputOption?:
+    "RAW"
+    |
+    "USER_ENTERED";
+
 }

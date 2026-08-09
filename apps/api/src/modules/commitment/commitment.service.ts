@@ -1279,8 +1279,24 @@ export class CommitmentService {
             this.sheetCommitmentValues(
               commitment,
             ),
+          valueInputOption:
+            "RAW",
         },
       );
+
+    const current =
+      await this.findSheetCommitment(
+        workspaceId,
+        commitment.id,
+      );
+
+    if(current){
+      await this.updateSheetCommitmentRow(
+        workspaceId,
+        current.rowNumber,
+        commitment,
+      );
+    }
   }
 
   private async updateSheetCommitmentRow(
@@ -1306,6 +1322,8 @@ export class CommitmentService {
               commitment,
             ),
           ],
+          valueInputOption:
+            "RAW",
         },
       );
   }
@@ -1353,7 +1371,9 @@ export class CommitmentService {
       commitment.id,
       commitment.workspaceId,
       commitment.name,
-      commitment.amount,
+      this.amountNumber(
+        commitment.amount,
+      ),
       commitment.frequency,
       String(commitment.dueDay),
       String(commitment.reminderDaysBefore),
