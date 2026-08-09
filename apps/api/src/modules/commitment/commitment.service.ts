@@ -435,6 +435,38 @@ export class CommitmentService {
         commitmentId,
       );
 
+    const monthlyInstances =
+      await this.app.prisma.monthlyCommitmentInstance.findMany({
+        where:{
+          commitmentId:
+            commitment.id,
+
+          workspaceId:
+            actor.workspaceId,
+        },
+        select:{
+          id:
+            true,
+        },
+      });
+
+
+    const receiptMarkers =
+      monthlyInstances
+        .map(
+          (instance) =>
+            `commitment:${instance.id}`,
+        );
+
+
+    const linkedTransactions =
+      await this.transactionService
+        .bulkDeleteSheetTransactionsByReceiptMarkers(
+          actor.workspaceId,
+          receiptMarkers,
+        );
+
+
     await this.app.prisma.commitment.delete({
       where:{
         id:
@@ -446,6 +478,7 @@ export class CommitmentService {
       deleted:true,
       id:
         commitment.id,
+      linkedTransactions,
     };
   }
 

@@ -1092,6 +1092,223 @@ export class TransactionService {
 
   }
 
+  async bulkDeleteSheetTransactionsByReceiptMarkers(
+    workspaceId:string,
+
+    receiptMarkers:string[],
+  ){
+
+    const normalizedMarkers =
+      Array.from(
+        new Set(
+          receiptMarkers
+            .map(
+              (marker) =>
+                String(
+                  marker,
+                )
+                  .trim(),
+            )
+            .filter(
+              Boolean,
+            ),
+        ),
+      );
+
+
+    if(normalizedMarkers.length === 0){
+
+      return {
+        requestedMarkerCount:
+          0,
+
+        deletedCount:
+          0,
+
+        deletedIds:
+          [] as string[],
+
+        marker:
+          "[DELETED]",
+      };
+
+    }
+
+
+    const setting =
+      await this.googleSettingsRepository
+        .findByWorkspaceId(
+          workspaceId,
+        );
+
+
+    if(!setting?.spreadsheetId){
+
+      return {
+        requestedMarkerCount:
+          normalizedMarkers.length,
+
+        deletedCount:
+          0,
+
+        deletedIds:
+          [] as string[],
+
+        marker:
+          "[DELETED]",
+      };
+
+    }
+
+
+    const spreadsheetIds =
+      [
+        setting.spreadsheetId,
+        setting.backupSpreadsheetId,
+      ]
+        .filter(
+          Boolean,
+        )
+        .filter(
+          (
+            spreadsheetId,
+            index,
+            values,
+          ) =>
+            values.indexOf(
+              spreadsheetId,
+            )
+            ===
+            index,
+        ) as string[];
+
+
+    const deletedIds =
+      new Set<string>();
+
+
+    for(
+      const spreadsheetId
+      of spreadsheetIds
+    ){
+
+      const rows =
+        await this.sheetsService
+          .readRange(
+            workspaceId,
+            {
+              spreadsheetId,
+
+              range:
+                "Transactions!A:O",
+            },
+          );
+
+
+      for(
+        let rowIndex = 1;
+        rowIndex < rows.length;
+        rowIndex += 1
+      ){
+
+        const row =
+          rows[rowIndex]
+          ?? [];
+
+
+        const transactionId =
+          String(
+            row[0]
+            ?? "",
+          )
+            .trim();
+
+
+        const description =
+          String(
+            row[6]
+            ?? "",
+          )
+            .trim();
+
+
+        const receiptUrl =
+          String(
+            row[11]
+            ?? "",
+          )
+            .trim();
+
+
+        if(
+          !transactionId
+          ||
+          description.startsWith(
+            "[DELETED]",
+          )
+          ||
+          !normalizedMarkers.includes(
+            receiptUrl,
+          )
+        ){
+
+          continue;
+
+        }
+
+
+        const rowNumber =
+          rowIndex
+          +
+          1;
+
+
+        await this.sheetsService
+          .updateRange(
+            workspaceId,
+            {
+              spreadsheetId,
+
+              range:
+                `Transactions!G${rowNumber}:G${rowNumber}`,
+
+              values:[
+                [
+                  `[DELETED] ${description}`
+                    .trim(),
+                ],
+              ],
+            },
+          );
+
+
+        deletedIds.add(
+          transactionId,
+        );
+
+      }
+
+    }
+
+
+    return {
+      requestedMarkerCount:
+        normalizedMarkers.length,
+
+      deletedCount:
+        deletedIds.size,
+
+      deletedIds:
+        Array.from(
+          deletedIds,
+        ),
+
+      marker:
+        "[DELETED]",
+    };
+
+  }
+
 
 
   async deleteTransaction(
