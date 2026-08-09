@@ -87,6 +87,27 @@ type CommitmentDraft = {
   expiresAt:number;
 };
 
+type PayCommitmentDraft = {
+  workspaceId:string;
+  actorUserId:string;
+  role:
+    | "OWNER"
+    | "ADMIN"
+    | "MEMBER"
+    | "VIEWER";
+  language:"ms" | "en";
+  items:Array<{
+    id:string;
+    name:string;
+    amount:string;
+    dueDay:number;
+    status:string;
+  }>;
+  selectedId?:string;
+  selectedName?:string;
+  expiresAt:number;
+};
+
 const COMMITMENT_DRAFT_TTL_MS =
   10 * 60 * 1000;
 
@@ -111,6 +132,9 @@ export class WhatsAppService {
 
   private readonly commitmentDrafts =
     new Map<string, CommitmentDraft>();
+
+  private readonly payCommitmentDrafts =
+    new Map<string, PayCommitmentDraft>();
 
 
 
@@ -2127,8 +2151,14 @@ export class WhatsAppService {
         if(
           draftKey
           &&
-          this.commitmentDrafts.has(
-            draftKey,
+          (
+            this.commitmentDrafts.has(
+              draftKey,
+            )
+            ||
+            this.payCommitmentDrafts.has(
+              draftKey,
+            )
           )
         ){
 
@@ -2401,6 +2431,21 @@ export class WhatsAppService {
       await this.getWorkspaceReplyLanguage(
         instance.workspaceId,
       );
+
+    const payCommitmentDraftResult =
+      await this.handlePayCommitmentDraftMessage(
+        instance.workspaceId,
+        normalized,
+        actorMember.userId,
+        actorMember.role,
+        commandReplyLanguage,
+      );
+
+    if(payCommitmentDraftResult){
+
+      return payCommitmentDraftResult;
+
+    }
 
     const commitmentDraftResult =
       await this.handleCommitmentDraftMessage(
@@ -3491,6 +3536,535 @@ export class WhatsAppService {
 
       normalized,
     };
+
+  }
+
+
+
+
+  private payCommitmentDraftKey(
+    workspaceId:string,
+    actorUserId:string,
+  ){
+
+    return this.commitmentDraftKey(
+      workspaceId,
+      actorUserId,
+    );
+
+  }
+
+
+
+
+  private parsePayCommitmentDraftStart(
+    text:string,
+  ){
+
+    const match =
+      text
+        .trim()
+        .match(
+          /^(?:pay\s*commitments?|paycommitments?|bayar\s*commitments?|bayarcommitments?|bayar\s+komitmen|pay\s+bill|bayar\s+bill)(?:\s+(.+))?$/i,
+        );
+
+    if(!match){
+
+      return null;
+
+    }
+
+    return {
+      name:
+        match[1]
+          ?.trim()
+        || "",
+    };
+
+  }
+
+
+
+
+  private async handlePayCommitmentDraftMessage(
+    workspaceId:string,
+    normalized:NormalizedEvolutionMessage,
+    actorUserId:string,
+    role:
+      | "OWNER"
+      | "ADMIN"
+      | "MEMBER"
+      | "VIEWER",
+    language:"ms" | "en",
+  ){
+
+    const text =
+      this.stripBangPrefix(
+        normalized.text
+        ?? "",
+      );
+
+    const key =
+      this.payCommitmentDraftKey(
+        workspaceId,
+        actorUserId,
+      );
+
+    const existingDraft =
+      this.payCommitmentDrafts.get(
+        key,
+      );
+
+    if(existingDraft && existingDraft.expiresAt < Date.now()){
+
+      this.payCommitmentDrafts.delete(
+        key,
+      );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? "⏱️ Pay commitment session expired. Type !paycommitment to start again."
+          : "⏱️ Sesi bayar komitmen tamat. Taip !paycommitment untuk mula semula.",
+      );
+
+      return {
+        message:
+          "WhatsApp pay commitment draft expired",
+        source:
+          "EVOLUTION",
+        normalized,
+      };
+
+    }
+
+    if(existingDraft){
+
+      return this.continuePayCommitmentDraft(
+        key,
+        existingDraft,
+        text,
+        normalized,
+      );
+
+    }
+
+    const start =
+      this.parsePayCommitmentDraftStart(
+        text,
+      );
+
+    if(!start){
+
+      return null;
+
+    }
+
+    if(
+      !this.canUseWhatsAppCommand(
+        role,
+        "reminder",
+      )
+    ){
+
+      await this.safeSendWebhookReply(
+        normalized,
+        this.buildCommandNotAllowedReply(
+          "reminder",
+          language,
+        ),
+      );
+
+      return {
+        message:
+          "WhatsApp pay commitment draft blocked",
+        source:
+          "EVOLUTION",
+        normalized,
+        role,
+      };
+
+    }
+
+    this.commitmentDrafts.delete(
+      key,
+    );
+
+    const actor = {
+      userId:
+        actorUserId,
+      workspaceId,
+      role,
+    };
+
+    const result =
+      await this.commitmentService.listCommitments(
+        actor,
+        "unpaid",
+      );
+
+    const items =
+      result.items
+        .filter(
+          (item:any) => item.canManage,
+        )
+        .map(
+          (item:any) => ({
+            id:
+              item.id,
+            name:
+              item.name,
+            amount:
+              item.amount,
+            dueDay:
+              item.dueDay,
+            status:
+              item.currentMonth?.status
+              ?? "",
+          }),
+        );
+
+    if(items.length === 0){
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? "✅ No unpaid commitments found for this month."
+          : "✅ Tiada komitmen belum bayar untuk bulan ini.",
+      );
+
+      return {
+        message:
+          "WhatsApp pay commitment none found",
+        source:
+          "EVOLUTION",
+        normalized,
+      };
+
+    }
+
+    const draft:PayCommitmentDraft = {
+      workspaceId,
+      actorUserId,
+      role,
+      language,
+      items,
+      expiresAt:
+        Date.now() + COMMITMENT_DRAFT_TTL_MS,
+    };
+
+    if(start.name){
+
+      const selected =
+        this.findPayCommitmentSelection(
+          draft,
+          start.name,
+        );
+
+      if(selected){
+        draft.selectedId =
+          selected.id;
+        draft.selectedName =
+          selected.name;
+      }
+
+    }
+
+    this.payCommitmentDrafts.set(
+      key,
+      draft,
+    );
+
+    await this.safeSendWebhookReply(
+      normalized,
+      draft.selectedId
+        ? this.buildPayCommitmentConfirmReply(
+            draft,
+          )
+        : this.buildPayCommitmentListReply(
+            draft,
+            result.period.label,
+          ),
+    );
+
+    return {
+      message:
+        "WhatsApp pay commitment draft started",
+      source:
+        "EVOLUTION",
+      normalized,
+    };
+
+  }
+
+
+
+
+  private async continuePayCommitmentDraft(
+    key:string,
+    draft:PayCommitmentDraft,
+    text:string,
+    normalized:NormalizedEvolutionMessage,
+  ){
+
+    const normalizedText =
+      text
+        .trim()
+        .toLowerCase();
+
+    if([
+      "cancel",
+      "batal",
+      "stop",
+      "tak jadi",
+    ].includes(normalizedText)){
+
+      this.payCommitmentDrafts.delete(
+        key,
+      );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        draft.language === "en"
+          ? "✅ Pay commitment cancelled."
+          : "✅ Bayaran komitmen dibatalkan.",
+      );
+
+      return {
+        message:
+          "WhatsApp pay commitment draft cancelled",
+        source:
+          "EVOLUTION",
+        normalized,
+      };
+
+    }
+
+    if(draft.selectedId){
+
+      if([
+        "confirm",
+        "sahkan",
+        "ya",
+        "yes",
+        "ok",
+      ].includes(normalizedText)){
+
+        const actor = {
+          userId:
+            draft.actorUserId,
+          workspaceId:
+            draft.workspaceId,
+          role:
+            draft.role,
+        };
+
+        const result =
+          await this.commitmentService.markCurrentMonthPaid(
+            actor,
+            draft.selectedId,
+          );
+
+        this.payCommitmentDrafts.delete(
+          key,
+        );
+
+        await this.safeSendWebhookReply(
+          normalized,
+          draft.language === "en"
+            ? `✅ ${draft.selectedName} marked as paid for this month.`
+            : `✅ ${draft.selectedName} ditanda sudah dibayar untuk bulan ini.`,
+        );
+
+        return {
+          message:
+            "WhatsApp pay commitment confirmed",
+          source:
+            "EVOLUTION",
+          normalized,
+          result,
+        };
+
+      }
+
+      await this.safeSendWebhookReply(
+        normalized,
+        draft.language === "en"
+          ? "Reply !confirm to mark paid, or !cancel to cancel."
+          : "Reply !confirm untuk tandakan sudah bayar, atau !cancel untuk batal.",
+      );
+
+      return {
+        message:
+          "WhatsApp pay commitment confirm required",
+        source:
+          "EVOLUTION",
+        normalized,
+      };
+
+    }
+
+    const selected =
+      this.findPayCommitmentSelection(
+        draft,
+        text,
+      );
+
+    if(!selected){
+
+      await this.safeSendWebhookReply(
+        normalized,
+        draft.language === "en"
+          ? "Commitment not found. Reply with the number from the list, or type !cancel."
+          : "Komitmen tidak dijumpai. Reply nombor daripada senarai, atau taip !cancel.",
+      );
+
+      return {
+        message:
+          "WhatsApp pay commitment selection invalid",
+        source:
+          "EVOLUTION",
+        normalized,
+      };
+
+    }
+
+    draft.selectedId =
+      selected.id;
+    draft.selectedName =
+      selected.name;
+    draft.expiresAt =
+      Date.now() + COMMITMENT_DRAFT_TTL_MS;
+
+    this.payCommitmentDrafts.set(
+      key,
+      draft,
+    );
+
+    await this.safeSendWebhookReply(
+      normalized,
+      this.buildPayCommitmentConfirmReply(
+        draft,
+      ),
+    );
+
+    return {
+      message:
+        "WhatsApp pay commitment selected",
+      source:
+        "EVOLUTION",
+      normalized,
+    };
+
+  }
+
+
+
+
+  private findPayCommitmentSelection(
+    draft:PayCommitmentDraft,
+    text:string,
+  ){
+
+    const trimmed =
+      text
+        .trim();
+
+    const number =
+      Number(
+        trimmed,
+      );
+
+    if(
+      Number.isInteger(number)
+      &&
+      number >= 1
+      &&
+      number <= draft.items.length
+    ){
+
+      return draft.items[number - 1];
+
+    }
+
+    const needle =
+      trimmed
+        .toLowerCase();
+
+    return draft.items.find(
+      (item) =>
+        item.name
+          .toLowerCase()
+          .includes(
+            needle,
+          ),
+    )
+    ?? null;
+
+  }
+
+
+
+
+  private buildPayCommitmentListReply(
+    draft:PayCommitmentDraft,
+    periodLabel:string,
+  ){
+
+    const lines =
+      draft.items
+        .map(
+          (item, index) =>
+            `${index + 1}. ${item.name} — RM${this.formatReminderAmount(item.amount)} — ${item.status}`,
+        );
+
+    return [
+      draft.language === "en"
+        ? `💳 Unpaid commitments — ${periodLabel}`
+        : `💳 Komitmen belum bayar — ${periodLabel}`,
+      "",
+      ...lines,
+      "",
+      draft.language === "en"
+        ? "Reply with number or name. Example: 1"
+        : "Reply nombor atau nama. Contoh: 1",
+      "Type !cancel to cancel.",
+    ].join(
+      "\n",
+    );
+
+  }
+
+
+
+
+  private buildPayCommitmentConfirmReply(
+    draft:PayCommitmentDraft,
+  ){
+
+    const selected =
+      draft.items.find(
+        (item) => item.id === draft.selectedId,
+      );
+
+    if(!selected){
+      return draft.language === "en"
+        ? "Commitment not found. Type !paycommitment to start again."
+        : "Komitmen tidak dijumpai. Taip !paycommitment untuk mula semula.";
+    }
+
+    return [
+      draft.language === "en"
+        ? "✅ Confirm payment:"
+        : "✅ Sahkan bayaran:",
+      `${selected.name} — RM${this.formatReminderAmount(selected.amount)}`,
+      "",
+      draft.language === "en"
+        ? "Reply !confirm to mark paid or !cancel to cancel."
+        : "Reply !confirm untuk tandakan sudah bayar atau !cancel untuk batal.",
+    ].join(
+      "\n",
+    );
 
   }
 
