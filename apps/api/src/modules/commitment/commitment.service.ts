@@ -459,12 +459,52 @@ export class CommitmentService {
         );
 
 
-    const linkedTransactions =
-      await this.transactionService
-        .bulkDeleteSheetTransactionsByReceiptMarkers(
-          actor.workspaceId,
-          receiptMarkers,
-        );
+    let linkedTransactions:
+      Awaited<
+        ReturnType<
+          TransactionService["bulkDeleteSheetTransactionsByReceiptMarkers"]
+        >
+      >
+      |
+      null =
+        null;
+
+
+    let linkedTransactionCleanupError:
+      string
+      |
+      null =
+        null;
+
+
+    try{
+
+      linkedTransactions =
+        await this.transactionService
+          .bulkDeleteSheetTransactionsByReceiptMarkers(
+            actor.workspaceId,
+            receiptMarkers,
+          );
+
+    }catch(error){
+
+      linkedTransactionCleanupError =
+        error instanceof Error
+          ? error.message
+          : "Failed to cleanup linked commitment transactions";
+
+      console.error(
+        "COMMITMENT_LINKED_TRANSACTION_CLEANUP_FAILED:",
+        {
+          workspaceId:
+            actor.workspaceId,
+          commitmentId:
+            commitment.id,
+          error,
+        },
+      );
+
+    }
 
 
     await this.app.prisma.commitment.delete({
@@ -479,6 +519,7 @@ export class CommitmentService {
       id:
         commitment.id,
       linkedTransactions,
+      linkedTransactionCleanupError,
     };
   }
 
