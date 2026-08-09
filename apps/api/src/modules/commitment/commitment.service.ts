@@ -316,7 +316,9 @@ export class CommitmentService {
       name:
         input.name,
       amount:
-        input.amount,
+        this.safeAmountText(
+          input.amount,
+        ),
       currency:
         "MYR",
       frequency:
@@ -394,7 +396,7 @@ export class CommitmentService {
     const updated:SheetCommitment = {
       ...current.commitment,
       ...(input.name !== undefined ? { name:input.name } : {}),
-      ...(input.amount !== undefined ? { amount:input.amount } : {}),
+      ...(input.amount !== undefined ? { amount:this.safeAmountText(input.amount) } : {}),
       ...(input.dueDay !== undefined ? { dueDay:input.dueDay } : {}),
       ...(input.reminderDaysBefore !== undefined ? { reminderDaysBefore:input.reminderDaysBefore } : {}),
       ...(input.reminderTime !== undefined ? { reminderTime:input.reminderTime } : {}),

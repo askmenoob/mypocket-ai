@@ -1070,10 +1070,30 @@ function isStoredTrue(key:string){
 }
 
 function money(value:unknown, currency = "MYR"){
-  const amount =
-    Number(value || 0);
+  const raw =
+    String(value ?? "")
+      .replace(/,/g, "");
 
-  return `${currency} ${amount.toFixed(2)}`;
+  const match =
+    raw.match(
+      /([0-9]+(?:\.[0-9]{1,2})?)/,
+    );
+
+  const amount =
+    Number(
+      match?.[1]
+      ??
+      raw
+      ??
+      0,
+    );
+
+  const safeAmount =
+    Number.isFinite(amount)
+      ? amount
+      : 0;
+
+  return `${currency} ${safeAmount.toFixed(2)}`;
 }
 
 function listFrom<T>(payload:unknown):T[]{
@@ -7218,7 +7238,7 @@ function Dashboard(
                   {dashboardText.refresh}
                 </button>
                 <span>
-                  {commitmentsViewData?.period.label || dashboardText.currentMonth} · {dashboardText.totalUnpaid} RM{commitmentsViewData?.summary.totalUnpaid || "0.00"}
+                  {commitmentsViewData?.period.label || dashboardText.currentMonth} · {dashboardText.totalUnpaid} {money(commitmentsViewData?.summary.totalUnpaid)}
                 </span>
               </div>
 
@@ -7253,7 +7273,7 @@ function Dashboard(
                   <div className="commitmentRow" key={item.id}>
                     <div>
                       <strong>{item.name}</strong>
-                      <span>RM{Number(item.amount).toLocaleString("ms-MY")} · {dashboardText.due} {new Date(item.currentMonth.dueDate).toLocaleDateString("ms-MY")} · {item.currentMonth.status}</span>
+                      <span>{money(item.amount)} · {dashboardText.due} {new Date(item.currentMonth.dueDate).toLocaleDateString("ms-MY")} · {item.currentMonth.status}</span>
                       <small>{dashboardText.nextReminder}: {new Date(item.nextReminderAt).toLocaleString("ms-MY")}</small>
                     </div>
                     <div className="commitmentActions">
