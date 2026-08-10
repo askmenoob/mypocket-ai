@@ -2284,6 +2284,42 @@ export class WhatsAppService {
     }
 
 
+    if(
+      result.status === "failed"
+    ){
+
+      console.error(
+        "WHATSAPP_VOICE_PIPELINE_FAILED:",
+        {
+          messageId:
+            normalized.messageId
+            ??
+            null,
+          reason:
+            result.reason,
+        },
+      );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        "⚠️ Voice tidak dapat diproses buat masa ini. Sila cuba hantar semula.",
+      );
+
+      return {
+        message:
+          "WhatsApp voice processing failed",
+        source:"VOICE",
+        normalized:{
+          ...normalized,
+          reason:
+            result.reason,
+        },
+        voice:result,
+      };
+
+    }
+
+
     return {
       message:
         "WhatsApp voice input ignored",
@@ -2334,6 +2370,9 @@ export class WhatsAppService {
         new Set(
           [
             "bot",
+            "boot",
+            "boat",
+            "board",
             alias,
           ]
             .filter(Boolean)
@@ -2347,7 +2386,7 @@ export class WhatsAppService {
       );
 
     return new RegExp(
-      `^(?:(?:hey|hai)\\s+)?@?(?:${names.join("|")})(?=$|[\\s,:;-])`,
+      `^(?:(?:hey|hai)\\s+)?@?(?:${names.join("|")})(?=$|[\\s,.:;-])`,
       "i",
     );
 
@@ -2376,7 +2415,7 @@ export class WhatsAppService {
           "",
         )
         .replace(
-          /^[\s,:;-]*(?:(?:please\s+)?(?:rekod|record|catat|simpan|save)\b[\s,:;-]*)?/i,
+          /^[\s,.:;-]*(?:(?:please\s+)?(?:rekod|record|catat|simpan|save)\b[\s,.:;-]*)?/i,
           "",
         );
 

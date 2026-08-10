@@ -161,6 +161,70 @@ test(
 
 
 test(
+  "normalizes Evolution OGA voice filenames to Groq-supported OGG",
+  async () => {
+    let requestBody:FormData | null = null;
+    const provider =
+      new GroqSpeechProvider({
+        apiKey:"test-key",
+        model:"whisper-large-v3-turbo",
+        fetchImpl:async (_url, init) => {
+          requestBody =
+            init?.body as FormData;
+
+          return new Response(
+            JSON.stringify({
+              text:"bot rekod beli KFC RM150",
+              language:"ms",
+              duration:2,
+              segments:[
+                {no_speech_prob:0.01},
+              ],
+            }),
+            {
+              status:200,
+              headers:{
+                "Content-Type":"application/json",
+              },
+            },
+          );
+        },
+      });
+
+    const result =
+      await provider.transcribe({
+        audio:new Uint8Array([1, 2, 3]),
+        mimeType:"audio/ogg; codecs=opus",
+        fileName:"voice-note.oga",
+      });
+
+    assert.equal(
+      result.status,
+      "success",
+    );
+    assert.ok(requestBody);
+
+    const file =
+      requestBody!.get(
+        "file",
+      );
+
+    assert.ok(
+      file instanceof File,
+    );
+    assert.equal(
+      file.name,
+      "voice-note.ogg",
+    );
+    assert.equal(
+      file.type,
+      "audio/ogg; codecs=opus",
+    );
+  },
+);
+
+
+test(
   "fails closed on empty transcript and HTTP errors",
   async () => {
     const emptyProvider =

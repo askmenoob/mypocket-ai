@@ -66,7 +66,7 @@ const DEFAULT_MAX_BYTES =
 
 
 const DEFAULT_PROMPT =
-  "Transcribe exactly. The speaker may use Bahasa Melayu, English, or Manglish. Preserve names, amounts, currencies, dates, and merchant names. Do not translate or add commentary.";
+  "Transcribe exactly. The speaker may use Bahasa Melayu, English, or Manglish. A voice command may start with the address word bot; spell that word exactly as bot. Preserve names, amounts, currencies, dates, and merchant names. Do not translate or add commentary.";
 
 
 export class GroqSpeechProvider {
@@ -180,6 +180,13 @@ export class GroqSpeechProvider {
     );
 
 
+    const fileName =
+      this.normalizeAudioFileName(
+        input.fileName,
+        input.mimeType,
+      );
+
+
     form.append(
       "file",
       new Blob(
@@ -191,9 +198,7 @@ export class GroqSpeechProvider {
             "application/octet-stream",
         },
       ),
-      input.fileName
-      ||
-      "voice.ogg",
+      fileName,
     );
 
     form.append(
@@ -411,6 +416,38 @@ export class GroqSpeechProvider {
         value as Record<string, unknown>
         :
         {};
+
+  }
+
+
+  private normalizeAudioFileName(
+    fileName:string,
+    mimeType:string,
+  ){
+
+    const normalized =
+      fileName.trim()
+      ||
+      "voice.ogg";
+
+    if(
+      /^audio\/(?:ogg|opus)(?:;|$)/i.test(
+        mimeType,
+      )
+      &&
+      /\.oga$/i.test(
+        normalized,
+      )
+    ){
+
+      return normalized.replace(
+        /\.oga$/i,
+        ".ogg",
+      );
+
+    }
+
+    return normalized;
 
   }
 

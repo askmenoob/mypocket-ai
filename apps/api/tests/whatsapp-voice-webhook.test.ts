@@ -139,6 +139,79 @@ test(
 
 
 test(
+  "group voice resolves the linked member from Evolution participantAlt",
+  async () => {
+    const service =
+      createService(
+        "mypocket",
+      );
+
+    let actorJid = "";
+    let routedTranscript = "";
+    service.findWebhookActorMember =
+      async (_workspaceId:string, jid:string) => {
+        actorJid = jid;
+        return {
+          userId:"user-1",
+          role:"OWNER",
+        };
+      };
+    service.voicePipeline = {
+      process:async () => ({
+        status:"transcript_ready",
+        source:"VOICE",
+        provider:"groq-speech",
+        model:"whisper-large-v3-turbo",
+        transcript:"bot rekod beli KFC RM150",
+        confidence:0.96,
+        latencyMs:11,
+      }),
+    };
+    service.routeVoiceTranscript =
+      async (_normalized:any, transcript:string) => {
+        routedTranscript = transcript;
+        return {message:"text route"};
+      };
+
+    const result =
+      await service.handleEvolutionWebhook({
+        event:"messages.upsert",
+        instance:"demo",
+        data:{
+          key:{
+            fromMe:false,
+            remoteJid:"60132195990-1508049801@g.us",
+            participant:"267091500384378@lid",
+            participantAlt:"60103250032@s.whatsapp.net",
+            id:"group-voice-1",
+          },
+          message:{
+            audioMessage:{
+              mimetype:"audio/ogg; codecs=opus",
+              ptt:true,
+              seconds:7,
+            },
+          },
+        },
+      });
+
+    assert.equal(
+      result.message,
+      "WhatsApp voice routed to text pipeline",
+    );
+    assert.equal(
+      actorJid,
+      "60103250032@s.whatsapp.net",
+    );
+    assert.equal(
+      routedTranscript,
+      "bot rekod beli KFC RM150",
+    );
+  },
+);
+
+
+test(
   "linked voice sender receives transcript response without financial execution",
   async () => {
     const service =
@@ -265,6 +338,63 @@ test(
   },
 );
 
+
+test(
+  "voice processing failure replies instead of failing silently",
+  async () => {
+    const service =
+      createService();
+
+    let reply = "";
+    service.findWebhookActorMember =
+      async () => ({
+        userId:"user-1",
+        role:"MEMBER",
+      });
+    service.voicePipeline = {
+      process:async () => ({
+        status:"failed",
+        source:"VOICE",
+        reason:"GROQ_STT_HTTP_400",
+      }),
+    };
+    service.safeSendWebhookReply =
+      async (_normalized:any, text:string) => {
+        reply = text;
+      };
+
+    const originalConsoleError =
+      console.error;
+    console.error =
+      () => {};
+
+    let result:any;
+
+    try{
+      result =
+        await service.handleEvolutionWebhook(
+          payload,
+        );
+    }finally{
+      console.error =
+        originalConsoleError;
+    }
+
+    assert.equal(
+      result.message,
+      "WhatsApp voice processing failed",
+    );
+    assert.equal(
+      result.normalized.reason,
+      "GROQ_STT_HTTP_400",
+    );
+    assert.match(
+      reply,
+      /Voice tidak dapat diproses/,
+    );
+  },
+);
+
 test(
   "voice route accepts bot rekod prefix and adds WhatsApp trigger",
   async () => {
@@ -322,6 +452,52 @@ test(
     assert.equal(
       routedPayload.data.message.conversation,
       "!beli KFC RM150",
+    );
+  },
+);
+
+
+test(
+  "voice route tolerates production STT variants of the bot prefix",
+  async () => {
+    const service =
+      createService();
+
+    const routedMessages:string[] = [];
+    service.handleEvolutionWebhook =
+      async (input:any) => {
+        routedMessages.push(
+          input.data.message.conversation,
+        );
+        return {message:"text route"};
+      };
+
+    await service.routeVoiceTranscript(
+      {
+        instanceName:"demo",
+        messageId:"voice-stt-boot",
+        remoteJid:"60123456789@s.whatsapp.net",
+        participantJid:undefined,
+      },
+      "Boot record. Isi petrol RM40. Guna kad.",
+    );
+
+    await service.routeVoiceTranscript(
+      {
+        instanceName:"demo",
+        messageId:"voice-stt-board",
+        remoteJid:"60123456789@s.whatsapp.net",
+        participantJid:undefined,
+      },
+      "Board record isi petrol RM40. Cut.",
+    );
+
+    assert.deepEqual(
+      routedMessages,
+      [
+        "!Isi petrol RM40. Guna kad.",
+        "!isi petrol RM40. Cut.",
+      ],
     );
   },
 );
