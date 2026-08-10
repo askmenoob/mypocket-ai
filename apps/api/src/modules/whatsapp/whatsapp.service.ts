@@ -62,7 +62,18 @@ import {
 
 import {
   AIProviderRouter,
+  GroqSpeechProvider,
 } from "../intelligence/index.js";
+
+
+import {
+  EvolutionMediaDownloader,
+} from "./evolution-media.downloader.js";
+
+
+import {
+  WhatsAppVoicePipeline,
+} from "./whatsapp-voice.pipeline.js";
 
 type CommitmentDraftStep =
   | "name"
@@ -134,6 +145,9 @@ export class WhatsAppService {
   private readonly aiProviderRouter:
     AIProviderRouter<ParsedWhatsAppTransaction>;
 
+  private readonly voicePipeline:
+    WhatsAppVoicePipeline;
+
   private readonly commitmentDrafts =
     new Map<string, CommitmentDraft>();
 
@@ -168,6 +182,23 @@ export class WhatsAppService {
         ParsedWhatsAppTransaction
       >(
         [],
+      );
+
+
+    this.voicePipeline =
+      new WhatsAppVoicePipeline(
+        new EvolutionMediaDownloader({
+          apiUrl:
+            env.EVOLUTION_API_URL,
+          apiKey:
+            env.EVOLUTION_API_KEY,
+        }),
+        new GroqSpeechProvider({
+          apiKey:
+            env.GROQ_API_KEY,
+          model:
+            env.GROQ_STT_MODEL,
+        }),
       );
 
   }
@@ -1975,6 +2006,212 @@ export class WhatsAppService {
 
 
 
+  private async handleEvolutionMediaWebhook(
+    payload:unknown,
+    normalized:NormalizedEvolutionMessage,
+  ){
+
+    const instance =
+      await this.app.prisma.whatsAppInstance
+        .findUnique({
+          where:{
+            instanceName:
+              normalized.instanceName
+              ??
+              "",
+          },
+        });
+
+    if(!instance){
+
+      return {
+        message:"WhatsApp webhook ignored",
+        source:"EVOLUTION",
+        normalized:{
+          ...normalized,
+          reason:"WHATSAPP_INSTANCE_NOT_REGISTERED",
+        },
+      };
+
+    }
+
+
+    const isGroupMessage =
+      normalized.remoteJid
+        ?.endsWith(
+          "@g.us",
+        )
+      ??
+      false;
+
+    const actorJid =
+      isGroupMessage
+        ?
+        (
+          normalized.participantJid
+          ??
+          normalized.remoteJid
+        )
+        :
+        (
+          normalized.remoteJid
+          ??
+          normalized.participantJid
+        );
+
+    const actorMember =
+      await this.findWebhookActorMember(
+        instance.workspaceId,
+        actorJid,
+      );
+
+    if(!actorMember){
+
+      return {
+        message:"WhatsApp webhook ignored",
+        source:"EVOLUTION",
+        normalized:{
+          ...normalized,
+          reason:
+            "WHATSAPP_MEMBER_PHONE_NOT_LINKED",
+        },
+      };
+
+    }
+
+
+    const message =
+      this.extractEvolutionMessageEnvelope(
+        payload,
+      );
+
+    if(!message){
+
+      return {
+        message:"WhatsApp voice input unavailable",
+        source:"VOICE",
+        normalized:{
+          ...normalized,
+          reason:"MEDIA_PAYLOAD_MISSING",
+        },
+      };
+
+    }
+
+
+    const result =
+      await this.voicePipeline.process({
+        workspaceId:
+          instance.workspaceId,
+        instanceName:
+          normalized.instanceName
+          ??
+          "",
+        messageId:
+          normalized.messageId
+          ??
+          "",
+        message,
+        media:
+          normalized.media!,
+      });
+
+    if(
+      result.status === "confirmation_required"
+      ||
+      result.status === "transcript_ready"
+    ){
+
+      const reply =
+        result.status === "confirmation_required"
+          ?
+          [
+            "🎙️ Transkripsi suara memerlukan pengesahan.",
+            `\"${result.transcript}\"`,
+            "Belum ada transaksi direkodkan.",
+          ].join(
+            "\n",
+          )
+          :
+          [
+            "🎙️ Transkripsi suara berjaya.",
+            `\"${result.transcript}\"`,
+            "Belum ada transaksi direkodkan dalam voice slice ini.",
+          ].join(
+            "\n",
+          );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        reply,
+      );
+
+    }
+
+
+    return {
+      message:
+        result.status === "transcript_ready"
+          ?
+          "WhatsApp voice transcript ready"
+          :
+          result.status === "confirmation_required"
+            ?
+            "WhatsApp voice confirmation required"
+            :
+            "WhatsApp voice input ignored",
+      source:"VOICE",
+      normalized,
+      voice:result,
+    };
+
+  }
+
+
+  private extractEvolutionMessageEnvelope(
+    payload:unknown,
+  ):Record<string, unknown> | null{
+
+    const body =
+      this.asRecord(
+        payload,
+      );
+
+    const data =
+      this.asRecord(
+        body.data,
+      );
+
+    const key =
+      this.asRecord(
+        data.key,
+      );
+
+    const message =
+      this.asRecord(
+        data.message
+        ??
+        body.message,
+      );
+
+    if(
+      !this.asString(key.id)
+      ||
+      Object.keys(message).length === 0
+    ){
+
+      return null;
+
+    }
+
+    return {
+      key,
+      message,
+    };
+
+  }
+
+
   async handleEvolutionWebhook(
     payload:unknown,
   ){
@@ -1986,6 +2223,19 @@ export class WhatsAppService {
 
 
     if(!normalized.accepted){
+
+      if(
+        normalized.reason ===
+        "MEDIA_INPUT_PENDING_PIPELINE"
+      ){
+
+        return this.handleEvolutionMediaWebhook(
+          payload,
+          normalized,
+        );
+
+      }
+
 
       return {
 
@@ -9310,11 +9560,55 @@ export class WhatsAppService {
         reason:"MEDIA_INPUT_PENDING_PIPELINE",
         event,
         instanceName,
+        remoteJid:
+          this.asString(
+            key.remoteJid
+            ??
+            data.remoteJid,
+          ),
+        participantJid:
+          this.asString(
+            key.participantAlt,
+          )
+          ||
+          this.asString(
+            data.participantAlt,
+          )
+          ||
+          this.asString(
+            key.participant,
+          )
+          ||
+          this.asString(
+            data.participant,
+          )
+          ||
+          this.asString(
+            data.sender,
+          ),
+        pushName:
+          this.asString(
+            data.pushName
+            ??
+            body.pushName,
+          ),
+        messageId:
+          this.asString(
+            key.id
+            ??
+            data.id,
+          ),
         messageType:
           media.kind,
         media,
         text:
           text || undefined,
+        timestamp:
+          this.normalizeTimestamp(
+            data.messageTimestamp
+            ??
+            body.messageTimestamp,
+          ),
       };
 
     }
