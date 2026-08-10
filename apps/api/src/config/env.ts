@@ -39,6 +39,10 @@ const EnvSchema = z.object({
 
   GROQ_API_KEY: z.string().optional(),
 
+  GROQ_STT_MODEL:
+    z.string()
+      .default("whisper-large-v3-turbo"),
+
   GOOGLE_CLIENT_ID: z.string().optional(),
 
   GOOGLE_CLIENT_SECRET: z.string().optional(),

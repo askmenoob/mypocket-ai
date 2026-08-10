@@ -8,6 +8,17 @@ export {
 } from "./groq-text.provider.js";
 
 
+export {
+  GroqSpeechProvider,
+} from "./groq-speech.provider.js";
+
+
+export type {
+  GroqSpeechTranscript,
+  SpeechToTextInput,
+} from "./groq-speech.provider.js";
+
+
 export type {
   AITextProvider,
 } from "./ai-provider.js";
