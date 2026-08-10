@@ -264,6 +264,57 @@ test(
 
 
 test(
+  "recognizes TL as a receipt total label at the start of a line",
+  async () => {
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async () =>
+          new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      amount:null,
+                      currency:null,
+                      merchantName:"Yik Mun",
+                      rawText:[
+                        "AMT-EXCL TAX RM63.40",
+                        "SST 6% RM3.80",
+                        "TL RM67.20",
+                        "CASH RM100.00",
+                        "CG RM32.80",
+                      ].join("\n"),
+                      confidence:0.7,
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          ),
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"yik-mun.jpg",
+      });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.amount, "67.20");
+    assert.equal(result.value.currency, "RM");
+  },
+);
+
+
+test(
   "fails closed on malformed vision response",
   async () => {
     const provider =
