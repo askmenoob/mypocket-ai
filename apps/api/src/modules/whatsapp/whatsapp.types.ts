@@ -44,8 +44,7 @@ export interface WhatsAppDevTransactionInput {
     role:
       | "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER";
+      | "MEMBER";
   };
 
 }

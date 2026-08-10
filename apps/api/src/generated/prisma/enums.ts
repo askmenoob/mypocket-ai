@@ -30,8 +30,7 @@ export type GoogleSheetMode = (typeof GoogleSheetMode)[keyof typeof GoogleSheetM
 export const WorkspaceRole = {
   OWNER: 'OWNER',
   ADMIN: 'ADMIN',
-  MEMBER: 'MEMBER',
-  VIEWER: 'VIEWER'
+  MEMBER: 'MEMBER'
 } as const
 
 export type WorkspaceRole = (typeof WorkspaceRole)[keyof typeof WorkspaceRole]

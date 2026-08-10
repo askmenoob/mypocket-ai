@@ -1,8 +1,7 @@
 export type MemberRole =
   | "OWNER"
   | "ADMIN"
-  | "MEMBER"
-  | "VIEWER";
+  | "MEMBER";
 
 
 export interface WorkspaceMemberContext {

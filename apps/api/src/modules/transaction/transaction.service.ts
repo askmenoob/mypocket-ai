@@ -565,24 +565,12 @@ export class TransactionService {
     actorRole:
       "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER",
+      | "MEMBER",
 
     input:CreateTransactionInput,
   ){
 
 
-    if(
-      actorRole === "VIEWER"
-    ){
-
-      throw new AppError(
-        "INSUFFICIENT_ROLE",
-        "Viewer cannot create transaction",
-        403,
-      );
-
-    }
 
 
 
@@ -679,8 +667,7 @@ export class TransactionService {
     actorRole:
       "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER",
+      | "MEMBER",
 
     workspaceId:string,
 
@@ -755,8 +742,7 @@ export class TransactionService {
     actorRole:
       "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER",
+      | "MEMBER",
 
     workspaceId:string,
 
@@ -1315,8 +1301,7 @@ export class TransactionService {
     actorRole:
       "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER",
+      | "MEMBER",
 
     workspaceId:string,
 

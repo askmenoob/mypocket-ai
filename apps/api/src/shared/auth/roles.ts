@@ -9,8 +9,6 @@ export const Roles = {
   MEMBER:
     "MEMBER",
 
-  VIEWER:
-    "VIEWER",
 
 } as const;
 

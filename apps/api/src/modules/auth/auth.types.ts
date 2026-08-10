@@ -26,7 +26,6 @@ export interface AuthSession {
     role:
       | "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER";
+      | "MEMBER";
   };
 }

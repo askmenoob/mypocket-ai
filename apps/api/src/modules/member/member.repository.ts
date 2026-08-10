@@ -118,8 +118,7 @@ export class MemberRepository {
     role:
       "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER",
+      | "MEMBER",
   ) {
 
     return this.prisma.workspaceMember.create({
@@ -151,8 +150,7 @@ export class MemberRepository {
     role:
       "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER",
+      | "MEMBER",
   ) {
 
     return this.prisma.workspaceMember.update({

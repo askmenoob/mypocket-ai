@@ -725,8 +725,7 @@ export class CommitmentService {
       actor.role as
         | "OWNER"
         | "ADMIN"
-        | "MEMBER"
-        | "VIEWER",
+        | "MEMBER",
       {
         workspaceId:
           actor.workspaceId,

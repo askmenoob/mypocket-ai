@@ -75,8 +75,7 @@ type CommitmentDraft = {
   role:
     | "OWNER"
     | "ADMIN"
-    | "MEMBER"
-    | "VIEWER";
+    | "MEMBER";
   language:"ms" | "en";
   name?:string;
   amount?:string;
@@ -93,8 +92,7 @@ type PayCommitmentDraft = {
   role:
     | "OWNER"
     | "ADMIN"
-    | "MEMBER"
-    | "VIEWER";
+    | "MEMBER";
   language:"ms" | "en";
   items:Array<{
     id:string;
@@ -3271,8 +3269,7 @@ export class WhatsAppService {
     role:
       | "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER",
+      | "MEMBER",
     language:"ms" | "en",
   ){
 
@@ -3672,8 +3669,7 @@ export class WhatsAppService {
     role:
       | "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER",
+      | "MEMBER",
     language:"ms" | "en",
   ){
 
@@ -5206,8 +5202,7 @@ export class WhatsAppService {
     role:
       | "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER",
+      | "MEMBER",
 
     commandKind:WhatsAppCommandKind,
   ){
@@ -5583,8 +5578,7 @@ export class WhatsAppService {
     role:
       | "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER",
+      | "MEMBER",
     command:NonNullable<ReturnType<WhatsAppService["parseReminderCommand"]>>,
   ){
 
@@ -6947,8 +6941,7 @@ export class WhatsAppService {
     role:
       | "OWNER"
       | "ADMIN"
-      | "MEMBER"
-      | "VIEWER",
+      | "MEMBER",
 
     edit:WhatsAppEditCommand,
 

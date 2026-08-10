@@ -289,7 +289,6 @@ enum WorkspaceRole {
   OWNER
   ADMIN
   MEMBER
-  VIEWER
 }
 
 enum WorkspaceType {

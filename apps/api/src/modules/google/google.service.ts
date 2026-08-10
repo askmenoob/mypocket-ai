@@ -69,9 +69,7 @@ export class GoogleService {
       |
       "ADMIN"
       |
-      "MEMBER"
-      |
-      "VIEWER",
+      "MEMBER",
 
     workspaceId:string,
 
@@ -148,9 +146,7 @@ export class GoogleService {
       |
       "ADMIN"
       |
-      "MEMBER"
-      |
-      "VIEWER",
+      "MEMBER",
 
     workspaceId:string,
   ){

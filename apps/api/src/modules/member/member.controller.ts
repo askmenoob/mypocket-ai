@@ -69,6 +69,7 @@ export class MemberController {
 
     return this.service
       .addMember(
+        request.user.userId,
         request.user.workspaceId,
         body.email,
         body.role,

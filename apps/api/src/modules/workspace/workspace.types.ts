@@ -12,8 +12,7 @@ export type WorkspacePackage =
 export type WorkspaceRole =
   | "OWNER"
   | "ADMIN"
-  | "MEMBER"
-  | "VIEWER";
+  | "MEMBER";
 
 
 export interface WorkspaceContext {

@@ -68,10 +68,5 @@ export const RolePermissions = {
   ],
 
 
-  [Roles.VIEWER]: [
-
-    Permissions.WORKSPACE_READ,
-
-  ],
 
 };

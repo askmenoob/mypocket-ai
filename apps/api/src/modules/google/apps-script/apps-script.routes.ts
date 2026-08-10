@@ -5,6 +5,11 @@ import {
 }
 from "./apps-script.service.js";
 
+import {
+ requireRole,
+ Roles,
+} from "../../../shared/auth/index.js";
+
 
 
 export async function appsScriptRoutes(
@@ -19,6 +24,15 @@ export async function appsScriptRoutes(
 
  fastify.post(
   "/test",
+  {
+   preHandler:[
+    requireRole(
+     Roles.OWNER,
+     Roles.ADMIN,
+     Roles.MEMBER,
+    ),
+   ],
+  },
   async(
    request,
    reply

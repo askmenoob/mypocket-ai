@@ -54,10 +54,53 @@ export class MemberService {
 
 
   async addMember(
+    actorUserId:string,
     workspaceId:string,
     email:string,
     role:MemberRole,
   ) {
+
+    const actor =
+      await this.repository.findMembership(
+        actorUserId,
+        workspaceId,
+      );
+
+    if (
+      !actor
+      ||
+      (
+        actor.role !== "OWNER"
+        &&
+        actor.role !== "ADMIN"
+      )
+    ) {
+      throw new AppError(
+        "MEMBER_ADD_FORBIDDEN",
+        "Only workspace Owner/Admin can add members",
+        403,
+      );
+    }
+
+    if (role === "OWNER") {
+      throw new AppError(
+        "OWNER_ROLE_ASSIGNMENT_BLOCKED",
+        "A new member cannot be assigned the Owner role",
+        400,
+      );
+    }
+
+    if (
+      actor.role === "ADMIN"
+      &&
+      role === "ADMIN"
+    ) {
+      throw new AppError(
+        "ADMIN_ROLE_LIMIT",
+        "Admin cannot add another admin",
+        403,
+      );
+    }
 
     const user =
       await this.repository.findUserByEmail(
