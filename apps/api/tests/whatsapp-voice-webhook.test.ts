@@ -88,6 +88,7 @@ test(
       createService();
 
     let reply = "";
+    let routedTranscript = "";
     let transactionCalls = 0;
     service.findWebhookActorMember =
       async () => ({
@@ -109,6 +110,11 @@ test(
       async (_normalized:any, text:string) => {
         reply = text;
       };
+    service.routeVoiceTranscript =
+      async (_normalized:any, transcript:string) => {
+        routedTranscript = transcript;
+        return {message:"text route"};
+      };
     service.transactionService = {
       createTransaction:async () => {
         transactionCalls += 1;
@@ -126,11 +132,15 @@ test(
     );
     assert.equal(
       result.message,
-      "WhatsApp voice transcript ready",
+      "WhatsApp voice routed to text pipeline",
     );
-    assert.match(
+    assert.equal(
+      routedTranscript,
+      "bayar makan RM 12",
+    );
+    assert.equal(
       reply,
-      /bayar makan RM 12/,
+      "",
     );
     assert.equal(
       transactionCalls,

@@ -2048,7 +2048,7 @@ export class WhatsAppService {
   private async handleEvolutionMediaWebhook(
     payload:unknown,
     normalized:NormalizedEvolutionMessage,
-  ){
+  ):Promise<Record<string, unknown>>{
 
     const instance =
       await this.app.prisma.whatsAppInstance
@@ -2170,52 +2170,102 @@ export class WhatsAppService {
 
     if(
       result.status === "confirmation_required"
-      ||
-      result.status === "transcript_ready"
     ){
 
       const reply =
-        result.status === "confirmation_required"
-          ?
-          [
-            "🎙️ Transkripsi suara memerlukan pengesahan.",
-            `\"${result.transcript}\"`,
-            "Belum ada transaksi direkodkan.",
-          ].join(
-            "\n",
-          )
-          :
-          [
-            "🎙️ Transkripsi suara berjaya.",
-            `\"${result.transcript}\"`,
-            "Belum ada transaksi direkodkan dalam voice slice ini.",
-          ].join(
-            "\n",
-          );
+        [
+          "🎙️ Transkripsi suara memerlukan pengesahan.",
+          `\"${result.transcript}\"`,
+          "Belum ada transaksi direkodkan.",
+        ].join(
+          "\n",
+        );
 
       await this.safeSendWebhookReply(
         normalized,
         reply,
       );
 
+      return {
+        message:
+          "WhatsApp voice confirmation required",
+        source:"VOICE",
+        normalized,
+        voice:result,
+      };
+
+    }
+
+
+    if(
+      result.status === "transcript_ready"
+    ){
+
+      const routed =
+        await this.routeVoiceTranscript(
+          normalized,
+          result.transcript,
+        );
+
+
+      return {
+        message:
+          "WhatsApp voice routed to text pipeline",
+        source:"VOICE",
+        normalized,
+        voice:result,
+        routed,
+      };
+
     }
 
 
     return {
       message:
-        result.status === "transcript_ready"
-          ?
-          "WhatsApp voice transcript ready"
-          :
-          result.status === "confirmation_required"
-            ?
-            "WhatsApp voice confirmation required"
-            :
-            "WhatsApp voice input ignored",
+        "WhatsApp voice input ignored",
       source:"VOICE",
       normalized,
       voice:result,
     };
+
+  }
+
+
+  private async routeVoiceTranscript(
+    normalized:NormalizedEvolutionMessage,
+    transcript:string,
+  ):Promise<Record<string, unknown>>{
+
+    const originalMessageId =
+      normalized.messageId
+      ??
+      "unknown";
+
+
+    return this.handleEvolutionWebhook({
+      event:"messages.upsert",
+      instance:
+        normalized.instanceName,
+      data:{
+        key:{
+          fromMe:false,
+          remoteJid:
+            normalized.remoteJid,
+          participant:
+            normalized.participantJid,
+          participantAlt:
+            normalized.participantJid,
+          id:
+            `voice-transcript-${originalMessageId}`,
+        },
+        message:{
+          conversation:
+            transcript,
+        },
+        messageTimestamp:
+          normalized.timestamp,
+      },
+    });
 
   }
 
@@ -2370,7 +2420,7 @@ export class WhatsAppService {
 
   async handleEvolutionWebhook(
     payload:unknown,
-  ){
+  ):Promise<Record<string, unknown>>{
 
     const normalized =
       this.normalizeEvolutionPayload(
