@@ -6137,21 +6137,26 @@ function Dashboard(
     const token =
       stored(STORAGE.token);
 
-    await api(
-      "/workspace/members",
-      token,
-      {
-        method:"POST",
-        body:JSON.stringify({
-          email:newMemberEmail,
-          role:newMemberRole,
-        }),
-      },
-    );
+    const response =
+      await api<{
+        inviteUrl:string;
+      }>(
+        "/workspace/invites",
+        token,
+        {
+          method:"POST",
+          body:JSON.stringify({
+            email:newMemberEmail,
+            role:newMemberRole,
+          }),
+        },
+      );
 
     setNewMemberEmail("");
+    setLinkEmail(newMemberEmail);
     setNewMemberRole("MEMBER");
-    setActionMessage("Member added.");
+    setInviteUrl(response.inviteUrl);
+    setActionMessage("Invite link created. Share this link with the member.");
     props.refresh();
   }
 
@@ -8070,7 +8075,7 @@ function Dashboard(
               }
 
               <p className="helperText">
-                Owner/Admin boleh tambah user, tukar role, remove member dan pautkan nombor WhatsApp.
+                Owner/Admin boleh create invite link, tukar role, remove member dan pautkan nombor WhatsApp.
                 {isSharedWorkspace
                   ? " Family/Business workspace wajib mapping nombor WhatsApp untuk permission command."
                   : " Personal workspace boleh guna terus, tetapi role tetap boleh disediakan untuk upgrade nanti."}
@@ -8101,7 +8106,7 @@ function Dashboard(
                   className="primary"
                   onClick={addMember}
                 >
-                  Add member
+                  Create invite link
                 </button>
               </div>
 

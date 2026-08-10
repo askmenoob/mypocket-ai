@@ -54,105 +54,17 @@ export class MemberService {
 
 
   async addMember(
-    actorUserId:string,
-    workspaceId:string,
-    email:string,
-    role:MemberRole,
+    _actorUserId:string,
+    _workspaceId:string,
+    _email:string,
+    _role:MemberRole,
   ) {
-
-    const actor =
-      await this.repository.findMembership(
-        actorUserId,
-        workspaceId,
-      );
-
-    if (
-      !actor
-      ||
-      (
-        actor.role !== "OWNER"
-        &&
-        actor.role !== "ADMIN"
-      )
-    ) {
-      throw new AppError(
-        "MEMBER_ADD_FORBIDDEN",
-        "Only workspace Owner/Admin can add members",
-        403,
-      );
-    }
-
-    if (role === "OWNER") {
-      throw new AppError(
-        "OWNER_ROLE_ASSIGNMENT_BLOCKED",
-        "A new member cannot be assigned the Owner role",
-        400,
-      );
-    }
-
-    if (
-      actor.role === "ADMIN"
-      &&
-      role === "ADMIN"
-    ) {
-      throw new AppError(
-        "ADMIN_ROLE_LIMIT",
-        "Admin cannot add another admin",
-        403,
-      );
-    }
-
-    const user =
-      await this.repository.findUserByEmail(
-        email,
-      );
-
-
-    if (!user) {
-
-      throw new AppError(
-        "USER_NOT_FOUND",
-        "User not found",
-        404,
-      );
-
-    }
-
-
-    const members =
-      await this.repository.findMembers(
-        workspaceId,
-      );
-
-
-    const exists =
-      members.some(
-        member =>
-          member.userId === user.id,
-      );
-
-
-    if (exists) {
-
-      throw new AppError(
-        "MEMBER_ALREADY_EXISTS",
-        "Member already exists in workspace",
-        409,
-      );
-
-    }
-
-
-    return this.repository.createMember(
-      workspaceId,
-      user.id,
-      role,
+    throw new AppError(
+      "INVITE_REQUIRED",
+      "Members must be added through the workspace invite flow",
+      410,
     );
-
   }
-
-
-
 
   async updateRole(
     actorUserId:string,

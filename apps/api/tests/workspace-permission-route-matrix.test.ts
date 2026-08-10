@@ -58,7 +58,6 @@ test("Apps Script test endpoint is workspace-authenticated", () => {
 
 test("direct member add cannot escalate or bypass actor checks", () => {
   const service = source("src/modules/member/member.service.ts");
-  assert.match(service, /MEMBER_ADD_FORBIDDEN/);
-  assert.match(service, /OWNER_ROLE_ASSIGNMENT_BLOCKED/);
-  assert.match(service, /ADMIN_ROLE_LIMIT/);
+  assert.match(service, /INVITE_REQUIRED/);
+  assert.match(service, /Members must be added through the workspace invite flow/);
 });
