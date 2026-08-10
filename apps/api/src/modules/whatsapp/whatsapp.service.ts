@@ -2201,6 +2201,35 @@ export class WhatsAppService {
       });
 
     if(
+      (
+        result.status === "confirmation_required"
+        ||
+        result.status === "transcript_ready"
+      )
+      &&
+      !this.isVoiceTranscriptAddressedToBot(
+        result.transcript,
+        instance.botAlias
+        ??
+        "bot",
+      )
+    ){
+
+      return {
+        message:
+          "WhatsApp voice ignored without bot prefix",
+        source:"VOICE",
+        normalized:{
+          ...normalized,
+          reason:
+            "VOICE_BOT_PREFIX_REQUIRED",
+        },
+        voice:result,
+      };
+
+    }
+
+    if(
       result.status === "confirmation_required"
     ){
 
@@ -2237,6 +2266,9 @@ export class WhatsAppService {
         await this.routeVoiceTranscript(
           normalized,
           result.transcript,
+          instance.botAlias
+          ??
+          "bot",
         );
 
 
@@ -2263,8 +2295,68 @@ export class WhatsAppService {
   }
 
 
+  private isVoiceTranscriptAddressedToBot(
+    transcript:string,
+    botAlias:string,
+  ){
+
+    const withoutBang =
+      transcript
+        .trim()
+        .replace(
+          /^!+\s*/,
+          "",
+        );
+
+    return this.voiceBotAddressPattern(
+      botAlias,
+    ).test(
+      withoutBang,
+    );
+
+  }
+
+
+  private voiceBotAddressPattern(
+    botAlias:string,
+  ){
+
+    const alias =
+      botAlias
+        .trim()
+        .replace(
+          /^@+/,
+          "",
+        );
+
+    const names =
+      Array.from(
+        new Set(
+          [
+            "bot",
+            alias,
+          ]
+            .filter(Boolean)
+            .map(
+              (name) => name.replace(
+                /[.*+?^${}()|[\]\\]/g,
+                "\\$&",
+              ),
+            ),
+        ),
+      );
+
+    return new RegExp(
+      `^(?:(?:hey|hai)\\s+)?@?(?:${names.join("|")})(?=$|[\\s,:;-])`,
+      "i",
+    );
+
+  }
+
+
   private normalizeVoiceTranscriptCommand(
     transcript:string,
+    botAlias:string,
   ){
 
     const withoutBang =
@@ -2278,11 +2370,13 @@ export class WhatsAppService {
     const withoutBotPrefix =
       withoutBang
         .replace(
-          /^(?:(?:hey|hai)\s+)?(?:bot|mypocket|money\s+bot)[\s,:;-]+(?:please\s+)?(?:rekod|record|catat|simpan|save)\b[\s,:;-]*/i,
+          this.voiceBotAddressPattern(
+            botAlias,
+          ),
           "",
         )
         .replace(
-          /^(?:rekod|record|catat|simpan|save)\b[\s,:;-]*/i,
+          /^[\s,:;-]*(?:(?:please\s+)?(?:rekod|record|catat|simpan|save)\b[\s,:;-]*)?/i,
           "",
         );
 
@@ -2307,6 +2401,7 @@ export class WhatsAppService {
   private async routeVoiceTranscript(
     normalized:NormalizedEvolutionMessage,
     transcript:string,
+    botAlias = "bot",
   ):Promise<Record<string, unknown>>{
 
     const originalMessageId =
@@ -2317,6 +2412,7 @@ export class WhatsAppService {
     const commandText =
       this.normalizeVoiceTranscriptCommand(
         transcript,
+        botAlias,
       );
 
 
