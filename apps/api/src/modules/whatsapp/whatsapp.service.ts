@@ -38,6 +38,11 @@ import type {
 
 
 import {
+  extractEvolutionMedia,
+} from "./whatsapp-media.js";
+
+
+import {
   WhatsAppReplyBuilder,
 } from "./whatsapp-reply.builder.js";
 
@@ -9254,6 +9259,12 @@ export class WhatsAppService {
       );
 
 
+    const media =
+      extractEvolutionMedia(
+        message,
+      );
+
+
     const text =
       this.extractMessageText(
         message,
@@ -9280,13 +9291,30 @@ export class WhatsAppService {
     }
 
 
-    if(!text){
+    if(!text && !media){
 
       return {
         accepted:false,
         reason:"MESSAGE_TEXT_MISSING",
         event,
         instanceName,
+      };
+
+    }
+
+
+    if(media){
+
+      return {
+        accepted:false,
+        reason:"MEDIA_INPUT_PENDING_PIPELINE",
+        event,
+        instanceName,
+        messageType:
+          media.kind,
+        media,
+        text:
+          text || undefined,
       };
 
     }
@@ -9341,6 +9369,9 @@ export class WhatsAppService {
           ??
           data.id,
         ),
+
+      messageType:
+        "text",
 
       text,
 

@@ -1,3 +1,9 @@
+import type {
+  EvolutionMediaDescriptor,
+  EvolutionMediaKind,
+} from "./whatsapp-media.js";
+
+
 export type WhatsAppTransactionType =
   | "EXPENSE"
   | "INCOME";
@@ -80,6 +86,12 @@ export interface NormalizedEvolutionMessage {
   pushName?:string;
 
   messageId?:string;
+
+  messageType?:
+    | "text"
+    | EvolutionMediaKind;
+
+  media?:EvolutionMediaDescriptor;
 
   text?:string;
 
