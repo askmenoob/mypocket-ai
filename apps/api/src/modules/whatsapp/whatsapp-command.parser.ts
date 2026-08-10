@@ -9,6 +9,7 @@ export type WhatsAppCommandKind =
   | "summary"
   | "list"
   | "edit"
+  | "delete"
   | "undo"
   | "reminder"
   | "transaction";
@@ -47,6 +48,14 @@ export interface WhatsAppListCommand {
     | WhatsAppSummaryPeriod;
 
   keyword?:string;
+
+}
+
+
+
+export interface WhatsAppDeleteTransactionCommand {
+
+  number:number;
 
 }
 
@@ -498,6 +507,54 @@ export class WhatsAppCommandParser {
   }
 
 
+
+
+
+  static deleteTransaction(
+    text:string,
+  ):
+    | WhatsAppDeleteTransactionCommand
+    | null {
+
+    const match =
+      text
+        .trim()
+        .match(
+          /^[!/]?(?:delete|padam)\s+([1-9]\d*)$/i,
+        );
+
+
+    if(!match){
+
+      return null;
+
+    }
+
+
+    const number =
+      Number(
+        match[1],
+      );
+
+
+    if(
+      !Number.isSafeInteger(
+        number,
+      )
+      ||
+      number < 1
+    ){
+
+      return null;
+
+    }
+
+
+    return {
+      number,
+    };
+
+  }
 
 
 

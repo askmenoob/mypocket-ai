@@ -55,9 +55,15 @@ import {
 import {
   WhatsAppCommandParser,
   type WhatsAppCommandKind,
+  type WhatsAppDeleteTransactionCommand,
   type WhatsAppEditCommand,
   type WhatsAppListCommand,
 } from "./whatsapp-command.parser.js";
+
+
+import {
+  WhatsAppTransactionListSnapshotStore,
+} from "./whatsapp-list-snapshot.store.js";
 
 
 import {
@@ -179,6 +185,9 @@ export class WhatsAppService {
 
   private readonly sheetSyncService:
     WhatsAppSheetSyncService;
+
+  private readonly transactionListSnapshots =
+    new WhatsAppTransactionListSnapshotStore();
 
 
   private readonly aiProviderRouter:
@@ -3132,6 +3141,15 @@ export class WhatsAppService {
         );
 
 
+    const deleteCommand =
+      WhatsAppCommandParser
+        .deleteTransaction(
+          normalized.text
+          ??
+          "",
+        );
+
+
     const isCategories =
       WhatsAppCommandParser
         .isCategories(
@@ -3178,6 +3196,7 @@ export class WhatsAppService {
 
     const commandKind =
       this.resolveWebhookCommandKind({
+        deleteCommand,
         editCommand,
         isUndo,
         isStatus,
@@ -3361,6 +3380,20 @@ export class WhatsAppService {
         actorMember.userId,
         actorMember.role,
         editCommand,
+        commandReplyLanguage,
+      );
+
+    }
+
+
+    if(deleteCommand){
+
+      return this.handleDeleteTransactionCommand(
+        instance.workspaceId,
+        normalized,
+        actorMember.userId,
+        actorMember.role,
+        deleteCommand,
         commandReplyLanguage,
       );
 
@@ -3884,6 +3917,10 @@ export class WhatsAppService {
 
   private resolveWebhookCommandKind(
     input:{
+      deleteCommand:
+        | WhatsAppDeleteTransactionCommand
+        | null;
+
       editCommand:
         | WhatsAppEditCommand
         | null;
@@ -3920,6 +3957,12 @@ export class WhatsAppService {
         | null;
     },
   ):WhatsAppCommandKind{
+
+    if(input.deleteCommand){
+
+      return "delete";
+
+    }
 
     if(input.editCommand){
 
@@ -6552,6 +6595,8 @@ export class WhatsAppService {
       commandKind === "edit"
       ||
       commandKind === "undo"
+      ||
+      commandKind === "delete"
     ){
 
       return [
@@ -8035,9 +8080,50 @@ export class WhatsAppService {
         );
 
 
+    this.transactionListSnapshots
+      .save({
+        workspaceId,
+        userId:
+          actorUserId,
+        transactionIds:
+          transactions
+            .map(
+              (transaction) => String(
+                transaction.id
+                ??
+                "",
+              ),
+            ),
+      });
+
+
+    const canDelete =
+      transactions.length > 0
+      &&
+      (
+        actorRole === "OWNER"
+        ||
+        actorRole === "ADMIN"
+      );
+
+
+    const replyWithDeleteHint =
+      canDelete
+        ? [
+            reply,
+            "",
+            language === "en"
+              ? "To mark one item [DELETED], type !delete <number> within 5 minutes."
+              : "Untuk tanda satu rekod [DELETED], taip !delete <nombor> dalam masa 5 minit.",
+          ].join(
+            "\n",
+          )
+        : reply;
+
+
     await this.safeSendWebhookReply(
       normalized,
-      reply,
+      replyWithDeleteHint,
     );
 
 
@@ -8055,6 +8141,176 @@ export class WhatsAppService {
       count:
         transactions.length,
     };
+
+  }
+
+
+
+
+  private async handleDeleteTransactionCommand(
+    workspaceId:string,
+
+    normalized:NormalizedEvolutionMessage,
+
+    actorUserId:string,
+
+    actorRole:
+      | "OWNER"
+      | "ADMIN"
+      | "MEMBER",
+
+    command:WhatsAppDeleteTransactionCommand,
+
+    language:"ms" | "en" = "ms",
+  ){
+
+    const resolved =
+      this.transactionListSnapshots
+        .resolve({
+          workspaceId,
+          userId:
+            actorUserId,
+          number:
+            command.number,
+        });
+
+
+    if(resolved.status !== "ok"){
+
+      const reason =
+        resolved.status === "expired"
+          ? "TRANSACTION_LIST_SNAPSHOT_EXPIRED"
+          : resolved.status === "out_of_range"
+            ? "TRANSACTION_LIST_NUMBER_OUT_OF_RANGE"
+            : "TRANSACTION_LIST_SNAPSHOT_MISSING";
+
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? "ℹ️ The transaction list is missing, expired, or the number is invalid. Type !list again before deleting."
+          : "ℹ️ Senarai transaksi tiada, telah tamat, atau nombor tidak sah. Taip !list semula sebelum memadam.",
+      );
+
+
+      return {
+        message:
+          "WhatsApp delete selection unavailable",
+        source:
+          "EVOLUTION",
+        normalized:{
+          ...normalized,
+          reason,
+        },
+        command,
+      };
+
+    }
+
+
+    try{
+
+      const result =
+        await this.transactionService
+          .bulkDeleteSheetTransactions(
+            actorRole,
+            workspaceId,
+            [
+              resolved.transactionId,
+            ],
+          );
+
+
+      this.transactionListSnapshots
+        .clear(
+          workspaceId,
+          actorUserId,
+        );
+
+
+      if(
+        result.deletedCount !== 1
+      ){
+
+        await this.safeSendWebhookReply(
+          normalized,
+          language === "en"
+            ? "⚠️ The selected transaction was not found in every configured Sheet replica. Nothing was deleted. Type !list and try again."
+            : "⚠️ Transaksi dipilih tidak ditemui pada semua replika Sheet. Tiada rekod dipadam. Taip !list dan cuba semula.",
+        );
+
+
+        return {
+          message:
+            "WhatsApp transaction delete not applied",
+          source:
+            "EVOLUTION",
+          normalized:{
+            ...normalized,
+            reason:
+              "TRANSACTION_NOT_FOUND_IN_SHEET_REPLICAS",
+          },
+          command,
+          result,
+        };
+
+      }
+
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? `✅ Transaction ${command.number} was marked [DELETED].`
+          : `✅ Transaksi ${command.number} telah ditanda [DELETED].`,
+      );
+
+
+      return {
+        message:
+          "WhatsApp transaction deleted",
+        source:
+          "EVOLUTION",
+        normalized,
+        command,
+        transactionId:
+          resolved.transactionId,
+        result,
+      };
+
+    }catch(error){
+
+      console.error(
+        "WHATSAPP_TRANSACTION_DELETE_FAILED:",
+        {
+          transactionId:
+            resolved.transactionId,
+          error,
+        },
+      );
+
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? `⚠️ Transaction ${command.number} could not be deleted completely. Type !delete ${command.number} to retry.`
+          : `⚠️ Transaksi ${command.number} tidak dapat dipadam sepenuhnya. Taip !delete ${command.number} untuk cuba semula.`,
+      );
+
+
+      return {
+        message:
+          "WhatsApp transaction delete failed",
+        source:
+          "EVOLUTION",
+        normalized:{
+          ...normalized,
+          reason:
+            "TRANSACTION_DELETE_FAILED",
+        },
+        command,
+      };
+
+    }
 
   }
 

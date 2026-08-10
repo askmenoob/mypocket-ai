@@ -266,7 +266,7 @@ export class WhatsAppSheetSyncService {
     workspaceId:string,
 
     transactionId:string,
-  ):Promise<void>{
+  ):Promise<boolean>{
 
     const setting =
       await this.app.prisma.workspaceGoogleSetting
@@ -279,14 +279,19 @@ export class WhatsAppSheetSyncService {
 
     if(!setting){
 
-      return;
+      return false;
 
     }
+
 
     const spreadsheetIds =
       this.getSpreadsheetIds(
         setting,
       );
+
+
+    let matched =
+      false;
 
 
     for(const spreadsheetId of spreadsheetIds){
@@ -322,6 +327,10 @@ export class WhatsAppSheetSyncService {
         continue;
 
       }
+
+
+      matched =
+        true;
 
 
       const rowNumber =
@@ -375,9 +384,10 @@ export class WhatsAppSheetSyncService {
 
     }
 
+
+    return matched;
+
   }
-
-
 
 
 
