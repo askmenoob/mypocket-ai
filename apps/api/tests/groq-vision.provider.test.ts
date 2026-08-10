@@ -121,6 +121,144 @@ test(
       request!.response_format,
       {type:"json_object"},
     );
+    assert.match(
+      request!.messages[0].content[0].text,
+      /final amount actually paid/i,
+    );
+  },
+);
+
+
+test(
+  "prefers the final paid total over subtotal, tax, cash, and change",
+  async () => {
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async () =>
+          new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      amount:null,
+                      currency:null,
+                      merchantName:"Lotus's",
+                      rawText:[
+                        "SUBTOTAL RM217.80",
+                        "SERVICE CHARGE RM3.00",
+                        "TAX RM31.80",
+                        "TOTAL RM252.60",
+                        "CASH RM300.00",
+                        "CHANGE RM47.40",
+                      ].join("\n"),
+                      confidence:0.61,
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          ),
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"lotus.jpg",
+      });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.amount, "252.60");
+    assert.equal(result.value.currency, "RM");
+  },
+);
+
+
+test(
+  "recognizes Malay paid-total labels and decimal commas",
+  async () => {
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async () =>
+          new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      amount:null,
+                      rawText:"JUMLAH DIBAYAR MYR 12,50",
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          ),
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"receipt.jpg",
+      });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.amount, "12.50");
+    assert.equal(result.value.currency, "MYR");
+  },
+);
+
+
+test(
+  "finds the paid total when OCR flattens the receipt into one line",
+  async () => {
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async () =>
+          new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      rawText:"SUBTOTAL RM217.80 TOTAL RM252.60 CHANGE RM47.40",
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          ),
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"receipt.jpg",
+      });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.amount, "252.60");
   },
 );
 

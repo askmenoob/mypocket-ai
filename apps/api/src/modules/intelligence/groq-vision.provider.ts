@@ -68,7 +68,7 @@ const DEFAULT_MAX_BYTES =
 
 
 const DEFAULT_PROMPT =
-  "Read this receipt or document. Return JSON only with amount, currency, merchantName, transactionDate, description, rawText, and confidence. Do not invent missing values; use null for fields that are not visible. Preserve the original language and currency. confidence must be a number from 0 to 1 reflecting extraction certainty.";
+  "Read this receipt or document. Return JSON only with amount, currency, merchantName, transactionDate, description, rawText, and confidence. The amount must be the final amount actually paid by the customer, usually labelled TOTAL, GRAND TOTAL, TOTAL PAID, NET TOTAL, AMOUNT PAID, JUMLAH BAYAR, or JUMLAH DIBAYAR. Prefer that final payable total over subtotal, item totals, tax, service charge, discount, rounding, cash tendered, or change. If multiple totals exist, choose the final amount due/paid. Do not invent missing values; use null for fields that are not visible. Preserve the original language and currency. confidence must be a number from 0 to 1 reflecting extraction certainty.";
 
 
 export class GroqVisionProvider {
@@ -319,15 +319,30 @@ export class GroqVisionProvider {
     }
 
 
-    const amount =
+    const modelAmount =
       this.normalizeAmount(
         root.amount,
       );
 
+    // Prefer an explicit final-total line from OCR text. This protects the
+    // transaction amount when the model chooses a subtotal or leaves amount
+    // blank on a noisy receipt.
+    const finalTotal =
+      this.extractFinalPaidAmount(
+        rawText,
+      );
+
+    const amount =
+      finalTotal.amount
+      ??
+      modelAmount;
+
     const currency =
       this.asString(
         root.currency,
-      );
+      )
+      ||
+      finalTotal.currency;
 
     const merchantName =
       this.asString(
@@ -418,11 +433,32 @@ export class GroqVisionProvider {
     value:unknown,
   ):string | undefined{
 
-    const raw =
+    let raw =
       this.asString(
         value,
       )
-      .replace(",", ".");
+      .replace(/[^0-9,.-]/g, "");
+
+    if(raw.includes(",") && raw.includes(".")){
+
+      raw =
+        raw.replace(/,/g, "");
+
+    }else if(raw.includes(",")){
+
+      const parts =
+        raw.split(",");
+
+      raw =
+        parts.length === 2
+        &&
+        parts[1].length <= 2
+          ?
+          `${parts[0]}.${parts[1]}`
+          :
+          raw.replace(/,/g, "");
+
+    }
 
     if(
       !/^\d+(?:\.\d{1,2})?$/.test(
@@ -444,6 +480,168 @@ export class GroqVisionProvider {
         amount.toFixed(2)
         :
         undefined;
+
+  }
+
+
+  private extractFinalPaidAmount(
+    rawText:string,
+  ):{
+    amount?:string;
+    currency?:string;
+  }{
+
+    const lines =
+      rawText
+        .replace(/[\u00a0\u202f]/g, " ")
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    const priorityLabels:[RegExp, number][] = [
+      [
+        /(?:grand\s*total|total\s*paid|amount\s*paid|net\s*total|total\s*due|balance\s*due|jumlah\s*(?:perlu\s*)?(?:bayar|dibayar))/i,
+        3,
+      ],
+      [
+        /\btotal\b/i,
+        1,
+      ],
+    ];
+
+    let best:
+      {
+        amount:string;
+        currency?:string;
+        priority:number;
+      }
+      | undefined;
+
+    for(const line of lines){
+
+      for(const [label, priority] of priorityLabels){
+
+        const match =
+          label.exec(line);
+
+        if(!match){
+
+          continue;
+
+        }
+
+        // Do not treat the second word in "SUB TOTAL" as the final total.
+        const beforeLabel =
+          line.slice(0, match.index);
+
+        if(
+          /sub\s*$/i.test(
+            beforeLabel,
+          )
+        ){
+
+          continue;
+
+        }
+
+        const afterLabel =
+          line.slice(
+            match.index + match[0].length,
+          );
+
+        const afterValues =
+          this.extractMonetaryValues(
+            afterLabel,
+          );
+
+        const beforeValues =
+          afterValues.length === 0
+            ?
+            this.extractMonetaryValues(
+              line.slice(0, match.index),
+            )
+            :
+            [];
+
+        const value =
+          afterValues[0]
+          ??
+          beforeValues[beforeValues.length - 1];
+
+        if(!value){
+
+          continue;
+
+        }
+
+        if(!best || priority >= best.priority){
+
+          best = {
+            amount:value.amount,
+            ...(value.currency
+              ? {currency:value.currency}
+              : {}),
+            priority,
+          };
+
+        }
+
+        break;
+
+      }
+
+    }
+
+    return best
+      ? {
+          amount:best.amount,
+          ...(best.currency
+            ? {currency:best.currency}
+            : {}),
+        }
+      : {};
+
+  }
+
+
+  private extractMonetaryValues(
+    text:string,
+  ):Array<{
+    amount:string;
+    currency?:string;
+  }>{
+
+    const pattern =
+      /(?:(RM|MYR|USD|EUR|GBP)\s*)?(-?(?:\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:[,.]\d{1,2})?))/gi;
+
+    const values:Array<{
+      amount:string;
+      currency?:string;
+    }> = [];
+
+    for(const match of text.matchAll(pattern)){
+
+      const amount =
+        this.normalizeAmount(
+          match[2],
+        );
+
+      if(!amount || Number(amount) <= 0){
+
+        continue;
+
+      }
+
+      values.push({
+        amount,
+        ...(match[1]
+          ? {currency:match[1].toUpperCase()}
+          : {}),
+      });
+
+    }
+
+    return values;
 
   }
 
