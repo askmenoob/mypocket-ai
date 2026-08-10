@@ -148,3 +148,33 @@ test(
     );
   },
 );
+
+test(
+  "voice route accepts bot rekod prefix and adds WhatsApp trigger",
+  async () => {
+    const service =
+      createService();
+
+    let routedPayload:any = null;
+    service.handleEvolutionWebhook =
+      async (input:any) => {
+        routedPayload = input;
+        return {message:"text route"};
+      };
+
+    await service.routeVoiceTranscript(
+      {
+        instanceName:"demo",
+        messageId:"voice-prefix-1",
+        remoteJid:"60123456789@s.whatsapp.net",
+        participantJid:undefined,
+      },
+      "bot rekod 'beli KFC RM150'",
+    );
+
+    assert.equal(
+      routedPayload.data.message.conversation,
+      "!beli KFC RM150",
+    );
+  },
+);

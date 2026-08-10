@@ -82,6 +82,11 @@ import {
 } from "../google/drive/google-drive.service.js";
 
 
+import type {
+  ReceiptVisionCandidate,
+} from "../intelligence/groq-vision.provider.js";
+
+
 import {
   GoogleDriveReceiptStorage,
   WhatsAppReceiptPipeline,
@@ -114,6 +119,21 @@ type CommitmentDraft = {
   expiresAt:number;
 };
 
+type ReceiptConfirmationDraft = {
+  workspaceId:string;
+  actorUserId:string;
+  role:
+    | "OWNER"
+    | "ADMIN"
+    | "MEMBER";
+  language:"ms" | "en";
+  receiptUrl:string;
+  fileName:string;
+  extraction:ReceiptVisionCandidate;
+  expiresAt:number;
+};
+
+
 type PayCommitmentDraft = {
   workspaceId:string;
   actorUserId:string;
@@ -136,6 +156,10 @@ type PayCommitmentDraft = {
 };
 
 const COMMITMENT_DRAFT_TTL_MS =
+  10 * 60 * 1000;
+
+
+const RECEIPT_DRAFT_TTL_MS =
   10 * 60 * 1000;
 
 
@@ -171,6 +195,9 @@ export class WhatsAppService {
 
   private readonly payCommitmentDrafts =
     new Map<string, PayCommitmentDraft>();
+
+  private readonly receiptDrafts =
+    new Map<string, ReceiptConfirmationDraft>();
 
 
 
@@ -2146,6 +2173,8 @@ export class WhatsAppService {
         instance.workspaceId,
         normalized,
         message,
+        actorMember.userId,
+        actorMember.role,
       );
 
     }
@@ -2231,6 +2260,47 @@ export class WhatsAppService {
   }
 
 
+  private normalizeVoiceTranscriptCommand(
+    transcript:string,
+  ){
+
+    const withoutBang =
+      transcript
+        .trim()
+        .replace(
+          /^!+\s*/,
+          "",
+        );
+
+    const withoutBotPrefix =
+      withoutBang
+        .replace(
+          /^(?:(?:hey|hai)\s+)?(?:bot|mypocket|money\s+bot)[\s,:;-]+(?:please\s+)?(?:rekod|record|catat|simpan|save)\b[\s,:;-]*/i,
+          "",
+        )
+        .replace(
+          /^(?:rekod|record|catat|simpan|save)\b[\s,:;-]*/i,
+          "",
+        );
+
+    const commandText =
+      withoutBotPrefix
+        .trim()
+        .replace(
+          /^[`'"“”‘’]+/,
+          "",
+        )
+        .replace(
+          /[`'"“”‘’]+$/,
+          "",
+        )
+        .trim();
+
+    return commandText || withoutBang;
+
+  }
+
+
   private async routeVoiceTranscript(
     normalized:NormalizedEvolutionMessage,
     transcript:string,
@@ -2240,6 +2310,11 @@ export class WhatsAppService {
       normalized.messageId
       ??
       "unknown";
+
+    const commandText =
+      this.normalizeVoiceTranscriptCommand(
+        transcript,
+      );
 
 
     return this.handleEvolutionWebhook({
@@ -2260,7 +2335,7 @@ export class WhatsAppService {
         },
         message:{
           conversation:
-            transcript,
+            `!${commandText}`,
         },
         messageTimestamp:
           normalized.timestamp,
@@ -2274,6 +2349,11 @@ export class WhatsAppService {
     workspaceId:string,
     normalized:NormalizedEvolutionMessage,
     message:Record<string, unknown>,
+    actorUserId:string,
+    actorRole:
+      | "OWNER"
+      | "ADMIN"
+      | "MEMBER",
   ){
 
     const setting =
@@ -2303,6 +2383,43 @@ export class WhatsAppService {
           ??
           "",
       });
+
+    if(
+      result.status === "draft_ready"
+      ||
+      result.status === "confirmation_required"
+    ){
+
+      if(
+        result.extraction.amount?.trim()
+        &&
+        result.receiptUrl
+      ){
+
+        this.receiptDrafts.set(
+          this.receiptDraftKey(
+            workspaceId,
+            actorUserId,
+          ),
+          {
+            workspaceId,
+            actorUserId,
+            role:actorRole,
+            language:"ms",
+            receiptUrl:result.receiptUrl,
+            fileName:result.fileName,
+            extraction:result.extraction,
+            expiresAt:
+              Date.now()
+              +
+              RECEIPT_DRAFT_TTL_MS,
+          },
+        );
+
+      }
+
+    }
+
 
     if(
       result.status === "draft_ready"
@@ -2338,7 +2455,11 @@ export class WhatsAppService {
               :
               "Jumlah tidak jelas",
             result.receiptUrl,
-            "Belum ada transaksi direkodkan.",
+            result.extraction.amount?.trim()
+              ?
+              "Taip !confirm untuk rekod atau !cancel untuk batal."
+              :
+              "Jumlah tidak jelas; sila hantar semula gambar resit.",
           ].join(
             "\n",
           );
@@ -2999,6 +3120,21 @@ export class WhatsAppService {
     if(commitmentDraftResult){
 
       return commitmentDraftResult;
+
+    }
+
+    const receiptDraftResult =
+      await this.handleReceiptDraftMessage(
+        instance.workspaceId,
+        normalized,
+        actorMember.userId,
+        actorMember.role,
+        commandReplyLanguage,
+      );
+
+    if(receiptDraftResult){
+
+      return receiptDraftResult;
 
     }
 
@@ -3707,6 +3843,294 @@ export class WhatsAppService {
   }
 
 
+
+
+  private receiptDraftKey(
+    workspaceId:string,
+    actorUserId:string,
+  ){
+
+    return `${workspaceId}:${actorUserId}`;
+
+  }
+
+
+  private async handleReceiptDraftMessage(
+    workspaceId:string,
+    normalized:NormalizedEvolutionMessage,
+    actorUserId:string,
+    actorRole:
+      | "OWNER"
+      | "ADMIN"
+      | "MEMBER",
+    language:"ms" | "en",
+  ){
+
+    const text =
+      (normalized.text ?? "")
+        .trim()
+        .toLowerCase();
+
+    if(
+      text !== "confirm"
+      &&
+      text !== "cancel"
+      &&
+      text !== "batal"
+    ){
+
+      return null;
+
+    }
+
+    const key =
+      this.receiptDraftKey(
+        workspaceId,
+        actorUserId,
+      );
+
+    const draft =
+      this.receiptDrafts.get(
+        key,
+      );
+
+    if(
+      draft
+      &&
+      draft.expiresAt < Date.now()
+    ){
+
+      this.receiptDrafts.delete(
+        key,
+      );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? "Receipt draft expired. Upload the receipt again."
+          : "Draft receipt sudah tamat. Sila upload resit semula.",
+      );
+
+      return {
+        message:"WhatsApp receipt draft expired",
+        source:"RECEIPT",
+        normalized,
+      };
+
+    }
+
+    if(!draft){
+
+      if(
+        text === "cancel"
+        ||
+        text === "batal"
+      ){
+
+        return null;
+
+      }
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? "No pending receipt draft. Upload a receipt image first."
+          : "Tiada draft receipt pending. Upload gambar resit dahulu.",
+      );
+
+      return {
+        message:"WhatsApp receipt confirmation missing draft",
+        source:"RECEIPT",
+        normalized,
+      };
+
+    }
+
+    if(
+      text === "cancel"
+      ||
+      text === "batal"
+    ){
+
+      this.receiptDrafts.delete(
+        key,
+      );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? "Receipt draft cancelled. No transaction was recorded."
+          : "Draft receipt dibatalkan. Tiada transaksi direkodkan.",
+      );
+
+      return {
+        message:"WhatsApp receipt draft cancelled",
+        source:"RECEIPT",
+        normalized,
+      };
+
+    }
+
+    try{
+
+      const transaction =
+        await this.createReceiptTransaction(
+          draft,
+        );
+
+      this.receiptDrafts.delete(
+        key,
+      );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? [
+            "✅ Receipt confirmed and transaction recorded.",
+            `${draft.extraction.merchantName ?? "Receipt"} ${draft.extraction.currency ?? "MYR"} ${draft.extraction.amount}`,
+            draft.receiptUrl,
+          ].join("\n")
+          : [
+            "✅ Receipt disahkan dan transaksi direkodkan.",
+            `${draft.extraction.merchantName ?? "Receipt"} ${draft.extraction.currency ?? "MYR"} ${draft.extraction.amount}`,
+            draft.receiptUrl,
+          ].join("\n"),
+      );
+
+      return {
+        message:"WhatsApp receipt confirmed",
+        source:"RECEIPT",
+        normalized,
+        transaction,
+      };
+
+    }catch(error){
+
+      console.error(
+        "WHATSAPP_RECEIPT_CONFIRM_FAILED:",
+        error,
+      );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? "Receipt could not be recorded. The draft is still pending."
+          : "Receipt belum dapat direkodkan. Draft masih pending.",
+      );
+
+      return {
+        message:"WhatsApp receipt confirmation failed",
+        source:"RECEIPT",
+        normalized,
+        reason:"RECEIPT_CONFIRMATION_FAILED",
+      };
+
+    }
+
+  }
+
+
+  private async createReceiptTransaction(
+    draft:ReceiptConfirmationDraft,
+  ){
+
+    const amountText =
+      draft.extraction.amount
+        ?.replace(/,/g, "")
+        .trim();
+
+    if(
+      !amountText
+      ||
+      !/^\d+(?:\.\d{1,2})?$/.test(
+        amountText,
+      )
+    ){
+
+      throw new AppError(
+        "RECEIPT_AMOUNT_INVALID",
+        "Receipt amount is missing or invalid",
+        400,
+      );
+
+    }
+
+    const merchantName =
+      draft.extraction.merchantName?.trim()
+      ||
+      "Receipt";
+
+    const currency =
+      draft.extraction.currency?.trim()
+      ||
+      "MYR";
+
+    const parsed =
+      this.parseTransactionText(
+        `beli ${merchantName} RM${amountText}`,
+        draft.extraction.transactionDate,
+        currency,
+      );
+
+    const category =
+      await this.findOrCreateCategory(
+        draft.workspaceId,
+        parsed.categoryName,
+      );
+
+    const merchant =
+      await this.findOrCreateMerchant(
+        draft.workspaceId,
+        merchantName,
+      );
+
+    const date =
+      draft.extraction.transactionDate
+      &&
+      !Number.isNaN(
+        new Date(
+          draft.extraction.transactionDate,
+        ).getTime(),
+      )
+        ?
+        new Date(
+          draft.extraction.transactionDate,
+        )
+        :
+        new Date(
+          parsed.transactionDate,
+        );
+
+    return this.transactionService
+      .createTransaction(
+        draft.role,
+        {
+          workspaceId:
+            draft.workspaceId,
+          createdById:
+            draft.actorUserId,
+          amount:
+            parsed.amount,
+          currency,
+          type:"EXPENSE",
+          description:
+            draft.extraction.description?.trim()
+            ||
+            parsed.description,
+          transactionDate:
+            date,
+          categoryId:
+            category.id,
+          merchantId:
+            merchant.id,
+          receiptUrl:
+            draft.receiptUrl,
+          source:
+            "WHATSAPP_RECEIPT",
+        },
+      );
+
+  }
 
 
   private commitmentDraftKey(
