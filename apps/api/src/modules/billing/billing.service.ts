@@ -286,8 +286,6 @@ export class BillingService {
       &&
       membership.user.subscription.status
         === "ACTIVE"
-      &&
-      !existingBilling
     ){
 
       throw new AppError(
@@ -374,6 +372,7 @@ export class BillingService {
         "PENDING",
         "ACTIVE",
         "RETRYING",
+        "PAUSED",
       ].includes(
         existingBilling.status,
       )

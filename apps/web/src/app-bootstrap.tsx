@@ -6484,7 +6484,17 @@ function Dashboard(
       }
 
 
-      if(billing){
+      if(
+        billing
+        &&
+        ![
+          "CANCELED",
+          "INACTIVE",
+          "EXPIRED",
+        ].includes(
+          billing.status,
+        )
+      ){
 
         throw new Error(
           "This subscription is still being processed. Please refresh before choosing another plan.",
