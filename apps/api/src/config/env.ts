@@ -43,6 +43,10 @@ const EnvSchema = z.object({
     z.string()
       .default("whisper-large-v3-turbo"),
 
+  GROQ_VISION_MODEL:
+    z.string()
+      .default("qwen/qwen3.6-27b"),
+
   GOOGLE_CLIENT_ID: z.string().optional(),
 
   GOOGLE_CLIENT_SECRET: z.string().optional(),

@@ -63,6 +63,7 @@ import {
 import {
   AIProviderRouter,
   GroqSpeechProvider,
+  GroqVisionProvider,
 } from "../intelligence/index.js";
 
 
@@ -74,6 +75,17 @@ import {
 import {
   WhatsAppVoicePipeline,
 } from "./whatsapp-voice.pipeline.js";
+
+
+import {
+  GoogleDriveService,
+} from "../google/drive/google-drive.service.js";
+
+
+import {
+  GoogleDriveReceiptStorage,
+  WhatsAppReceiptPipeline,
+} from "./whatsapp-receipt.pipeline.js";
 
 type CommitmentDraftStep =
   | "name"
@@ -145,8 +157,14 @@ export class WhatsAppService {
   private readonly aiProviderRouter:
     AIProviderRouter<ParsedWhatsAppTransaction>;
 
+  private readonly mediaDownloader:
+    EvolutionMediaDownloader;
+
   private readonly voicePipeline:
     WhatsAppVoicePipeline;
+
+  private readonly receiptPipeline:
+    WhatsAppReceiptPipeline;
 
   private readonly commitmentDrafts =
     new Map<string, CommitmentDraft>();
@@ -185,20 +203,41 @@ export class WhatsAppService {
       );
 
 
+    this.mediaDownloader =
+      new EvolutionMediaDownloader({
+        apiUrl:
+          env.EVOLUTION_API_URL,
+        apiKey:
+          env.EVOLUTION_API_KEY,
+      });
+
+
     this.voicePipeline =
       new WhatsAppVoicePipeline(
-        new EvolutionMediaDownloader({
-          apiUrl:
-            env.EVOLUTION_API_URL,
-          apiKey:
-            env.EVOLUTION_API_KEY,
-        }),
+        this.mediaDownloader,
         new GroqSpeechProvider({
           apiKey:
             env.GROQ_API_KEY,
           model:
             env.GROQ_STT_MODEL,
         }),
+      );
+
+
+    this.receiptPipeline =
+      new WhatsAppReceiptPipeline(
+        this.mediaDownloader,
+        new GroqVisionProvider({
+          apiKey:
+            env.GROQ_API_KEY,
+          model:
+            env.GROQ_VISION_MODEL,
+        }),
+        new GoogleDriveReceiptStorage(
+          new GoogleDriveService(
+            app,
+          ),
+        ),
       );
 
   }
@@ -2099,6 +2138,19 @@ export class WhatsAppService {
     }
 
 
+    if(
+      normalized.media?.kind !== "audio"
+    ){
+
+      return this.handleEvolutionReceiptWebhook(
+        instance.workspaceId,
+        normalized,
+        message,
+      );
+
+    }
+
+
     const result =
       await this.voicePipeline.process({
         workspaceId:
@@ -2163,6 +2215,110 @@ export class WhatsAppService {
       source:"VOICE",
       normalized,
       voice:result,
+    };
+
+  }
+
+
+  private async handleEvolutionReceiptWebhook(
+    workspaceId:string,
+    normalized:NormalizedEvolutionMessage,
+    message:Record<string, unknown>,
+  ){
+
+    const setting =
+      await this.app.prisma.workspaceGoogleSetting
+        .findUnique({
+          where:{
+            workspaceId,
+          },
+        });
+
+    const result =
+      await this.receiptPipeline.process({
+        workspaceId,
+        instanceName:
+          normalized.instanceName
+          ??
+          "",
+        messageId:
+          normalized.messageId
+          ??
+          "",
+        message,
+        media:
+          normalized.media!,
+        receiptsFolderId:
+          setting?.receiptsFolderId
+          ??
+          "",
+      });
+
+    if(
+      result.status === "draft_ready"
+      ||
+      result.status === "confirmation_required"
+      ||
+      result.status === "stored_pending_ocr"
+    ){
+
+      const reply =
+        result.status === "stored_pending_ocr"
+          ?
+          [
+            "🧾 Dokumen receipt disimpan ke Google Drive.",
+            result.receiptUrl,
+            "OCR belum dijalankan untuk format ini.",
+          ].join(
+            "\n",
+          )
+          :
+          [
+            result.status === "confirmation_required"
+              ?
+              "🧾 Receipt dikesan tetapi memerlukan pengesahan."
+              :
+              "🧾 Receipt dikesan sebagai draft.",
+            result.extraction.merchantName
+              ??
+              "Merchant tidak jelas",
+            result.extraction.amount
+              ?
+              `${result.extraction.currency ?? ""} ${result.extraction.amount}`.trim()
+              :
+              "Jumlah tidak jelas",
+            result.receiptUrl,
+            "Belum ada transaksi direkodkan.",
+          ].join(
+            "\n",
+          );
+
+      await this.safeSendWebhookReply(
+        normalized,
+        reply,
+      );
+
+    }
+
+
+    return {
+      message:
+        result.status === "draft_ready"
+          ?
+          "WhatsApp receipt draft ready"
+          :
+          result.status === "confirmation_required"
+            ?
+            "WhatsApp receipt confirmation required"
+            :
+            result.status === "stored_pending_ocr"
+              ?
+              "WhatsApp receipt stored"
+              :
+              "WhatsApp receipt input ignored",
+      source:"RECEIPT",
+      normalized,
+      receipt:result,
     };
 
   }

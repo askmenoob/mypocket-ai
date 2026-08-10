@@ -13,6 +13,17 @@ export {
 } from "./groq-speech.provider.js";
 
 
+export {
+  GroqVisionProvider,
+} from "./groq-vision.provider.js";
+
+
+export type {
+  ReceiptVisionCandidate,
+  ReceiptVisionInput,
+} from "./groq-vision.provider.js";
+
+
 export type {
   GroqSpeechTranscript,
   SpeechToTextInput,

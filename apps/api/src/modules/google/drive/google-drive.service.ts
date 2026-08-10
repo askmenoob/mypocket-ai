@@ -4,6 +4,11 @@ import type {
 
 
 import {
+  Readable,
+} from "node:stream";
+
+
+import {
   google,
 } from "googleapis";
 
@@ -261,6 +266,128 @@ export class GoogleDriveService {
 
 
 
+
+
+  async uploadReceiptFile(
+    workspaceId:string,
+    input:{
+      receiptsFolderId:string;
+      fileName:string;
+      mimeType:string;
+      bytes:Uint8Array;
+    },
+  ){
+
+    const receiptsFolderId =
+      input.receiptsFolderId
+        .trim();
+
+    if(!receiptsFolderId){
+
+      throw new Error(
+        "GOOGLE_RECEIPT_FOLDER_MISSING",
+      );
+
+    }
+
+
+    const folder =
+      await this.getFileMetadata(
+        workspaceId,
+        receiptsFolderId,
+      );
+
+    if(
+      folder.mimeType !==
+      "application/vnd.google-apps.folder"
+      ||
+      !folder.capabilities.canAddChildren
+    ){
+
+      throw new Error(
+        "GOOGLE_RECEIPT_FOLDER_NOT_WRITABLE",
+      );
+
+    }
+
+
+    const safeFileName =
+      input.fileName
+        .trim()
+        .replace(
+          /[\\/\0]/g,
+          "_",
+        )
+        .slice(
+          0,
+          180,
+        )
+      ||
+      "receipt.bin";
+
+    const drive =
+      await this.getClient(
+        workspaceId,
+      );
+
+    const response =
+      await drive.files.create({
+        requestBody:{
+          name:safeFileName,
+          mimeType:
+            input.mimeType
+            ||
+            "application/octet-stream",
+          parents:[receiptsFolderId],
+        },
+        media:{
+          mimeType:
+            input.mimeType
+            ||
+            "application/octet-stream",
+          body:
+            Readable.from([
+              Buffer.from(
+                input.bytes,
+              ),
+            ]),
+        },
+        fields:
+          "id,name,mimeType,webViewLink,webContentLink",
+      });
+
+    const id =
+      response.data.id
+      ??
+      "";
+
+    if(!id){
+
+      throw new Error(
+        "GOOGLE_RECEIPT_UPLOAD_ID_MISSING",
+      );
+
+    }
+
+    return {
+      id,
+      name:
+        response.data.name
+        ??
+        safeFileName,
+      mimeType:
+        response.data.mimeType
+        ??
+        input.mimeType,
+      url:
+        response.data.webViewLink
+        ??
+        response.data.webContentLink
+        ??
+        `https://drive.google.com/file/d/${id}/view`,
+    };
+
+  }
 
 
   async copyFile(
