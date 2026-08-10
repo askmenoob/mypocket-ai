@@ -1,15 +1,19 @@
 import { AppIcon } from "./app-icon";
 import {
+  dashboardPercentageChange,
+  filterDashboardTransactions,
+  rankDashboardExpenses,
+  resolvePreviousDashboardDateRange,
+  summarizeDashboardTransactions,
+  topDashboardAmounts,
+} from "./dashboard-analytics";
+import type {
+  DashboardTransactionFilterMode as TransactionFilterMode,
+} from "./dashboard-analytics";
+import {
   useEffect,
   useState,
 } from "react";
-type TransactionFilterMode =
-  | "TODAY"
-  | "WEEK"
-  | "MONTH"
-  | "YEAR"
-  | "ALL"
-  | "CUSTOM";
 
 type DashboardLanguage =
   | "ms"
@@ -134,8 +138,8 @@ const dashboardImageIcons:Record<string, string> = {
 const PREMIUM_DASHBOARD_TEXT = {
   en:{
     transactionPeriod:"Transaction period", record:"record", records:"records", today:"Today", thisWeek:"This Week", thisMonth:"This Month", thisYear:"This Year", allTime:"All Time", customRange:"Custom Range", to:"to",
-    expense:"Expense", income:"Income", filteredTransaction:"filtered transaction", filteredTransactions:"filtered transactions", balance:"Balance", membersLinked:"members linked", healthy:"Healthy", live:"Live", connected:"Connected", disconnected:"Disconnected", checking:"Checking", notConnected:"Not connected", myPocketWorkspace:"MyPocket workspace",
-    expenseTrend:"Expense Trend", spendingByCategory:"Spending by Category", financeAllocation:"Income Allocation", paidExpenses:"Paid expenses", unpaidCommitments:"Unpaid commitments", availableBalance:"Available balance", deficit:"Deficit", incomeRequired:"Income required", total:"Total", recentTransactions:"Recent Transactions", viewAll:"View all",
+    expense:"Expense", income:"Income", filteredTransaction:"filtered transaction", filteredTransactions:"filtered transactions", balance:"Balance", netBalance:"Net balance", transactionCount:"Transactions", membersLinked:"members linked", healthy:"Healthy", live:"Live", connected:"Connected", disconnected:"Disconnected", checking:"Checking", notConnected:"Not connected", myPocketWorkspace:"MyPocket workspace",
+    expenseTrend:"Expense Trend", spendingByCategory:"Spending by Category", topMerchants:"Top Merchants", financeAllocation:"Income Allocation", paidExpenses:"Paid expenses", unpaidCommitments:"Unpaid commitments", availableBalance:"Available balance", deficit:"Deficit", incomeRequired:"Income required", total:"Total", recentTransactions:"Recent Transactions", viewAll:"View all", previousPeriod:"vs previous period", noPreviousBaseline:"No previous-period baseline", noExpenseData:"No expense data for the selected period.", noMerchantData:"No merchant spending for the selected period.", configuredTimezone:"Reporting timezone",
     date:"Date", type:"Type", category:"Category", merchant:"Merchant", amount:"Amount", source:"Source", recordedBy:"Recorded by",
     whatsappIntegration:"WhatsApp Integration", manage:"Manage", instance:"Instance", status:"Status", trigger:"Trigger", members:"Members", lastSync:"Last Sync", notLinked:"not linked",
     aliasLabel:"WhatsApp group bot alias", saving:"Saving...", saveAlias:"Save Alias", aliasHelp:"In groups, start messages with ! or @{alias}. Private chat does not need a trigger.",
@@ -144,8 +148,8 @@ const PREMIUM_DASHBOARD_TEXT = {
   },
   ms:{
     transactionPeriod:"Tempoh transaksi", record:"rekod", records:"rekod", today:"Hari Ini", thisWeek:"Minggu Ini", thisMonth:"Bulan Ini", thisYear:"Tahun Ini", allTime:"Sepanjang Masa", customRange:"Julat Tersuai", to:"hingga",
-    expense:"Belanja", income:"Income", filteredTransaction:"transaksi ditapis", filteredTransactions:"transaksi ditapis", balance:"Baki", membersLinked:"ahli dipautkan", healthy:"Sihat", live:"Live", connected:"Connected", disconnected:"Disconnected", checking:"Menyemak", notConnected:"Belum connected", myPocketWorkspace:"Workspace MyPocket",
-    expenseTrend:"Trend Belanja", spendingByCategory:"Belanja Mengikut Kategori", financeAllocation:"Agihan Income", paidExpenses:"Belanja sudah dibayar", unpaidCommitments:"Komitmen belum dibayar", availableBalance:"Baki tersedia", deficit:"Defisit", incomeRequired:"Income diperlukan", total:"Jumlah", recentTransactions:"Transaksi Terkini", viewAll:"Lihat semua",
+    expense:"Belanja", income:"Income", filteredTransaction:"transaksi ditapis", filteredTransactions:"transaksi ditapis", balance:"Baki", netBalance:"Baki bersih", transactionCount:"Transaksi", membersLinked:"ahli dipautkan", healthy:"Sihat", live:"Live", connected:"Connected", disconnected:"Disconnected", checking:"Menyemak", notConnected:"Belum connected", myPocketWorkspace:"Workspace MyPocket",
+    expenseTrend:"Trend Belanja", spendingByCategory:"Belanja Mengikut Kategori", topMerchants:"Merchant Utama", financeAllocation:"Agihan Income", paidExpenses:"Belanja sudah dibayar", unpaidCommitments:"Komitmen belum dibayar", availableBalance:"Baki tersedia", deficit:"Defisit", incomeRequired:"Income diperlukan", total:"Jumlah", recentTransactions:"Transaksi Terkini", viewAll:"Lihat semua", previousPeriod:"berbanding tempoh sebelumnya", noPreviousBaseline:"Tiada baseline tempoh sebelumnya", noExpenseData:"Tiada data belanja untuk tempoh dipilih.", noMerchantData:"Tiada belanja merchant untuk tempoh dipilih.", configuredTimezone:"Zon masa laporan",
     date:"Tarikh", type:"Jenis", category:"Kategori", merchant:"Merchant", amount:"Jumlah", source:"Sumber", recordedBy:"Direkod oleh",
     whatsappIntegration:"Integrasi WhatsApp", manage:"Urus", instance:"Instance", status:"Status", trigger:"Trigger", members:"Ahli", lastSync:"Sync terakhir", notLinked:"belum linked",
     aliasLabel:"Alias bot WhatsApp group", saving:"Menyimpan...", saveAlias:"Simpan Alias", aliasHelp:"Dalam group, mula mesej dengan ! atau @{alias}. Private chat tidak perlu trigger.",
@@ -299,6 +303,7 @@ function MiniSparkline(
   props:{
     values:number[];
     trend:number | null;
+    positiveTrendIsGood?:boolean;
   },
 ){
   const pathValue =
@@ -317,9 +322,13 @@ function MiniSparkline(
     props.trend === null
       ? "neutral"
       : props.trend > 0
-        ? "increase"
-        : props.trend < 0
+        ? props.positiveTrendIsGood
           ? "decrease"
+          : "increase"
+        : props.trend < 0
+          ? props.positiveTrendIsGood
+            ? "increase"
+            : "decrease"
           : "neutral";
 
   const trendText =
@@ -414,6 +423,7 @@ function MetricCard(
     trend?:number | null;
     sparklineData?:number[];
     status?:string;
+    positiveTrendIsGood?:boolean;
   },
 ){
   const trend =
@@ -451,6 +461,9 @@ function MetricCard(
         <MiniSparkline
           values={sparklineData}
           trend={trend}
+          positiveTrendIsGood={
+            props.positiveTrendIsGood
+          }
         />
       )}
 
@@ -465,6 +478,71 @@ function MetricCard(
         </span>
       )}
     </article>
+  );
+}
+
+function RankedAmountList(
+  props:{
+    items:Array<{
+      name:string;
+      amount:number;
+    }>;
+    total:number;
+    emptyMessage:string;
+  },
+){
+  if(props.items.length === 0){
+    return (
+      <div
+        className="pd-empty-state"
+        role="status"
+        aria-live="polite"
+      >
+        {props.emptyMessage}
+      </div>
+    );
+  }
+
+  const maximum =
+    Math.max(
+      ...props.items.map((item) => item.amount),
+      1,
+    );
+
+  return (
+    <div className="pd-rank-list">
+      {props.items.map((item) => {
+        const share =
+          props.total > 0
+            ? (item.amount / props.total) * 100
+            : 0;
+
+        return (
+          <div
+            className="pd-rank-row"
+            key={item.name}
+          >
+            <div className="pd-rank-copy">
+              <strong>{item.name}</strong>
+              <span>{share.toFixed(1)}%</span>
+            </div>
+
+            <div className="pd-rank-track">
+              <span
+                style={{
+                  width:`${Math.max(
+                    2,
+                    (item.amount / maximum) * 100,
+                  )}%`,
+                }}
+              />
+            </div>
+
+            <b>{currency(item.amount)}</b>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -528,6 +606,20 @@ export function PremiumDashboard(
       ? props.data.transactions
       : [];
 
+  const allTransactions =
+    Array.isArray(props.data?.allTransactions)
+      ? props.data.allTransactions
+      : transactions;
+
+  const dashboardTimeZone =
+    String(
+      props.data?.dashboardTimeZone
+      ||
+      props.data?.botSettings?.timezone
+      ||
+      "Asia/Kuala_Lumpur",
+    );
+
   const members =
     Array.isArray(props.data?.members)
       ? props.data.members
@@ -589,46 +681,74 @@ export function PremiumDashboard(
         ).toUpperCase() === "EXPENSE",
     );
 
-  const incomes =
-    transactions.filter(
-      (item:any) =>
-        String(
-          item?.type,
-        ).toUpperCase() === "INCOME",
+  const periodSummary =
+    summarizeDashboardTransactions(
+      transactions,
     );
 
   const periodExpense =
-    expenses.reduce(
-      (
-        total:number,
-        item:any,
-      ) =>
-        total
-        +
-        amountOf(
-          item,
-        ),
-      0,
-    );
+    periodSummary.expense;
 
   const periodIncome =
-    incomes.reduce(
-      (
-        total:number,
-        item:any,
-      ) =>
-        total
-        +
-        amountOf(
-          item,
-        ),
-      0,
-    );
+    periodSummary.income;
 
   const periodBalance =
-    periodIncome
-    -
-    periodExpense;
+    periodSummary.balance;
+
+  const currentRange = {
+    start:
+      props.filterStart === null
+        ? null
+        : new Date(props.filterStart),
+    end:
+      props.filterEnd === null
+        ? null
+        : new Date(props.filterEnd),
+  };
+
+  const previousRange =
+    resolvePreviousDashboardDateRange(
+      props.transactionFilter,
+      currentRange,
+      dashboardTimeZone,
+    );
+
+  const previousTransactions =
+    previousRange
+      ? filterDashboardTransactions(
+        allTransactions,
+        previousRange,
+      )
+      : [];
+
+  const previousSummary =
+    summarizeDashboardTransactions(
+      previousTransactions,
+    );
+
+  const expenseChange =
+    dashboardPercentageChange(
+      periodExpense,
+      previousSummary.expense,
+    );
+
+  const incomeChange =
+    dashboardPercentageChange(
+      periodIncome,
+      previousSummary.income,
+    );
+
+  const balanceChange =
+    dashboardPercentageChange(
+      periodBalance,
+      previousSummary.balance,
+    );
+
+  const transactionCountChange =
+    dashboardPercentageChange(
+      periodSummary.transactionCount,
+      previousSummary.transactionCount,
+    );
 
   const unpaidCommitmentTotal =
     Number(
@@ -637,10 +757,15 @@ export function PremiumDashboard(
     ||
     0;
 
+  const periodUnpaidCommitmentTotal =
+    props.transactionFilter === "MONTH"
+      ? unpaidCommitmentTotal
+      : 0;
+
   const committedOutflow =
     periodExpense
     +
-    unpaidCommitmentTotal;
+    periodUnpaidCommitmentTotal;
 
   const availableAfterCommitments =
     Math.max(
@@ -1216,12 +1341,6 @@ export function PremiumDashboard(
       },
     );
 
-  const daysInMonth =
-    Math.max(
-      dailyTotals.length,
-      2,
-    );
-
   const todaySparklineData =
     dailyTotals.length > 1
       ? dailyTotals.map(
@@ -1235,26 +1354,6 @@ export function PremiumDashboard(
         0,
       ];
 
-  const monthSparklineData =
-    todaySparklineData;
-
-  const todayExpense =
-    periodExpense;
-
-  const monthExpense =
-    periodExpense;
-
-  const todayChange:
-    number | null =
-    null;
-
-  const monthChange:
-    number | null =
-    null;
-
-  const monthExpenses =
-    expenses;
-
   const chartLabelStep =
     Math.max(
       1,
@@ -1265,94 +1364,37 @@ export function PremiumDashboard(
       ),
     );
 
-  const categoryMap =
-    new Map<string, number>();
+  const otherLabel =
+    language === "ms"
+      ? "Lain-lain"
+      : "Others";
 
-  monthExpenses.forEach(
-    (item:any) => {
-
-      const name =
-        String(
-          item?.category?.name
-          ||
-          (language === "ms" ? "Lain-lain" : "Others"),
-        ).trim()
-        ||
-        (language === "ms" ? "Lain-lain" : "Others");
-
-      categoryMap.set(
-        name,
-        (
-          categoryMap.get(
-            name,
-          )
-          ||
-          0
-        )
-        +
-        amountOf(
-          item,
-        ),
-      );
-
-    },
-  );
-
-  const categories =
-    Array.from(
-      categoryMap.entries(),
-    )
-      .map(
-        (
-          [
-            name,
-            amount,
-          ],
-        ) => ({
-          name,
-          amount,
-        }),
-      )
-      .sort(
-        (
-          first,
-          second,
-        ) =>
-          second.amount
-          -
-          first.amount,
-      );
+  const unspecifiedMerchantLabel =
+    language === "ms"
+      ? "Merchant tidak dinyatakan"
+      : "Unspecified merchant";
 
   const visibleCategories =
-    categories.slice(
-      0,
+    topDashboardAmounts(
+      rankDashboardExpenses(
+        transactions,
+        "category",
+        otherLabel,
+      ),
       5,
+      otherLabel,
     );
 
-  if(categories.length > 5){
-
-    visibleCategories.push({
-      name:
-        language === "ms" ? "Lain-lain" : "Others",
-
-      amount:
-        categories
-          .slice(
-            5,
-          )
-          .reduce(
-            (
-              total,
-              item,
-            ) =>
-              total
-              +
-              item.amount,
-            0,
-          ),
-    });
-
-  }
+  const visibleMerchants =
+    topDashboardAmounts(
+      rankDashboardExpenses(
+        transactions,
+        "merchant",
+        unspecifiedMerchantLabel,
+      ),
+      5,
+      otherLabel,
+    );
 
 
   const colours = [
@@ -1379,7 +1421,7 @@ export function PremiumDashboard(
         name:
           text.unpaidCommitments,
         amount:
-          unpaidCommitmentTotal,
+          periodUnpaidCommitmentTotal,
       },
       {
         name:
@@ -2109,6 +2151,12 @@ export function PremiumDashboard(
         .pd-spark .neutral{color:#809491}
         .pd-health{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:6px 9px;border-radius:999px;background:#e6f8ef;color:#159568;font-size:10px;font-weight:800}
         .pd-chart-grid,.pd-content-grid,.pd-bottom-grid{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(360px,1fr);gap:12px}.pd-chart-grid{align-items:start}.pd-chart-grid>.pd-panel:first-child{align-self:start;padding-bottom:11px}
+        .pd-insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+        .pd-rank-list{display:flex;flex-direction:column;gap:13px}
+        .pd-rank-row{display:grid;grid-template-columns:minmax(130px,1fr) minmax(90px,1.6fr) auto;align-items:center;gap:12px}
+        .pd-rank-copy{display:flex;min-width:0;justify-content:space-between;gap:8px}.pd-rank-copy strong{overflow:hidden;color:#244946;font-size:11px;text-overflow:ellipsis;white-space:nowrap}.pd-rank-copy span{color:#718784;font-size:9px}
+        .pd-rank-track{overflow:hidden;height:7px;border-radius:999px;background:#e7f0ee}.pd-rank-track span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#079b83,#36bea7)}
+        .pd-rank-row>b{min-width:76px;color:#173b3b;font-size:10px;text-align:right}
         .pd-panel{min-width:0;border-radius:13px;padding:17px}
         .pd-panel-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
         .pd-panel-header h2{margin:0;color:#102f31;font-size:16px}
@@ -2214,7 +2262,7 @@ export function PremiumDashboard(
         @media(max-width:720px){.pd-filter-bar{align-items:stretch}.pd-filter-controls{display:grid;grid-template-columns:1fr}.pd-filter-select,.pd-filter-date{width:100%}.pd-filter-separator{display:none}}
         @media(max-width:1200px){.pd-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.pd-chart-grid,.pd-content-grid,.pd-bottom-grid{grid-template-columns:1fr}}
         @media(max-width:520px){.pd-alias-row{grid-template-columns:1fr}.pd-alias-row .pd-button{width:100%}}
-        @media(max-width:720px){.pd-metrics{grid-template-columns:1fr}.pd-donut-layout,.pd-wa-layout,.pd-sheet{grid-template-columns:1fr}.pd-quick-grid{grid-template-columns:1fr}.pd-spark{width:72px}.pd-panel{padding:14px}.pd-legend-row{grid-template-columns:9px minmax(0,1fr) auto}.pd-legend-percent{display:none}}
+        @media(max-width:720px){.pd-metrics,.pd-insight-grid{grid-template-columns:1fr}.pd-donut-layout,.pd-wa-layout,.pd-sheet{grid-template-columns:1fr}.pd-quick-grid{grid-template-columns:1fr}.pd-spark{width:72px}.pd-panel{padding:14px}.pd-legend-row{grid-template-columns:9px minmax(0,1fr) auto}.pd-legend-percent{display:none}.pd-rank-row{grid-template-columns:minmax(110px,1fr) auto}.pd-rank-track{grid-column:1/-1}.pd-rank-row>b{grid-column:2;grid-row:1}}
       `}</style>
 
       <section className="pd-filter-bar">
@@ -2224,7 +2272,7 @@ export function PremiumDashboard(
           </strong>
 
           <span>
-            {props.transactionFilterLabel} · {transactions.length} {transactions.length === 1 ? text.record : text.records}
+            {props.transactionFilterLabel} · {transactions.length} {transactions.length === 1 ? text.record : text.records} · {text.configuredTimezone}: {dashboardTimeZone}
           </span>
         </div>
 
@@ -2303,8 +2351,8 @@ export function PremiumDashboard(
           icon="wallet"
           label={`${props.transactionFilterLabel} ${text.expense}`}
           value={currency(periodExpense)}
-          subtitle={`${transactions.length} ${transactions.length === 1 ? text.filteredTransaction : text.filteredTransactions}`}
-          trend={null}
+          subtitle={`${periodSummary.expenseCount} ${periodSummary.expenseCount === 1 ? text.filteredTransaction : text.filteredTransactions} · ${previousTransactions.length > 0 ? text.previousPeriod : text.noPreviousBaseline}`}
+          trend={expenseChange}
           sparklineData={todaySparklineData}
         />
 
@@ -2312,13 +2360,47 @@ export function PremiumDashboard(
           icon="calendar"
           label={`${props.transactionFilterLabel} ${text.income}`}
           value={currency(periodIncome)}
+          subtitle={`${periodSummary.incomeCount} ${periodSummary.incomeCount === 1 ? text.filteredTransaction : text.filteredTransactions} · ${previousTransactions.length > 0 ? text.previousPeriod : text.noPreviousBaseline}`}
+          trend={incomeChange}
+          sparklineData={[
+            previousSummary.income,
+            periodIncome,
+          ]}
+          positiveTrendIsGood
+        />
+
+        <MetricCard
+          icon="wallet"
+          label={`${props.transactionFilterLabel} ${text.netBalance}`}
+          value={currency(periodBalance)}
           subtitle={
-            incomeDeficit > 0
-              ? `${text.deficit} ${currency(incomeDeficit)}`
-              : `${text.availableBalance} ${currency(availableAfterCommitments)}`
+            periodUnpaidCommitmentTotal > 0
+              ? incomeDeficit > 0
+                ? `${text.deficit} ${currency(incomeDeficit)}`
+                : `${text.availableBalance} ${currency(availableAfterCommitments)}`
+              : previousTransactions.length > 0
+                ? text.previousPeriod
+                : text.noPreviousBaseline
           }
-          trend={null}
-          sparklineData={monthSparklineData}
+          trend={balanceChange}
+          sparklineData={[
+            previousSummary.balance,
+            periodBalance,
+          ]}
+          positiveTrendIsGood
+        />
+
+        <MetricCard
+          icon="transactions"
+          label={text.transactionCount}
+          value={periodSummary.transactionCount.toLocaleString(locale)}
+          subtitle={`${periodSummary.expenseCount} ${text.expense.toLowerCase()} · ${periodSummary.incomeCount} ${text.income.toLowerCase()}`}
+          trend={transactionCountChange}
+          sparklineData={[
+            previousSummary.transactionCount,
+            periodSummary.transactionCount,
+          ]}
+          positiveTrendIsGood
         />
 
         <MetricCard
@@ -2572,6 +2654,28 @@ export function PremiumDashboard(
               </div>
             </div>
           </div>
+        </DashboardPanel>
+      </section>
+
+      <section className="pd-insight-grid">
+        <DashboardPanel
+          title={`${text.spendingByCategory} · ${props.transactionFilterLabel}`}
+        >
+          <RankedAmountList
+            items={visibleCategories}
+            total={periodExpense}
+            emptyMessage={text.noExpenseData}
+          />
+        </DashboardPanel>
+
+        <DashboardPanel
+          title={`${text.topMerchants} · ${props.transactionFilterLabel}`}
+        >
+          <RankedAmountList
+            items={visibleMerchants}
+            total={periodExpense}
+            emptyMessage={text.noMerchantData}
+          />
         </DashboardPanel>
       </section>
 

@@ -1,5 +1,14 @@
 import { AppIcon } from "./app-icon";
 import { AdminUserManagement } from "./admin-user-management";
+import {
+  dashboardDateInputValue,
+  resolveDashboardDateRange,
+  transactionMatchesDashboardRange,
+} from "./dashboard-analytics";
+import type {
+  DashboardDateRange as TransactionFilterRange,
+  DashboardTransactionFilterMode as TransactionFilterMode,
+} from "./dashboard-analytics";
 import { PremiumDashboard } from "./premium-dashboard";
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -355,97 +364,14 @@ type DashboardView =
   | "settings"
   | "super-admin";
 
-type TransactionFilterMode =
-  | "TODAY"
-  | "WEEK"
-  | "MONTH"
-  | "YEAR"
-  | "ALL"
-  | "CUSTOM";
-
-
-type TransactionFilterRange = {
-  start:Date | null;
-  end:Date | null;
-};
-
-
 function transactionDateInputValue(
   date:Date,
+  timeZone = "Asia/Kuala_Lumpur",
 ){
-
-  const year =
-    date.getFullYear();
-
-  const month =
-    String(
-      date.getMonth() + 1,
-    ).padStart(
-      2,
-      "0",
-    );
-
-  const day =
-    String(
-      date.getDate(),
-    ).padStart(
-      2,
-      "0",
-    );
-
-
-  return `${year}-${month}-${day}`;
-
-}
-
-
-function parseTransactionDateInput(
-  value:string,
-){
-
-  if(
-    !/^\d{4}-\d{2}-\d{2}$/.test(
-      value,
-    )
-  ){
-
-    return null;
-
-  }
-
-
-  const [
-    year,
-    month,
-    day,
-  ] =
-    value
-      .split("-")
-      .map(Number);
-
-
-  const date =
-    new Date(
-      year,
-      month - 1,
-      day,
-    );
-
-
-  if(
-    date.getFullYear() !== year
-    ||
-    date.getMonth() !== month - 1
-    ||
-    date.getDate() !== day
-  ){
-
-    return null;
-
-  }
-
-
-  return date;
+  return dashboardDateInputValue(
+    date,
+    timeZone,
+  );
 
 }
 
@@ -454,163 +380,16 @@ function resolveTransactionFilterRange(
   mode:TransactionFilterMode,
   customFrom:string,
   customTo:string,
+  timeZone = "Asia/Kuala_Lumpur",
   referenceDate:Date = new Date(),
 ):TransactionFilterRange {
-
-  const today =
-    new Date(
-      referenceDate.getFullYear(),
-      referenceDate.getMonth(),
-      referenceDate.getDate(),
-    );
-
-
-  if(mode === "ALL"){
-
-    return {
-      start:null,
-      end:null,
-    };
-
-  }
-
-
-  if(mode === "TODAY"){
-
-    return {
-      start:
-        today,
-
-      end:
-        new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          today.getDate() + 1,
-        ),
-    };
-
-  }
-
-
-  if(mode === "WEEK"){
-
-    const mondayOffset =
-      (
-        today.getDay()
-        +
-        6
-      )
-      %
-      7;
-
-    const start =
-      new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate() - mondayOffset,
-      );
-
-
-    return {
-      start,
-
-      end:
-        new Date(
-          start.getFullYear(),
-          start.getMonth(),
-          start.getDate() + 7,
-        ),
-    };
-
-  }
-
-
-  if(mode === "MONTH"){
-
-    return {
-      start:
-        new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          1,
-        ),
-
-      end:
-        new Date(
-          today.getFullYear(),
-          today.getMonth() + 1,
-          1,
-        ),
-    };
-
-  }
-
-
-  if(mode === "YEAR"){
-
-    return {
-      start:
-        new Date(
-          today.getFullYear(),
-          0,
-          1,
-        ),
-
-      end:
-        new Date(
-          today.getFullYear() + 1,
-          0,
-          1,
-        ),
-    };
-
-  }
-
-
-  let from =
-    parseTransactionDateInput(
-      customFrom,
-    );
-
-  let to =
-    parseTransactionDateInput(
-      customTo,
-    );
-
-
-  if(
-    from
-    &&
-    to
-    &&
-    from.getTime() > to.getTime()
-  ){
-
-    const temporary =
-      from;
-
-    from =
-      to;
-
-    to =
-      temporary;
-
-  }
-
-
-  return {
-    start:
-      from,
-
-    end:
-      to
-        ? new Date(
-          to.getFullYear(),
-          to.getMonth(),
-          to.getDate() + 1,
-        )
-        : null,
-  };
+  return resolveDashboardDateRange(
+    mode,
+    customFrom,
+    customTo,
+    timeZone,
+    referenceDate,
+  );
 
 }
 
@@ -802,6 +581,7 @@ function transactionFilterDisplayLabel(
   mode:TransactionFilterMode,
   range:TransactionFilterRange,
   language:DashboardLanguage = "en",
+  timeZone = "Asia/Kuala_Lumpur",
 ){
 
   const text =
@@ -852,6 +632,8 @@ function transactionFilterDisplayLabel(
 
             year:
               "numeric",
+
+            timeZone,
           },
         )
         : "";
@@ -865,9 +647,7 @@ function transactionFilterDisplayLabel(
   const inclusiveEnd =
     range.end
       ? new Date(
-        range.end.getFullYear(),
-        range.end.getMonth(),
-        range.end.getDate() - 1,
+        range.end.getTime() - 1,
       )
       : null;
 
@@ -911,47 +691,10 @@ function transactionMatchesFilter(
   transaction:Transaction,
   range:TransactionFilterRange,
 ){
-
-  const timestamp =
-    new Date(
-      transaction.transactionDate,
-    ).getTime();
-
-
-  if(
-    !Number.isFinite(
-      timestamp,
-    )
-  ){
-
-    return false;
-
-  }
-
-
-  if(
-    range.start
-    &&
-    timestamp < range.start.getTime()
-  ){
-
-    return false;
-
-  }
-
-
-  if(
-    range.end
-    &&
-    timestamp >= range.end.getTime()
-  ){
-
-    return false;
-
-  }
-
-
-  return true;
+  return transactionMatchesDashboardRange(
+    transaction,
+    range,
+  );
 
 }
 
@@ -3751,6 +3494,11 @@ function Dashboard(
   const dashboardText =
     DASHBOARD_TEXT[dashboardLanguage];
 
+  const dashboardTimeZone =
+    props.data.botSettings?.timezone
+    ||
+    "Asia/Kuala_Lumpur";
+
   const [billingOpen, setBillingOpen] =
     useState(false);
 
@@ -3811,17 +3559,13 @@ function Dashboard(
   const [transactionCustomFrom, setTransactionCustomFrom] =
     useState(
       () => {
-
         const current =
-          new Date();
+          transactionDateInputValue(
+            new Date(),
+            dashboardTimeZone,
+          );
 
-        return transactionDateInputValue(
-          new Date(
-            current.getFullYear(),
-            current.getMonth(),
-            1,
-          ),
-        );
+        return `${current.slice(0, 7)}-01`;
 
       },
     );
@@ -3831,6 +3575,7 @@ function Dashboard(
       () =>
         transactionDateInputValue(
           new Date(),
+          dashboardTimeZone,
         ),
     );
 
@@ -4576,6 +4321,7 @@ function Dashboard(
       transactionFilter,
       transactionCustomFrom,
       transactionCustomTo,
+      dashboardTimeZone,
     );
 
   const filteredTransactions =
@@ -4593,6 +4339,7 @@ function Dashboard(
       transactionFilter,
       transactionDateRange,
       dashboardLanguage,
+      dashboardTimeZone,
     );
 
   const visibleTransactionIds =
@@ -6933,6 +6680,9 @@ function Dashboard(
               ...props.data,
               transactions:
                 filteredTransactions,
+              allTransactions:
+                props.data.transactions,
+              dashboardTimeZone,
             }}
             transactionFilter={transactionFilter}
             transactionFilterLabel={transactionFilterLabel}
