@@ -90,6 +90,7 @@ import type {
 import {
   GoogleDriveReceiptStorage,
   WhatsAppReceiptPipeline,
+  type PendingReceiptUpload,
 } from "./whatsapp-receipt.pipeline.js";
 
 type CommitmentDraftStep =
@@ -127,7 +128,9 @@ type ReceiptConfirmationDraft = {
     | "ADMIN"
     | "MEMBER";
   language:"ms" | "en";
-  receiptUrl:string;
+  receiptsFolderId:string;
+  receiptUrl?:string;
+  pendingUpload:PendingReceiptUpload;
   fileName:string;
   extraction:ReceiptVisionCandidate;
   expiresAt:number;
@@ -160,7 +163,7 @@ const COMMITMENT_DRAFT_TTL_MS =
 
 
 const RECEIPT_DRAFT_TTL_MS =
-  10 * 60 * 1000;
+  60 * 1000;
 
 
 
@@ -2392,28 +2395,41 @@ export class WhatsAppService {
 
       if(
         result.extraction.amount?.trim()
-        &&
-        result.receiptUrl
       ){
 
-        this.receiptDrafts.set(
+        const key =
           this.receiptDraftKey(
             workspaceId,
             actorUserId,
-          ),
+          );
+
+        const expiresAt =
+          Date.now()
+          +
+          RECEIPT_DRAFT_TTL_MS;
+
+        this.receiptDrafts.set(
+          key,
           {
             workspaceId,
             actorUserId,
             role:actorRole,
             language:"ms",
-            receiptUrl:result.receiptUrl,
+            receiptsFolderId:
+              setting?.receiptsFolderId
+              ??
+              "",
+            pendingUpload:
+              result.pendingUpload,
             fileName:result.fileName,
             extraction:result.extraction,
-            expiresAt:
-              Date.now()
-              +
-              RECEIPT_DRAFT_TTL_MS,
+            expiresAt,
           },
+        );
+
+        this.scheduleReceiptDraftExpiry(
+          key,
+          expiresAt,
         );
 
       }
@@ -2454,10 +2470,18 @@ export class WhatsAppService {
               `${result.extraction.currency ?? ""} ${result.extraction.amount}`.trim()
               :
               "Jumlah tidak jelas",
-            result.receiptUrl,
+            this.normalizeReceiptTransactionDate(
+              result.extraction.transactionDate,
+            )
+              ?
+              `Tarikh: ${this.normalizeReceiptTransactionDate(
+                result.extraction.transactionDate,
+              )!.slice(0, 10)}`
+              :
+              "Tarikh resit tidak jelas; tarikh confirm akan digunakan.",
             result.extraction.amount?.trim()
               ?
-              "Taip !confirm untuk rekod atau !cancel untuk batal."
+              "Taip !confirm dalam 1 minit untuk upload dan rekod, atau !cancel untuk batal."
               :
               "Jumlah tidak jelas; sila hantar semula gambar resit.",
           ].join(
@@ -2471,6 +2495,21 @@ export class WhatsAppService {
 
     }
 
+
+    const receiptResult =
+      result.status === "draft_ready"
+      ||
+      result.status === "confirmation_required"
+        ? {
+            status:result.status,
+            source:result.source,
+            fileName:result.fileName,
+            extraction:result.extraction,
+            ...(result.reason
+              ? {reason:result.reason}
+              : {}),
+          }
+        : result;
 
     return {
       message:
@@ -2489,7 +2528,7 @@ export class WhatsAppService {
               "WhatsApp receipt input ignored",
       source:"RECEIPT",
       normalized,
-      receipt:result,
+      receipt:receiptResult,
     };
 
   }
@@ -3855,6 +3894,44 @@ export class WhatsAppService {
   }
 
 
+  private scheduleReceiptDraftExpiry(
+    key:string,
+    expiresAt:number,
+  ){
+
+    const timer =
+      setTimeout(
+        () => {
+
+          const current =
+            this.receiptDrafts.get(
+              key,
+            );
+
+          if(
+            current?.expiresAt
+            ===
+            expiresAt
+          ){
+
+            this.receiptDrafts.delete(
+              key,
+            );
+
+          }
+
+        },
+        Math.max(
+          0,
+          expiresAt - Date.now(),
+        ),
+      );
+
+    timer.unref();
+
+  }
+
+
   private async handleReceiptDraftMessage(
     workspaceId:string,
     normalized:NormalizedEvolutionMessage,
@@ -3973,6 +4050,37 @@ export class WhatsAppService {
 
     try{
 
+      if(!draft.receiptUrl){
+
+        const stored =
+          await this.receiptPipeline
+            .storeConfirmedReceipt({
+              workspaceId:
+                draft.workspaceId,
+              receiptsFolderId:
+                draft.receiptsFolderId,
+              media:
+                draft.pendingUpload,
+            });
+
+        if(stored.status === "failed"){
+
+          throw new AppError(
+            "RECEIPT_STORAGE_FAILED",
+            stored.reason,
+            502,
+          );
+
+        }
+
+        draft.receiptUrl =
+          stored.receiptUrl;
+
+        draft.fileName =
+          stored.fileName;
+
+      }
+
       const transaction =
         await this.createReceiptTransaction(
           draft,
@@ -4030,9 +4138,165 @@ export class WhatsAppService {
   }
 
 
+  private normalizeReceiptTransactionDate(
+    value?:string,
+  ):string | undefined{
+
+    const raw =
+      value?.trim();
+
+    if(!raw){
+
+      return undefined;
+
+    }
+
+    const numericDate =
+      raw.match(
+        /^(\d{1,4})[./-](\d{1,2})[./-](\d{1,4})(?:[ T,]+(\d{1,2})(?::(\d{1,2}))?(?::(\d{1,2}))?)?$/,
+      );
+
+    if(numericDate){
+
+      const yearFirst =
+        numericDate[1].length === 4;
+
+      const rawYear =
+        Number(
+          yearFirst
+            ? numericDate[1]
+            : numericDate[3],
+        );
+
+      const year =
+        rawYear < 100
+          ? 2000 + rawYear
+          : rawYear;
+
+      const firstPart =
+        Number(
+          numericDate[1],
+        );
+
+      const secondPart =
+        Number(
+          numericDate[2],
+        );
+
+      const thirdPart =
+        Number(
+          numericDate[3],
+        );
+
+      // Malaysian receipts are day-first by default. If the middle value is
+      // greater than 12, the receipt is unambiguously month-first instead.
+      const month =
+        yearFirst
+          ? secondPart
+          : firstPart <= 12
+            &&
+            secondPart > 12
+              ? firstPart
+              : secondPart;
+
+      const day =
+        yearFirst
+          ? thirdPart
+          : firstPart <= 12
+            &&
+            secondPart > 12
+              ? secondPart
+              : firstPart;
+
+      const hour =
+        Number(
+          numericDate[4]
+          ??
+          0,
+        );
+
+      const minute =
+        Number(
+          numericDate[5]
+          ??
+          0,
+        );
+
+      const second =
+        Number(
+          numericDate[6]
+          ??
+          0,
+        );
+
+      const date =
+        new Date(
+          Date.UTC(
+            year,
+            month - 1,
+            day,
+            hour,
+            minute,
+            second,
+          ),
+        );
+
+      if(
+        year >= 1900
+        &&
+        year <= 2100
+        &&
+        date.getUTCFullYear() === year
+        &&
+        date.getUTCMonth() === month - 1
+        &&
+        date.getUTCDate() === day
+        &&
+        date.getUTCHours() === hour
+        &&
+        date.getUTCMinutes() === minute
+        &&
+        date.getUTCSeconds() === second
+      ){
+
+        return date.toISOString();
+
+      }
+
+      return undefined;
+
+    }
+
+    const parsed =
+      new Date(
+        raw,
+      );
+
+    return Number.isNaN(
+      parsed.getTime(),
+    )
+      ? undefined
+      : parsed.toISOString();
+
+  }
+
+
   private async createReceiptTransaction(
     draft:ReceiptConfirmationDraft,
   ){
+
+    const receiptUrl =
+      draft.receiptUrl?.trim();
+
+    if(!receiptUrl){
+
+      throw new AppError(
+        "RECEIPT_NOT_UPLOADED",
+        "Receipt must be uploaded before recording",
+        409,
+      );
+
+    }
 
     const amountText =
       draft.extraction.amount
@@ -4065,10 +4329,15 @@ export class WhatsAppService {
       ||
       "MYR";
 
+    const receiptTransactionDate =
+      this.normalizeReceiptTransactionDate(
+        draft.extraction.transactionDate,
+      );
+
     const parsed =
       this.parseTransactionText(
         `beli ${merchantName} RM${amountText}`,
-        draft.extraction.transactionDate,
+        receiptTransactionDate,
         currency,
       );
 
@@ -4084,22 +4353,17 @@ export class WhatsAppService {
         merchantName,
       );
 
+    const parsedDate =
+      new Date(
+        parsed.transactionDate,
+      );
+
     const date =
-      draft.extraction.transactionDate
-      &&
-      !Number.isNaN(
-        new Date(
-          draft.extraction.transactionDate,
-        ).getTime(),
+      Number.isNaN(
+        parsedDate.getTime(),
       )
-        ?
-        new Date(
-          draft.extraction.transactionDate,
-        )
-        :
-        new Date(
-          parsed.transactionDate,
-        );
+        ? new Date()
+        : parsedDate;
 
     return this.transactionService
       .createTransaction(
@@ -4124,7 +4388,7 @@ export class WhatsAppService {
           merchantId:
             merchant.id,
           receiptUrl:
-            draft.receiptUrl,
+            receiptUrl,
           source:
             "WHATSAPP_RECEIPT",
         },

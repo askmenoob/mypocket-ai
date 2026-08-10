@@ -74,6 +74,17 @@ export interface ReceiptStorage {
 }
 
 
+export interface PendingReceiptUpload {
+
+  bytes:Uint8Array;
+
+  mimeType:string;
+
+  fileName:string;
+
+}
+
+
 export class GoogleDriveReceiptStorage
 implements ReceiptStorage {
 
@@ -129,9 +140,9 @@ export type ReceiptPipelineResult =
   | {
       status:"confirmation_required" | "draft_ready";
       source:"RECEIPT";
-      receiptUrl:string;
       fileName:string;
       extraction:ReceiptVisionCandidate;
+      pendingUpload:PendingReceiptUpload;
       reason?:"RECEIPT_LOW_CONFIDENCE_CONFIRMATION";
     };
 
@@ -303,18 +314,6 @@ export class WhatsAppReceiptPipeline {
     }
 
 
-    const stored =
-      await this.store(
-        input,
-        value,
-      );
-
-    if(stored.status === "failed"){
-
-      return stored;
-
-    }
-
     this.processed.set(
       idempotencyKey,
       Date.now() + this.idempotencyTtlMs,
@@ -334,11 +333,14 @@ export class WhatsAppReceiptPipeline {
       return {
         status:"confirmation_required",
         source:"RECEIPT",
-        receiptUrl:
-          stored.receiptUrl,
         fileName:
-          stored.fileName,
+          value.fileName,
         extraction,
+        pendingUpload:{
+          bytes:value.bytes,
+          mimeType:value.mimeType,
+          fileName:value.fileName,
+        },
         reason:
           "RECEIPT_LOW_CONFIDENCE_CONFIRMATION",
       };
@@ -348,12 +350,31 @@ export class WhatsAppReceiptPipeline {
     return {
       status:"draft_ready",
       source:"RECEIPT",
-      receiptUrl:
-        stored.receiptUrl,
       fileName:
-        stored.fileName,
+        value.fileName,
       extraction,
+      pendingUpload:{
+        bytes:value.bytes,
+        mimeType:value.mimeType,
+        fileName:value.fileName,
+      },
     };
+
+  }
+
+
+  async storeConfirmedReceipt(
+    input:{
+      workspaceId:string;
+      receiptsFolderId:string;
+      media:PendingReceiptUpload;
+    },
+  ){
+
+    return this.store(
+      input,
+      input.media,
+    );
 
   }
 

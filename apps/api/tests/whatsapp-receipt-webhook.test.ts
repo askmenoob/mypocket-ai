@@ -64,6 +64,7 @@ test(
 
     let reply = "";
     let transactionCalls = 0;
+    let uploadCalls = 0;
     service.findWebhookActorMember =
       async () => ({
         userId:"user-1",
@@ -78,8 +79,12 @@ test(
         return {
           status:"draft_ready",
           source:"RECEIPT",
-          receiptUrl:"https://drive.example/receipt-1",
           fileName:"receipt.jpg",
+          pendingUpload:{
+            bytes:new Uint8Array([1, 2, 3]),
+            mimeType:"image/jpeg",
+            fileName:"receipt.jpg",
+          },
           extraction:{
             merchantName:"Kedai Makan",
             amount:"12.50",
@@ -90,6 +95,10 @@ test(
             model:"qwen/qwen3.6-27b",
           },
         };
+      },
+      storeConfirmedReceipt:async () => {
+        uploadCalls += 1;
+        throw new Error("must not upload before confirmation");
       },
     };
     service.safeSendWebhookReply =
@@ -115,17 +124,88 @@ test(
       result.message,
       "WhatsApp receipt draft ready",
     );
-    assert.match(
+    assert.doesNotMatch(
       reply,
-      /https:\/\/drive.example\/receipt-1/,
+      /drive\.example/,
     );
     assert.match(
       reply,
-      /!confirm/,
+      /!confirm dalam 1 minit/,
     );
     assert.equal(
       transactionCalls,
       0,
+    );
+    assert.equal(
+      uploadCalls,
+      0,
+    );
+    assert.equal(
+      (result.receipt as any).pendingUpload,
+      undefined,
+    );
+    const draft =
+      service.receiptDrafts.get(
+        "workspace-1:user-1",
+      );
+    assert.ok(
+      draft.expiresAt - Date.now() <= 60_000
+      &&
+      draft.expiresAt - Date.now() > 58_000,
+    );
+  },
+);
+
+
+test(
+  "unconfirmed receipt bytes are discarded automatically after expiry",
+  async () => {
+    const service =
+      createService(
+        "receipts-folder",
+      );
+
+    const key =
+      "workspace-1:user-1";
+    const expiresAt =
+      Date.now() + 20;
+
+    service.receiptDrafts.set(
+      key,
+      {
+        workspaceId:"workspace-1",
+        actorUserId:"user-1",
+        role:"MEMBER",
+        language:"ms",
+        receiptsFolderId:"receipts-folder",
+        pendingUpload:{
+          bytes:new Uint8Array([1, 2, 3]),
+          mimeType:"image/jpeg",
+          fileName:"receipt.jpg",
+        },
+        fileName:"receipt.jpg",
+        extraction:{
+          amount:"12.50",
+          rawText:"TOTAL RM12.50",
+          latencyMs:10,
+          model:"qwen/qwen3.6-27b",
+        },
+        expiresAt,
+      },
+    );
+
+    service.scheduleReceiptDraftExpiry(
+      key,
+      expiresAt,
+    );
+
+    await new Promise(
+      (resolve) => setTimeout(resolve, 50),
+    );
+
+    assert.equal(
+      service.receiptDrafts.has(key),
+      false,
     );
   },
 );
@@ -161,7 +241,7 @@ test(
 );
 
 test(
-  "receipt confirm records the pending draft with its Drive URL",
+  "receipt confirm uploads first and then records the pending draft",
   async () => {
     const service =
       createService(
@@ -170,6 +250,7 @@ test(
 
     let reply = "";
     let capturedDraft:any = null;
+    const events:string[] = [];
     service.findWebhookActorMember =
       async () => ({
         userId:"user-1",
@@ -181,8 +262,23 @@ test(
       async (_normalized:any, text:string) => {
         reply = text;
       };
+    service.receiptPipeline = {
+      storeConfirmedReceipt:async (input:any) => {
+        events.push("upload");
+        assert.equal(
+          input.receiptsFolderId,
+          "receipts-folder",
+        );
+        return {
+          status:"success",
+          receiptUrl:"https://drive.example/receipt-1",
+          fileName:"receipt.jpg",
+        };
+      },
+    };
     service.createReceiptTransaction =
       async (draft:any) => {
+        events.push("transaction");
         capturedDraft = draft;
         return {id:"transaction-1"};
       };
@@ -193,7 +289,12 @@ test(
         actorUserId:"user-1",
         role:"MEMBER",
         language:"ms",
-        receiptUrl:"https://drive.example/receipt-1",
+        receiptsFolderId:"receipts-folder",
+        pendingUpload:{
+          bytes:new Uint8Array([1, 2, 3]),
+          mimeType:"image/jpeg",
+          fileName:"receipt.jpg",
+        },
         fileName:"receipt.jpg",
         extraction:{
           merchantName:"Kedai Makan",
@@ -232,6 +333,10 @@ test(
       capturedDraft.receiptUrl,
       "https://drive.example/receipt-1",
     );
+    assert.deepEqual(
+      events,
+      ["upload", "transaction"],
+    );
     assert.match(
       reply,
       /transaksi direkodkan/,
@@ -241,6 +346,190 @@ test(
         "workspace-1:user-1",
       ),
       false,
+    );
+  },
+);
+
+
+test(
+  "receipt confirm normalizes a Malaysian receipt date before recording",
+  async () => {
+    const service =
+      createService(
+        "receipts-folder",
+      );
+
+    let capturedInput:any = null;
+    service.findWebhookActorMember =
+      async () => ({
+        userId:"user-1",
+        role:"MEMBER",
+      });
+    service.getWorkspaceReplyLanguage =
+      async () => "ms";
+    service.safeSendWebhookReply =
+      async () => {};
+    service.findOrCreateCategory =
+      async () => ({id:"category-1"});
+    service.findOrCreateMerchant =
+      async () => ({id:"merchant-1"});
+    service.transactionService = {
+      createTransaction:async (_role:any, input:any) => {
+        capturedInput = input;
+        assert.equal(
+          Number.isNaN(
+            input.transactionDate.getTime(),
+          ),
+          false,
+        );
+        return {id:"transaction-1"};
+      },
+    };
+    service.receiptDrafts.set(
+      "workspace-1:user-1",
+      {
+        workspaceId:"workspace-1",
+        actorUserId:"user-1",
+        role:"MEMBER",
+        language:"ms",
+        receiptUrl:"https://drive.example/receipt-date",
+        fileName:"receipt.jpg",
+        extraction:{
+          merchantName:"99 Speed Mart",
+          amount:"17.35",
+          currency:"MYR",
+          transactionDate:"31/07/2026 15:30",
+          rawText:"31/07/2026 15:30 NET TOTAL RM17.35",
+          confidence:0.9,
+          latencyMs:10,
+          model:"qwen/qwen3.6-27b",
+        },
+        expiresAt:Date.now() + 60_000,
+      },
+    );
+
+    const result =
+      await service.handleEvolutionWebhook({
+        event:"messages.upsert",
+        instance:"demo",
+        data:{
+          key:{
+            fromMe:false,
+            remoteJid:"60123456789@s.whatsapp.net",
+            id:"receipt-confirm-date",
+          },
+          message:{
+            conversation:"!confirm",
+          },
+        },
+      });
+
+    assert.equal(
+      result.message,
+      "WhatsApp receipt confirmed",
+    );
+    assert.equal(
+      capturedInput.transactionDate.toISOString(),
+      "2026-07-31T15:30:00.000Z",
+    );
+    assert.equal(
+      service.normalizeReceiptTransactionDate(
+        "07/31/2026 15:30",
+      ),
+      "2026-07-31T15:30:00.000Z",
+    );
+    assert.equal(
+      service.normalizeReceiptTransactionDate(
+        "2026-07-31",
+      ),
+      "2026-07-31T00:00:00.000Z",
+    );
+  },
+);
+
+
+test(
+  "receipt confirm falls back safely when OCR date is invalid",
+  async () => {
+    const service =
+      createService(
+        "receipts-folder",
+      );
+
+    const startedAt =
+      Date.now();
+    let recordedAt = 0;
+    service.findWebhookActorMember =
+      async () => ({
+        userId:"user-1",
+        role:"MEMBER",
+      });
+    service.getWorkspaceReplyLanguage =
+      async () => "ms";
+    service.safeSendWebhookReply =
+      async () => {};
+    service.findOrCreateCategory =
+      async () => ({id:"category-1"});
+    service.findOrCreateMerchant =
+      async () => ({id:"merchant-1"});
+    service.transactionService = {
+      createTransaction:async (_role:any, input:any) => {
+        recordedAt =
+          input.transactionDate.getTime();
+        assert.equal(
+          Number.isNaN(recordedAt),
+          false,
+        );
+        return {id:"transaction-1"};
+      },
+    };
+    service.receiptDrafts.set(
+      "workspace-1:user-1",
+      {
+        workspaceId:"workspace-1",
+        actorUserId:"user-1",
+        role:"MEMBER",
+        language:"ms",
+        receiptUrl:"https://drive.example/receipt-invalid-date",
+        fileName:"receipt.jpg",
+        extraction:{
+          merchantName:"Ninso",
+          amount:"19.60",
+          currency:"MYR",
+          transactionDate:"DATE NOT CLEAR",
+          rawText:"DATE NOT CLEAR TOTAL RM19.60",
+          confidence:0.8,
+          latencyMs:10,
+          model:"qwen/qwen3.6-27b",
+        },
+        expiresAt:Date.now() + 60_000,
+      },
+    );
+
+    const result =
+      await service.handleEvolutionWebhook({
+        event:"messages.upsert",
+        instance:"demo",
+        data:{
+          key:{
+            fromMe:false,
+            remoteJid:"60123456789@s.whatsapp.net",
+            id:"receipt-confirm-invalid-date",
+          },
+          message:{
+            conversation:"!confirm",
+          },
+        },
+      });
+
+    assert.equal(
+      result.message,
+      "WhatsApp receipt confirmed",
+    );
+    assert.ok(
+      recordedAt >= startedAt
+      &&
+      recordedAt <= Date.now(),
     );
   },
 );

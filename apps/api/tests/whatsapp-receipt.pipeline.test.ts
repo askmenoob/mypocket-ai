@@ -48,7 +48,7 @@ function storage(){
 
 
 test(
-  "creates a draft receipt with Drive URL and OCR extraction",
+  "keeps an image draft in memory and uploads only after confirmation",
   async () => {
     const saved =
       storage();
@@ -91,11 +91,31 @@ test(
     );
     assert.equal(
       (result as any).receiptUrl,
-      "https://drive.example/file-1",
+      undefined,
     );
     assert.equal(
       (result as any).extraction.amount,
       "12.50",
+    );
+    assert.equal(
+      saved.calls.count,
+      0,
+    );
+
+    const confirmed =
+      await pipeline.storeConfirmedReceipt({
+        workspaceId:"workspace-1",
+        receiptsFolderId:"folder-1",
+        media:(result as any).pendingUpload,
+      });
+
+    assert.equal(
+      confirmed.status,
+      "success",
+    );
+    assert.equal(
+      (confirmed as any).receiptUrl,
+      "https://drive.example/file-1",
     );
     assert.equal(
       saved.calls.count,
@@ -149,7 +169,7 @@ test(
     );
     assert.equal(
       saved.calls.count,
-      1,
+      0,
     );
   },
 );
@@ -194,6 +214,10 @@ test(
     assert.equal(
       visionCalls,
       0,
+    );
+    assert.equal(
+      saved.calls.count,
+      1,
     );
   },
 );

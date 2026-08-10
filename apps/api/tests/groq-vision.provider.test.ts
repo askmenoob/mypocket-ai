@@ -125,6 +125,10 @@ test(
       request!.messages[0].content[0].text,
       /final amount actually paid/i,
     );
+    assert.match(
+      request!.messages[0].content[0].text,
+      /YYYY-MM-DD/,
+    );
   },
 );
 

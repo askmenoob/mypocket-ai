@@ -68,7 +68,7 @@ const DEFAULT_MAX_BYTES =
 
 
 const DEFAULT_PROMPT =
-  "Read this receipt or document. Return JSON only with amount, currency, merchantName, transactionDate, description, rawText, and confidence. The amount must be the final amount actually paid by the customer, usually labelled TOTAL, GRAND TOTAL, TOTAL PAID, NET TOTAL, AMOUNT PAID, JUMLAH BAYAR, JUMLAH DIBAYAR, or TL when TL appears as the receipt total label at the start of an amount line. Prefer that final payable total over subtotal, item totals, tax, service charge, discount, rounding, cash tendered, or change. If multiple totals exist, choose the final amount due/paid. Do not invent missing values; use null for fields that are not visible. Preserve the original language and currency. confidence must be a number from 0 to 1 reflecting extraction certainty.";
+  "Read this receipt or document. Return JSON only with amount, currency, merchantName, transactionDate, description, rawText, and confidence. The amount must be the final amount actually paid by the customer, usually labelled TOTAL, GRAND TOTAL, TOTAL PAID, NET TOTAL, AMOUNT PAID, JUMLAH BAYAR, JUMLAH DIBAYAR, or TL when TL appears as the receipt total label at the start of an amount line. Prefer that final payable total over subtotal, item totals, tax, service charge, discount, rounding, cash tendered, or change. If multiple totals exist, choose the final amount due/paid. Use YYYY-MM-DD for transactionDate when the printed receipt date is visible; otherwise use null. Do not invent missing values; use null for fields that are not visible. Preserve the original language and currency. confidence must be a number from 0 to 1 reflecting extraction certainty.";
 
 
 export class GroqVisionProvider {
