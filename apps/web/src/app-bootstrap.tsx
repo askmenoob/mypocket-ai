@@ -1157,6 +1157,11 @@ function App(){
       false,
     );
 
+  const [wizardRequested, setWizardRequested] =
+    useState(
+      false,
+    );
+
   const [state, setState] =
     useState<LoadState>({
       loading:false,
@@ -2135,6 +2140,7 @@ function App(){
 
       setTermsAccepted(true);
       setOnboardingCompleted(true);
+      setWizardRequested(false);
       setNotice("Setup completed. Dashboard is ready.");
       setState({
         loading:false,
@@ -2165,6 +2171,7 @@ function App(){
     }
 
     setOnboardingCompleted(false);
+    setWizardRequested(true);
   }
 
   async function installApp(){
@@ -2565,22 +2572,28 @@ function App(){
     &&
     Boolean(data.me?.workspace?.id)
     &&
-    !(
-      Boolean(
-        getWorkspaceOnboardingCompletedAt(
-          data,
-        ),
-      )
-      &&
-      hasConnectedGoogleSheet(
-        data,
-      )
-    )
-    &&
     (
-      !termsAccepted
+      wizardRequested
       ||
-      !onboardingCompleted
+      (
+        !(
+          Boolean(
+            getWorkspaceOnboardingCompletedAt(
+              data,
+            ),
+          )
+          &&
+          hasConnectedGoogleSheet(
+            data,
+          )
+        )
+        &&
+        (
+          !termsAccepted
+          ||
+          !onboardingCompleted
+        )
+      )
     );
 
   const qrSecondsLeft =

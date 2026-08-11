@@ -72,3 +72,24 @@ test("setup wizard reuses the landing brand assets and has a mobile progress lay
   assert.ok(mascot.size > 100_000);
   assert.ok(mark.size > 10_000);
 });
+
+test("completed users can explicitly reopen and close the setup wizard", async () => {
+  const component = await readFile(
+    new URL("src/app-bootstrap.tsx", appRoot),
+    "utf8",
+  );
+  const resetStart = component.indexOf("function resetWizard()");
+  const resetEnd = component.indexOf("async function installApp()", resetStart);
+  const needsStart = component.indexOf("const needsWizard =");
+  const needsEnd = component.indexOf("const qrSecondsLeft", needsStart);
+
+  assert.ok(resetStart >= 0 && resetEnd > resetStart);
+  assert.ok(needsStart >= 0 && needsEnd > needsStart);
+
+  const resetWizard = component.slice(resetStart, resetEnd);
+  const needsWizard = component.slice(needsStart, needsEnd);
+
+  assert.match(resetWizard, /setWizardRequested\(true\)/);
+  assert.match(needsWizard, /wizardRequested/);
+  assert.match(component, /setWizardRequested\(false\)/);
+});
