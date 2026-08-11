@@ -231,6 +231,185 @@
 .wizardInstructions li::before{content:counter(wizard-instructions);width:26px;height:26px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;background:#eaf5ec;color:var(--wizard-green);font-size:12px;font-weight:850}
 .wizardSecondaryLinks,.wizardFinishExtras{display:flex;justify-content:center;gap:22px}
 
+.qrModalBackdrop.mascot{
+  padding:14px;
+  background:rgba(4,35,29,.66);
+  animation:qrMascotBackdropIn 220ms ease both;
+}
+.qrPanel.mascot{
+  position:relative;
+  width:min(94vw,560px);
+  max-height:calc(100svh - 28px);
+  overflow:auto;
+  padding:20px 26px 18px;
+  border-color:#b9e5d3;
+  border-radius:28px;
+  background:radial-gradient(circle at 50% 43%,#f0fbf5 0,#fff 58%);
+  box-shadow:0 30px 90px rgba(3,33,27,.28);
+  scrollbar-width:thin;
+}
+.qrPanel.mascot .qrHeader h2{color:var(--wizard-ink);font-size:25px;letter-spacing:-.025em}
+.qrPanel.mascot .qrHeader p{max-width:420px;color:var(--wizard-ink-soft);font-size:13px}
+.qrPanel.mascot .iconButton{flex:0 0 auto;color:var(--wizard-green-deep)}
+.qrMascotStage{
+  position:relative;
+  isolation:isolate;
+  width:min(100%,390px);
+  aspect-ratio:.88;
+  overflow:hidden;
+  margin:2px auto -4px;
+  animation:qrMascotPop 620ms cubic-bezier(.18,.9,.3,1.18) both;
+}
+.qrMascotStage::after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  right:10%;
+  bottom:2%;
+  left:10%;
+  height:20%;
+  border-radius:50%;
+  background:rgba(6,155,104,.13);
+  filter:blur(20px);
+}
+.qrMascotFigure{
+  position:absolute;
+  inset:0 auto auto 0;
+  z-index:1;
+  width:100%;
+  height:auto;
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 16px 22px rgba(8,45,37,.14));
+}
+.qrMascotPlacard{
+  position:absolute;
+  z-index:2;
+  top:58.6%;
+  left:27.7%;
+  width:44.6%;
+  aspect-ratio:1.1;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:11%;
+  background:#fff;
+}
+.qrMascotCode{
+  width:88%;
+  aspect-ratio:1;
+  display:block;
+  object-fit:contain;
+  border-radius:4px;
+  animation:qrCodeReveal 320ms ease-out both;
+}
+.qrMascotZoomButton{
+  width:100%;
+  height:100%;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:9%;
+  background:#fff;
+  cursor:zoom-in;
+}
+.qrMascotZoomButton:hover .qrMascotCode,
+.qrMascotZoomButton:focus-visible .qrMascotCode{transform:scale(1.04)}
+.qrMascotLoader{
+  width:34%;
+  aspect-ratio:1;
+  border:5px solid #d9eee4;
+  border-top-color:var(--wizard-green);
+  border-radius:50%;
+  animation:qrMascotSpin 760ms linear infinite;
+}
+.qrMascotAlert{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#fff1f3;
+  color:#be123c;
+  font-size:24px;
+  font-weight:900;
+}
+.qrPanel.mascot .qrState{margin:8px 0 10px;padding:12px 15px;font-size:13px}
+.qrPanel.mascot .qrTimer{margin:0 0 10px}
+.qrZoomHint{
+  display:block;
+  margin:-5px auto 9px;
+  padding:4px 7px;
+  border:0;
+  border-bottom:1px dashed currentColor;
+  background:transparent;
+  color:var(--wizard-green);
+  font-size:12px;
+  font-weight:800;
+  cursor:zoom-in;
+}
+.qrPanel.mascot .qrActions{margin-top:6px}
+.qrPanel.mascot .hint{margin-bottom:0;text-align:center}
+.qrZoomOverlay{
+  position:absolute;
+  inset:0;
+  z-index:20;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  border-radius:inherit;
+  background:rgba(4,35,29,.82);
+  backdrop-filter:blur(9px);
+  animation:qrZoomBackdropIn 180ms ease both;
+}
+.qrZoomCard{
+  position:relative;
+  width:min(100%,420px);
+  display:grid;
+  justify-items:center;
+  gap:13px;
+  padding:28px 24px 22px;
+  border:1px solid #b9e5d3;
+  border-radius:24px;
+  background:#fff;
+  box-shadow:0 24px 64px rgba(3,33,27,.28);
+  animation:qrZoomCardIn 260ms cubic-bezier(.2,.8,.3,1.12) both;
+}
+.qrZoomCard > strong{color:var(--wizard-green-deep);font-size:19px}
+.qrZoomCard > p{margin:0;color:var(--wizard-ink-soft);font-size:13px;text-align:center}
+.qrZoomClose{position:absolute;top:12px;right:12px}
+.qrZoomCode{
+  width:min(74vw,340px);
+  aspect-ratio:1;
+  display:block;
+  object-fit:contain;
+  padding:12px;
+  border:1px solid #d9eee4;
+  border-radius:18px;
+  background:#fff;
+}
+
+@keyframes qrMascotBackdropIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+@keyframes qrMascotPop{
+  from{opacity:0;transform:translateY(42px) scale(.84)}
+  70%{opacity:1;transform:translateY(-5px) scale(1.02)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes qrCodeReveal{
+  from{opacity:0;transform:scale(.82) rotate(-2deg)}
+  to{opacity:1;transform:scale(1) rotate(0)}
+}
+@keyframes qrMascotSpin{to{transform:rotate(360deg)}}
+@keyframes qrZoomBackdropIn{from{opacity:0}to{opacity:1}}
+@keyframes qrZoomCardIn{
+  from{opacity:0;transform:scale(.88)}
+  to{opacity:1;transform:scale(1)}
+}
+
 .wizardFinishHeading{display:flex;align-items:flex-start;gap:18px}
 .wizardFinishIcon{width:62px;height:62px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;background:#f0f2ef;color:#7d8985}
 .wizardFinishIcon.ready{background:#e4f7ed;color:var(--wizard-green)}
@@ -295,6 +474,14 @@
   .wizardFinishHeading h2{font-size:38px}
   .wizardReviewList button{grid-template-columns:28px minmax(0,1fr)}
   .wizardReviewList small{grid-column:2}
+  .qrModalBackdrop.mascot{align-items:center;padding:8px}
+  .qrPanel.mascot{width:100%;max-height:calc(100svh - 16px);padding:17px 18px 14px;border-radius:24px}
+  .qrPanel.mascot .qrHeader h2{font-size:22px}
+  .qrMascotStage{width:min(100%,340px);margin-top:0}
+  .qrPanel.mascot .qrActions{grid-template-columns:1fr 1fr}
+  .qrZoomOverlay{padding:12px}
+  .qrZoomCard{width:100%;padding:26px 14px 18px}
+  .qrZoomCode{width:min(78vw,300px);padding:10px}
 }
 
 @media(max-width:390px){
@@ -306,9 +493,15 @@
   .wizardWelcomeIntro p{padding-right:104px}
   .wizardContent h2{font-size:34px}
   .wizardProgressNode{width:31px;height:31px}
+  .qrPanel.mascot{padding-right:14px;padding-left:14px}
+  .qrPanel.mascot .qrHeader p{font-size:12px}
+  .qrMascotStage{width:min(100%,310px)}
+  .qrPanel.mascot .qrActions{grid-template-columns:1fr}
 }
 
 @media(prefers-reduced-motion:reduce){
   .wizardContent{animation:none}
   .wizardProgressFill,.step{transition:none}
+  .qrModalBackdrop.mascot,.qrMascotStage,.qrMascotCode,.qrZoomOverlay,.qrZoomCard{animation:none}
+  .qrMascotLoader{animation-duration:1.8s}
 }

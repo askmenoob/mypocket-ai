@@ -93,3 +93,29 @@ test("completed users can explicitly reopen and close the setup wizard", async (
   assert.match(needsWizard, /wizardRequested/);
   assert.match(component, /setWizardRequested\(false\)/);
 });
+
+test("WhatsApp setup presents the live pairing QR inside an animated mascot popup", async () => {
+  const [component, styles, mascot] = await Promise.all([
+    readFile(new URL("src/app-bootstrap.tsx", appRoot), "utf8"),
+    readFile(new URL("src/setup-wizard.css", appRoot), "utf8"),
+    stat(new URL("public/mypocket-mascot-qr-holder.png", appRoot)),
+  ]);
+  const wizard = setupWizardSource(component);
+
+  assert.match(wizard, /<WhatsAppQrPanel[\s\S]*?mascot[\s\S]*?openQr=/);
+  assert.match(component, /src="\/mypocket-mascot-qr-holder\.png"/);
+  assert.match(component, /className="qrMascotCode"[\s\S]*?src=\{props\.qr\.imageSrc\}/);
+  assert.match(component, /aria-label="Besarkan kod QR"/);
+  assert.match(component, /setQrZoomed\(true\)/);
+  assert.match(component, /className="qrZoomOverlay"/);
+  assert.match(component, /className="qrZoomCode"[\s\S]*?src=\{props\.qr\.imageSrc\}/);
+  assert.match(component, /role="dialog"/);
+  assert.match(component, /aria-modal="true"/);
+  assert.match(styles, /@keyframes\s+qrMascotPop/);
+  assert.match(styles, /\.qrMascotCode/);
+  assert.match(styles, /\.qrZoomOverlay/);
+  assert.match(styles, /\.qrZoomCode/);
+  assert.match(styles, /@media\(max-width:720px\)/);
+  assert.match(styles, /@media\(prefers-reduced-motion:reduce\)/);
+  assert.ok(mascot.size > 100_000);
+});

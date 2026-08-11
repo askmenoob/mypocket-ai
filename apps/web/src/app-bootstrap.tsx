@@ -3295,7 +3295,7 @@ function SetupWizard(
                   <WhatsAppQrPanel
                     qr={props.whatsAppQr}
                     secondsLeft={props.qrSecondsLeft}
-                    inline
+                    mascot
                     openQr={() => props.openWhatsAppQr("wizard")}
                     resetQr={() => props.resetWhatsAppInstance("wizard")}
                     closeQr={props.closeWhatsAppQr}
@@ -9113,6 +9113,7 @@ function WhatsAppQrPanel(
     qr:WhatsAppQrState;
     secondsLeft:number;
     inline?:boolean;
+    mascot?:boolean;
     openQr:() => void;
     resetQr:() => void;
     closeQr:() => void;
@@ -9126,14 +9127,80 @@ function WhatsAppQrPanel(
     &&
     props.secondsLeft <= 0;
 
+  const qrReady =
+    Boolean(
+      props.qr.imageSrc,
+    )
+    &&
+    !props.qr.loading
+    &&
+    !expired;
+
+  const [qrZoomed, setQrZoomed] =
+    useState(false);
+
+  useEffect(() => {
+
+    if(!qrReady && qrZoomed){
+      setQrZoomed(false);
+    }
+
+  }, [
+    qrReady,
+    qrZoomed,
+  ]);
+
+  useEffect(() => {
+
+    if(props.inline){
+      return;
+    }
+
+    const closeOnEscape =
+      (event:KeyboardEvent) => {
+        if(event.key === "Escape"){
+          if(qrZoomed){
+            setQrZoomed(false);
+          }else{
+            props.closeQr();
+          }
+        }
+      };
+
+    window.addEventListener(
+      "keydown",
+      closeOnEscape,
+    );
+
+    return () => window.removeEventListener(
+      "keydown",
+      closeOnEscape,
+    );
+
+  }, [
+    props.inline,
+    props.closeQr,
+    qrZoomed,
+  ]);
+
+  const panelClassName =
+    `qrPanel${props.inline ? " inline" : ""}${props.mascot ? " mascot" : ""}`;
+
   const content =
     (
-      <section className={props.inline ? "qrPanel inline" : "qrPanel"}>
+      <section
+        className={panelClassName}
+        aria-labelledby="whatsappQrTitle"
+      >
         <div className="qrHeader">
           <div>
-            <h2>WhatsApp pairing QR</h2>
+            <h2 id="whatsappQrTitle">
+              {props.mascot ? "Kod QR WhatsApp anda" : "WhatsApp pairing QR"}
+            </h2>
             <p>
-              Scan QR ini di WhatsApp → Linked devices → Link a device.
+              {props.mascot
+                ? "Imbas kod yang dipegang mascot melalui WhatsApp → Linked devices → Link a device."
+                : "Scan QR ini di WhatsApp → Linked devices → Link a device."}
             </p>
           </div>
 
@@ -9141,10 +9208,46 @@ function WhatsAppQrPanel(
             className="iconButton"
             onClick={props.closeQr}
             aria-label="Close WhatsApp QR"
+            autoFocus={!props.inline}
           >
             ×
           </button>
         </div>
+
+        {props.mascot && (
+          <div className="qrMascotStage">
+            <img
+              className="qrMascotFigure"
+              src="/mypocket-mascot-qr-holder.png"
+              alt="Mascot MyPocket AI memegang kod QR WhatsApp"
+            />
+
+            <div className="qrMascotPlacard">
+              {props.qr.loading && (
+                <span className="qrMascotLoader" aria-hidden="true" />
+              )}
+
+              {qrReady && (
+                <button
+                  type="button"
+                  className="qrMascotZoomButton"
+                  onClick={() => setQrZoomed(true)}
+                  aria-label="Besarkan kod QR"
+                >
+                  <img
+                    className="qrMascotCode"
+                    src={props.qr.imageSrc}
+                    alt="Kod QR untuk sambungkan WhatsApp"
+                  />
+                </button>
+              )}
+
+              {!props.qr.loading && !qrReady && (
+                <span className="qrMascotAlert" aria-hidden="true">!</span>
+              )}
+            </div>
+          </div>
+        )}
 
         {props.qr.loading && (
           <div
@@ -9153,7 +9256,9 @@ function WhatsAppQrPanel(
             aria-live="polite"
             aria-atomic="true"
           >
-            Sedang dapatkan QR daripada Evolution...
+            {props.mascot
+              ? "Mascot sedang menyediakan kod QR baharu..."
+              : "Sedang dapatkan QR daripada Evolution..."}
           </div>
         )}
 
@@ -9169,7 +9274,7 @@ function WhatsAppQrPanel(
           </div>
         )}
 
-        {props.qr.imageSrc && !props.qr.loading && !expired && (
+        {!props.mascot && props.qr.imageSrc && !props.qr.loading && !expired && (
           <div className="qrImageShell">
             <img
               className="qrImage"
@@ -9204,25 +9309,68 @@ function WhatsAppQrPanel(
           </div>
         )}
 
+        {props.mascot && qrReady && (
+          <button
+            type="button"
+            className="qrZoomHint"
+            onClick={() => setQrZoomed(true)}
+          >
+            Tekan QR untuk besarkan
+          </button>
+        )}
+
         <div className="qrActions">
           <button
             className="secondary"
             onClick={props.openQr}
           >
-            Reload QR
+            {props.mascot ? "Muat semula QR" : "Reload QR"}
           </button>
 
           <button
             className="primary"
             onClick={props.resetQr}
           >
-            Generate fresh QR
+            {props.mascot ? "Jana QR baharu" : "Generate fresh QR"}
           </button>
         </div>
 
         <p className="hint">
-          Selepas bot connected, QR ini tidak boleh digunakan untuk pair device lain.
+          Selepas bot disambungkan, QR ini tidak boleh digunakan pada peranti lain.
         </p>
+
+        {props.mascot && qrZoomed && qrReady && (
+          <div
+            className="qrZoomOverlay"
+            role="group"
+            aria-label="Paparan kod QR dibesarkan"
+            onMouseDown={(event) => {
+              if(event.target === event.currentTarget){
+                setQrZoomed(false);
+              }
+            }}
+          >
+            <div className="qrZoomCard">
+              <button
+                type="button"
+                className="iconButton qrZoomClose"
+                onClick={() => setQrZoomed(false)}
+                aria-label="Kecilkan kod QR"
+                autoFocus
+              >
+                ×
+              </button>
+
+              <strong>Kod QR dibesarkan</strong>
+              <img
+                className="qrZoomCode"
+                src={props.qr.imageSrc}
+                alt="Kod QR WhatsApp bersaiz besar"
+              />
+              <p>Imbas kod ini melalui WhatsApp sebelum masa tamat.</p>
+            </div>
+          </div>
+        )}
       </section>
     );
 
@@ -9235,7 +9383,17 @@ function WhatsAppQrPanel(
 
 
   return (
-    <div className="qrModalBackdrop" role="dialog" aria-modal="true">
+    <div
+      className={`qrModalBackdrop${props.mascot ? " mascot" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="whatsappQrTitle"
+      onMouseDown={(event) => {
+        if(event.target === event.currentTarget){
+          props.closeQr();
+        }
+      }}
+    >
       {content}
     </div>
   );
