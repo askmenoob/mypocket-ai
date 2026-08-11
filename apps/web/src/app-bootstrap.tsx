@@ -102,6 +102,7 @@ type Transaction = {
   description:string | null;
   transactionDate:string;
   source?:string | null;
+  receiptReference?:string | null;
   createdById?:string | null;
   createdByEmail?:string | null;
   createdBy?:{
@@ -470,6 +471,7 @@ const DASHBOARD_TEXT = {
     type:"Type",
     category:"Category",
     merchant:"Merchant",
+    receiptReference:"Receipt reference",
     amount:"Amount",
     source:"Source",
     recordedBy:"Recorded by",
@@ -554,6 +556,7 @@ const DASHBOARD_TEXT = {
     type:"Jenis",
     category:"Kategori",
     merchant:"Merchant",
+    receiptReference:"Rujukan resit",
     amount:"Jumlah",
     source:"Sumber",
     recordedBy:"Direkod oleh",
@@ -6943,6 +6946,7 @@ function Dashboard(
                     <th>{dashboardText.type}</th>
                     <th>{dashboardText.category}</th>
                     <th>{dashboardText.merchant}</th>
+                    <th>{dashboardText.receiptReference}</th>
                     <th>{dashboardText.amount}</th>
                     <th>{dashboardText.source}</th>
                     <th>{dashboardText.recordedBy}</th>
@@ -6956,8 +6960,8 @@ function Dashboard(
                           activeView === "transactions"
                           &&
                           canBulkDeleteTransactions
-                            ? 8
-                            : 7
+                            ? 9
+                            : 8
                         }
                         className="hint"
                         role="status"
@@ -7022,6 +7026,7 @@ function Dashboard(
                       </td>
                       <td>{item.category?.name || "-"}</td>
                       <td>{item.merchant?.name || "-"}</td>
+                      <td>{item.receiptReference || "-"}</td>
                       <td className={item.type === "INCOME" ? "incomeText" : "expenseText"}>
                         {money(item.amount, item.currency)}
                       </td>
@@ -9136,204 +9141,897 @@ function WhatsAppQrPanel(
 function PublicLanding(){
 
   return (
-    <main className="publicPage">
-      <header className="publicHeader">
-        <LogoBlock />
+    <main className="mLanding" id="top">
 
-        <nav className="publicNav">
-          <a href="#features">Features</a>
-          <a href="#how">How it works</a>
-          <a href="#privacy">Privacy</a>
-          <a href="#pricing">Pricing</a>
-        </nav>
+      <header className="mNav">
+        <div className="mNavInner">
 
-        <div className="publicActions">
-          <a className="secondaryLink" href="https://app.imai.my">
-            Open Dashboard
+          <a
+            className="mBrandLink"
+            href="#top"
+            aria-label="MyPocket AI home"
+          >
+            <LogoBlock />
           </a>
-          <a className="primaryLinkButton" href="https://app.imai.my">
-            Get Started
-          </a>
+
+          <nav className="mNavLinks" aria-label="Main navigation">
+            <a href="#features">Features</a>
+            <a href="#how">How It Works</a>
+            <a href="#dashboard">Dashboard</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
+          </nav>
+
+          <div className="mNavActions">
+            <a
+              className="mNavLogin"
+              href="https://app.imai.my"
+            >
+              Sign In
+            </a>
+
+            <a
+              className="mButton mButtonPrimary mNavCta"
+              href="https://app.imai.my"
+            >
+              Get Started
+            </a>
+          </div>
+
         </div>
       </header>
 
-      <section className="hero">
-        <div className="heroCopy">
-          <div className="heroTrust">
-            AI-powered · Privacy first · You own your data
+
+      <section className="mHero">
+
+        <div className="mHeroInner">
+
+          <div className="mHeroCopy">
+
+            <h1>
+              Manage your finances
+              <span> effortlessly.</span>
+              <br />
+              Right from WhatsApp.
+            </h1>
+
+            <p className="mHeroLead">
+              Record expenses, send receipts or voice notes,
+              track your balance and manage monthly commitments
+              through simple WhatsApp conversations with MyPocket AI.
+            </p>
+
+            <div className="mHeroButtons">
+
+              <a
+                className="mButton mButtonPrimary"
+                href="https://app.imai.my"
+              >
+                Start with MyPocket AI
+                <span aria-hidden="true">→</span>
+              </a>
+
+              <a
+                className="mButton mButtonGhost"
+                href="#how"
+              >
+                See How It Works
+              </a>
+
+            </div>
+
+            <div className="mHeroProof">
+
+              <div>
+                <strong>01</strong>
+                <span>Chat naturally</span>
+              </div>
+
+              <div>
+                <strong>02</strong>
+                <span>Receipts & voice notes</span>
+              </div>
+
+              <div>
+                <strong>03</strong>
+                <span>Your own Google Sheet</span>
+              </div>
+
+            </div>
+
           </div>
 
-          <h1>
-            Record expenses through WhatsApp.
-            <span> Sync to your own Google Sheet.</span>
-          </h1>
+
+          <div
+            className="mHeroVisual"
+            aria-label="MyPocket AI WhatsApp demo"
+          >
+
+            <div className="mHeroGlow" aria-hidden="true"></div>
+
+            <div className="mMascotHalo">
+
+              <div className="mMascotOrbit mOrbitOne"></div>
+              <div className="mMascotOrbit mOrbitTwo"></div>
+
+              <img
+                className="mMascot"
+                src="/mypocket-robot.webp?v=1"
+                alt="MyPocket AI robot mascot"
+              />
+
+            </div>
+
+
+            <div className="mPhone">
+
+              <div className="mPhoneNotch"></div>
+
+              <div className="mPhoneHeader">
+
+                <img
+                  src="/dashboard-icons/whatsapp-logo.png"
+                  alt=""
+                />
+
+                <div>
+                  <strong>MyPocket AI</strong>
+                  <span>online</span>
+                </div>
+
+              </div>
+
+
+              <div className="mPhoneChat">
+
+                <div className="mChatDate">
+                  Today
+                </div>
+
+                <div className="mChatBubble mChatUser">
+                  Lunch RM12.50 via TNG
+                </div>
+
+                <div className="mChatBubble mChatBot">
+                  <strong>Recorded successfully ✅</strong>
+                  <span>Food · RM12.50</span>
+                  <span>TNG eWallet</span>
+                </div>
+
+                <div className="mChatBubble mChatUser">
+                  What is my balance this month?
+                </div>
+
+                <div className="mChatBubble mChatBot">
+                  <strong>Current balance</strong>
+                  <span className="mChatAmount">RM2,840.50</span>
+                </div>
+
+              </div>
+
+
+              <div className="mPhoneComposer">
+                <span>Type a message...</span>
+                <strong>➤</strong>
+              </div>
+
+            </div>
+
+
+            <div className="mFloatCard mFloatExpense">
+
+              <div className="mFloatIcon">✓</div>
+
+              <div>
+                <span>Transaction recorded</span>
+                <strong>RM12.50</strong>
+              </div>
+
+            </div>
+
+
+            <div className="mFloatCard mFloatVoice">
+
+              <div className="mWaveIcon">
+                <i></i><i></i><i></i><i></i><i></i>
+              </div>
+
+              <div>
+                <span>Voice Intelligence</span>
+                <strong>Understood</strong>
+              </div>
+
+            </div>
+
+
+            <div className="mFloatCard mFloatSheet">
+
+              <img
+                src="/dashboard-icons/google-sheets-logo.png"
+                alt=""
+              />
+
+              <div>
+                <span>Google Sheet</span>
+                <strong>Synced</strong>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section className="mValueStrip">
+
+        <div className="mValueItem">
+          <span>WhatsApp-first</span>
+          <strong>No complicated app to learn.</strong>
+        </div>
+
+        <div className="mValueItem">
+          <span>AI-assisted</span>
+          <strong>Understands text, receipts and voice notes.</strong>
+        </div>
+
+        <div className="mValueItem">
+          <span>Privacy-first</span>
+          <strong>Your financial data stays within your workspace.</strong>
+        </div>
+
+      </section>
+
+
+      <section id="how" className="mSection mHow">
+
+        <div className="mSectionHead">
+          <p className="mSectionLabel">How it works</p>
+          <h2>
+            From WhatsApp to financial records
+            <span> in seconds.</span>
+          </h2>
+          <p>
+            MyPocket AI is designed around the simplest workflow:
+            just send a message and let the system handle the rest.
+          </p>
+        </div>
+
+
+        <div className="mSteps">
+
+          <article className="mStep">
+            <div className="mStepNumber">01</div>
+            <div className="mStepIcon">
+              <img
+                src="/dashboard-icons/whatsapp-logo.png"
+                alt=""
+              />
+            </div>
+            <h3>Send it through WhatsApp</h3>
+            <p>
+              Type a transaction, send a receipt photo or use
+              a voice note just like a normal conversation.
+            </p>
+          </article>
+
+
+          <article className="mStep">
+            <div className="mStepNumber">02</div>
+            <div className="mStepIcon mStepAi">AI</div>
+            <h3>MyPocket AI understands</h3>
+            <p>
+              AI identifies the amount, category, payment method
+              and the financial action behind your message.
+            </p>
+          </article>
+
+
+          <article className="mStep">
+            <div className="mStepNumber">03</div>
+            <div className="mStepIcon">
+              <img
+                src="/dashboard-icons/google-sheets-logo.png"
+                alt=""
+              />
+            </div>
+            <h3>Records and insights are ready</h3>
+            <p>
+              Review everything through WhatsApp, your dashboard
+              and the Google Sheet connected to your workspace.
+            </p>
+          </article>
+
+        </div>
+
+      </section>
+
+
+      <section id="features" className="mSection mFeatures">
+
+        <div className="mSectionHead mSectionHeadLeft">
+          <p className="mSectionLabel">Built for everyday finance</p>
+          <h2>
+            More than just an
+            <span> expense tracker.</span>
+          </h2>
+        </div>
+
+
+        <div className="mFeatureGrid">
+
+          <article className="mFeature mFeatureLarge">
+
+            <div className="mFeatureCopy">
+              <span className="mFeatureNo">01</span>
+              <h3>WhatsApp Finance Assistant</h3>
+              <p>
+                Record income and expenses using natural language,
+                whether you type formally or in everyday chat.
+              </p>
+            </div>
+
+            <div className="mMiniConversation">
+              <div>lunch rm8 tng</div>
+              <div>
+                <strong>✓ Recorded</strong>
+                <span>Food · RM8.00 · TNG</span>
+              </div>
+            </div>
+
+          </article>
+
+
+          <article className="mFeature">
+
+            <span className="mFeatureNo">02</span>
+            <div className="mFeatureSymbol">▤</div>
+            <h3>Receipt Intelligence</h3>
+            <p>
+              Send a receipt photo and let MyPocket AI extract
+              the key information before the record is confirmed.
+            </p>
+
+          </article>
+
+
+          <article className="mFeature">
+
+            <span className="mFeatureNo">03</span>
+            <div className="mFeatureSymbol">◖</div>
+            <h3>Voice Intelligence</h3>
+            <p>
+              Use voice notes to record transactions or give
+              instructions without typing everything out.
+            </p>
+
+          </article>
+
+
+          <article className="mFeature">
+
+            <span className="mFeatureNo">04</span>
+            <div className="mFeatureSymbol">◎</div>
+            <h3>Commitments & Reminders</h3>
+            <p>
+              Track monthly commitments and outstanding payments
+              through one simple workflow.
+            </p>
+
+          </article>
+
+
+          <article className="mFeature">
+
+            <span className="mFeatureNo">05</span>
+            <div className="mFeatureSymbol">◫</div>
+            <h3>Family & Business</h3>
+            <p>
+              Shared workspaces support Owner, Admin and Member
+              roles with permission-based access controls.
+            </p>
+
+          </article>
+
+
+          <article className="mFeature mFeatureWide">
+
+            <div>
+              <span className="mFeatureNo">06</span>
+              <h3>Your Google Workspace</h3>
+              <p>
+                Your Google Sheet and financial folders remain connected
+                to your workspace with clear recovery and
+                access-control workflows.
+              </p>
+            </div>
+
+            <div className="mGoogleVisual">
+
+              <img
+                src="/dashboard-icons/google-sheets-logo.png"
+                alt=""
+              />
+
+              <span></span>
+
+              <img
+                src="/mypocket-logo.png?v=3"
+                alt=""
+              />
+
+            </div>
+
+          </article>
+
+        </div>
+
+      </section>
+
+
+      <section id="dashboard" className="mDashboardSection">
+
+        <div className="mDashboardInner">
+
+          <div className="mDashboardCopy">
+
+            <p className="mSectionLabel">MyPocket AI Dashboard</p>
+
+            <h2>
+              See your financial picture
+              <span> without opening a spreadsheet.</span>
+            </h2>
+
+            <p>
+              Your dashboard brings together transactions, income,
+              expenses, balances, categories and commitments
+              so you can understand the month at a glance.
+            </p>
+
+            <ul className="mCheckList">
+              <li><span>✓</span>Income & expense overview</li>
+              <li><span>✓</span>Transaction trends & categories</li>
+              <li><span>✓</span>Outstanding commitments</li>
+              <li><span>✓</span>Desktop, tablet & mobile</li>
+            </ul>
+
+          </div>
+
+
+          <div className="mDashboardMock">
+
+            <div className="mDashTop">
+
+              <div>
+                <span>MyPocket AI</span>
+                <strong>Financial Overview</strong>
+              </div>
+
+              <div className="mDashMonth">
+                This Month
+              </div>
+
+            </div>
+
+
+            <div className="mDashStats">
+
+              <div>
+                <span>Income</span>
+                <strong>RM6,000</strong>
+                <small>Sample data</small>
+              </div>
+
+              <div>
+                <span>Expenses</span>
+                <strong>RM2,450</strong>
+                <small>Sample data</small>
+              </div>
+
+              <div>
+                <span>Balance</span>
+                <strong>RM3,550</strong>
+                <small>Sample data</small>
+              </div>
+
+            </div>
+
+
+            <div className="mDashBody">
+
+              <div className="mChartPanel">
+
+                <div className="mPanelTitle">
+              <strong>Monthly Expenses</strong>
+                  <span>30 days</span>
+                </div>
+
+                <div className="mBarChart">
+                  <i className="mBar1"></i>
+                  <i className="mBar2"></i>
+                  <i className="mBar3"></i>
+                  <i className="mBar4"></i>
+                  <i className="mBar5"></i>
+                  <i className="mBar6"></i>
+                  <i className="mBar7"></i>
+                  <i className="mBar8"></i>
+                </div>
+
+              </div>
+
+
+              <div className="mCategoryPanel">
+
+                <div className="mPanelTitle">
+                  <strong>Categories</strong>
+                </div>
+
+                <div className="mDonutChart"></div>
+
+                <div className="mLegend">
+                  <span><i></i>Food</span>
+                  <span><i></i>Transport</span>
+                  <span><i></i>Shopping</span>
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div className="mRecent">
+
+              <div className="mPanelTitle">
+                <strong>Recent Transactions</strong>
+                <span>View all</span>
+              </div>
+
+              <div className="mRecentRow">
+                <span>🍜</span>
+                <div>
+                  <strong>Lunch</strong>
+                  <small>Food · TNG</small>
+                </div>
+                <b>-RM12.50</b>
+              </div>
+
+              <div className="mRecentRow">
+                <span>🚗</span>
+                <div>
+                  <strong>Petrol</strong>
+                  <small>Transport · Card</small>
+                </div>
+                <b>-RM60.00</b>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section id="pricing" className="mSection mPricing">
+
+        <div className="mSectionHead">
+          <p className="mSectionLabel">Plans & Pricing</p>
+          <h2>
+            Choose the plan that fits
+            <span> the way you manage money.</span>
+          </h2>
+          <p>
+            Start as an individual and scale naturally
+            to a family or business workspace.
+          </p>
+        </div>
+
+
+        <div className="mPricingGrid">
+
+          <Plan
+            title="Personal"
+            price="RM 0"
+            text="Essential tools for personal finance"
+            features={[
+              "1 WhatsApp number",
+              "Google Sheet sync",
+              "PWA dashboard",
+              "Basic summaries",
+            ]}
+          />
+
+          <Plan
+            title="Personal Pro"
+            price="RM 9"
+            text="More power for personal finance"
+            highlight
+            features={[
+              "Personal workspace",
+              "Backup Google Sheet",
+              "Advanced WhatsApp commands",
+              "Priority improvements",
+            ]}
+          />
+
+          <Plan
+            title="Family"
+            price="RM 19"
+            text="Shared finance for households"
+            features={[
+              "Up to 5 WhatsApp numbers",
+              "Roles & permissions",
+              "Member mapping",
+              "Shared workspace",
+            ]}
+          />
+
+          <Plan
+            title="Business"
+            price="RM 49"
+            text="Financial workflows for small teams"
+            features={[
+              "Up to 10 WhatsApp numbers",
+              "Advanced audit log",
+              "Business workspace",
+              "Priority support",
+            ]}
+          />
+
+        </div>
+
+      </section>
+
+
+      <section className="mTrust">
+
+        <div className="mTrustInner">
+
+          <div className="mTrustCopy">
+
+            <p className="mSectionLabel">Privacy-first</p>
+
+            <h2>
+              Your finances.
+              <span> Your control.</span>
+            </h2>
+
+            <p>
+              MyPocket AI never asks for your Google or WhatsApp
+              passwords. Integrations use platform authorization
+              and can be disconnected whenever required.
+            </p>
+
+            <div className="mTrustLinks">
+              <a href="/privacy">Privacy Policy →</a>
+              <a href="/terms">Terms of Service →</a>
+            </div>
+
+          </div>
+
+
+          <div className="mTrustGrid">
+
+            <article>
+              <span>01</span>
+              <strong>Data Ownership</strong>
+              <p>
+                Your financial workspace connects only to
+                the Google Workspace you authorize.
+              </p>
+            </article>
+
+            <article>
+              <span>02</span>
+              <strong>Role & Access Control</strong>
+              <p>
+                Owner, Admin and Member controls help keep
+                actions separated by responsibility.
+              </p>
+            </article>
+
+            <article>
+              <span>03</span>
+              <strong>Secure Integrations</strong>
+              <p>
+                Service connections use supported authentication
+                and authorization flows.
+              </p>
+            </article>
+
+            <article>
+              <span>04</span>
+              <strong>Recoverable</strong>
+              <p>
+                Google Storage includes setup, repair and
+                recovery workflows for your workspace.
+              </p>
+            </article>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section id="faq" className="mSection mFaq">
+
+        <div className="mSectionHead">
+          <p className="mSectionLabel">Frequently Asked Questions</p>
+          <h2>Everything you need to know.</h2>
+        </div>
+
+
+        <div className="mFaqGrid">
+
+          <details open>
+            <summary>
+              Do I need to install another WhatsApp app?
+            </summary>
+            <p>
+              No. MyPocket AI works through WhatsApp
+              together with the MyPocket AI web dashboard.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              Can I send receipt photos?
+            </summary>
+            <p>
+              Yes. Receipt Intelligence can extract key
+              receipt information before a financial
+              action is confirmed.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              Can I use voice notes?
+            </summary>
+            <p>
+              Yes. Voice Intelligence can transcribe voice
+              notes and route them through the existing
+              MyPocket AI workflow.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              Does MyPocket AI ask for my Google password?
+            </summary>
+            <p>
+              No. MyPocket AI never asks for your
+              Google or WhatsApp passwords.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              Can I use it for my family or business?
+            </summary>
+            <p>
+              Yes. Family and Business workspaces support
+              multiple members with role-based controls.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              Where can I view my financial reports?
+            </summary>
+            <p>
+              You can review records and summaries through
+              the dashboard, WhatsApp and the Google Sheet
+              connected to your workspace.
+            </p>
+          </details>
+
+        </div>
+
+      </section>
+
+
+      <section className="mFinalCta">
+
+        <div className="mFinalGlow"></div>
+
+        <img
+          className="mFinalRobot"
+          src="/mypocket-robot.webp?v=1"
+          alt=""
+        />
+
+        <div className="mFinalCopy">
+
+          <h2>
+            Start managing money with
+            <span> a single message.</span>
+          </h2>
 
           <p>
-            MyPocket AI gives you a WhatsApp finance bot, a beautiful PWA dashboard,
-            and seamless Google Sheet sync. Your workspace stays simple, fast and
-            easy to control.
+            Turn WhatsApp into your everyday financial assistant
+            with MyPocket AI.
           </p>
 
-          <p className="privacyLine">
-            We do not ask for your Google or WhatsApp passwords. We only store
-            minimum operational data needed to run the service securely.
-          </p>
+          <div className="mHeroButtons">
 
-          <div className="heroButtons">
-            <a className="primaryLinkButton" href="https://app.imai.my">
-              Get Started Free →
+            <a
+              className="mButton mButtonPrimary"
+              href="https://app.imai.my"
+            >
+              Start with MyPocket AI
+              <span aria-hidden="true">→</span>
             </a>
 
-            <a className="secondaryLink light" href="#how">
-              See How It Works
+            <a
+              className="mButton mButtonGhost"
+              href="https://app.imai.my"
+            >
+              Sign In
             </a>
+
           </div>
 
-          <div className="heroTags">
-            <span>WhatsApp bot</span>
-            <span>Google Sheet sync</span>
-            <span>PWA dashboard</span>
-          </div>
         </div>
 
-        <div className="heroVisual">
-          <div className="phoneMock">
-            <div className="phoneTop">9:41 · MyPocket AI</div>
-            <div className="chat sent">makan nasi rm8 tng</div>
-            <div className="chat reply">
-              ✅ Recorded!<br />
-              Item: Makan nasi<br />
-              Amount: RM8.00<br />
-              Category: Food<br />
-              Payment: TNG
+      </section>
+
+
+      <footer className="mFooter">
+
+        <div className="mFooterTop">
+
+          <div className="mFooterBrand">
+            <LogoBlock />
+            <p>
+              AI-powered financial management through WhatsApp,
+              your dashboard and Google Workspace.
+            </p>
+          </div>
+
+          <div className="mFooterLinks">
+
+            <div>
+              <strong>Product</strong>
+              <a href="#features">Features</a>
+              <a href="#how">How It Works</a>
+              <a href="#pricing">Pricing</a>
             </div>
-            <div className="chatInput">Message</div>
-          </div>
 
-          <div className="dashMock">
-            <div className="mockHeader">
-              <strong>Overview</strong>
-              <span>May 2026</span>
+            <div>
+              <strong>Resources</strong>
+              <a href="/help">Help</a>
+              <a href="/guides">Guides</a>
+              <a href="/updates">Updates</a>
             </div>
-            <div className="mockStats">
-              <div><span>Total Expenses</span><strong>RM 1,268.50</strong></div>
-              <div><span>Transactions</span><strong>42</strong></div>
-              <div><span>Daily Average</span><strong>RM 40.92</strong></div>
+
+            <div>
+              <strong>Legal</strong>
+              <a href="/privacy">Privacy</a>
+              <a href="/terms">Terms</a>
             </div>
-            <div className="donut"></div>
+
           </div>
 
-          <div className="sheetMock">
-            <strong>MyPocket AI · Expenses</strong>
-            <table>
-              <tbody>
-                <tr><td>Date</td><td>Category</td><td>Amount</td></tr>
-                <tr><td>24/05</td><td>Food</td><td>RM8.00</td></tr>
-                <tr><td>24/05</td><td>Transport</td><td>RM30.00</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section id="how" className="publicSection">
-        <h2>How it works</h2>
-        <p>Get up and running in three simple steps.</p>
-
-        <div className="steps">
-          <PublicCard icon="▦" title="Connect Google" text="Connect your Google account and choose or create your Google Sheet." />
-          <PublicCard icon="☏" title="Pair WhatsApp" text="Scan a QR code to pair your WhatsApp bot securely." />
-          <PublicCard icon="✓" title="Start recording" text="Text your expenses naturally. MyPocket records and syncs automatically." />
-        </div>
-      </section>
-
-      <section id="features" className="publicSection">
-        <h2>Everything you need to manage money, your way</h2>
-
-        <div className="featureGrid">
-          <PublicCard icon="☏" title="WhatsApp Bot" text="Record expenses in seconds with natural language and instant confirmation." />
-          <PublicCard icon="▦" title="Google Sheet Templates" text="Pre-built templates for Personal, Family and Business workspaces." />
-          <PublicCard icon="▣" title="PWA Dashboard" text="Fast, installable dashboard for phone, tablet and desktop." />
-          <PublicCard icon="👥" title="Family & Business Roles" text="Invite members, set roles, and protect commands with permissions." />
-          <PublicCard icon="◔" title="Smart Summaries" text="Daily, weekly and monthly summaries by category and spend." />
-          <PublicCard icon="✎" title="Edit & Undo" text="Fix recent transactions and sync changes back to your sheet." />
-          <PublicCard icon="◆" title="Categories & Tags" text="Organize records with categories, merchants and payment methods." />
-          <PublicCard icon="●" title="Simple Setup Wizard" text="Guided onboarding for terms, Google, WhatsApp and subscription." />
-        </div>
-      </section>
-
-      <section id="privacy" className="publicSection privacyBand">
-        <h2>Trust & privacy is our promise</h2>
-
-        <div className="trustGrid">
-          <PublicCard icon="🛡" title="You own your data" text="Your financial workspace lives in your Google Sheet. You can revoke access anytime." />
-          <PublicCard icon="🔒" title="We don't ask for passwords" text="We never ask for Google or WhatsApp passwords." />
-          <PublicCard icon="▤" title="Minimum data stored" text="We store only what is needed to run automation, sync and access control." />
-          <PublicCard icon="✓" title="Secure by design" text="Connections use platform APIs and follow industry-standard security practices." />
-        </div>
-      </section>
-
-      <section id="pricing" className="publicSection">
-        <h2>Simple pricing, for everyone</h2>
-        <p>Start free. Upgrade when you need more.</p>
-
-        <div className="pricingGrid">
-          <Plan title="Personal" price="RM 0" text="For individuals" features={["1 WhatsApp number", "Google Sheet sync", "PWA dashboard", "Basic summaries"]} />
-          <Plan title="Personal Pro" price="RM 9" text="For power users" highlight features={["Personal template", "Backup Google Sheet", "Advanced WhatsApp commands", "Priority improvements"]} />
-          <Plan title="Family" price="RM 19" text="For households" features={["Up to 5 WhatsApp numbers", "Roles & permissions", "Member mapping", "Priority support"]} />
-          <Plan title="Business" price="RM 49" text="For small teams" features={["Up to 10 WhatsApp numbers", "Advanced audit log", "Business templates", "Priority support"]} />
-        </div>
-      </section>
-
-      <section className="faq publicSection">
-        <h2>Frequently asked questions</h2>
-
-        <div className="faqGrid">
-          <details open>
-            <summary>Do you store my Google or WhatsApp passwords?</summary>
-            <p>No. MyPocket AI never asks for those passwords.</p>
-          </details>
-          <details>
-            <summary>Can I use my own Google Sheet?</summary>
-            <p>Yes. Your workspace syncs to your own sheet.</p>
-          </details>
-          <details>
-            <summary>Can I cancel anytime?</summary>
-            <p>Yes. You can disconnect integrations and stop using the service anytime.</p>
-          </details>
-          <details>
-            <summary>Is there a free plan?</summary>
-            <p>Yes. Personal workspace starts free.</p>
-          </details>
-        </div>
-      </section>
-
-      <section className="finalCta">
-        <div>
-          <h2>Ready to take control of your money?</h2>
-          <p>Get started in less than two minutes.</p>
         </div>
 
-        <div className="heroButtons">
-          <a className="primaryLinkButton" href="https://app.imai.my">
-            Get Started Free
-          </a>
-          <a className="secondaryLink light" href="https://app.imai.my">
-            Open Dashboard
-          </a>
-        </div>
-      </section>
 
-      <footer className="publicFooter">
-        <LogoBlock />
-        <span>© 2026 MyPocket AI. All rights reserved.</span>
+        <div className="mFooterBottom">
+          <span>© 2026 MyPocket AI. All rights reserved.</span>
+          <span>imai.my</span>
+        </div>
+
       </footer>
+
     </main>
   );
 
 }
-
-
 
 function PublicCard(
   props:{
