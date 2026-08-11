@@ -12,9 +12,11 @@ import type {
   DashboardTransactionFilterMode as TransactionFilterMode,
 } from "./dashboard-analytics";
 import { PremiumDashboard } from "./premium-dashboard";
+import { PublicLandingPage } from "./public-landing";
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
+import "./public-landing.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
@@ -1103,6 +1105,10 @@ function isPublicLandingHost(){
     host === "imai.my"
     ||
     host === "www.imai.my"
+    ||
+    host === "localhost"
+    ||
+    host === "127.0.0.1"
   );
 }
 
@@ -1132,7 +1138,7 @@ function hasConnectedGoogleSheet(
 function App(){
 
   if(isPublicLandingHost()){
-    return <PublicLanding />;
+    return <PublicLandingPage />;
   }
 
   const [token, setToken] =

@@ -1,0 +1,1915 @@
+.mpLanding {
+  --mp-cream: #fbfaf6;
+  --mp-cream-deep: #f2f2e9;
+  --mp-ink: #082d25;
+  --mp-ink-soft: #47655e;
+  --mp-green: #069b68;
+  --mp-green-bright: #16b979;
+  --mp-green-deep: #073d31;
+  --mp-line: #dfe5da;
+  --mp-white: #ffffff;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--mp-cream);
+  color: var(--mp-ink);
+  font-family: Inter, "Avenir Next", Avenir, "Segoe UI", sans-serif;
+}
+
+.mpLanding *,
+.mpLanding *::before,
+.mpLanding *::after {
+  box-sizing: border-box;
+}
+
+.mpLanding a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mpLanding button,
+.mpLanding a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mpLanding :focus-visible {
+  outline: 3px solid #30c98c;
+  outline-offset: 4px;
+}
+
+.mpNav {
+  position: relative;
+  z-index: 30;
+  border-bottom: 1px solid rgba(8, 45, 37, 0.1);
+  background: rgba(251, 250, 246, 0.94);
+  backdrop-filter: blur(18px);
+}
+
+.mpNavInner,
+.mpHeroInner,
+.mpProblemInner,
+.mpHowInner,
+.mpSectionInner,
+.mpFooterInner {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.mpNavInner {
+  min-height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.mpBrandLink {
+  flex: 0 0 auto;
+}
+
+.mpBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--mp-ink);
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+.mpBrand img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.mpNavLinks {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  margin-left: auto;
+}
+
+.mpNavLinks a,
+.mpSignIn {
+  position: relative;
+  color: #173c34;
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.mpNavLinks a::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -10px;
+  left: 0;
+  height: 2px;
+  transform: scaleX(0);
+  background: var(--mp-green);
+  transition: transform 180ms ease;
+}
+
+.mpNavLinks a:hover::after {
+  transform: scaleX(1);
+}
+
+.mpNavActions,
+.mpHeroActions,
+.mpFinalActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mpNavActions {
+  margin-left: 8px;
+}
+
+.mpButton {
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.mpButton svg {
+  width: 19px;
+  height: 19px;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mpButton:hover {
+  transform: translateY(-2px);
+}
+
+.mpButtonPrimary {
+  background: linear-gradient(135deg, #087d58, #08a56c);
+  color: #fff !important;
+  box-shadow: 0 12px 30px rgba(6, 155, 104, 0.2);
+}
+
+.mpButtonPrimary:hover {
+  box-shadow: 0 16px 36px rgba(6, 155, 104, 0.3);
+}
+
+.mpButtonSecondary {
+  border-color: #0d8e63;
+  background: transparent;
+  color: var(--mp-ink);
+}
+
+.mpButtonLight {
+  background: #fff;
+  color: var(--mp-green-deep) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.mpButtonOutlineLight {
+  border-color: rgba(255, 255, 255, 0.72);
+  color: #fff !important;
+}
+
+.mpNavCta {
+  min-height: 48px;
+  padding-inline: 18px;
+}
+
+.mpHero {
+  position: relative;
+  padding: 32px 0 0;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(31, 174, 117, 0.08), transparent 28%),
+    var(--mp-cream);
+}
+
+.mpHero::before {
+  content: "";
+  position: absolute;
+  top: 36px;
+  left: -94px;
+  width: 190px;
+  height: 120px;
+  border-radius: 0 80px 80px 0;
+  background: rgba(6, 155, 104, 0.07);
+}
+
+.mpHeroInner {
+  min-height: 640px;
+  display: grid;
+  grid-template-columns: 1.02fr 0.98fr;
+  align-items: center;
+  gap: 50px;
+}
+
+.mpHeroCopy {
+  position: relative;
+  z-index: 4;
+  padding: 40px 0 76px;
+}
+
+.mpHero h1,
+.mpProblem h2,
+.mpHow h2,
+.mpCapabilities h2,
+.mpPricing h2,
+.mpTrust h2,
+.mpFaq h2,
+.mpFinalCta h2 {
+  margin: 0;
+  color: var(--mp-ink);
+  font-weight: 940;
+  letter-spacing: -0.062em;
+  line-height: 0.98;
+}
+
+.mpHero h1 {
+  max-width: 660px;
+  font-size: clamp(56px, 5.7vw, 82px);
+}
+
+.mpHero h1 span,
+.mpProblem h2 span,
+.mpHow h2 span,
+.mpCapabilities h2 span,
+.mpPricing h2 span,
+.mpTrust h2 span,
+.mpFaq h2 span {
+  color: var(--mp-green);
+}
+
+.mpHeroCopy > p {
+  max-width: 610px;
+  margin: 28px 0 34px;
+  color: var(--mp-ink-soft);
+  font-size: 19px;
+  font-weight: 540;
+  line-height: 1.66;
+}
+
+.mpHeroStage {
+  position: relative;
+  min-height: 600px;
+  align-self: end;
+}
+
+.mpHeroShape {
+  position: absolute;
+  top: 54px;
+  right: -64px;
+  width: 540px;
+  height: 520px;
+  border-radius: 50% 42% 48% 45%;
+  background:
+    radial-gradient(circle at 50% 40%, #f5f5eb 0 48%, #e8eee5 49% 100%);
+  transform: rotate(-6deg);
+}
+
+.mpHeroRobot {
+  position: absolute;
+  z-index: 4;
+  right: 20px;
+  bottom: -8px;
+  width: min(430px, 88%);
+  max-height: 590px;
+  object-fit: contain;
+  filter: drop-shadow(0 28px 28px rgba(20, 61, 48, 0.16));
+}
+
+.mpActivity {
+  position: absolute;
+  z-index: 8;
+  min-width: 206px;
+  display: grid;
+  grid-template-columns: 42px 1fr 20px;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid rgba(8, 45, 37, 0.1);
+  border-radius: 14px;
+  padding: 13px 14px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16px 30px rgba(35, 68, 58, 0.13);
+  animation: mp-float 5s ease-in-out infinite;
+}
+
+.mpActivity > span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #ebf8ee;
+  color: var(--mp-green);
+}
+
+.mpActivity svg {
+  width: 21px;
+  height: 21px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mpActivity > svg {
+  color: var(--mp-green);
+}
+
+.mpActivity div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mpActivity small {
+  color: #4f6a63;
+  font-size: 11px;
+  font-weight: 720;
+}
+
+.mpActivity strong {
+  font-size: 14px;
+}
+
+.mpActivityReceipt {
+  top: 118px;
+  right: -34px;
+}
+
+.mpActivityVoice {
+  top: 330px;
+  left: -36px;
+  animation-delay: -1.7s;
+}
+
+.mpActivitySheet {
+  right: -52px;
+  bottom: 62px;
+  animation-delay: -3.2s;
+}
+
+@keyframes mp-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+.mpValueRail {
+  position: relative;
+  z-index: 12;
+  width: min(1180px, calc(100% - 48px));
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0 auto;
+  border: 1px solid var(--mp-line);
+  border-radius: 24px 24px 0 0;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(8, 45, 37, 0.06);
+}
+
+.mpValueRail article {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 28px 30px;
+}
+
+.mpValueRail article + article {
+  border-left: 1px solid var(--mp-line);
+}
+
+.mpValueRail article > span {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #eff6ec;
+  color: var(--mp-green-deep);
+}
+
+.mpValueRail svg,
+.mpProblemList svg,
+.mpStepRail svg,
+.mpCapabilityPanel svg,
+.mpTrustPoints svg,
+.mpRecordSuccess svg,
+.mpTabs svg {
+  width: 23px;
+  height: 23px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mpValueRail strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.mpValueRail p {
+  margin: 0;
+  color: var(--mp-ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.mpProblem {
+  padding: 112px 0;
+  border-top: 1px solid var(--mp-line);
+  background: #fff;
+}
+
+.mpProblemInner {
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  align-items: center;
+  gap: 88px;
+}
+
+.mpProblem h2,
+.mpCapabilities h2,
+.mpPricing h2,
+.mpTrust h2,
+.mpFaq h2 {
+  font-size: clamp(44px, 4.6vw, 68px);
+}
+
+.mpProblemCopy > p,
+.mpPricingHead > p,
+.mpTrustInner > div:first-child > p {
+  margin: 22px 0 38px;
+  color: var(--mp-ink-soft);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.mpProblemList article {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 20px;
+  align-items: center;
+  padding: 21px 0;
+  border-top: 1px solid var(--mp-line);
+}
+
+.mpProblemList article:last-child {
+  border-bottom: 1px solid var(--mp-line);
+}
+
+.mpProblemList article > span {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d9e5d9;
+  border-radius: 13px;
+  background: var(--mp-cream);
+  color: var(--mp-green-deep);
+}
+
+.mpProblemList h3,
+.mpProblemList p {
+  margin: 0;
+}
+
+.mpProblemList h3 {
+  margin-bottom: 6px;
+  font-size: 19px;
+  letter-spacing: -0.025em;
+}
+
+.mpProblemList p {
+  color: var(--mp-ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mpProblemVisual {
+  position: relative;
+  min-height: 570px;
+}
+
+.mpProblemVisual div {
+  position: absolute;
+  inset: 36px 16px 12px 70px;
+  border-radius: 48% 52% 44% 56%;
+  background: #f0f5ec;
+}
+
+.mpProblemVisual img {
+  position: absolute;
+  right: 60px;
+  bottom: 0;
+  width: min(460px, 90%);
+  max-height: 560px;
+  object-fit: contain;
+  filter: drop-shadow(0 28px 28px rgba(20, 61, 48, 0.13));
+}
+
+.mpHow {
+  padding: 100px 0 0;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(31, 174, 117, 0.22), transparent 30%),
+    var(--mp-green-deep);
+  color: #fff;
+}
+
+.mpHow h2 {
+  max-width: 820px;
+  margin: 0 auto;
+  color: #fff;
+  text-align: center;
+  font-size: clamp(44px, 4.8vw, 66px);
+}
+
+.mpHow h2 span {
+  color: #3ee29a;
+}
+
+.mpStepRail {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 64px 0 58px;
+}
+
+.mpStepRail::before {
+  content: "";
+  position: absolute;
+  top: 59px;
+  right: 16%;
+  left: 16%;
+  border-top: 1px dashed rgba(255, 255, 255, 0.38);
+}
+
+.mpStepRail article {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.mpStepRail b {
+  display: block;
+  margin-bottom: 13px;
+  color: #48dfa0;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+.mpStepRail article > span {
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 15px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--mp-green);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
+}
+
+.mpStepRail h3,
+.mpStepRail p {
+  margin: 0;
+}
+
+.mpStepRail h3 {
+  font-size: 18px;
+}
+
+.mpStepRail p {
+  margin-top: 7px;
+  color: rgba(255, 255, 255, 0.67);
+  font-size: 13px;
+}
+
+.mpReceiptFlow {
+  display: grid;
+  grid-template-columns: 0.84fr 1.16fr;
+  gap: 28px;
+  border-radius: 26px 26px 0 0;
+  padding: 30px;
+  background: var(--mp-cream);
+  color: var(--mp-ink);
+  box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.12);
+}
+
+.mpWhatsappPanel,
+.mpRecordPanel {
+  min-height: 390px;
+  border: 1px solid #d9e4d8;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 16px 35px rgba(30, 64, 54, 0.08);
+}
+
+.mpWhatsappPanel {
+  position: relative;
+  overflow: hidden;
+  padding: 70px 22px 22px;
+  background:
+    linear-gradient(rgba(245, 243, 233, 0.92), rgba(245, 243, 233, 0.92)),
+    radial-gradient(circle, #d9d9d0 1px, transparent 1.5px);
+  background-size: auto, 22px 22px;
+}
+
+.mpWhatsappHeader {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  background: #0b6145;
+  color: #fff;
+}
+
+.mpWhatsappHeader .mpBrand {
+  color: #fff;
+  font-size: 14px;
+}
+
+.mpWhatsappHeader .mpBrand img {
+  width: 28px;
+  height: 28px;
+}
+
+.mpWhatsappHeader > span {
+  margin-left: auto;
+  color: #b7f6d6;
+  font-size: 11px;
+}
+
+.mpReceiptPhoto {
+  width: 132px;
+  height: 120px;
+  display: grid;
+  place-items: center;
+  margin: 8px 0 12px auto;
+  border: 5px solid #daf3c8;
+  border-radius: 14px;
+  background: #f5efe3;
+  color: #7d8b82;
+}
+
+.mpReceiptPhoto svg {
+  width: 42px;
+  height: 42px;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+.mpReceiptPhoto span {
+  margin-top: -20px;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.mpWhatsappDraft {
+  max-width: 255px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 5px 14px 14px 14px;
+  padding: 12px 14px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(43, 70, 62, 0.1);
+}
+
+.mpWhatsappDraft small,
+.mpWhatsappDraft span {
+  color: var(--mp-ink-soft);
+  font-size: 11px;
+}
+
+.mpWhatsappConfirm {
+  width: max-content;
+  margin: 12px 0 0 auto;
+  border-radius: 12px 4px 12px 12px;
+  padding: 10px 18px;
+  background: #d8f8c7;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.mpRecordPanel {
+  position: relative;
+  padding: 30px;
+}
+
+.mpRecordIcon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #e9f7ec;
+  color: var(--mp-green);
+}
+
+.mpRecordIcon svg {
+  width: 26px;
+  height: 26px;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+
+.mpRecordPanel > small {
+  display: block;
+  margin-top: 22px;
+  color: var(--mp-green);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mpRecordPanel > strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 44px;
+  letter-spacing: -0.05em;
+}
+
+.mpRecordPanel dl {
+  margin: 22px 0 0;
+}
+
+.mpRecordPanel dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0;
+  border-top: 1px solid var(--mp-line);
+}
+
+.mpRecordPanel dt {
+  color: var(--mp-ink-soft);
+}
+
+.mpRecordPanel dd {
+  margin: 0;
+  font-weight: 800;
+}
+
+.mpRecordSuccess {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #edf8ef;
+  color: #166449;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.mpCapabilities,
+.mpPricing,
+.mpTrust,
+.mpFaq {
+  padding: 112px 0;
+}
+
+.mpCapabilities {
+  background: #fff;
+}
+
+.mpCapabilities h2 {
+  max-width: 760px;
+}
+
+.mpTabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 48px;
+  border: 1px solid var(--mp-line);
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  overflow: hidden;
+}
+
+.mpTabs button {
+  position: relative;
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  border-right: 1px solid var(--mp-line);
+  background: var(--mp-cream);
+  color: #385c53;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 820;
+  cursor: pointer;
+}
+
+.mpTabs button:last-child {
+  border-right: 0;
+}
+
+.mpTabs button::after {
+  content: "";
+  position: absolute;
+  right: 24px;
+  bottom: 0;
+  left: 24px;
+  height: 3px;
+  transform: scaleX(0);
+  background: var(--mp-green);
+  transition: transform 180ms ease;
+}
+
+.mpTabs button.active {
+  background: #fff;
+  color: var(--mp-green-deep);
+}
+
+.mpTabs button.active::after {
+  transform: scaleX(1);
+}
+
+.mpCapabilityPanel {
+  min-height: 550px;
+  display: grid;
+  grid-template-columns: 0.78fr 1.22fr;
+  align-items: center;
+  gap: 50px;
+  border: 1px solid var(--mp-line);
+  border-radius: 0 0 18px 18px;
+  padding: 54px;
+  background: var(--mp-cream);
+}
+
+.mpCapabilityCopy h3 {
+  margin: 0;
+  font-size: clamp(36px, 3.7vw, 52px);
+  line-height: 1.03;
+  letter-spacing: -0.05em;
+}
+
+.mpCapabilityCopy > p {
+  margin: 22px 0 28px;
+  color: var(--mp-ink-soft);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.mpCapabilityCopy ul,
+.mpPlan ul {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mpCapabilityCopy li,
+.mpPlan li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-size: 14px;
+  font-weight: 680;
+}
+
+.mpCapabilityCopy li svg,
+.mpPlan li svg {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: var(--mp-green);
+}
+
+.mpProductPreview {
+  min-height: 390px;
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  overflow: hidden;
+  border: 1px solid #d7e2d7;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 22px 42px rgba(25, 68, 55, 0.13);
+}
+
+.mpPreviewNav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 12px;
+  background: var(--mp-green-deep);
+}
+
+.mpPreviewBrand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.mpPreviewBrand svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mpPreviewNav i {
+  width: 30px;
+  height: 7px;
+  display: block;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.19);
+}
+
+.mpPreviewNav i.active {
+  background: #3cdaa0;
+}
+
+.mpPreviewMain {
+  padding: 24px;
+}
+
+.mpPreviewTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--mp-line);
+}
+
+.mpPreviewTop div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mpPreviewTop small {
+  color: var(--mp-green);
+  font-size: 10px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.mpPreviewTop strong {
+  font-size: 18px;
+}
+
+.mpPreviewTop > span {
+  border: 1px solid var(--mp-line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  color: var(--mp-ink-soft);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.mpReceiptSummary {
+  display: grid;
+  grid-template-columns: 54px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+  border: 1px solid var(--mp-line);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.mpReceiptThumb {
+  width: 52px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #f3eee4;
+  color: #71817c;
+}
+
+.mpReceiptSummary div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mpReceiptSummary small,
+.mpReceiptSummary span {
+  color: var(--mp-ink-soft);
+  font-size: 10px;
+}
+
+.mpReceiptSummary b {
+  border-radius: 99px;
+  padding: 5px 8px;
+  background: #fff1c9;
+  color: #8b5a0a;
+  font-size: 9px;
+}
+
+.mpReceiptDetails {
+  margin: 20px 0 14px;
+}
+
+.mpReceiptDetails div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 0;
+  border-top: 1px solid var(--mp-line);
+}
+
+.mpReceiptDetails dt,
+.mpReceiptDetails dd {
+  font-size: 11px;
+}
+
+.mpReceiptDetails dt {
+  color: var(--mp-ink-soft);
+}
+
+.mpReceiptDetails dd {
+  margin: 0;
+  font-weight: 800;
+}
+
+.mpPreviewMain > button {
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--mp-green);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.mpVoicePreview {
+  min-height: 270px;
+  display: grid;
+  grid-template-columns: 58px 1fr auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.mpVoiceAvatar {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e9f7ec;
+  color: var(--mp-green);
+}
+
+.mpVoicePreview > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mpVoicePreview small {
+  color: var(--mp-ink-soft);
+  font-size: 11px;
+}
+
+.mpVoicePreview > b {
+  border-radius: 99px;
+  padding: 6px 9px;
+  background: #e6f7ec;
+  color: #16734f;
+  font-size: 10px;
+}
+
+.mpWaveform {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mpWaveform i {
+  width: 3px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--mp-green);
+}
+
+.mpWaveform i:nth-child(3n) { height: 28px; }
+.mpWaveform i:nth-child(2n) { height: 20px; }
+
+.mpSheetPreview {
+  padding-top: 20px;
+}
+
+.mpSheetHeader,
+.mpSyncLine {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--mp-green-deep);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.mpSheetRow {
+  display: grid;
+  grid-template-columns: 0.7fr 1.2fr 1fr 0.8fr;
+  margin-top: 0;
+  border-bottom: 1px solid var(--mp-line);
+  padding: 12px 6px;
+  font-size: 10px;
+}
+
+.mpSheetRow.heading {
+  margin-top: 18px;
+  background: #eff7ef;
+  color: var(--mp-ink-soft);
+  font-weight: 800;
+}
+
+.mpSyncLine {
+  margin-top: 28px;
+  color: var(--mp-green);
+  font-size: 11px;
+}
+
+.mpChatPreview {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 22px;
+}
+
+.mpChatBubble {
+  width: max-content;
+  max-width: 84%;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 12px;
+}
+
+.mpChatBubble.user {
+  align-self: flex-end;
+  border-bottom-right-radius: 3px;
+  background: #dcf8c6;
+}
+
+.mpChatBubble.bot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--mp-line);
+  border-bottom-left-radius: 3px;
+  background: #fff;
+}
+
+.mpChatBubble.bot > span {
+  color: var(--mp-green);
+}
+
+.mpChatBubble.bot div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mpChatBubble.bot small {
+  color: var(--mp-ink-soft);
+}
+
+.mpChatComposer {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 22px;
+  border: 1px solid var(--mp-line);
+  border-radius: 99px;
+  padding: 0 16px;
+  color: #8b9c97;
+  font-size: 11px;
+}
+
+.mpChatComposer svg {
+  width: 18px;
+  color: var(--mp-green);
+}
+
+.mpPricing {
+  border-top: 1px solid var(--mp-line);
+  background: var(--mp-cream);
+}
+
+.mpPricingHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 60px;
+  align-items: end;
+}
+
+.mpPricingHead h2 {
+  max-width: 740px;
+}
+
+.mpPricingHead > p {
+  max-width: 340px;
+  margin-bottom: 8px;
+}
+
+.mpPricingGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 52px;
+}
+
+.mpPlan {
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #d7e1d6;
+  border-radius: 18px;
+  padding: 34px;
+  background: #fff;
+}
+
+.mpPlan--dark {
+  border-color: var(--mp-green-deep);
+  background:
+    radial-gradient(circle at 100% 0, rgba(45, 211, 143, 0.2), transparent 36%),
+    var(--mp-green-deep);
+  color: #fff;
+  box-shadow: 0 24px 45px rgba(7, 61, 49, 0.2);
+}
+
+.mpPlan h3 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.035em;
+}
+
+.mpPlan > p {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 24px 0 30px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--mp-line);
+}
+
+.mpPlan--dark > p {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.mpPlan > p strong {
+  font-size: 52px;
+  letter-spacing: -0.06em;
+}
+
+.mpPlan > p span {
+  color: var(--mp-ink-soft);
+  font-size: 13px;
+}
+
+.mpPlan--dark > p span {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.mpPlan ul {
+  margin-bottom: 34px;
+}
+
+.mpPlan--dark li svg {
+  color: #58e6a9;
+}
+
+.mpPlan .mpButton {
+  width: 100%;
+  margin-top: auto;
+}
+
+.mpTrust {
+  background: #fff;
+}
+
+.mpTrustInner {
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: 80px;
+  align-items: start;
+}
+
+.mpTrustPoints {
+  border-top: 1px solid var(--mp-line);
+}
+
+.mpTrustPoints article {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  column-gap: 16px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--mp-line);
+}
+
+.mpTrustPoints article > svg {
+  width: 30px;
+  height: 30px;
+  grid-row: span 2;
+  color: var(--mp-green);
+}
+
+.mpTrustPoints h3,
+.mpTrustPoints p {
+  margin: 0;
+}
+
+.mpTrustPoints h3 {
+  font-size: 18px;
+}
+
+.mpTrustPoints p {
+  margin-top: 7px;
+  color: var(--mp-ink-soft);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.mpFaq {
+  border-top: 1px solid var(--mp-line);
+  background: var(--mp-cream);
+}
+
+.mpFaqInner {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 80px;
+}
+
+.mpFaqList {
+  border-top: 1px solid #ccd9ce;
+}
+
+.mpFaqList details {
+  border-bottom: 1px solid #ccd9ce;
+}
+
+.mpFaqList summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  padding: 22px 0;
+  cursor: pointer;
+  list-style: none;
+  font-size: 17px;
+  font-weight: 820;
+}
+
+.mpFaqList summary::-webkit-details-marker {
+  display: none;
+}
+
+.mpFaqList summary span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #bfcfc2;
+  border-radius: 50%;
+  color: var(--mp-green);
+  transition: transform 180ms ease;
+}
+
+.mpFaqList details[open] summary span {
+  transform: rotate(45deg);
+}
+
+.mpFaqList details p {
+  max-width: 650px;
+  margin: -4px 0 24px;
+  color: var(--mp-ink-soft);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.mpFinalCta {
+  position: relative;
+  width: min(1180px, calc(100% - 48px));
+  min-height: 250px;
+  display: flex;
+  justify-content: space-between;
+  gap: 50px;
+  align-items: center;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 28px 28px 0 0;
+  padding: 54px 64px;
+  background:
+    radial-gradient(circle at 95% 30%, rgba(58, 219, 153, 0.2), transparent 33%),
+    var(--mp-green-deep);
+  color: #fff;
+}
+
+.mpFinalCta h2 {
+  color: #fff;
+  font-size: clamp(40px, 4.2vw, 60px);
+}
+
+.mpFinalCta p {
+  margin: 14px 0 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+}
+
+.mpFinalCta > div:not(.mpFinalShape) {
+  position: relative;
+  z-index: 2;
+}
+
+.mpFinalShape {
+  position: absolute;
+  right: -30px;
+  bottom: -96px;
+  width: 300px;
+  height: 300px;
+  border: 48px solid rgba(255, 255, 255, 0.07);
+  border-radius: 50%;
+}
+
+.mpFooter {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: #052f26;
+  color: #fff;
+}
+
+.mpFooterInner {
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  gap: 42px;
+}
+
+.mpFooter .mpBrand {
+  color: #fff;
+}
+
+.mpFooter nav {
+  display: flex;
+  gap: 26px;
+  margin-left: auto;
+}
+
+.mpFooter nav a,
+.mpFooterInner > span {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.mpFooter nav a:hover {
+  color: #fff;
+}
+
+@media (max-width: 1080px) {
+  .mpNavLinks {
+    gap: 22px;
+  }
+
+  .mpHeroInner {
+    grid-template-columns: 1fr 0.9fr;
+    gap: 20px;
+  }
+
+  .mpHero h1 {
+    font-size: clamp(52px, 6.2vw, 70px);
+  }
+
+  .mpActivityReceipt,
+  .mpActivitySheet {
+    right: 0;
+  }
+
+  .mpActivityVoice {
+    left: -8px;
+  }
+
+  .mpProblemInner,
+  .mpTrustInner,
+  .mpFaqInner {
+    gap: 52px;
+  }
+
+  .mpCapabilityPanel {
+    gap: 34px;
+    padding: 38px;
+  }
+}
+
+@media (max-width: 900px) {
+  .mpNavLinks {
+    display: none;
+  }
+
+  .mpHeroInner {
+    grid-template-columns: 1fr;
+  }
+
+  .mpHeroCopy {
+    max-width: 760px;
+    padding-bottom: 12px;
+  }
+
+  .mpHeroStage {
+    width: min(650px, 100%);
+    min-height: 590px;
+    margin: 0 auto;
+  }
+
+  .mpProblemInner,
+  .mpTrustInner,
+  .mpFaqInner {
+    grid-template-columns: 1fr;
+  }
+
+  .mpProblemCopy {
+    max-width: 700px;
+  }
+
+  .mpProblemVisual {
+    min-height: 500px;
+  }
+
+  .mpProblemVisual img {
+    right: 50%;
+    transform: translateX(50%);
+  }
+
+  .mpCapabilityPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .mpCapabilityCopy {
+    max-width: 680px;
+  }
+
+  .mpProductPreview {
+    min-height: 380px;
+  }
+
+  .mpPricingHead {
+    display: block;
+  }
+
+  .mpPricingHead > p {
+    max-width: 620px;
+  }
+
+  .mpPricingGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mpPlan {
+    min-height: 0;
+  }
+
+  .mpFinalCta {
+    display: block;
+  }
+
+  .mpFinalActions {
+    margin-top: 30px;
+  }
+}
+
+@media (max-width: 720px) {
+  .mpNavInner,
+  .mpHeroInner,
+  .mpProblemInner,
+  .mpHowInner,
+  .mpSectionInner,
+  .mpFooterInner,
+  .mpValueRail,
+  .mpFinalCta {
+    width: min(100% - 30px, 1180px);
+  }
+
+  .mpNavInner {
+    min-height: 72px;
+    gap: 12px;
+  }
+
+  .mpBrand {
+    font-size: 17px;
+  }
+
+  .mpBrand img {
+    width: 35px;
+    height: 35px;
+  }
+
+  .mpSignIn {
+    display: none;
+  }
+
+  .mpNavCta {
+    min-height: 42px;
+    padding: 0 13px;
+    font-size: 11px;
+  }
+
+  .mpHero {
+    padding-top: 18px;
+  }
+
+  .mpHero::before {
+    display: none;
+  }
+
+  .mpHeroCopy {
+    padding-top: 38px;
+  }
+
+  .mpHero h1 {
+    font-size: clamp(45px, 13.2vw, 62px);
+  }
+
+  .mpHeroCopy > p {
+    margin: 22px 0 28px;
+    font-size: 16px;
+    line-height: 1.58;
+  }
+
+  .mpHeroActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mpHeroActions .mpButton {
+    width: 100%;
+  }
+
+  .mpHeroStage {
+    min-height: 530px;
+  }
+
+  .mpHeroShape {
+    top: 56px;
+    right: -60px;
+    width: 420px;
+    height: 420px;
+  }
+
+  .mpHeroRobot {
+    right: 50%;
+    width: 320px;
+    transform: translateX(50%);
+  }
+
+  .mpActivity {
+    min-width: 158px;
+    grid-template-columns: 34px 1fr 16px;
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .mpActivity > span {
+    width: 34px;
+    height: 34px;
+  }
+
+  .mpActivity small {
+    font-size: 9px;
+  }
+
+  .mpActivity strong {
+    font-size: 11px;
+  }
+
+  .mpActivityReceipt {
+    top: 66px;
+    right: 0;
+  }
+
+  .mpActivityVoice {
+    top: 296px;
+    left: 0;
+  }
+
+  .mpActivitySheet {
+    right: 0;
+    bottom: 42px;
+  }
+
+  .mpValueRail {
+    grid-template-columns: 1fr;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .mpValueRail article {
+    padding: 22px;
+  }
+
+  .mpValueRail article + article {
+    border-top: 1px solid var(--mp-line);
+    border-left: 0;
+  }
+
+  .mpProblem,
+  .mpCapabilities,
+  .mpPricing,
+  .mpTrust,
+  .mpFaq {
+    padding: 78px 0;
+  }
+
+  .mpProblem h2,
+  .mpCapabilities h2,
+  .mpPricing h2,
+  .mpTrust h2,
+  .mpFaq h2 {
+    font-size: clamp(40px, 11.2vw, 54px);
+  }
+
+  .mpProblemInner {
+    gap: 18px;
+  }
+
+  .mpProblemVisual {
+    min-height: 410px;
+  }
+
+  .mpProblemVisual div {
+    inset: 20px 0 8px;
+  }
+
+  .mpProblemVisual img {
+    width: 330px;
+  }
+
+  .mpHow {
+    padding-top: 76px;
+  }
+
+  .mpHow h2 {
+    font-size: clamp(40px, 11vw, 54px);
+  }
+
+  .mpStepRail {
+    grid-template-columns: 1fr;
+    gap: 34px;
+    margin: 46px 0;
+  }
+
+  .mpStepRail::before {
+    top: 40px;
+    bottom: 40px;
+    left: 50%;
+    width: 0;
+    border-top: 0;
+    border-left: 1px dashed rgba(255, 255, 255, 0.28);
+  }
+
+  .mpStepRail article {
+    padding: 0 20px;
+  }
+
+  .mpReceiptFlow {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .mpRecordPanel {
+    min-height: 350px;
+    padding: 24px;
+  }
+
+  .mpTabs {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .mpTabs button {
+    min-width: 145px;
+    flex: 1 0 auto;
+  }
+
+  .mpCapabilityPanel {
+    min-height: 0;
+    padding: 24px 18px 18px;
+  }
+
+  .mpCapabilityCopy h3 {
+    font-size: 38px;
+  }
+
+  .mpProductPreview {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .mpPreviewNav {
+    padding-inline: 8px;
+  }
+
+  .mpPreviewBrand {
+    font-size: 0;
+  }
+
+  .mpPreviewMain {
+    padding: 17px;
+  }
+
+  .mpReceiptSummary {
+    grid-template-columns: 46px 1fr;
+  }
+
+  .mpReceiptSummary b {
+    display: none;
+  }
+
+  .mpVoicePreview {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .mpVoicePreview > b {
+    display: none;
+  }
+
+  .mpSheetRow {
+    grid-template-columns: 0.7fr 1.2fr 1fr;
+  }
+
+  .mpSheetRow span:nth-child(4) {
+    display: none;
+  }
+
+  .mpPricingGrid {
+    margin-top: 36px;
+  }
+
+  .mpPlan {
+    padding: 28px 24px;
+  }
+
+  .mpTrustInner,
+  .mpFaqInner {
+    gap: 38px;
+  }
+
+  .mpFinalCta {
+    min-height: 330px;
+    border-radius: 24px 24px 0 0;
+    padding: 44px 28px;
+  }
+
+  .mpFinalActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mpFooterInner {
+    min-height: 200px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 22px;
+    padding: 34px 0;
+  }
+
+  .mpFooter nav {
+    flex-wrap: wrap;
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mpLanding *,
+  .mpLanding *::before,
+  .mpLanding *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

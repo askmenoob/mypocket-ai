@@ -19,7 +19,9 @@ const types = {
 createServer((req, res) => {
   const host = String(req.headers.host || "").split(":")[0];
   const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const safePath = normalize(url.pathname).replace(/^(\.\.[/\\])+/, "");
+  const safePath = normalize(url.pathname)
+    .replaceAll("\\", "/")
+    .replace(/^(\.\.\/)+/, "");
 
   const isPublicDomain =
     host === "imai.my" ||
@@ -42,18 +44,8 @@ createServer((req, res) => {
     filePath = join(root, "index.html");
   }
 
-  if (
-    isPublicDomain &&
-    (
-      safePath === "/" ||
-      safePath === "/index.html"
-    )
-  ) {
-    filePath = join(root, "landing.html");
-  }
-
   if (!existsSync(filePath)) {
-    filePath = join(root, isPublicDomain ? "landing.html" : "index.html");
+    filePath = join(root, "index.html");
   }
 
   res.setHeader("Content-Type", types[extname(filePath)] || "application/octet-stream");
