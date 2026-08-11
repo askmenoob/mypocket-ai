@@ -89,7 +89,7 @@ export class TemplateProvisioner {
 
     const copied =
       await this.driveService
-        .copyFile(
+        .importPublicSpreadsheetTemplate(
 
           input.workspaceId,
 
@@ -108,7 +108,7 @@ export class TemplateProvisioner {
 
           input.workspaceId,
 
-          template.spreadsheetId,
+          copied.id,
 
           `${template.name} Backup - DO NOT DELETE`,
 

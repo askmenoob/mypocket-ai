@@ -24,6 +24,27 @@ import {
 
 
 
+const GOOGLE_SPREADSHEET_MIME_TYPE =
+  "application/vnd.google-apps.spreadsheet";
+
+
+const XLSX_MIME_TYPE =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+
+const MAX_TEMPLATE_EXPORT_BYTES =
+  20
+  *
+  1024
+  *
+  1024;
+
+
+const GOOGLE_FILE_ID_PATTERN =
+  /^[A-Za-z0-9_-]{10,200}$/;
+
+
+
 export interface WorkspaceFolderStructure {
 
   rootFolderId:
@@ -81,14 +102,27 @@ export class GoogleDriveService {
 
 
 
+  private readonly fetchTemplate:
+    typeof fetch;
+
+
+
   constructor(
     app:FastifyInstance,
+
+    fetchTemplate:
+      typeof fetch =
+        globalThis.fetch,
   ){
 
     this.tokenService =
       new GoogleTokenService(
         app,
       );
+
+
+    this.fetchTemplate =
+      fetchTemplate;
 
   }
 
@@ -466,6 +500,199 @@ export class GoogleDriveService {
         response.data.webContentLink
         ??
         `https://drive.google.com/file/d/${id}/view`,
+    };
+
+  }
+
+
+
+  async importPublicSpreadsheetTemplate(
+    workspaceId:string,
+
+    fileId:string,
+
+    name:string,
+
+    parentId:string,
+  ){
+
+    if(
+      !GOOGLE_FILE_ID_PATTERN
+        .test(
+          fileId,
+        )
+    ){
+
+      throw new Error(
+        "GOOGLE_TEMPLATE_FILE_ID_INVALID",
+      );
+
+    }
+
+
+    const exportUrl =
+      `https://docs.google.com/spreadsheets/d/${encodeURIComponent(fileId)}/export?format=xlsx`;
+
+
+    const exportResponse =
+      await this.fetchTemplate(
+        exportUrl,
+        {
+          headers:{
+            accept:
+              XLSX_MIME_TYPE,
+          },
+          redirect:
+            "follow",
+          signal:
+            AbortSignal.timeout(
+              20_000,
+            ),
+        },
+      );
+
+
+    if(!exportResponse.ok){
+
+      throw new Error(
+        "GOOGLE_TEMPLATE_EXPORT_FAILED",
+      );
+
+    }
+
+
+    const contentLength =
+      Number(
+        exportResponse.headers
+          .get(
+            "content-length",
+          ),
+      );
+
+
+    if(
+      Number.isFinite(
+        contentLength,
+      )
+      &&
+      contentLength
+      >
+      MAX_TEMPLATE_EXPORT_BYTES
+    ){
+
+      throw new Error(
+        "GOOGLE_TEMPLATE_EXPORT_TOO_LARGE",
+      );
+
+    }
+
+
+    const bytes =
+      Buffer.from(
+        await exportResponse
+          .arrayBuffer(),
+      );
+
+
+    if(
+      bytes.byteLength
+      >
+      MAX_TEMPLATE_EXPORT_BYTES
+    ){
+
+      throw new Error(
+        "GOOGLE_TEMPLATE_EXPORT_TOO_LARGE",
+      );
+
+    }
+
+
+    if(
+      bytes.byteLength < 4
+      ||
+      bytes[0] !== 0x50
+      ||
+      bytes[1] !== 0x4b
+    ){
+
+      throw new Error(
+        "GOOGLE_TEMPLATE_EXPORT_INVALID",
+      );
+
+    }
+
+
+    const safeName =
+      name
+        .trim()
+        .replace(
+          /[\\/\0]/g,
+          "_",
+        )
+        .slice(
+          0,
+          180,
+        )
+      ||
+      "MyPocket Workspace Template";
+
+
+    const drive =
+      await this.getClient(
+        workspaceId,
+      );
+
+
+    const response =
+      await drive.files
+        .create({
+          requestBody:{
+            name:
+              safeName,
+            mimeType:
+              GOOGLE_SPREADSHEET_MIME_TYPE,
+            parents:[
+              parentId,
+            ],
+          },
+          media:{
+            mimeType:
+              XLSX_MIME_TYPE,
+            body:
+              Readable.from([
+                bytes,
+              ]),
+          },
+          fields:
+            "id,name,webViewLink",
+        });
+
+
+    const id =
+      response.data.id
+      ??
+      "";
+
+
+    if(!id){
+
+      throw new Error(
+        "GOOGLE_TEMPLATE_IMPORT_ID_MISSING",
+      );
+
+    }
+
+
+    return {
+      id,
+      name:
+        response.data.name
+        ??
+        safeName,
+      url:
+        response.data.webViewLink
+        ??
+        `https://docs.google.com/spreadsheets/d/${id}/edit`,
     };
 
   }
