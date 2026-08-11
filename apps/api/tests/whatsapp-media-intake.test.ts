@@ -155,3 +155,95 @@ test(
     );
   },
 );
+
+
+test(
+  "self-sent receipt images without captions enter the media pipeline",
+  () => {
+    const service =
+      new WhatsAppService(
+        {} as any,
+      );
+
+
+    const normalized =
+      (service as any)
+        .normalizeEvolutionPayload({
+          event:"messages.upsert",
+          instance:"demo",
+          data:{
+            key:{
+              fromMe:true,
+              remoteJid:"60132195990-1508049801@g.us",
+              id:"self-receipt-1",
+            },
+            message:{
+              imageMessage:{
+                mimetype:"image/jpeg",
+                fileName:"receipt.jpg",
+              },
+            },
+          },
+        });
+
+
+    assert.equal(
+      normalized.accepted,
+      false,
+    );
+    assert.equal(
+      normalized.reason,
+      "MEDIA_INPUT_PENDING_PIPELINE",
+    );
+    assert.equal(
+      normalized.fromMe,
+      true,
+    );
+    assert.equal(
+      normalized.media.kind,
+      "image",
+    );
+  },
+);
+
+
+test(
+  "self-sent private images without a receipt trigger remain ignored",
+  () => {
+    const service =
+      new WhatsAppService(
+        {} as any,
+      );
+
+
+    const normalized =
+      (service as any)
+        .normalizeEvolutionPayload({
+          event:"messages.upsert",
+          instance:"demo",
+          data:{
+            key:{
+              fromMe:true,
+              remoteJid:"60123456789@s.whatsapp.net",
+              id:"self-private-image-1",
+            },
+            message:{
+              imageMessage:{
+                mimetype:"image/jpeg",
+                fileName:"photo.jpg",
+              },
+            },
+          },
+        });
+
+
+    assert.equal(
+      normalized.accepted,
+      false,
+    );
+    assert.equal(
+      normalized.reason,
+      "MESSAGE_FROM_SELF",
+    );
+  },
+);

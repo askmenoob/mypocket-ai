@@ -79,6 +79,8 @@ export interface NormalizedEvolutionMessage {
 
   instanceName?:string;
 
+  fromMe?:boolean;
+
   remoteJid?:string;
 
   participantJid?:string;

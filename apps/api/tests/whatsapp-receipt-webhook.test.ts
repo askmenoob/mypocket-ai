@@ -33,6 +33,7 @@ function createService(folderId:string | null){
         findUnique:async () => ({
           workspaceId:"workspace-1",
           instanceName:"demo",
+          phoneNumber:"60103250032",
           botAlias:"mypocket",
         }),
       },
@@ -159,6 +160,90 @@ test(
       draft.expiresAt - Date.now() <= 60_000
       &&
       draft.expiresAt - Date.now() > 58_000,
+    );
+  },
+);
+
+
+test(
+  "self-sent group receipt without caption uses the bot phone as actor and replies",
+  async () => {
+    const service =
+      createService(
+        "receipts-folder",
+      );
+
+    let actorJid = "";
+    let reply = "";
+    service.findWebhookActorMember =
+      async (_workspaceId:string, jid:string) => {
+        actorJid = jid;
+        return {
+          userId:"user-1",
+          role:"OWNER",
+        };
+      };
+    service.receiptPipeline = {
+      process:async () => ({
+        status:"draft_ready",
+        source:"RECEIPT",
+        fileName:"receipt.jpg",
+        pendingUpload:{
+          bytes:new Uint8Array([1, 2, 3]),
+          mimeType:"image/jpeg",
+          fileName:"receipt.jpg",
+        },
+        extraction:{
+          merchantName:"AEON Mall",
+          receiptType:"GROCERIES",
+          amount:"99.00",
+          currency:"MYR",
+          rawText:"AEON MALL TOTAL 99.00",
+          confidence:0.94,
+          latencyMs:10,
+          model:"qwen/qwen3.6-27b",
+        },
+      }),
+    };
+    service.safeSendWebhookReply =
+      async (_normalized:any, text:string) => {
+        reply = text;
+      };
+    service.transactionService = {
+      getSheetCategoryNames:async () => [],
+      getSheetTransactions:async () => [],
+    };
+
+    const result =
+      await service.handleEvolutionWebhook({
+        event:"messages.upsert",
+        instance:"demo",
+        data:{
+          key:{
+            fromMe:true,
+            remoteJid:"60132195990-1508049801@g.us",
+            id:"self-group-receipt-1",
+          },
+          message:{
+            imageMessage:{
+              mimetype:"image/jpeg",
+              fileName:"receipt.jpg",
+            },
+          },
+        },
+      });
+
+    assert.equal(
+      actorJid,
+      "60103250032",
+    );
+    assert.equal(
+      result.message,
+      "WhatsApp receipt draft ready",
+    );
+    assert.match(
+      reply,
+      /!confirm dalam 1 minit/,
     );
   },
 );
@@ -384,6 +469,11 @@ test(
         userId:"user-1",
         role:"MEMBER",
       });
+    let reply = "";
+    service.safeSendWebhookReply =
+      async (_normalized:any, text:string) => {
+        reply = text;
+      };
 
     const result =
       await service.handleEvolutionWebhook(
@@ -397,6 +487,18 @@ test(
     assert.equal(
       result.receipt.reason,
       "RECEIPT_FOLDER_NOT_CONFIGURED",
+    );
+    assert.equal(
+      result.message,
+      "WhatsApp receipt processing failed",
+    );
+    assert.match(
+      reply,
+      /Resit belum dapat diproses/,
+    );
+    assert.match(
+      reply,
+      /Tiada transaksi direkodkan/,
     );
   },
 );

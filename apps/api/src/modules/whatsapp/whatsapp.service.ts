@@ -2124,7 +2124,13 @@ export class WhatsAppService {
       false;
 
     const actorJid =
-      isGroupMessage
+      normalized.fromMe
+      &&
+      instance.phoneNumber
+        ?
+        instance.phoneNumber
+        :
+        isGroupMessage
         ?
         (
           normalized.participantJid
@@ -2664,6 +2670,43 @@ export class WhatsAppService {
     }
 
 
+    if(
+      result.status === "failed"
+      ||
+      result.status === "unsupported"
+    ){
+
+      await this.safeSendWebhookReply(
+        normalized,
+        [
+          "⚠️ Resit belum dapat diproses.",
+          "Tiada transaksi direkodkan.",
+          result.reason === "RECEIPT_FOLDER_NOT_CONFIGURED"
+            ?
+            "Sila sambungkan semula Google Sheet/Drive, kemudian hantar gambar resit sekali lagi."
+            :
+            "Sila hantar semula gambar resit yang jelas dalam format JPEG atau PNG.",
+        ].join(
+          "\n",
+        ),
+      );
+
+      this.app.log?.warn(
+        {
+          workspaceId,
+          instanceName:
+            normalized.instanceName,
+          messageId:
+            normalized.messageId,
+          reason:
+            result.reason,
+        },
+        "WhatsApp receipt processing failed",
+      );
+
+    }
+
+
     const receiptResult =
       result.status === "draft_ready"
       ||
@@ -2693,7 +2736,13 @@ export class WhatsAppService {
               ?
               "WhatsApp receipt stored"
               :
-              "WhatsApp receipt input ignored",
+              result.status === "failed"
+              ||
+              result.status === "unsupported"
+                ?
+                "WhatsApp receipt processing failed"
+                :
+                "WhatsApp receipt input ignored",
       source:"RECEIPT",
       normalized,
       receipt:receiptResult,
@@ -11387,6 +11436,14 @@ export class WhatsAppService {
       );
 
 
+    const remoteJid =
+      this.asString(
+        key.remoteJid
+        ??
+        data.remoteJid,
+      );
+
+
     const message =
       this.asRecord(
         data.message
@@ -11410,6 +11467,14 @@ export class WhatsAppService {
     if(
       fromMe
       &&
+      !(
+        media
+        &&
+        remoteJid.endsWith(
+          "@g.us",
+        )
+      )
+      &&
       !text
         .trim()
         .startsWith(
@@ -11422,6 +11487,7 @@ export class WhatsAppService {
         reason:"MESSAGE_FROM_SELF",
         event,
         instanceName,
+        fromMe,
       };
 
     }
@@ -11446,12 +11512,9 @@ export class WhatsAppService {
         reason:"MEDIA_INPUT_PENDING_PIPELINE",
         event,
         instanceName,
+        fromMe,
         remoteJid:
-          this.asString(
-            key.remoteJid
-            ??
-            data.remoteJid,
-          ),
+          remoteJid,
         participantJid:
           this.asString(
             key.participantAlt,
@@ -11508,12 +11571,10 @@ export class WhatsAppService {
 
       instanceName,
 
+      fromMe,
+
       remoteJid:
-        this.asString(
-          key.remoteJid
-          ??
-          data.remoteJid,
-        ),
+        remoteJid,
 
       participantJid:
         this.asString(
