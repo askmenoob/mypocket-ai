@@ -1470,11 +1470,11 @@ test(
         "utf8",
       );
 
-    const authControllerSource =
+    const googleOAuthControllerSource =
       readFileSync(
         resolve(
           currentDirectory,
-          "../../src/modules/auth/auth.controller.ts",
+          "../../src/modules/google/oauth/google.oauth.controller.ts",
         ),
         "utf8",
       );
@@ -1544,8 +1544,8 @@ test(
     );
 
     assert.match(
-      authControllerSource,
-      /autoCreateSheet\([\s\S]{0,220}profile\.email/,
+      googleOAuthControllerSource,
+      /autoCreateSheet\([\s\S]{0,220}account\.email/,
     );
 
     assert.match(

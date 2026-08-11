@@ -208,30 +208,4 @@ export class AuthRepository {
 
 
 
-
-
-
-
-
-  async createGoogleAccount(
-    workspaceId:string,
-    profile:GoogleProfile,
-  ){
-
-    return this.prisma.googleAccount.create({
-
-      data:{
-
-        email:
-          profile.email,
-
-        workspaceId,
-
-      },
-
-    });
-
-  }
-
-
 }

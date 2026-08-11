@@ -71,8 +71,14 @@ export class AuthService {
   }
 
 
-  getGoogleLoginUrl() {
-    return this.google.getAuthorizationUrl();
+  getGoogleLoginUrl(
+    state:string,
+    codeChallenge:string,
+  ) {
+    return this.google.getAuthorizationUrl(
+      state,
+      codeChallenge,
+    );
   }
 
 
@@ -101,11 +107,6 @@ export class AuthService {
 
       workspace = result.workspace;
 
-
-      await this.repository.createGoogleAccount(
-        workspace.id,
-        profile,
-      );
 
     } else {
 

@@ -23,7 +23,10 @@ const EnvSchema = z.object({
 
   PORT: z.coerce.number().default(3000),
 
-  APP_URL: z.string().optional(),
+  APP_URL:
+    z.string()
+      .url()
+      .optional(),
 
   LOG_LEVEL: z.string().default("info"),
 

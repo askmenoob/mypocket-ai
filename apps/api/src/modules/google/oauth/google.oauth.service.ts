@@ -21,6 +21,10 @@ import {
 import {
   AppError,
 } from "../../../shared/errors/index.js";
+import {
+  buildGoogleAuthorizationUrl,
+  buildGoogleTokenRequestBody,
+} from "../../../shared/google/google-oauth-request.js";
 
 
 
@@ -57,50 +61,26 @@ export class GoogleOAuthService {
 
   generateAuthorizationUrl(
     state:string,
+    codeChallenge:string,
   ){
 
 
-    const params =
-      new URLSearchParams({
-
-
-        client_id:
-          googleConfig.clientId ?? "",
-
-
-        redirect_uri:
-          googleConfig.redirectUri ?? "",
-
-
-        response_type:
-          "code",
-
-
-        access_type:
-          "offline",
-
-
-        prompt:
-          "consent",
-
-
-        scope:
-          googleConfig.scopes.join(
-            " ",
-          ),
-
-
-        state,
-
-      });
-
-
-
-    return (
-      "https://accounts.google.com/o/oauth2/v2/auth?"
-      +
-      params.toString()
-    );
+    return buildGoogleAuthorizationUrl({
+      clientId:
+        googleConfig.clientId ?? "",
+      redirectUri:
+        googleConfig.redirectUri ?? "",
+      scopes:
+        googleConfig.workspaceScopes,
+      accessType:
+        "offline",
+      prompt:
+        "consent",
+      includeGrantedScopes:
+        true,
+      state,
+      codeChallenge,
+    });
 
   }
 
@@ -163,31 +143,20 @@ export class GoogleOAuthService {
 
   async exchangeCodeForToken(
     code:string,
+    codeVerifier:string,
   ){
 
 
     const body =
-      new URLSearchParams({
-
-
+      buildGoogleTokenRequestBody({
         code,
-
-
-        client_id:
+        clientId:
           googleConfig.clientId ?? "",
-
-
-        client_secret:
+        clientSecret:
           googleConfig.clientSecret ?? "",
-
-
-        redirect_uri:
+        redirectUri:
           googleConfig.redirectUri ?? "",
-
-
-        grant_type:
-          "authorization_code",
-
+        codeVerifier,
       });
 
 
@@ -207,8 +176,7 @@ export class GoogleOAuthService {
           },
 
 
-          body:
-            body.toString(),
+          body,
 
         },
       );
@@ -268,12 +236,14 @@ export class GoogleOAuthService {
   async connectWorkspaceGoogleAccount(
     workspaceId:string,
     code:string,
+    codeVerifier:string,
   ){
 
 
     const token =
       await this.exchangeCodeForToken(
         code,
+        codeVerifier,
       );
 
 
@@ -380,7 +350,7 @@ export class GoogleOAuthService {
 
         expiresAt,
 
-        googleConfig.scopes.join(
+        googleConfig.workspaceScopes.join(
           " ",
         ),
 

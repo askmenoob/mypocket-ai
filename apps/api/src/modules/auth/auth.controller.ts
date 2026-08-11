@@ -5,33 +5,35 @@ import type {
 } from "fastify";
 
 import { env } from "../../config/index.js";
+import {
+  resolveDashboardUrl,
+} from "../../config/dashboard-url.js";
 import { AuthService } from "./auth.service.js";
 import {
-  googleConfig,
-} from "../../config/google.js";
-import { GoogleService as GoogleAuthService } from "./google.service.js";
+  GoogleService as GoogleAuthService,
+} from "./google.service.js";
 import {
-  GoogleService as WorkspaceGoogleService,
-} from "../google/google.service.js";
+  clearOAuthCookie,
+  createOAuthFlow,
+  oauthValuesMatch,
+  readCookie,
+  serializeOAuthCookie,
+} from "../../shared/auth/oauth-flow.security.js";
 import {
-  GoogleSettingsService,
-} from "../google/settings/google-settings.service.js";
-import {
-  TokenEncryptionService,
-} from "../google/crypto/token-encryption.service.js";
-import type {
-  AuthSession,
-  GoogleProfile,
-} from "./auth.types.js";
+  AppError,
+} from "../../shared/errors/index.js";
+
+
+const GOOGLE_AUTH_STATE_COOKIE =
+  "__Host-imai_google_auth_state";
+const GOOGLE_AUTH_VERIFIER_COOKIE =
+  "__Host-imai_google_auth_verifier";
 
 
 export class AuthController {
 
   private readonly service: AuthService;
   private readonly google: GoogleAuthService;
-  private readonly workspaceGoogle: WorkspaceGoogleService;
-  private readonly googleSettings: GoogleSettingsService;
-  private readonly encryption: TokenEncryptionService;
 
 
   constructor(
@@ -44,19 +46,6 @@ export class AuthController {
     this.google =
       new GoogleAuthService();
 
-    this.workspaceGoogle =
-      new WorkspaceGoogleService(
-        app,
-      );
-
-    this.googleSettings =
-      new GoogleSettingsService(
-        app,
-      );
-
-    this.encryption =
-      new TokenEncryptionService();
-
   }
 
 
@@ -66,8 +55,28 @@ export class AuthController {
     reply: FastifyReply,
   ) => {
 
+    const flow =
+      createOAuthFlow();
+
+    reply.header(
+      "Set-Cookie",
+      [
+        serializeOAuthCookie(
+          GOOGLE_AUTH_STATE_COOKIE,
+          flow.state,
+        ),
+        serializeOAuthCookie(
+          GOOGLE_AUTH_VERIFIER_COOKIE,
+          flow.verifier,
+        ),
+      ],
+    );
+
     const url =
-      this.service.getGoogleLoginUrl();
+      this.service.getGoogleLoginUrl(
+        flow.state,
+        flow.challenge,
+      );
 
 
     return reply.redirect(url);
@@ -81,6 +90,7 @@ export class AuthController {
       Querystring: {
         code?: string;
         mode?: string;
+        state?: string;
       };
     }>,
     reply: FastifyReply,
@@ -90,13 +100,55 @@ export class AuthController {
     const code =
       request.query.code;
 
+    const expectedState =
+      readCookie(
+        request.headers.cookie,
+        GOOGLE_AUTH_STATE_COOKIE,
+      );
+
+    const codeVerifier =
+      readCookie(
+        request.headers.cookie,
+        GOOGLE_AUTH_VERIFIER_COOKIE,
+      );
+
+    reply.header(
+      "Set-Cookie",
+      [
+        clearOAuthCookie(
+          GOOGLE_AUTH_STATE_COOKIE,
+        ),
+        clearOAuthCookie(
+          GOOGLE_AUTH_VERIFIER_COOKIE,
+        ),
+      ],
+    );
+
 
     if (!code) {
 
-      throw new Error(
-        "Missing authorization code",
+      throw new AppError(
+        "GOOGLE_AUTH_CODE_MISSING",
+        "Google did not return an authorization code.",
+        400,
       );
 
+    }
+
+
+    if(
+      !codeVerifier
+      ||
+      !oauthValuesMatch(
+        expectedState,
+        request.query.state,
+      )
+    ){
+      throw new AppError(
+        "GOOGLE_AUTH_FLOW_INVALID",
+        "Google sign-in expired or could not be verified. Please start again from MyPocket AI.",
+        400,
+      );
     }
 
 
@@ -104,6 +156,7 @@ export class AuthController {
     const tokens =
       await this.google.exchangeCode(
         code,
+        codeVerifier,
       );
 
 
@@ -120,26 +173,15 @@ export class AuthController {
       profile,
     );
 
-    const googleSetup =
-      await this.completeGoogleSetup(
-        session,
-        profile,
-        tokens,
-      );
-
-
     if(request.query.mode === "json"){
-      return {
-        ...session,
-        googleSetup,
-      };
+      return session;
     }
 
 
     const appUrl =
-      env.APP_URL
-      ??
-      "https://app.imai.my";
+      resolveDashboardUrl(
+        env.APP_URL,
+      );
 
     const redirectUrl =
       new URL(
@@ -155,39 +197,13 @@ export class AuthController {
           session.token,
 
         next:
-          googleSetup.connected
-            ? "whatsapp"
-            : "google",
+          "google",
       });
 
-
-    if(googleSetup.connected){
-
-      redirectParams.set(
-        "google",
-        "connected",
-      );
-
-      redirectParams.set(
-        "message",
-        googleSetup.createdSheet
-          ? "Google login successful. Google Sheet template created."
-          : "Google login successful. Google Sheet connected.",
-      );
-
-    }else{
-
-      redirectParams.set(
-        "google",
-        "error",
-      );
-
-      redirectParams.set(
-        "message",
-        googleSetup.message,
-      );
-
-    }
+    redirectParams.set(
+      "message",
+      "Google sign-in successful. Connect Google Sheets in the next step when you are ready.",
+    );
 
 
     redirectUrl.hash =
@@ -199,129 +215,6 @@ export class AuthController {
     );
 
   };
-
-
-  private async completeGoogleSetup(
-    session:AuthSession,
-    profile:GoogleProfile,
-    tokens:{
-      access_token:string;
-      refresh_token?:string;
-      expires_in?:number;
-    },
-  ){
-
-    try{
-
-      if(
-        session.workspace.role !== "OWNER"
-        &&
-        session.workspace.role !== "ADMIN"
-      ){
-
-        return {
-          connected:false,
-          createdSheet:false,
-          message:
-            "Google Sheet setup hanya boleh dibuat oleh Owner/Admin workspace.",
-        };
-
-      }
-
-
-      const expiresAt =
-        tokens.expires_in
-          ? new Date(
-              Date.now()
-              +
-              tokens.expires_in * 1000,
-            )
-          : null;
-
-
-      const encryptedAccessToken =
-        this.encryption.encrypt(
-          tokens.access_token,
-        );
-
-
-      const encryptedRefreshToken =
-        tokens.refresh_token
-          ? this.encryption.encrypt(
-              tokens.refresh_token,
-            )
-          : null;
-
-
-      await this.workspaceGoogle
-        .connect(
-          session.workspace.role,
-          session.workspace.id,
-          profile.email,
-          encryptedAccessToken,
-          encryptedRefreshToken,
-          expiresAt,
-          googleConfig.scopes.join(
-            " ",
-          ),
-        );
-
-
-      const existingSettings =
-        await this.googleSettings
-          .getSettings(
-            session.workspace.id,
-          );
-
-
-      if(existingSettings?.spreadsheetId){
-
-        return {
-          connected:true,
-          createdSheet:false,
-          message:
-            "Google Sheet already connected.",
-        };
-
-      }
-
-
-      await this.googleSettings
-        .autoCreateSheet(
-          session.workspace.id,
-          "MyPocket Workspace Template",
-          profile.email,
-        );
-
-
-      return {
-        connected:true,
-        createdSheet:true,
-        message:
-          "Google Sheet template created successfully.",
-      };
-
-    }catch(error){
-
-      const err =
-        error as {
-          message?:string;
-        };
-
-
-      return {
-        connected:false,
-        createdSheet:false,
-        message:
-          err.message
-          ??
-          "Google Sheet setup failed. Please reconnect from setup wizard.",
-      };
-
-    }
-
-  }
-
 
 
   me = async (

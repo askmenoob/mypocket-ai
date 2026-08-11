@@ -13,6 +13,9 @@ import {
 import {
   env,
 } from "../../../config/index.js";
+import {
+  resolveDashboardUrl,
+} from "../../../config/dashboard-url.js";
 
 
 import {
@@ -23,6 +26,27 @@ import {
 import {
   googleOAuthCallbackSchema,
 } from "./google.oauth.schemas.js";
+import {
+  clearOAuthCookie,
+  createOAuthFlow,
+  oauthValuesMatch,
+  readCookie,
+  serializeOAuthCookie,
+} from "../../../shared/auth/oauth-flow.security.js";
+
+
+const GOOGLE_WORKSPACE_STATE_COOKIE =
+  "__Host-imai_google_workspace_state";
+const GOOGLE_WORKSPACE_VERIFIER_COOKIE =
+  "__Host-imai_google_workspace_verifier";
+
+
+type GoogleWorkspaceState = {
+  purpose:string;
+  workspaceId:string;
+  userId:string;
+  nonce:string;
+};
 
 
 
@@ -39,7 +63,7 @@ export class GoogleOAuthController {
 
 
   constructor(
-    app:FastifyInstance,
+    private readonly app:FastifyInstance,
   ){
 
     this.service =
@@ -68,14 +92,47 @@ export class GoogleOAuthController {
       request.user as any;
 
 
+    const flow =
+      createOAuthFlow();
+
     const state =
-      user.workspaceId;
+      this.app.jwt.sign(
+        {
+          purpose:
+            "google-workspace-oauth",
+          workspaceId:
+            user.workspaceId,
+          userId:
+            user.userId,
+          nonce:
+            flow.state,
+        },
+        {
+          expiresIn:
+            "10m",
+        },
+      );
+
+    reply.header(
+      "Set-Cookie",
+      [
+        serializeOAuthCookie(
+          GOOGLE_WORKSPACE_STATE_COOKIE,
+          state,
+        ),
+        serializeOAuthCookie(
+          GOOGLE_WORKSPACE_VERIFIER_COOKIE,
+          flow.verifier,
+        ),
+      ],
+    );
 
 
     const url =
       this.service
         .generateAuthorizationUrl(
           state,
+          flow.challenge,
         );
 
 
@@ -102,7 +159,41 @@ export class GoogleOAuthController {
         );
 
 
-    if(!query.state){
+    const expectedState =
+      readCookie(
+        request.headers.cookie,
+        GOOGLE_WORKSPACE_STATE_COOKIE,
+      );
+
+    const codeVerifier =
+      readCookie(
+        request.headers.cookie,
+        GOOGLE_WORKSPACE_VERIFIER_COOKIE,
+      );
+
+    reply.header(
+      "Set-Cookie",
+      [
+        clearOAuthCookie(
+          GOOGLE_WORKSPACE_STATE_COOKIE,
+        ),
+        clearOAuthCookie(
+          GOOGLE_WORKSPACE_VERIFIER_COOKIE,
+        ),
+      ],
+    );
+
+
+    if(
+      !query.state
+      ||
+      !codeVerifier
+      ||
+      !oauthValuesMatch(
+        expectedState,
+        query.state,
+      )
+    ){
 
       return this.redirectToAppWithError(
         reply,
@@ -115,17 +206,43 @@ export class GoogleOAuthController {
 
     try{
 
+    const oauthState =
+      this.app.jwt.verify<GoogleWorkspaceState>(
+        query.state,
+      );
+
+
+    if(
+      oauthState.purpose
+      !==
+      "google-workspace-oauth"
+      ||
+      !oauthState.workspaceId
+      ||
+      !oauthState.userId
+      ||
+      !oauthState.nonce
+    ){
+      throw new Error(
+        "GOOGLE_OAUTH_STATE_INVALID",
+      );
+    }
+
+    const workspaceId =
+      oauthState.workspaceId;
+
     const account =
       await this.service
         .connectWorkspaceGoogleAccount(
-          query.state,
+          workspaceId,
           query.code,
+          codeVerifier,
         );
 
     const existingSettings =
       await this.settingsService
         .getSettings(
-          query.state,
+          workspaceId,
         );
 
 
@@ -134,8 +251,9 @@ export class GoogleOAuthController {
       ??
       await this.settingsService
         .autoCreateSheet(
-          query.state,
+          workspaceId,
           "MyPocket Workspace Template",
+          account.email,
         );
 
 
@@ -152,7 +270,7 @@ export class GoogleOAuthController {
           "whatsapp",
 
         workspaceId:
-          query.state,
+          workspaceId,
 
         googleAccountId:
           account.id,
@@ -231,9 +349,9 @@ export class GoogleOAuthController {
   ){
 
     const appUrl =
-      env.APP_URL
-      ??
-      "https://app.imai.my";
+      resolveDashboardUrl(
+        env.APP_URL,
+      );
 
 
     const redirectUrl =

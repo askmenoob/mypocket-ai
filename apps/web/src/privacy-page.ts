@@ -156,8 +156,8 @@ export function renderPrivacyPage(): void {
       <ul>
         <li>Google account identity data, including your email address and basic profile information, to authenticate you and connect the correct workspace owner account.</li>
         <li>Google OAuth access tokens, refresh tokens, token expiry information, and the scopes you granted, so MyPocket AI can maintain the Google connection you requested.</li>
-        <li>Google Sheets data and metadata, including spreadsheet IDs, spreadsheet titles, sheet names, spreadsheet URLs, ranges, rows, and cell values in spreadsheets connected to or created for your MyPocket AI workspace.</li>
-        <li>Google Drive file and folder metadata needed to create, copy, organize, and move MyPocket AI workspace folders, reports, exports, receipt folders, templates, backups, and connected spreadsheets.</li>
+        <li>Google Sheets data and metadata, including spreadsheet IDs, spreadsheet titles, sheet names, spreadsheet URLs, ranges, rows, and cell values only in files connected to or created for your MyPocket AI workspace.</li>
+        <li>Google Drive file and folder metadata needed to create, copy, organize, and move specific MyPocket AI workspace folders, reports, exports, receipts, templates, backups, and connected spreadsheets. MyPocket AI does not request access to your entire Google Drive.</li>
       </ul>
 
       <p>

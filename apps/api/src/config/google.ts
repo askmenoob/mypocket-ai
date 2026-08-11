@@ -1,6 +1,10 @@
 import {
   env,
 } from "./index.js";
+import {
+  GOOGLE_IDENTITY_SCOPES,
+  GOOGLE_WORKSPACE_SCOPES,
+} from "./google-scopes.js";
 
 
 export const googleConfig = {
@@ -25,17 +29,12 @@ export const googleConfig = {
     env.GOOGLE_TEMPLATE_ROOT_FOLDER_ID,
 
 
-  scopes:[
-    "openid",
+  identityScopes:
+    GOOGLE_IDENTITY_SCOPES,
 
-    "https://www.googleapis.com/auth/userinfo.email",
 
-    "https://www.googleapis.com/auth/userinfo.profile",
-
-    "https://www.googleapis.com/auth/spreadsheets",
-
-    "https://www.googleapis.com/auth/drive",
-  ],
+  workspaceScopes:
+    GOOGLE_WORKSPACE_SCOPES,
 
 
 };

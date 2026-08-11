@@ -2205,6 +2205,9 @@ function App(){
         await fetch(
           `${API_BASE}/google/oauth/url`,
           {
+            credentials:
+              "include",
+
             headers:{
               Authorization:
                 `Bearer ${token}`,
@@ -2711,16 +2714,23 @@ function TokenGate(
 
         <h1>MyPocket AI Dashboard</h1>
         <p>
-          Login menggunakan Google untuk membuka workspace, setup wizard,
-          WhatsApp bot dan Google Sheet anda.
+          Log masuk untuk membuka workspace dan setup wizard MyPocket AI.
         </p>
+
+        <div className="loginTrustNote">
+          <span aria-hidden="true">✓</span>
+          <small>
+            Log masuk hanya berkongsi nama dan alamat e-mel anda. Kebenaran
+            untuk fail MyPocket diminta secara berasingan selepas log masuk.
+          </small>
+        </div>
 
         <a
           className="googleButton"
           href={googleLoginUrl()}
         >
           <span>G</span>
-          Continue with Google
+          Log masuk dengan Google
         </a>
 
         <button
@@ -3166,8 +3176,12 @@ function SetupWizard(
                   <div className="wizardTrustNote">
                     <WizardFeatureIcon name="lock" />
                     <div>
-                      <strong>Data anda kekal milik anda</strong>
-                      <span>Anda boleh mencabut akses pada bila-bila masa.</span>
+                      <strong>Akses fail khusus sahaja</strong>
+                      <span>
+                        MyPocket tidak meminta akses ke seluruh Google Drive.
+                        Hanya fail MyPocket yang anda pilih atau cipta, dan akses
+                        boleh dicabut pada bila-bila masa.
+                      </span>
                     </div>
                   </div>
                 )}

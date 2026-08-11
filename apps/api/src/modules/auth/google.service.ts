@@ -3,6 +3,10 @@ import {
   googleConfig,
 } from "../../config/google.js";
 import type { GoogleProfile } from "./auth.types.js";
+import {
+  buildGoogleAuthorizationUrl,
+  buildGoogleTokenRequestBody,
+} from "../../shared/google/google-oauth-request.js";
 
 
 interface GoogleTokenResponse {
@@ -49,40 +53,32 @@ export class GoogleService {
   }
 
 
-  getAuthorizationUrl() {
+  getAuthorizationUrl(
+    state:string,
+    codeChallenge:string,
+  ) {
 
     const redirectUri =
       this.getAuthRedirectUri();
 
-    const params = new URLSearchParams({
-
-      client_id:
+    return buildGoogleAuthorizationUrl({
+      clientId:
         env.GOOGLE_CLIENT_ID ?? "",
-
-      redirect_uri:
-        redirectUri,
-
-      response_type:
-        "code",
-
-      scope: googleConfig.scopes.join(" "),
-
-      access_type:
+      redirectUri,
+      scopes:
+        googleConfig.identityScopes,
+      accessType:
         "online",
+      state,
+      codeChallenge,
     });
-
-
-    return (
-      "https://accounts.google.com/o/oauth2/v2/auth?"
-      +
-      params.toString()
-    );
   }
 
 
 
   async exchangeCode(
     code: string,
+    codeVerifier:string,
   ): Promise<GoogleTokenResponse> {
 
 
@@ -102,22 +98,15 @@ export class GoogleService {
 
 
           body:
-            new URLSearchParams({
-
-              client_id:
+            buildGoogleTokenRequestBody({
+              clientId:
                 env.GOOGLE_CLIENT_ID ?? "",
-
-              client_secret:
+              clientSecret:
                 env.GOOGLE_CLIENT_SECRET ?? "",
-
               code,
-
-              grant_type:
-                "authorization_code",
-
-              redirect_uri:
+              codeVerifier,
+              redirectUri:
                 this.getAuthRedirectUri(),
-
             }),
         },
       );

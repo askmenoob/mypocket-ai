@@ -32,6 +32,9 @@ function payload(
 
 function transactions(){
 
+  const now =
+    new Date();
+
   return [
     {
       id:"tx-newest",
@@ -41,7 +44,7 @@ function transactions(){
       description:"petrol",
       transactionDate:
         new Date(
-          "2026-08-11T00:40:00.000Z",
+          now.getTime(),
         ),
       category:{name:"Transport"},
       merchant:{name:"Shell"},
@@ -55,7 +58,7 @@ function transactions(){
       description:"lunch",
       transactionDate:
         new Date(
-          "2026-08-11T00:30:00.000Z",
+          now.getTime(),
         ),
       category:{name:"Food"},
       merchant:{name:"KFC"},
