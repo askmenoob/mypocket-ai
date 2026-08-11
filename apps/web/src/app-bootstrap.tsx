@@ -13,7 +13,7 @@ import type {
 } from "./dashboard-analytics";
 import { PremiumDashboard } from "./premium-dashboard";
 import { PublicLandingPage } from "./public-landing";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 import "./public-landing.css";
@@ -3678,6 +3678,46 @@ function Dashboard(
   const [notificationOpen, setNotificationOpen] =
     useState(false);
 
+  const notificationCloseTimerRef =
+    useRef<number | null>(null);
+
+  function cancelNotificationClose(){
+
+    if(notificationCloseTimerRef.current === null){
+      return;
+    }
+
+    window.clearTimeout(
+      notificationCloseTimerRef.current,
+    );
+
+    notificationCloseTimerRef.current =
+      null;
+
+  }
+
+  function scheduleNotificationClose(){
+
+    cancelNotificationClose();
+
+    notificationCloseTimerRef.current =
+      window.setTimeout(() => {
+
+        setNotificationOpen(false);
+
+        notificationCloseTimerRef.current =
+          null;
+
+      }, 180);
+
+  }
+
+  useEffect(() => () => {
+
+    cancelNotificationClose();
+
+  }, []);
+
   const [seenNotificationIds, setSeenNotificationIds] =
     useState<string[]>([]);
 
@@ -6702,6 +6742,8 @@ function Dashboard(
                 aria-haspopup="dialog"
                 onClick={() => {
 
+                  cancelNotificationClose();
+
                   const nextOpen =
                     !notificationOpen;
 
@@ -6725,6 +6767,8 @@ function Dashboard(
               {notificationOpen && (
                 <section
                   className="notificationPanel"
+                  onMouseEnter={cancelNotificationClose}
+                  onMouseLeave={scheduleNotificationClose}
                   role="dialog"
                   aria-label={
                     dashboardLanguage === "ms"
@@ -6778,7 +6822,10 @@ function Dashboard(
                         type="button"
                         className="notificationClose"
                         aria-label={dashboardLanguage === "ms" ? "Tutup notifikasi" : "Close notifications"}
-                        onClick={() => setNotificationOpen(false)}
+                        onClick={() => {
+                          cancelNotificationClose();
+                          setNotificationOpen(false);
+                        }}
                       >
                         ×
                       </button>
