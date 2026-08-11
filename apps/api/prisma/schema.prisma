@@ -350,6 +350,7 @@ model Transaction {
   merchantId      String?
   paymentMethodId String?
   receiptUrl      String?
+  receiptReference String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   category        Category?         @relation(fields: [categoryId], references: [id])

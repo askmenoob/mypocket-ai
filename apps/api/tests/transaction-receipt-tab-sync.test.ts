@@ -31,6 +31,12 @@ test(
       values:unknown[];
     }> = [];
 
+    const updates:Array<{
+      spreadsheetId:string;
+      range:string;
+      values:unknown[][];
+    }> = [];
+
     service.sheetsService = {
       getSheetTitles:async () => [
         "Categories",
@@ -47,6 +53,11 @@ test(
         "Commitments List",
         "Commitments Log",
       ],
+      readRange:async () => [[]],
+      updateRange:async (_workspaceId:string, input:any) => {
+        updates.push(input);
+        return {updatedRange:input.range};
+      },
       appendRow:async (_workspaceId:string, input:any) => {
         appends.push(input);
         return {updatedRange:""};
@@ -67,6 +78,7 @@ test(
       source:"WHATSAPP_RECEIPT",
       aiConfidence:0.94,
       receiptUrl:"https://drive.example/shell-receipt",
+      receiptReference:"b7610a",
       receiptType:"FUEL",
       receiptClassificationSource:"EVIDENCE",
       createdById:"user-1",
@@ -79,9 +91,9 @@ test(
         entry.range,
       ]),
       [
-        ["sheet-main", "Transactions!A:O"],
+        ["sheet-main", "Transactions!A:P"],
         ["sheet-main", "Receipts Checklist!A:J"],
-        ["sheet-backup", "Transactions!A:O"],
+        ["sheet-backup", "Transactions!A:P"],
         ["sheet-backup", "Receipts Checklist!A:J"],
       ],
     );
@@ -93,6 +105,27 @@ test(
     assert.equal(
       transaction[11],
       "https://drive.example/shell-receipt",
+    );
+    assert.equal(transaction[15], "b7610a");
+
+    assert.deepEqual(
+      updates.map((entry) => [
+        entry.spreadsheetId,
+        entry.range,
+        entry.values,
+      ]),
+      [
+        [
+          "sheet-main",
+          "Transactions!P1:P1",
+          [["Receipt Reference"]],
+        ],
+        [
+          "sheet-backup",
+          "Transactions!P1:P1",
+          [["Receipt Reference"]],
+        ],
+      ],
     );
 
     const checklist =
@@ -114,6 +147,10 @@ test(
     assert.match(
       String(checklist[9]),
       /FUEL.*EVIDENCE/,
+    );
+    assert.match(
+      String(checklist[9]),
+      /Reference: b7610a/,
     );
 
     assert.equal(

@@ -138,6 +138,14 @@ test(
       request!.messages[0].content[0].text,
       /FUEL.*GROCERIES.*DINING/i,
     );
+    assert.match(
+      request!.messages[0].content[0].text,
+      /merchantBrand.*purchaseDetails.*visualCues/i,
+    );
+    assert.match(
+      request!.messages[0].content[0].text,
+      /Shell logo.*legal merchant/i,
+    );
   },
 );
 
@@ -374,6 +382,285 @@ test(
     }
     assert.equal(result.value.receiptType, "FUEL");
     assert.equal(result.value.classificationSource, "EVIDENCE");
+  },
+);
+
+
+test(
+  "classifies a MANKON legal-merchant receipt as fuel from pump and diesel details",
+  async () => {
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async () =>
+          new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      amount:"390.00",
+                      currency:"MYR",
+                      merchantName:"MANKON PHOENIX ENTERPRISE",
+                      receiptType:"RETAIL",
+                      referenceNumber:"8ba50b",
+                      receiptNumber:"613694",
+                      purchaseDetails:
+                        "FS Diesel, Pump 8, 85.340 L @ RM4.570/L",
+                      rawText:[
+                        "MANKON PHOENIX ENTERPRISE",
+                        "Card Name Shellcard",
+                        "FS Diesel(Pump 8) RM390.00",
+                        "85.340ltr@RM4.570/ltr",
+                        "TOTAL RM390.00",
+                      ].join("\n"),
+                      confidence:0.95,
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          ),
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"mankon-shell-diesel.jpg",
+      });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.receiptType, "FUEL");
+    assert.equal(result.value.classificationSource, "EVIDENCE");
+    assert.equal(result.value.receiptReference, "8ba50b");
+    assert.equal(
+      result.value.purchaseDetails,
+      "FS Diesel, Pump 8, 85.340 L @ RM4.570/L",
+    );
+  },
+);
+
+
+test(
+  "uses a detected Shell logo as fuel evidence when the legal merchant has another name",
+  async () => {
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async () =>
+          new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      amount:"390.00",
+                      currency:"MYR",
+                      merchantName:"MANKON PHOENIX ENTERPRISE",
+                      merchantBrand:"Shell",
+                      visualCues:["Shell logo"],
+                      receiptType:"RETAIL",
+                      rawText:[
+                        "MANKON PHOENIX ENTERPRISE",
+                        "INVOICE",
+                        "TOTAL RM390.00",
+                      ].join("\n"),
+                      confidence:0.88,
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          ),
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"mankon-shell-logo.jpg",
+      });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.merchantBrand, "Shell");
+    assert.deepEqual(result.value.visualCues, ["Shell logo"]);
+    assert.equal(result.value.receiptType, "FUEL");
+    assert.equal(result.value.classificationSource, "EVIDENCE");
+  },
+);
+
+
+test(
+  "uses the detected brand when Groq returns only a registration identifier as merchant",
+  async () => {
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async () =>
+          new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      amount:"341.92",
+                      currency:"MYR",
+                      merchantName:"IP0148/23-D",
+                      merchantBrand:"Shell",
+                      receiptType:"FUEL",
+                      receiptNumber:"597534",
+                      rawText:
+                        "FS Diesel Pump 1 RM4.070/L TOTAL RM341.92",
+                      confidence:0.98,
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          ),
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"shell-cropped.jpg",
+      });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.merchantName, "Shell");
+    assert.equal(result.value.merchantBrand, "Shell");
+    assert.equal(result.value.receiptType, "FUEL");
+    assert.equal(result.value.receiptReference, "597534");
+  },
+);
+
+
+test(
+  "retries once when Groq fails JSON validation and then succeeds",
+  async () => {
+    let requests = 0;
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async () => {
+          requests += 1;
+          if(requests === 1){
+            return new Response(
+              JSON.stringify({
+                error:{
+                  code:"json_validate_failed",
+                  message:"Failed to validate JSON",
+                },
+              }),
+              {status:400},
+            );
+          }
+          return new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      amount:"341.92",
+                      currency:"MYR",
+                      merchantName:"Shell",
+                      receiptType:"FUEL",
+                      rawText:
+                        "Shell Pump 1 FS Diesel TOTAL RM341.92",
+                      confidence:0.98,
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          );
+        },
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"shell-retry.jpg",
+      });
+
+    assert.equal(requests, 2);
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.receiptType, "FUEL");
+    assert.equal(result.value.amount, "341.92");
+  },
+);
+
+
+test(
+  "does not treat an ordinary one-litre grocery item as fuel",
+  async () => {
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async () =>
+          new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      amount:"8.90",
+                      currency:"MYR",
+                      merchantName:"Lotus's",
+                      receiptType:"GROCERIES",
+                      purchaseDetails:"Fresh milk 1 L",
+                      rawText:[
+                        "LOTUS'S",
+                        "FRESH MILK 1 L  RM8.90",
+                        "TOTAL RM8.90",
+                      ].join("\n"),
+                      confidence:0.96,
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          ),
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"lotus-milk.jpg",
+      });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.receiptType, "GROCERIES");
+    assert.notEqual(result.value.receiptType, "FUEL");
   },
 );
 

@@ -152,7 +152,7 @@ export class TransactionService {
               setting.spreadsheetId,
 
             range:
-              "Transactions!A:O",
+              "Transactions!A:P",
           },
         );
 
@@ -697,6 +697,9 @@ export class TransactionService {
 
           receiptUrl:
             input.receiptUrl,
+
+          receiptReference:
+            input.receiptReference,
 
           receiptType:
             input.receiptType,
@@ -1604,6 +1607,11 @@ export class TransactionService {
         ??
         null,
 
+      receiptReference:
+        input.receiptReference
+        ??
+        null,
+
       createdAt:
         now,
 
@@ -1779,6 +1787,13 @@ export class TransactionService {
               paymentMethodName,
           }
           : null,
+
+      receiptReference:
+        valueAt(
+          15,
+        )
+        ||
+        null,
 
     };
 

@@ -134,6 +134,9 @@ export class TransactionRepository {
         receiptUrl:
           input.receiptUrl,
 
+        receiptReference:
+          input.receiptReference,
+
       },
 
       include:{

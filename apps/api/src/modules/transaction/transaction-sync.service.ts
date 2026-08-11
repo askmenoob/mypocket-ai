@@ -29,6 +29,9 @@ export class TransactionSyncService {
   private readonly settingsRepository:
     GoogleSettingsRepository;
 
+  private readonly preparedReceiptReferenceHeaders =
+    new Set<string>();
+
 
 
   constructor(
@@ -154,10 +157,19 @@ export class TransactionSyncService {
       ??
       "",
 
+      payload.receiptReference
+      ??
+      "",
+
     ];
 
 
     for(const spreadsheetId of spreadsheetIds){
+
+      await this.ensureReceiptReferenceHeader(
+        payload.workspaceId,
+        spreadsheetId,
+      );
 
       const sheetTitles =
         payload.source === "WHATSAPP_RECEIPT"
@@ -177,7 +189,7 @@ export class TransactionSyncService {
             spreadsheetId,
 
             range:
-              "Transactions!A:O",
+              "Transactions!A:P",
 
             values,
 
@@ -215,6 +227,9 @@ export class TransactionSyncService {
                   payload.receiptClassificationSource
                     ? `Classification: ${payload.receiptClassificationSource}`
                     : "",
+                  payload.receiptReference
+                    ? `Reference: ${payload.receiptReference}`
+                    : "",
                 ]
                   .filter(Boolean)
                   .join("; "),
@@ -225,6 +240,83 @@ export class TransactionSyncService {
       }
 
     }
+
+  }
+
+
+  private async ensureReceiptReferenceHeader(
+    workspaceId:string,
+    spreadsheetId:string,
+  ){
+
+    const cacheKey =
+      `${workspaceId}:${spreadsheetId}`;
+
+    if(
+      this.preparedReceiptReferenceHeaders
+        .has(
+          cacheKey,
+        )
+    ){
+
+      return;
+
+    }
+
+    const rows =
+      await this.sheetsService
+        .readRange(
+          workspaceId,
+          {
+            spreadsheetId,
+            range:
+              "Transactions!P1:P1",
+          },
+        );
+
+    const currentHeader =
+      String(
+        rows[0]?.[0]
+        ??
+        "",
+      )
+        .trim();
+
+    if(
+      currentHeader
+      &&
+      currentHeader !== "Receipt Reference"
+    ){
+
+      throw new Error(
+        "TRANSACTION_RECEIPT_REFERENCE_HEADER_CONFLICT",
+      );
+
+    }
+
+    if(!currentHeader){
+
+      await this.sheetsService
+        .updateRange(
+          workspaceId,
+          {
+            spreadsheetId,
+            range:
+              "Transactions!P1:P1",
+            values:[
+              [
+                "Receipt Reference",
+              ],
+            ],
+          },
+        );
+
+    }
+
+    this.preparedReceiptReferenceHeaders
+      .add(
+        cacheKey,
+      );
 
   }
 

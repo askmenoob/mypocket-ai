@@ -41,6 +41,12 @@ z.object({
     z.string()
       .optional(),
 
+  receiptReference:
+    z.string()
+      .trim()
+      .max(120)
+      .optional(),
+
 });
 
 

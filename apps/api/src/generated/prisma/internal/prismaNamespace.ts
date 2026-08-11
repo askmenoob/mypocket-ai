@@ -2346,6 +2346,7 @@ export const TransactionScalarFieldEnum = {
   merchantId: 'merchantId',
   paymentMethodId: 'paymentMethodId',
   receiptUrl: 'receiptUrl',
+  receiptReference: 'receiptReference',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

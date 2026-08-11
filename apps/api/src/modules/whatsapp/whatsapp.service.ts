@@ -2620,6 +2620,19 @@ export class WhatsAppService {
               result.extraction,
               "ms",
             ),
+            ...(
+              this.buildReceiptDetailsLine(
+                result.extraction,
+                "ms",
+              )
+                ? [
+                    this.buildReceiptDetailsLine(
+                      result.extraction,
+                      "ms",
+                    )!,
+                  ]
+                : []
+            ),
             result.extraction.amount
               ?
               `${result.extraction.currency ?? ""} ${result.extraction.amount}`.trim()
@@ -4290,6 +4303,19 @@ export class WhatsAppService {
               draft.extraction,
               "en",
             ),
+            ...(
+              this.buildReceiptDetailsLine(
+                draft.extraction,
+                "en",
+              )
+                ? [
+                    this.buildReceiptDetailsLine(
+                      draft.extraction,
+                      "en",
+                    )!,
+                  ]
+                : []
+            ),
             draft.receiptUrl,
           ].join("\n")
           : [
@@ -4298,6 +4324,19 @@ export class WhatsAppService {
             this.buildReceiptClassificationLine(
               draft.extraction,
               "ms",
+            ),
+            ...(
+              this.buildReceiptDetailsLine(
+                draft.extraction,
+                "ms",
+              )
+                ? [
+                    this.buildReceiptDetailsLine(
+                      draft.extraction,
+                      "ms",
+                    )!,
+                  ]
+                : []
             ),
             draft.receiptUrl,
           ].join("\n"),
@@ -4587,6 +4626,8 @@ export class WhatsAppService {
           currency,
           type:"EXPENSE",
           description:
+            draft.extraction.purchaseDetails?.trim()
+            ||
             draft.extraction.description?.trim()
             ||
             parsed.description,
@@ -4598,6 +4639,8 @@ export class WhatsAppService {
             merchant.id,
           receiptUrl:
             receiptUrl,
+          receiptReference:
+            draft.extraction.receiptReference,
           aiConfidence:
             draft.extraction.confidence,
           receiptType:
@@ -4760,13 +4803,23 @@ export class WhatsAppService {
 
       }
 
+      const receiptType =
+        this.receiptTypeForMemory(
+          categoryName,
+          merchantName,
+          transaction?.description,
+        );
+
       return {
-        receiptType:
-          this.receiptTypeForMemory(
-            categoryName,
-            merchantName,
-          ),
-        categoryName,
+        receiptType,
+        categoryName:
+          receiptType === "FUEL"
+            ? this.receiptCategoryForType(
+                "FUEL",
+              )
+              ??
+              categoryName
+            : categoryName,
       };
 
     }catch(error){
@@ -4945,14 +4998,32 @@ export class WhatsAppService {
   private receiptTypeForMemory(
     categoryName:string,
     merchantName?:string,
+    description?:string,
   ):ReceiptType{
 
-    const merchant =
-      String(
-        merchantName
-        ??
-        "",
-      );
+    const evidence =
+      [
+        merchantName,
+        description,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+    if(
+      /\b(?:shell(?:card)?|petronas|petron|caltex|bhp\s*petrol|bhpetrol|esso|pump\s*\d*|fuel|petrol|diesel|gasoline|ron\s*9[57]|minyak\s*(?:petrol|diesel)?)\b/i
+        .test(
+          evidence,
+        )
+      ||
+      /(?:rm\s*)?\d+(?:\.\d+)?\s*\/\s*(?:l|ltr|litres?|liters?)\b/i
+        .test(
+          evidence,
+        )
+    ){
+
+      return "FUEL";
+
+    }
 
     if(
       (
@@ -4963,7 +5034,7 @@ export class WhatsAppService {
       &&
       /\b(?:shell|petronas|petron|caltex|bhpetrol|esso)\b/i
         .test(
-          merchant,
+          evidence,
         )
     ){
 
@@ -4982,7 +5053,7 @@ export class WhatsAppService {
       &&
       /\b(?:99\s*speed\s*mart|lotus'?s?|tesco|giant|aeon\s*big|econsave|jaya\s*grocer|village\s*grocer)\b/i
         .test(
-          merchant,
+          evidence,
         )
     ){
 
@@ -5054,6 +5125,29 @@ export class WhatsAppService {
     return language === "en"
       ? `Type: ${labels[receiptType].en} (${categoryName})`
       : `Jenis: ${labels[receiptType].ms} (${categoryName})`;
+
+  }
+
+
+  private buildReceiptDetailsLine(
+    extraction:ReceiptVisionCandidate,
+    language:"ms" | "en",
+  ):string | undefined{
+
+    const details =
+      extraction.purchaseDetails?.trim()
+      ||
+      extraction.description?.trim();
+
+    if(!details){
+
+      return undefined;
+
+    }
+
+    return language === "en"
+      ? `Details: ${details}`
+      : `Butiran: ${details}`;
 
   }
 

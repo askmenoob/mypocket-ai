@@ -48,6 +48,8 @@ export interface TransactionSyncPayload {
 
   receiptUrl?:string;
 
+  receiptReference?:string;
+
 
   receiptType?:string;
 

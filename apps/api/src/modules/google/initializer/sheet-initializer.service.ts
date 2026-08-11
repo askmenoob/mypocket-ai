@@ -78,7 +78,7 @@ export class SheetInitializerService {
           input.spreadsheetId,
 
         range:
-          "Transactions!A1:O1",
+          "Transactions!A1:P1",
 
         values:[
 
@@ -98,6 +98,7 @@ export class SheetInitializerService {
             "Created At",
             "Created By ID",
             "Created By Email",
+            "Receipt Reference",
           ],
 
         ],
@@ -205,7 +206,7 @@ export class SheetInitializerService {
 
           [
             "Usage",
-            "Do not rename sheet names or Transactions columns. Backend sync writes A:O.",
+            "Do not rename sheet names or Transactions columns. Backend sync writes A:P.",
             "",
             "",
             "",

@@ -33,6 +33,8 @@ export interface CreateTransactionInput {
 
   receiptUrl?:string;
 
+  receiptReference?:string;
+
   source?:string;
 
   aiConfidence?:number;
@@ -61,5 +63,7 @@ export interface UpdateTransactionInput {
   paymentMethodId?:string;
 
   receiptUrl?:string;
+
+  receiptReference?:string;
 
 }

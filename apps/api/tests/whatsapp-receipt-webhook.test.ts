@@ -271,6 +271,52 @@ test(
 
 
 test(
+  "repairs merchant memory when a confirmed receipt description proves it was fuel",
+  async () => {
+    const service =
+      createService(
+        "receipts-folder",
+      );
+
+    service.transactionService = {
+      getSheetCategoryNames:async () => [
+        "Food",
+        "Transport",
+        "Shopping",
+        "Others",
+      ],
+      getSheetTransactions:async () => [
+        {
+          source:"WHATSAPP_RECEIPT",
+          merchant:{name:"MANKON PHOENIX ENTERPRISE"},
+          category:{name:"Shopping"},
+          description:
+            "FS Diesel, Pump 8, 85.340 L @ RM4.570/L",
+        },
+      ],
+    };
+
+    const extraction =
+      await service.enrichReceiptClassification(
+        "workspace-family",
+        {
+          merchantName:"MANKON PHOENIX ENTERPRISE",
+          receiptType:"OTHER",
+          classificationSource:"GROQ",
+          rawText:"MANKON PHOENIX ENTERPRISE TOTAL RM390.00",
+          latencyMs:10,
+          model:"qwen/qwen3.6-27b",
+        },
+      );
+
+    assert.equal(extraction.receiptType, "FUEL");
+    assert.equal(extraction.categoryName, "Transport");
+    assert.equal(extraction.classificationSource, "MEMORY");
+  },
+);
+
+
+test(
   "maps receipt types to the categories available in the workspace sheet",
   async () => {
     const service =
@@ -412,10 +458,15 @@ test(
         },
         fileName:"receipt.jpg",
         extraction:{
-          merchantName:"Kedai Makan",
-          amount:"12.50",
+          merchantName:"MANKON PHOENIX ENTERPRISE",
+          merchantBrand:"Shell",
+          receiptType:"FUEL",
+          categoryName:"Transport",
+          purchaseDetails:
+            "FS Diesel, Pump 8, 85.340 L @ RM4.570/L",
+          amount:"390.00",
           currency:"MYR",
-          rawText:"KEDAI MAKAN RM12.50",
+          rawText:"FS Diesel Pump 8 TOTAL RM390.00",
           confidence:0.95,
           latencyMs:10,
           model:"qwen/qwen3.6-27b",
@@ -455,6 +506,10 @@ test(
     assert.match(
       reply,
       /transaksi direkodkan/,
+    );
+    assert.match(
+      reply,
+      /Butiran: FS Diesel, Pump 8, 85\.340 L @ RM4\.570\/L/,
     );
     assert.equal(
       service.receiptDrafts.has(
@@ -517,6 +572,10 @@ test(
           merchantName:"99 Speed Mart",
           receiptType:"GROCERIES",
           categoryName:"Shopping",
+          description:"Groceries",
+          purchaseDetails:
+            "Household groceries, 3 items",
+          receiptReference:"REF-2026-001",
           amount:"17.35",
           currency:"MYR",
           transactionDate:"31/07/2026 15:30",
@@ -556,6 +615,14 @@ test(
     assert.equal(
       categoryName,
       "Shopping",
+    );
+    assert.equal(
+      capturedInput.description,
+      "Household groceries, 3 items",
+    );
+    assert.equal(
+      capturedInput.receiptReference,
+      "REF-2026-001",
     );
     assert.equal(
       service.normalizeReceiptTransactionDate(
