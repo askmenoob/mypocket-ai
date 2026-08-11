@@ -31,12 +31,34 @@ import {
   HitPayClient,
 } from "./hitpay.client.js";
 
+import {
+  GoogleDriveService,
+} from "../google/drive/google-drive.service.js";
+
+import {
+  buildMyPocketRootFolderName,
+} from "../google/drive/google-root-folder-name.js";
+
 
 type JsonRecord =
   Record<
     string,
     unknown
   >;
+
+
+type AutoCreatedRootFolderRenameInput = {
+  workspaceId:string;
+  plan:PaidBillingPlan;
+};
+
+
+type BillingServiceDependencies = {
+  renameAutoCreatedRootFolder?:
+    (
+      input:AutoCreatedRootFolderRenameInput,
+    ) => Promise<void>;
+};
 
 
 const PLAN_CONFIGURATION:
@@ -92,10 +114,29 @@ export class BillingService {
     new HitPayClient();
 
 
+  private readonly renameAutoCreatedRootFolder:
+    (
+      input:AutoCreatedRootFolderRenameInput,
+    ) => Promise<void>;
+
+
   constructor(
     private readonly app:
       FastifyInstance,
-  ){}
+    dependencies?:BillingServiceDependencies,
+  ){
+    this.renameAutoCreatedRootFolder =
+      dependencies
+        ?.renameAutoCreatedRootFolder
+      ??
+      (
+        async (input) => {
+          await this.renameWorkspaceRootFolder(
+            input,
+          );
+        }
+      );
+  }
 
 
   async getSubscription(
@@ -373,6 +414,8 @@ export class BillingService {
         "ACTIVE",
         "RETRYING",
         "PAUSED",
+        "PLAN_CHANGE_PAYMENT_PENDING",
+        "PLAN_CHANGE_REVIEW_REQUIRED",
       ].includes(
         existingBilling.status,
       )
@@ -717,6 +760,109 @@ export class BillingService {
     }
 
 
+    const currentPlan =
+      billing.plan as PaidBillingPlan;
+
+
+    const currentConfiguration =
+      PLAN_CONFIGURATION[
+        currentPlan
+      ];
+
+
+    const configuration =
+      PLAN_CONFIGURATION[
+        requestedPlan
+      ];
+
+
+    if(
+      !currentConfiguration
+      ||
+      !configuration
+    ){
+
+      throw new AppError(
+        "BILLING_PLAN_INVALID",
+        "Billing plan configuration is invalid",
+        500,
+      );
+
+    }
+
+
+    if(
+      billing.plan === requestedPlan
+      &&
+      !billing.pendingPlan
+    ){
+
+      throw new AppError(
+        "BILLING_PLAN_ALREADY_ACTIVE",
+        "This billing plan is already active",
+        409,
+      );
+
+    }
+
+
+    const amountDueNow =
+      Math.round(
+        Math.max(
+          0,
+          configuration.amount
+          -
+          currentConfiguration.amount,
+        )
+        *
+        100,
+      )
+      /
+      100;
+
+
+    if(
+      billing.pendingPlan === requestedPlan
+      &&
+      [
+        "PLAN_CHANGE_PAYMENT_PENDING",
+        "PLAN_CHANGE_REVIEW_REQUIRED",
+      ].includes(
+        billing.status,
+      )
+    ){
+
+      return {
+        currentPlan:
+          billing.plan,
+
+        pendingPlan:
+          billing.pendingPlan,
+
+        status:
+          billing.status,
+
+        effective:
+          "AFTER_PAYMENT",
+
+        paymentStatus:
+          billing.status
+            === "PLAN_CHANGE_PAYMENT_PENDING"
+              ? "AWAITING_WEBHOOK"
+              : "REVIEW_REQUIRED",
+
+        amountDueNow,
+
+        currency:
+          "MYR",
+
+        reused:
+          true,
+      };
+
+    }
+
+
     if(
       ![
         "ACTIVE",
@@ -740,144 +886,180 @@ export class BillingService {
     }
 
 
-    if(
-      billing.plan === requestedPlan
-      &&
-      !billing.pendingPlan
-    ){
-
-      throw new AppError(
-        "BILLING_PLAN_ALREADY_ACTIVE",
-        "This billing plan is already active",
-        409,
+    const providerPath =
+      (
+        "/v1/recurring-billing/"
+        +
+        encodeURIComponent(
+          billing.providerSubscriptionId,
+        )
       );
 
-    }
+
+    if(amountDueNow === 0){
+
+      if(
+        billing.pendingPlan
+          === requestedPlan
+      ){
+
+        return {
+          currentPlan:
+            billing.plan,
+
+          pendingPlan:
+            billing.pendingPlan,
+
+          status:
+            billing.status,
+
+          effective:
+            "NEXT_CYCLE",
+
+          amountDueNow:
+            0,
+
+          currency:
+            "MYR",
+
+          reused:
+            true,
+        };
+
+      }
 
 
-    if(
-      billing.pendingPlan
-        === requestedPlan
-    ){
+      const response =
+        await this.hitPay.request({
+          method:
+            "PUT",
+
+          path:
+            providerPath,
+
+          body:{
+            plan_id:
+              configuration.providerPlanId,
+          },
+        });
+
+
+      if(
+        response.status !== 200
+        ||
+        !this.isRecord(
+          response.payload,
+        )
+      ){
+
+        throw new AppError(
+          "HITPAY_PLAN_CHANGE_FAILED",
+          "HitPay could not schedule the billing downgrade",
+          502,
+        );
+
+      }
+
+
+      const responsePlanId =
+        this.firstString(
+          response.payload
+            .business_recurring_plans_id,
+
+          response.payload
+            .plan_id,
+        );
+
+
+      if(
+        responsePlanId
+        &&
+        responsePlanId
+          !== configuration.providerPlanId
+      ){
+
+        throw new AppError(
+          "HITPAY_PLAN_CHANGE_MISMATCH",
+          "HitPay returned a different billing plan",
+          502,
+        );
+
+      }
+
+
+      const updated =
+        await this.app.prisma
+          .workspaceBillingSubscription
+          .update({
+            where:{
+              id:
+                billing.id,
+            },
+
+            data:{
+              pendingPlan:
+                requestedPlan,
+
+              pendingProviderPlanId:
+                configuration.providerPlanId,
+
+              planChangeRequestedAt:
+                new Date(),
+
+              checkoutUrl:
+                this.stringValue(
+                  response.payload.url,
+                )
+                ||
+                billing.checkoutUrl,
+            },
+          });
+
 
       return {
         currentPlan:
-          billing.plan,
+          updated.plan,
 
         pendingPlan:
-          billing.pendingPlan,
+          updated.pendingPlan,
 
         status:
-          billing.status,
+          updated.status,
 
         effective:
           "NEXT_CYCLE",
 
+        amountDueNow:
+          0,
+
+        currency:
+          "MYR",
+
         reused:
-          true,
+          false,
       };
 
     }
 
 
-    const configuration =
-      PLAN_CONFIGURATION[
-        requestedPlan
-      ];
+    const reservedAt =
+      new Date();
 
 
-    const response =
-      await this.hitPay.request({
-        method:
-          "PUT",
-
-        path:
-          (
-            "/v1/recurring-billing/"
-            +
-            encodeURIComponent(
-              billing.providerSubscriptionId,
-            )
-          ),
-
-        body:{
-          plan_id:
-            configuration.providerPlanId,
-        },
-      });
+    const originalBillingStatus =
+      billing.status;
 
 
-    if(response.status !== 200){
-
-      this.app.log.error(
-        {
-          hitPayStatus:
-            response.status,
-
-          workspaceId:
-            membership.workspaceId,
-        },
-        "HITPAY_CHANGE_RECURRING_PLAN_FAILED",
-      );
-
-
-      throw new AppError(
-        "HITPAY_PLAN_CHANGE_FAILED",
-        "HitPay could not change the billing plan",
-        502,
-      );
-
-    }
-
-
-    if(
-      !this.isRecord(
-        response.payload,
-      )
-    ){
-
-      throw new AppError(
-        "HITPAY_RESPONSE_INVALID",
-        "HitPay returned an invalid response",
-        502,
-      );
-
-    }
-
-
-    const responsePlanId =
-      this.firstString(
-        response.payload
-          .business_recurring_plans_id,
-
-        response.payload
-          .plan_id,
-      );
-
-
-    if(
-      responsePlanId
-      &&
-      responsePlanId
-        !== configuration.providerPlanId
-    ){
-
-      throw new AppError(
-        "HITPAY_PLAN_CHANGE_MISMATCH",
-        "HitPay returned a different billing plan",
-        502,
-      );
-
-    }
-
-
-    const updated =
+    const reservation =
       await this.app.prisma
         .workspaceBillingSubscription
-        .update({
+        .updateMany({
           where:{
             id:
               billing.id,
+
+            updatedAt:
+              billing.updatedAt,
           },
 
           data:{
@@ -888,30 +1070,452 @@ export class BillingService {
               configuration.providerPlanId,
 
             planChangeRequestedAt:
-              new Date(),
+              reservedAt,
 
-            checkoutUrl:
-              this.stringValue(
-                response.payload.url,
-              )
-              ||
-              billing.checkoutUrl,
+            status:
+              "PLAN_CHANGE_PAYMENT_PENDING",
+
+            lastPaymentStatus:
+              "PENDING",
           },
         });
 
 
+    if(reservation.count !== 1){
+
+      const concurrent =
+        await this.app.prisma
+          .workspaceBillingSubscription
+          .findUnique({
+            where:{
+              id:
+                billing.id,
+            },
+          });
+
+
+      if(
+        concurrent?.pendingPlan
+          === requestedPlan
+        &&
+        [
+          "PLAN_CHANGE_PAYMENT_PENDING",
+          "PLAN_CHANGE_REVIEW_REQUIRED",
+        ].includes(
+          concurrent.status,
+        )
+      ){
+
+        return {
+          currentPlan:
+            concurrent.plan,
+
+          pendingPlan:
+            concurrent.pendingPlan,
+
+          status:
+            concurrent.status,
+
+          effective:
+            "AFTER_PAYMENT",
+
+          paymentStatus:
+            concurrent.status
+              === "PLAN_CHANGE_PAYMENT_PENDING"
+                ? "AWAITING_WEBHOOK"
+                : "REVIEW_REQUIRED",
+
+          amountDueNow,
+
+          currency:
+            "MYR",
+
+          reused:
+            true,
+        };
+
+      }
+
+
+      throw new AppError(
+        "BILLING_PLAN_CHANGE_CONFLICT",
+        "The billing plan changed while this request was being processed",
+        409,
+      );
+
+    }
+
+
+    const markReviewRequired =
+      async () => {
+        await this.app.prisma
+          .workspaceBillingSubscription
+          .updateMany({
+            where:{
+              id:
+                billing.id,
+
+              pendingPlan:
+                requestedPlan,
+            },
+
+            data:{
+              status:
+                "PLAN_CHANGE_REVIEW_REQUIRED",
+
+              lastPaymentStatus:
+                "UNKNOWN",
+            },
+          });
+      };
+
+
+    const clearFailedUpgrade =
+      async () => {
+        let rollback;
+
+
+        try{
+          rollback =
+            await this.hitPay.request({
+              method:
+                "PUT",
+
+              path:
+                providerPath,
+
+              body:{
+                plan_id:
+                  currentConfiguration.providerPlanId,
+              },
+            });
+        }catch{
+          await markReviewRequired();
+
+          throw new AppError(
+            "HITPAY_PLAN_CHANGE_ROLLBACK_FAILED",
+            "HitPay plan change needs manual review",
+            502,
+          );
+        }
+
+
+        if(rollback.status !== 200){
+          await markReviewRequired();
+
+          throw new AppError(
+            "HITPAY_PLAN_CHANGE_ROLLBACK_FAILED",
+            "HitPay plan change needs manual review",
+            502,
+          );
+        }
+
+
+        await this.app.prisma
+          .workspaceBillingSubscription
+          .updateMany({
+            where:{
+              id:
+                billing.id,
+
+              pendingPlan:
+                requestedPlan,
+            },
+
+            data:{
+              pendingPlan:
+                null,
+
+              pendingProviderPlanId:
+                null,
+
+              planChangeRequestedAt:
+                null,
+
+              status:
+                originalBillingStatus,
+
+              lastPaymentStatus:
+                "FAILED",
+            },
+          });
+      };
+
+
+    const providerAlreadyTargeted =
+      billing.pendingPlan
+        === requestedPlan
+      &&
+      billing.pendingProviderPlanId
+        === configuration.providerPlanId;
+
+
+    if(!providerAlreadyTargeted){
+
+      let providerUpdate;
+
+
+      try{
+        providerUpdate =
+          await this.hitPay.request({
+            method:
+              "PUT",
+
+            path:
+              providerPath,
+
+            body:{
+              plan_id:
+                configuration.providerPlanId,
+            },
+          });
+      }catch{
+        await markReviewRequired();
+
+        throw new AppError(
+          "HITPAY_PLAN_CHANGE_UNCERTAIN",
+          "HitPay plan update needs manual review",
+          502,
+        );
+      }
+
+
+      if(
+        providerUpdate.status !== 200
+        ||
+        !this.isRecord(
+          providerUpdate.payload,
+        )
+      ){
+        await markReviewRequired();
+
+        throw new AppError(
+          "HITPAY_PLAN_CHANGE_UNCERTAIN",
+          "HitPay plan update needs manual review",
+          502,
+        );
+      }
+
+
+      const responsePlanId =
+        this.firstString(
+          providerUpdate.payload
+            .business_recurring_plans_id,
+
+          providerUpdate.payload
+            .plan_id,
+        );
+
+
+      if(
+        responsePlanId
+        &&
+        responsePlanId
+          !== configuration.providerPlanId
+      ){
+        await markReviewRequired();
+
+        throw new AppError(
+          "HITPAY_PLAN_CHANGE_MISMATCH",
+          "HitPay returned a different billing plan",
+          502,
+        );
+      }
+
+    }
+
+
+    let paymentResponse;
+
+
+    try{
+      paymentResponse =
+        await this.hitPay.request({
+          method:
+            "POST",
+
+          path:
+            (
+              "/v1/charge/recurring-billing/"
+              +
+              encodeURIComponent(
+                billing.providerSubscriptionId,
+              )
+            ),
+
+          body:{
+            amount:
+              amountDueNow,
+
+            currency:
+              "MYR",
+          },
+
+          encoding:
+            "form",
+        });
+    }catch{
+      await markReviewRequired();
+
+      throw new AppError(
+        "HITPAY_PLAN_CHANGE_PAYMENT_UNCERTAIN",
+        "HitPay payment needs manual review",
+        502,
+      );
+    }
+
+
+    if(
+      paymentResponse.status >= 400
+      &&
+      paymentResponse.status < 500
+    ){
+      await clearFailedUpgrade();
+
+      throw new AppError(
+        "HITPAY_PLAN_CHANGE_PAYMENT_FAILED",
+        "HitPay could not collect the upgrade balance",
+        402,
+      );
+    }
+
+
+    if(
+      ![
+        200,
+        201,
+      ].includes(
+        paymentResponse.status,
+      )
+      ||
+      !this.isRecord(
+        paymentResponse.payload,
+      )
+    ){
+      await markReviewRequired();
+
+      throw new AppError(
+        "HITPAY_PLAN_CHANGE_PAYMENT_UNCERTAIN",
+        "HitPay payment needs manual review",
+        502,
+      );
+    }
+
+
+    const providerPaymentStatus =
+      this.stringValue(
+        paymentResponse.payload.status,
+      )
+        .toLowerCase();
+
+
+    if(
+      [
+        "failed",
+        "declined",
+        "canceled",
+        "cancelled",
+      ].includes(
+        providerPaymentStatus,
+      )
+    ){
+      await clearFailedUpgrade();
+
+      throw new AppError(
+        "HITPAY_PLAN_CHANGE_PAYMENT_FAILED",
+        "HitPay could not collect the upgrade balance",
+        402,
+      );
+    }
+
+
+    if(
+      ![
+        "succeeded",
+        "success",
+        "paid",
+        "pending",
+        "processing",
+      ].includes(
+        providerPaymentStatus,
+      )
+    ){
+      await markReviewRequired();
+
+      throw new AppError(
+        "HITPAY_PLAN_CHANGE_PAYMENT_UNCERTAIN",
+        "HitPay payment needs manual review",
+        502,
+      );
+    }
+
+
+    const providerAmount =
+      this.numberValue(
+        paymentResponse.payload.amount,
+      );
+
+
+    const providerCurrency =
+      this.stringValue(
+        paymentResponse.payload.currency,
+      )
+        .toUpperCase();
+
+
+    if(
+      (
+        providerAmount !== null
+        &&
+        Math.round(
+          providerAmount
+          *
+          100,
+        )
+          !==
+        Math.round(
+          amountDueNow
+          *
+          100,
+        )
+      )
+      ||
+      (
+        providerCurrency
+        &&
+        providerCurrency !== "MYR"
+      )
+    ){
+      await markReviewRequired();
+
+      throw new AppError(
+        "HITPAY_PLAN_CHANGE_PAYMENT_MISMATCH",
+        "HitPay charged an unexpected upgrade amount",
+        502,
+      );
+    }
+
+
     return {
       currentPlan:
-        updated.plan,
+        billing.plan,
 
       pendingPlan:
-        updated.pendingPlan,
+        requestedPlan,
 
       status:
-        updated.status,
+        "PLAN_CHANGE_PAYMENT_PENDING",
 
       effective:
-        "NEXT_CYCLE",
+        "AFTER_PAYMENT",
+
+      paymentStatus:
+        "AWAITING_WEBHOOK",
+
+      amountDueNow,
+
+      currency:
+        "MYR",
 
       reused:
         false,
@@ -2177,7 +2781,13 @@ export class BillingService {
         );
 
 
-    const existing =
+    const externalId =
+      this.stringValue(
+        payload.id,
+      );
+
+
+    const existingByEventKey =
       await this.app.prisma
         .billingWebhookEvent
         .findUnique({
@@ -2187,29 +2797,38 @@ export class BillingService {
         });
 
 
-    if(existing){
+    const existing =
+      existingByEventKey
+      ??
+      (
+        externalId
+          ? await this.app.prisma
+              .billingWebhookEvent
+              .findFirst({
+                where:{
+                  provider:
+                    "HITPAY",
 
-      return {
-        received:
-          true,
+                  externalId,
 
-        duplicate:
-          true,
+                  eventObject,
 
-        mapped:
-          Boolean(
-            existing
-              .workspaceBillingSubscriptionId,
-          ),
+                  eventType,
 
-        eventId:
-          existing.id,
+                  status:
+                    "RECEIVED_UNMAPPED",
 
-        activationPerformed:
-          false,
-      };
+                  workspaceBillingSubscriptionId:
+                    null,
+                },
 
-    }
+                orderBy:{
+                  createdAt:
+                    "desc",
+                },
+              })
+          : null
+      );
 
 
     const billingSubscription =
@@ -2219,44 +2838,116 @@ export class BillingService {
       );
 
 
-    const event =
-      await this.app.prisma
-        .billingWebhookEvent
-        .create({
-          data:{
-            workspaceBillingSubscriptionId:
-              billingSubscription?.id
-              ??
-              null,
+    let event =
+      existing;
 
-            provider:
-              "HITPAY",
 
-            eventKey,
+    let recoveredDuplicate =
+      false;
 
-            signature:
-              input.signature,
 
-            eventObject,
+    if(existing){
 
-            eventType,
+      if(
+        existing.status
+          === "RECEIVED_UNMAPPED"
+        &&
+        !existing
+          .workspaceBillingSubscriptionId
+        &&
+        billingSubscription
+      ){
 
-            externalId:
-              this.stringValue(
-                payload.id,
-              )
-              ||
-              null,
+        event =
+          await this.app.prisma
+            .billingWebhookEvent
+            .update({
+              where:{
+                id:
+                  existing.id,
+              },
 
-            status:
-              billingSubscription
-                ? "RECEIVED_MAPPED"
-                : "RECEIVED_UNMAPPED",
+              data:{
+                workspaceBillingSubscriptionId:
+                  billingSubscription.id,
 
-            payload:
-              payload as Prisma.InputJsonValue,
-          },
-        });
+                status:
+                  "RECEIVED_MAPPED",
+
+                errorMessage:
+                  null,
+              },
+            });
+
+
+        recoveredDuplicate =
+          true;
+
+      }else{
+
+        return {
+          received:
+            true,
+
+          duplicate:
+            true,
+
+          mapped:
+            Boolean(
+              existing
+                .workspaceBillingSubscriptionId,
+            ),
+
+          eventId:
+            existing.id,
+
+          activationPerformed:
+            false,
+        };
+
+      }
+
+    }else{
+
+
+      event =
+        await this.app.prisma
+          .billingWebhookEvent
+          .create({
+            data:{
+              workspaceBillingSubscriptionId:
+                billingSubscription?.id
+                ??
+                null,
+
+              provider:
+                "HITPAY",
+
+              eventKey,
+
+              signature:
+                input.signature,
+
+              eventObject,
+
+              eventType,
+
+              externalId:
+                externalId
+                ||
+                null,
+
+              status:
+                billingSubscription
+                  ? "RECEIVED_MAPPED"
+                  : "RECEIVED_UNMAPPED",
+
+              payload:
+                payload as Prisma.InputJsonValue,
+            },
+          });
+
+    }
 
 
     if(!billingSubscription){
@@ -2266,7 +2957,7 @@ export class BillingService {
           true,
 
         duplicate:
-          false,
+          recoveredDuplicate,
 
         mapped:
           false,
@@ -2363,6 +3054,12 @@ export class BillingService {
 
     let activationPerformed =
       false;
+
+    let activatedRootFolderPlan:
+      PaidBillingPlan
+      |
+      null =
+        null;
 
 
     try{
@@ -2466,6 +3163,35 @@ export class BillingService {
                 );
 
 
+              const pendingUpgradeBalance =
+                pendingConfiguration
+                  ? Math.max(
+                      0,
+                      pendingConfiguration.amount
+                      -
+                      currentConfiguration.amount,
+                    )
+                  : 0;
+
+
+              const pendingUpgradeMatches =
+                Boolean(
+                  pendingPlan
+                  &&
+                  pendingConfiguration
+                  &&
+                  pendingUpgradeBalance > 0
+                  &&
+                  paidAmountInCents
+                    ===
+                  Math.round(
+                    pendingUpgradeBalance
+                    *
+                    100,
+                  ),
+                );
+
+
               if(
                 paidAmount === null
                 ||
@@ -2475,6 +3201,8 @@ export class BillingService {
                   !currentAmountMatches
                   &&
                   !pendingAmountMatches
+                  &&
+                  !pendingUpgradeMatches
                 )
               ){
 
@@ -2493,7 +3221,11 @@ export class BillingService {
                   &&
                   pendingConfiguration
                   &&
-                  pendingAmountMatches,
+                  (
+                    pendingAmountMatches
+                    ||
+                    pendingUpgradeMatches
+                  ),
                 );
 
 
@@ -2519,11 +3251,33 @@ export class BillingService {
                 processedAt;
 
 
-              const currentPeriodEnd =
-                this.addMonths(
-                  paymentAt,
-                  1,
+              const preservePaidPeriod =
+                Boolean(
+                  pendingUpgradeMatches
+                  &&
+                  billingSubscription
+                    .currentPeriodStart
+                  &&
+                  billingSubscription
+                    .currentPeriodEnd,
                 );
+
+
+              const currentPeriodStart =
+                preservePaidPeriod
+                  ? billingSubscription
+                      .currentPeriodStart!
+                  : paymentAt;
+
+
+              const currentPeriodEnd =
+                preservePaidPeriod
+                  ? billingSubscription
+                      .currentPeriodEnd!
+                  : this.addMonths(
+                      paymentAt,
+                      1,
+                    );
 
 
               await transaction
@@ -2578,7 +3332,7 @@ export class BillingService {
                       "SUCCEEDED",
 
                     currentPeriodStart:
-                      paymentAt,
+                      currentPeriodStart,
 
                     currentPeriodEnd,
 
@@ -2648,6 +3402,9 @@ export class BillingService {
 
               activationPerformed =
                 true;
+
+              activatedRootFolderPlan =
+                activatedPlan;
 
             }else if(failedPayment){
 
@@ -2853,6 +3610,32 @@ export class BillingService {
           },
         );
 
+
+      if(activatedRootFolderPlan){
+        try{
+          await this.renameAutoCreatedRootFolder({
+            workspaceId:
+              billingSubscription
+                .workspaceId,
+            plan:
+              activatedRootFolderPlan,
+          });
+        }catch(error){
+          this.app.log.warn(
+            {
+              err:
+                error,
+              workspaceId:
+                billingSubscription
+                  .workspaceId,
+              plan:
+                activatedRootFolderPlan,
+            },
+            "Google Drive root folder rename will be retried on a later billing event",
+          );
+        }
+      }
+
     }catch(error){
 
       const message =
@@ -2895,7 +3678,7 @@ export class BillingService {
         true,
 
       duplicate:
-        false,
+        recoveredDuplicate,
 
       mapped:
         true,
@@ -2988,6 +3771,24 @@ export class BillingService {
         : null;
 
 
+    const nestedRelatable =
+      this.isRecord(
+        payload.relatable,
+      )
+        ? payload.relatable
+        : null;
+
+
+    const nestedBusinessCharge =
+      this.isRecord(
+        nestedRelatable
+          ?.business_charge,
+      )
+        ? nestedRelatable
+          .business_charge
+        : null;
+
+
     const providerSubscriptionId =
       this.firstString(
         payload.recurring_billing_id,
@@ -2997,6 +3798,7 @@ export class BillingService {
         nestedRecurringBilling?.id,
         nestedPaymentRequest
           ?.recurring_billing_id,
+        nestedBusinessCharge?.id,
         eventObject.startsWith(
           "recurring_billing",
         )
@@ -3035,6 +3837,8 @@ export class BillingService {
         nestedPaymentRequest?.reference,
         nestedPaymentRequest
           ?.reference_number,
+        nestedBusinessCharge
+          ?.reference,
       );
 
 
@@ -3067,6 +3871,8 @@ export class BillingService {
         nestedRecurringBilling
           ?.customer_email,
         nestedPaymentRequest
+          ?.customer_email,
+        nestedBusinessCharge
           ?.customer_email,
       )
         .toLowerCase();
@@ -3117,6 +3923,8 @@ export class BillingService {
                 "PENDING",
                 "ACTIVE",
                 "RETRYING",
+                "PLAN_CHANGE_PAYMENT_PENDING",
+                "PLAN_CHANGE_REVIEW_REQUIRED",
               ],
             },
           },
@@ -3152,20 +3960,57 @@ export class BillingService {
               ];
 
 
-            return Boolean(
-              configuration
-              &&
-              Math.round(
-                configuration.amount
-                *
-                100,
-              )
-              ===
+            const pendingConfiguration =
+              candidate.pendingPlan
+                ? PLAN_CONFIGURATION[
+                    candidate.pendingPlan as
+                      PaidBillingPlan
+                  ]
+                : null;
+
+
+            const amountInCents =
               Math.round(
                 amount
                 *
                 100,
-              ),
+              );
+
+
+            const acceptedAmounts =
+              configuration
+                ? [
+                    configuration.amount,
+                    ...(
+                      pendingConfiguration
+                        ? [
+                            pendingConfiguration
+                              .amount,
+                            Math.max(
+                              0,
+                              pendingConfiguration
+                                .amount
+                              -
+                              configuration.amount,
+                            ),
+                          ]
+                        : []
+                    ),
+                  ]
+                : [];
+
+
+            return acceptedAmounts.some(
+              (
+                acceptedAmount,
+              ) =>
+                Math.round(
+                  acceptedAmount
+                  *
+                  100,
+                )
+                ===
+                amountInCents,
             );
 
           },
@@ -3178,6 +4023,61 @@ export class BillingService {
 
   }
 
+
+
+  private async renameWorkspaceRootFolder(
+    input:AutoCreatedRootFolderRenameInput,
+  ){
+    const workspace =
+      await this.app.prisma
+        .workspace
+        .findUnique({
+          where:{
+            id:
+              input.workspaceId,
+          },
+          select:{
+            owner:{
+              select:{
+                email:
+                  true,
+              },
+            },
+            googleSetting:{
+              select:{
+                mode:
+                  true,
+                rootFolderId:
+                  true,
+              },
+            },
+          },
+        });
+
+    if(
+      workspace
+        ?.googleSetting
+        ?.mode !== "AUTO_CREATED"
+      ||
+      !workspace.googleSetting.rootFolderId
+    ){
+      return;
+    }
+
+    const drive =
+      new GoogleDriveService(
+        this.app,
+      );
+
+    await drive.renameFile(
+      input.workspaceId,
+      workspace.googleSetting.rootFolderId,
+      buildMyPocketRootFolderName(
+        input.plan,
+        workspace.owner.email,
+      ),
+    );
+  }
 
 
   private hitPayWebhookSalt(){

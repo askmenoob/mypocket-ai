@@ -560,6 +560,70 @@ export class TransactionService {
 
 
 
+  async getSheetCategoryNames(
+    workspaceId:string,
+  ):Promise<string[]>{
+
+    const setting =
+      await this.googleSettingsRepository
+        .findByWorkspaceId(
+          workspaceId,
+        );
+
+    if(!setting?.spreadsheetId){
+
+      return [];
+
+    }
+
+    const sheetTitles =
+      await this.sheetsService
+        .getSheetTitles(
+          workspaceId,
+          setting.spreadsheetId,
+        );
+
+    if(
+      !sheetTitles.includes(
+        "Categories",
+      )
+    ){
+
+      return [];
+
+    }
+
+    const rows =
+      await this.sheetsService
+        .readRange(
+          workspaceId,
+          {
+            spreadsheetId:
+              setting.spreadsheetId,
+            range:
+              "Categories!A2:A200",
+          },
+        );
+
+    return Array.from(
+      new Set(
+        rows
+          .map(
+            (row) => String(
+              row[0]
+              ??
+              "",
+            ).trim(),
+          )
+          .filter(Boolean),
+      ),
+    );
+
+  }
+
+
+
+
 
   async createTransaction(
     actorRole:
@@ -627,6 +691,18 @@ export class TransactionService {
             input.source
             ??
             "SYSTEM",
+
+          aiConfidence:
+            input.aiConfidence,
+
+          receiptUrl:
+            input.receiptUrl,
+
+          receiptType:
+            input.receiptType,
+
+          receiptClassificationSource:
+            input.receiptClassificationSource,
 
           createdById:
             input.createdById,

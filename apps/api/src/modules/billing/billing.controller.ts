@@ -4,6 +4,13 @@ import type {
 } from "fastify";
 
 import {
+  env,
+} from "../../config/index.js";
+import {
+  hitPayWebhookSourceAllowed,
+} from "../../config/hitpay-environment.js";
+
+import {
   AppError,
 } from "../../shared/errors/app-error.js";
 
@@ -179,6 +186,43 @@ export class BillingController {
     }
 
 
+    const sourceIp =
+      this.headerValue(
+        request.headers[
+          "cf-connecting-ip"
+        ],
+      )
+        .trim();
+
+
+    if(
+      !hitPayWebhookSourceAllowed(
+        env.HITPAY_ENVIRONMENT,
+        sourceIp,
+      )
+    ){
+      request.log.warn(
+        {
+          hitpayWebhookSource:{
+            environment:
+              env.HITPAY_ENVIRONMENT,
+            sourceIp:
+              sourceIp
+              ||
+              null,
+          },
+        },
+        "Rejected HitPay webhook source",
+      );
+
+      throw new AppError(
+        "HITPAY_SOURCE_IP_NOT_ALLOWED",
+        "HitPay webhook source is not allowed",
+        403,
+      );
+    }
+
+
     const diagnosticSignature =
       this.headerValue(
         request.headers[
@@ -219,6 +263,8 @@ export class BillingController {
     request.log.warn(
       {
         hitpayWebhookTransport:{
+          sourceIp,
+
           userAgent:
             diagnosticUserAgent
             ||

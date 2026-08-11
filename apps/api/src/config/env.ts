@@ -3,6 +3,10 @@ import { z } from "zod";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  hitPayEnvironmentIssues,
+} from "./hitpay-environment.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -123,6 +127,46 @@ const EnvSchema = z.object({
     z.string()
       .uuid(),
 
-});
+}).superRefine(
+  (
+    value,
+    context,
+  ) => {
+    const issues =
+      hitPayEnvironmentIssues({
+        environment:
+          value.HITPAY_ENVIRONMENT,
+        apiBaseUrl:
+          value.HITPAY_API_BASE_URL,
+        webhookUrl:
+          value.HITPAY_WEBHOOK_URL,
+        personalProPlanId:
+          value.HITPAY_PLAN_PERSONAL_PRO_ID,
+        familyPlanId:
+          value.HITPAY_PLAN_FAMILY_ID,
+        businessPlanId:
+          value.HITPAY_PLAN_BUSINESS_ID,
+      });
+
+    for(const issue of issues){
+      context.addIssue({
+        code:
+          "custom",
+        message:
+          issue,
+        path:
+          issue.startsWith(
+            "HITPAY_API_BASE_URL",
+          )
+            ? ["HITPAY_API_BASE_URL"]
+            : issue.startsWith(
+              "HITPAY_WEBHOOK_URL",
+            )
+              ? ["HITPAY_WEBHOOK_URL"]
+              : ["HITPAY_PLAN_PERSONAL_PRO_ID"],
+      });
+    }
+  },
+);
 
 export const env = EnvSchema.parse(process.env);

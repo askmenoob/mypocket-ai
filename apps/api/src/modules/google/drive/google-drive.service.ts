@@ -209,6 +209,87 @@ export class GoogleDriveService {
   }
 
 
+  async renameFile(
+    workspaceId:string,
+    fileId:string,
+    name:string,
+  ){
+    const normalizedName =
+      name
+        .trim()
+        .replace(
+          /[\0]/g,
+          "",
+        )
+        .slice(
+          0,
+          200,
+        );
+
+    if(!normalizedName){
+      throw new Error(
+        "GOOGLE_DRIVE_FILE_NAME_MISSING",
+      );
+    }
+
+    const current =
+      await this.getFileMetadata(
+        workspaceId,
+        fileId,
+      );
+
+    if(
+      current.trashed
+      ||
+      !current.capabilities.canEdit
+    ){
+      throw new Error(
+        "GOOGLE_DRIVE_FILE_NOT_EDITABLE",
+      );
+    }
+
+    if(current.name === normalizedName){
+      return {
+        id:
+          current.id,
+        name:
+          current.name,
+        renamed:
+          false,
+      };
+    }
+
+    const drive =
+      await this.getClient(
+        workspaceId,
+      );
+
+    const response =
+      await drive.files.update({
+        fileId,
+        requestBody:{
+          name:
+            normalizedName,
+        },
+        fields:
+          "id,name",
+      });
+
+    return {
+      id:
+        response.data.id
+        ??
+        fileId,
+      name:
+        response.data.name
+        ??
+        normalizedName,
+      renamed:
+        true,
+    };
+  }
+
+
   async createFolder(
     workspaceId:string,
 

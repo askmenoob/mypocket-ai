@@ -35,6 +35,12 @@ export interface CreateTransactionInput {
 
   source?:string;
 
+  aiConfidence?:number;
+
+  receiptType?:string;
+
+  receiptClassificationSource?:string;
+
 }
 
 

@@ -232,3 +232,61 @@ test(
 
   },
 );
+
+
+test(
+  "the HitPay return route reports pending, canceled and failed outcomes safely",
+  () => {
+
+    const source =
+      readFileSync(
+        resolve(
+          process.cwd(),
+          "../web/src/app-bootstrap.tsx",
+        ),
+        "utf8",
+      );
+
+    const returnIndex =
+      source.indexOf(
+        '=== "/billing/hitpay/return"',
+      );
+
+    assert.notEqual(
+      returnIndex,
+      -1,
+    );
+
+    const returnBlock =
+      source.slice(
+        returnIndex,
+        returnIndex + 1900,
+      );
+
+    assert.match(
+      returnBlock,
+      /"cancelled",\s*"canceled",\s*"cancel",/s,
+    );
+    assert.match(
+      returnBlock,
+      /"failed",\s*"failure",\s*"declined",/s,
+    );
+    assert.match(
+      returnBlock,
+      /No subscription access was activated/,
+    );
+    assert.match(
+      returnBlock,
+      /verifying the signed HitPay confirmation before activating access/,
+    );
+    assert.match(
+      returnBlock,
+      /loadAll\(\s*token,\s*\)/s,
+    );
+    assert.match(
+      returnBlock,
+      /"\/#dashboard"/,
+    );
+
+  },
+);

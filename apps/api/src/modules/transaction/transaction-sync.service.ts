@@ -136,8 +136,12 @@ export class TransactionSyncService {
       ??
       "SYSTEM",
 
+      payload.aiConfidence
+      ??
       "",
 
+      payload.receiptUrl
+      ??
       "",
 
       transactionIso,
@@ -155,6 +159,17 @@ export class TransactionSyncService {
 
     for(const spreadsheetId of spreadsheetIds){
 
+      const sheetTitles =
+        payload.source === "WHATSAPP_RECEIPT"
+        &&
+        payload.receiptUrl
+          ? await this.sheetsService
+            .getSheetTitles(
+              payload.workspaceId,
+              spreadsheetId,
+            )
+          : [];
+
       await this.sheetsService
         .appendRow(
           payload.workspaceId,
@@ -168,6 +183,46 @@ export class TransactionSyncService {
 
           },
         );
+
+      if(
+        sheetTitles.includes(
+          "Receipts Checklist",
+        )
+      ){
+
+        await this.sheetsService
+          .appendRow(
+            payload.workspaceId,
+            {
+              spreadsheetId,
+              range:
+                "Receipts Checklist!A:J",
+              values:[
+                payload.transactionDate
+                  .getUTCFullYear(),
+                transactionDate,
+                payload.transactionId,
+                payload.merchant,
+                payload.category,
+                payload.amount,
+                payload.receiptUrl,
+                "",
+                "REVIEW",
+                [
+                  payload.receiptType
+                    ? `Receipt type: ${payload.receiptType}`
+                    : "",
+                  payload.receiptClassificationSource
+                    ? `Classification: ${payload.receiptClassificationSource}`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join("; "),
+              ],
+            },
+          );
+
+      }
 
     }
 

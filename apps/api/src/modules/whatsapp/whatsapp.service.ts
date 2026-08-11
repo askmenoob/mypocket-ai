@@ -90,6 +90,7 @@ import {
 
 import type {
   ReceiptVisionCandidate,
+  ReceiptType,
 } from "../intelligence/groq-vision.provider.js";
 
 
@@ -2537,6 +2538,12 @@ export class WhatsAppService {
       result.status === "confirmation_required"
     ){
 
+      result.extraction =
+        await this.enrichReceiptClassification(
+          workspaceId,
+          result.extraction,
+        );
+
       if(
         result.extraction.amount?.trim()
       ){
@@ -2609,6 +2616,10 @@ export class WhatsAppService {
             result.extraction.merchantName
               ??
               "Merchant tidak jelas",
+            this.buildReceiptClassificationLine(
+              result.extraction,
+              "ms",
+            ),
             result.extraction.amount
               ?
               `${result.extraction.currency ?? ""} ${result.extraction.amount}`.trim()
@@ -3451,6 +3462,7 @@ export class WhatsAppService {
     if(isCategories){
 
       return this.handleCategoriesCommand(
+        instance.workspaceId,
         normalized,
         commandReplyLanguage,
       );
@@ -4274,11 +4286,19 @@ export class WhatsAppService {
           ? [
             "✅ Receipt confirmed and transaction recorded.",
             `${draft.extraction.merchantName ?? "Receipt"} ${draft.extraction.currency ?? "MYR"} ${draft.extraction.amount}`,
+            this.buildReceiptClassificationLine(
+              draft.extraction,
+              "en",
+            ),
             draft.receiptUrl,
           ].join("\n")
           : [
             "✅ Receipt disahkan dan transaksi direkodkan.",
             `${draft.extraction.merchantName ?? "Receipt"} ${draft.extraction.currency ?? "MYR"} ${draft.extraction.amount}`,
+            this.buildReceiptClassificationLine(
+              draft.extraction,
+              "ms",
+            ),
             draft.receiptUrl,
           ].join("\n"),
       );
@@ -4519,10 +4539,21 @@ export class WhatsAppService {
         currency,
       );
 
+    const categoryName =
+      this.normalizeReceiptCategoryName(
+        draft.extraction.categoryName,
+      )
+      ??
+      this.receiptCategoryForType(
+        draft.extraction.receiptType,
+      )
+      ??
+      parsed.categoryName;
+
     const category =
       await this.findOrCreateCategory(
         draft.workspaceId,
-        parsed.categoryName,
+        categoryName,
       );
 
     const merchant =
@@ -4567,10 +4598,462 @@ export class WhatsAppService {
             merchant.id,
           receiptUrl:
             receiptUrl,
+          aiConfidence:
+            draft.extraction.confidence,
+          receiptType:
+            draft.extraction.receiptType,
+          receiptClassificationSource:
+            draft.extraction.classificationSource,
           source:
             "WHATSAPP_RECEIPT",
         },
       );
+
+  }
+
+
+  private async enrichReceiptClassification(
+    workspaceId:string,
+    extraction:ReceiptVisionCandidate,
+  ):Promise<ReceiptVisionCandidate>{
+
+    const availableCategories =
+      await this.getReceiptCategoryNames(
+        workspaceId,
+      );
+
+    const evidenceCategory =
+      extraction.classificationSource === "EVIDENCE"
+        ? this.selectReceiptCategory(
+            extraction.receiptType,
+            availableCategories,
+          )
+        : undefined;
+
+    if(evidenceCategory){
+
+      return {
+        ...extraction,
+        categoryName:evidenceCategory,
+      };
+
+    }
+
+    const memory =
+      await this.findReceiptClassificationMemory(
+        workspaceId,
+        extraction.merchantName,
+      );
+
+    if(memory){
+
+      return {
+        ...extraction,
+        receiptType:memory.receiptType,
+        categoryName:
+          this.selectReceiptCategory(
+            memory.receiptType,
+            availableCategories,
+            memory.categoryName,
+          ),
+        classificationSource:"MEMORY",
+      };
+
+    }
+
+    const categoryName =
+      this.selectReceiptCategory(
+        extraction.receiptType,
+        availableCategories,
+      );
+
+    return categoryName
+      ? {
+          ...extraction,
+          categoryName,
+        }
+      : extraction;
+
+  }
+
+
+  private async getReceiptCategoryNames(
+    workspaceId:string,
+  ):Promise<string[]>{
+
+    try{
+
+      return await this.transactionService
+        .getSheetCategoryNames(
+          workspaceId,
+        );
+
+    }catch(error){
+
+      console.warn(
+        "WHATSAPP_RECEIPT_CATEGORY_READ_FAILED:",
+        error instanceof Error
+          ? error.message
+          : "UNKNOWN",
+      );
+
+      return [];
+
+    }
+
+  }
+
+
+  private async findReceiptClassificationMemory(
+    workspaceId:string,
+    merchantName?:string,
+  ):Promise<{
+    receiptType:ReceiptType;
+    categoryName:string;
+  } | undefined>{
+
+    const merchantKey =
+      this.normalizeReceiptMerchantKey(
+        merchantName,
+      );
+
+    if(!merchantKey){
+
+      return undefined;
+
+    }
+
+    try{
+
+      const transactions =
+        await this.transactionService
+          .getSheetTransactions(
+            workspaceId,
+          );
+
+      const transaction =
+        transactions.find(
+          (candidate:any) =>
+            String(
+              candidate.source
+              ??
+              "",
+            ).toUpperCase() === "WHATSAPP_RECEIPT"
+            &&
+            this.normalizeReceiptMerchantKey(
+              candidate.merchant?.name,
+            ) === merchantKey
+            &&
+            this.normalizeReceiptCategoryName(
+              candidate.category?.name,
+            ) !== undefined,
+        );
+
+      const categoryName =
+        this.normalizeReceiptCategoryName(
+          transaction?.category?.name,
+        );
+
+      if(!categoryName){
+
+        return undefined;
+
+      }
+
+      return {
+        receiptType:
+          this.receiptTypeForMemory(
+            categoryName,
+            merchantName,
+          ),
+        categoryName,
+      };
+
+    }catch(error){
+
+      console.warn(
+        "WHATSAPP_RECEIPT_MEMORY_READ_FAILED:",
+        error instanceof Error
+          ? error.message
+          : "UNKNOWN",
+      );
+
+      return undefined;
+
+    }
+
+  }
+
+
+  private normalizeReceiptMerchantKey(
+    value?:string,
+  ){
+
+    return String(
+      value
+      ??
+      "",
+    )
+      .toLowerCase()
+      .replace(/\b(?:sdn\.?\s*bhd\.?|berhad|plc|limited|ltd\.?)\b/g, " ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+
+  }
+
+
+  private normalizeReceiptCategoryName(
+    value?:string,
+  ){
+
+    const categories:
+      Record<string, string> = {
+        food:"Food",
+        transport:"Transport",
+        bills:"Bills",
+        shopping:"Shopping",
+        rent:"Rent",
+        sales:"Sales",
+        marketing:"Marketing",
+        office:"Office",
+        salary:"Salary",
+        supplier:"Supplier",
+        rental:"Rental",
+        utilities:"Utilities",
+        travel:"Travel",
+        tax:"Tax",
+        others:"Others",
+      };
+
+    return categories[
+      String(
+        value
+        ??
+        "",
+      )
+        .trim()
+        .toLowerCase()
+    ];
+
+  }
+
+
+  private selectReceiptCategory(
+    receiptType:ReceiptType | undefined,
+    availableCategories:string[],
+    fallbackCategory?:string,
+  ){
+
+    const fallback =
+      this.normalizeReceiptCategoryName(
+        fallbackCategory,
+      )
+      ??
+      this.receiptCategoryForType(
+        receiptType,
+      )
+      ??
+      "Others";
+
+    if(availableCategories.length === 0){
+
+      return fallback;
+
+    }
+
+    const candidates:
+      Record<ReceiptType, string[]> = {
+        FUEL:["Fuel", "Petrol", "Transport", "Travel", "Vehicle", "Others"],
+        GROCERIES:["Groceries", "Grocery", "Shopping", "Supplier", "Office", "Others"],
+        DINING:["Food", "Meals", "Dining", "Travel", "Others"],
+        TRANSPORT:["Transport", "Travel", "Vehicle", "Others"],
+        UTILITIES:["Bills", "Utilities", "Office", "Others"],
+        RETAIL:["Shopping", "Office", "Supplier", "Others"],
+        HEALTHCARE:["Healthcare", "Medical", "Health", "Others"],
+        ACCOMMODATION:["Accommodation", "Travel", "Rental", "Rent", "Others"],
+        SERVICES:["Services", "Professional Fees", "Supplier", "Office", "Others"],
+        OTHER:["Others"],
+      };
+
+    const availableByKey =
+      new Map(
+        availableCategories.map(
+          (category) => [
+            category.trim().toLowerCase(),
+            category,
+          ],
+        ),
+      );
+
+    const orderedCandidates = [
+      fallbackCategory
+        ??
+        "",
+      ...(receiptType
+        ? candidates[receiptType]
+        : []),
+      fallback,
+      "Others",
+    ]
+      .filter(Boolean);
+
+    for(const candidate of orderedCandidates){
+
+      const available =
+        availableByKey.get(
+          candidate.trim().toLowerCase(),
+        );
+
+      if(available){
+
+        return available;
+
+      }
+
+    }
+
+    return fallback;
+
+  }
+
+
+  private receiptCategoryForType(
+    receiptType?:ReceiptType,
+  ){
+
+    const categories:
+      Partial<Record<ReceiptType, string>> = {
+        FUEL:"Transport",
+        GROCERIES:"Shopping",
+        DINING:"Food",
+        TRANSPORT:"Transport",
+        UTILITIES:"Bills",
+        RETAIL:"Shopping",
+        HEALTHCARE:"Others",
+        ACCOMMODATION:"Others",
+        SERVICES:"Others",
+        OTHER:"Others",
+      };
+
+    return receiptType
+      ? categories[receiptType]
+      : undefined;
+
+  }
+
+
+  private receiptTypeForMemory(
+    categoryName:string,
+    merchantName?:string,
+  ):ReceiptType{
+
+    const merchant =
+      String(
+        merchantName
+        ??
+        "",
+      );
+
+    if(
+      (
+        categoryName === "Transport"
+        ||
+        categoryName === "Travel"
+      )
+      &&
+      /\b(?:shell|petronas|petron|caltex|bhpetrol|esso)\b/i
+        .test(
+          merchant,
+        )
+    ){
+
+      return "FUEL";
+
+    }
+
+    if(
+      (
+        categoryName === "Shopping"
+        ||
+        categoryName === "Supplier"
+        ||
+        categoryName === "Office"
+      )
+      &&
+      /\b(?:99\s*speed\s*mart|lotus'?s?|tesco|giant|aeon\s*big|econsave|jaya\s*grocer|village\s*grocer)\b/i
+        .test(
+          merchant,
+        )
+    ){
+
+      return "GROCERIES";
+
+    }
+
+    const types:
+      Record<string, ReceiptType> = {
+        Food:"DINING",
+        Transport:"TRANSPORT",
+        Bills:"UTILITIES",
+        Shopping:"RETAIL",
+        Rent:"ACCOMMODATION",
+        Sales:"RETAIL",
+        Marketing:"SERVICES",
+        Office:"RETAIL",
+        Salary:"OTHER",
+        Supplier:"RETAIL",
+        Rental:"ACCOMMODATION",
+        Utilities:"UTILITIES",
+        Travel:"TRANSPORT",
+        Tax:"UTILITIES",
+        Others:"OTHER",
+      };
+
+    return types[categoryName]
+      ??
+      "OTHER";
+
+  }
+
+
+  private buildReceiptClassificationLine(
+    extraction:ReceiptVisionCandidate,
+    language:"ms" | "en",
+  ){
+
+    const labels:
+      Record<ReceiptType, {ms:string; en:string}> = {
+        FUEL:{ms:"Pengisian minyak", en:"Fuel purchase"},
+        GROCERIES:{ms:"Pembelian runcit", en:"Groceries"},
+        DINING:{ms:"Makanan dan minuman", en:"Food and dining"},
+        TRANSPORT:{ms:"Pengangkutan", en:"Transport"},
+        UTILITIES:{ms:"Bil dan utiliti", en:"Bills and utilities"},
+        RETAIL:{ms:"Pembelian barangan", en:"Retail purchase"},
+        HEALTHCARE:{ms:"Kesihatan", en:"Healthcare"},
+        ACCOMMODATION:{ms:"Penginapan", en:"Accommodation"},
+        SERVICES:{ms:"Perkhidmatan", en:"Services"},
+        OTHER:{ms:"Lain-lain", en:"Other"},
+      };
+
+    const receiptType =
+      extraction.receiptType
+      ??
+      "OTHER";
+
+    const categoryName =
+      this.normalizeReceiptCategoryName(
+        extraction.categoryName,
+      )
+      ??
+      this.receiptCategoryForType(
+        receiptType,
+      )
+      ??
+      "Others";
+
+    return language === "en"
+      ? `Type: ${labels[receiptType].en} (${categoryName})`
+      : `Jenis: ${labels[receiptType].ms} (${categoryName})`;
 
   }
 
@@ -6854,11 +7337,11 @@ export class WhatsAppService {
 
     const paidMatch =
       trimmed.match(
-        /^(?:bayar|paid|selesai)\s+(?:reminder\s+|komitmen\s+)?(.+)$/i,
+        /^(?:bayar|selesai)\s+(?:reminder|komitmen)\s+(.+)$/i,
       )
       ??
       trimmed.match(
-        /^(?:pay|done|complete|mark\s+paid)\s+(?:reminder\s+|commitment\s+)?(.+)$/i,
+        /^(?:pay|done|complete|mark\s+paid)\s+(?:reminder|commitment)\s+(.+)$/i,
       );
 
     if(paidMatch){
@@ -7471,15 +7954,39 @@ export class WhatsAppService {
 
 
   private async handleCategoriesCommand(
+    workspaceId:string,
+
     normalized:NormalizedEvolutionMessage,
 
     language:"ms" | "en" = "ms",
   ){
 
+    let categoryNames:string[] = [];
+
+    try{
+
+      categoryNames =
+        await this.transactionService
+          .getSheetCategoryNames(
+            workspaceId,
+          );
+
+    }catch(error){
+
+      console.warn(
+        "WHATSAPP_CATEGORIES_SHEET_READ_FAILED:",
+        error instanceof Error
+          ? error.message
+          : "UNKNOWN",
+      );
+
+    }
+
     const reply =
       WhatsAppReplyBuilder
         .categories(
           language,
+          categoryNames,
         );
 
 

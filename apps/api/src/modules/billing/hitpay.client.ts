@@ -43,6 +43,11 @@ type HitPayRequestInput = {
   body?:
     unknown;
 
+  encoding?:
+    "json"
+    |
+    "form";
+
 };
 
 
@@ -183,7 +188,11 @@ export class HitPayClient {
 
           "X-Requested-With: XMLHttpRequest",
           "Accept: application/json",
-          "Content-Type: application/json",
+          (
+            input.encoding === "form"
+              ? "Content-Type: application/x-www-form-urlencoded"
+              : "Content-Type: application/json"
+          ),
           "",
         ].join(
           "\n",
@@ -216,11 +225,92 @@ export class HitPayClient {
         input.body !== undefined
       ){
 
-        await writeFile(
-          requestFile,
+        let requestBody =
           JSON.stringify(
             input.body,
-          ),
+          );
+
+
+        if(input.encoding === "form"){
+
+          if(
+            !input.body
+            ||
+            typeof input.body !== "object"
+            ||
+            Array.isArray(
+              input.body,
+            )
+          ){
+
+            throw new AppError(
+              "HITPAY_FORM_BODY_INVALID",
+              "HitPay form body is invalid",
+              500,
+            );
+
+          }
+
+
+          const form =
+            new URLSearchParams();
+
+
+          for(
+            const [
+              key,
+              value,
+            ]
+            of Object.entries(
+              input.body,
+            )
+          ){
+
+            if(
+              value === undefined
+              ||
+              value === null
+            ){
+              continue;
+            }
+
+
+            if(
+              typeof value !== "string"
+              &&
+              typeof value !== "number"
+              &&
+              typeof value !== "boolean"
+            ){
+
+              throw new AppError(
+                "HITPAY_FORM_VALUE_INVALID",
+                "HitPay form value is invalid",
+                500,
+              );
+
+            }
+
+
+            form.append(
+              key,
+              String(
+                value,
+              ),
+            );
+
+          }
+
+
+          requestBody =
+            form.toString();
+
+        }
+
+
+        await writeFile(
+          requestFile,
+          requestBody,
           {
             mode:
               0o600,

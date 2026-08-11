@@ -26,9 +26,24 @@ export class WhatsAppReplyBuilder {
     ].join("\n");
   }
 
-  static categories(language:ReplyLanguage = "ms"){
+  static categories(
+    language:ReplyLanguage = "ms",
+    categoryNames:string[] = [],
+  ){
     const isEnglish =
       language === "en";
+
+    if(categoryNames.length > 0){
+      return [
+        isEnglish
+          ? "🏷️ MyPocket categories from Google Sheet"
+          : "🏷️ Kategori MyPocket daripada Google Sheet",
+        "",
+        ...categoryNames.map(
+          (category) => `• ${category}`,
+        ),
+      ].join("\n");
+    }
 
     return [
       isEnglish

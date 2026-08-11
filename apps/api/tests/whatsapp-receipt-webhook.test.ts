@@ -87,6 +87,7 @@ test(
           },
           extraction:{
             merchantName:"Kedai Makan",
+            receiptType:"DINING",
             amount:"12.50",
             currency:"MYR",
             rawText:"KEDAI MAKAN RM12.50",
@@ -106,6 +107,8 @@ test(
         reply = text;
       };
     service.transactionService = {
+      getSheetCategoryNames:async () => [],
+      getSheetTransactions:async () => [],
       createTransaction:async () => {
         transactionCalls += 1;
       },
@@ -131,6 +134,10 @@ test(
     assert.match(
       reply,
       /!confirm dalam 1 minit/,
+    );
+    assert.match(
+      reply,
+      /Jenis: Makanan dan minuman \(Food\)/,
     );
     assert.equal(
       transactionCalls,
@@ -207,6 +214,114 @@ test(
       service.receiptDrafts.has(key),
       false,
     );
+  },
+);
+
+
+test(
+  "reuses only confirmed receipt history as workspace merchant memory",
+  async () => {
+    const service =
+      createService(
+        "receipts-folder",
+      );
+
+    const requestedWorkspaces:string[] = [];
+    service.transactionService = {
+      getSheetCategoryNames:async () => [],
+      getSheetTransactions:async (workspaceId:string) => {
+        requestedWorkspaces.push(workspaceId);
+        return [
+          {
+            source:"WHATSAPP_RECEIPT",
+            merchant:{name:"Shell Malaysia Trading"},
+            category:{name:"Transport"},
+          },
+          {
+            source:"WHATSAPP",
+            merchant:{name:"Shell Malaysia Trading"},
+            category:{name:"Shopping"},
+          },
+        ];
+      },
+    };
+
+    const extraction =
+      await service.enrichReceiptClassification(
+        "workspace-family",
+        {
+          merchantName:"Shell Malaysia Trading Sdn Bhd",
+          receiptType:"OTHER",
+          classificationSource:"GROQ",
+          rawText:"SHELL THANK YOU GRAND TOTAL RM50.00",
+          latencyMs:10,
+          model:"qwen/qwen3.6-27b",
+        },
+      );
+
+    assert.deepEqual(
+      requestedWorkspaces,
+      ["workspace-family"],
+    );
+    assert.equal(extraction.receiptType, "FUEL");
+    assert.equal(extraction.categoryName, "Transport");
+    assert.equal(extraction.classificationSource, "MEMORY");
+  },
+);
+
+
+test(
+  "maps receipt types to the categories available in the workspace sheet",
+  async () => {
+    const service =
+      createService(
+        "receipts-folder",
+      );
+
+    service.transactionService = {
+      getSheetCategoryNames:async () => [
+        "Sales",
+        "Marketing",
+        "Office",
+        "Salary",
+        "Supplier",
+        "Rental",
+        "Utilities",
+        "Travel",
+        "Tax",
+        "Others",
+      ],
+      getSheetTransactions:async () => [],
+    };
+
+    const fuel =
+      await service.enrichReceiptClassification(
+        "workspace-business",
+        {
+          merchantName:"Shell",
+          receiptType:"FUEL",
+          classificationSource:"EVIDENCE",
+          rawText:"Pump 1 Diesel",
+          latencyMs:10,
+          model:"qwen/qwen3.6-27b",
+        },
+      );
+
+    const utility =
+      await service.enrichReceiptClassification(
+        "workspace-business",
+        {
+          merchantName:"TNB",
+          receiptType:"UTILITIES",
+          classificationSource:"GROQ",
+          rawText:"Electricity bill",
+          latencyMs:10,
+          model:"qwen/qwen3.6-27b",
+        },
+      );
+
+    assert.equal(fuel.categoryName, "Travel");
+    assert.equal(utility.categoryName, "Utilities");
   },
 );
 
@@ -369,8 +484,12 @@ test(
       async () => "ms";
     service.safeSendWebhookReply =
       async () => {};
+    let categoryName = "";
     service.findOrCreateCategory =
-      async () => ({id:"category-1"});
+      async (_workspaceId:string, name:string) => {
+        categoryName = name;
+        return {id:"category-1"};
+      };
     service.findOrCreateMerchant =
       async () => ({id:"merchant-1"});
     service.transactionService = {
@@ -396,6 +515,8 @@ test(
         fileName:"receipt.jpg",
         extraction:{
           merchantName:"99 Speed Mart",
+          receiptType:"GROCERIES",
+          categoryName:"Shopping",
           amount:"17.35",
           currency:"MYR",
           transactionDate:"31/07/2026 15:30",
@@ -431,6 +552,10 @@ test(
     assert.equal(
       capturedInput.transactionDate.toISOString(),
       "2026-07-31T15:30:00.000Z",
+    );
+    assert.equal(
+      categoryName,
+      "Shopping",
     );
     assert.equal(
       service.normalizeReceiptTransactionDate(

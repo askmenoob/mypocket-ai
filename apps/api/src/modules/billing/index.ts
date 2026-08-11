@@ -4,6 +4,14 @@ import type {
 } from "fastify";
 
 import {
+  env,
+} from "../../config/index.js";
+
+import {
+  activeHitPayWebhookPath,
+} from "../../config/hitpay-environment.js";
+
+import {
   BillingController,
 } from "./billing.controller.js";
 
@@ -167,13 +175,9 @@ async (
 
 
   app.post(
-    "/billing/hitpay/webhook/sandbox",
-    controller.receiveWebhook,
-  );
-
-
-  app.post(
-    "/billing/hitpay/webhook/production",
+    activeHitPayWebhookPath(
+      env.HITPAY_ENVIRONMENT,
+    ),
     controller.receiveWebhook,
   );
 

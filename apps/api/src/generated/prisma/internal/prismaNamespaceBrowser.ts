@@ -60,6 +60,9 @@ export const ModelName = {
   Subscription: 'Subscription',
   WorkspaceBillingSubscription: 'WorkspaceBillingSubscription',
   BillingWebhookEvent: 'BillingWebhookEvent',
+  PromoCampaign: 'PromoCampaign',
+  PromoRedemption: 'PromoRedemption',
+  PromoAuditEvent: 'PromoAuditEvent',
   WorkspaceMember: 'WorkspaceMember',
   Transaction: 'Transaction',
   Category: 'Category',
@@ -240,6 +243,80 @@ export const BillingWebhookEventScalarFieldEnum = {
 } as const
 
 export type BillingWebhookEventScalarFieldEnum = (typeof BillingWebhookEventScalarFieldEnum)[keyof typeof BillingWebhookEventScalarFieldEnum]
+
+
+export const PromoCampaignScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  name: 'name',
+  description: 'description',
+  type: 'type',
+  status: 'status',
+  firstChargeBehavior: 'firstChargeBehavior',
+  discountValue: 'discountValue',
+  freeTrialDays: 'freeTrialDays',
+  currency: 'currency',
+  applicablePlans: 'applicablePlans',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  totalRedemptionLimit: 'totalRedemptionLimit',
+  perUserRedemptionLimit: 'perUserRedemptionLimit',
+  newUsersOnly: 'newUsersOnly',
+  requiresPaymentMethod: 'requiresPaymentMethod',
+  autoConvert: 'autoConvert',
+  archivedAt: 'archivedAt',
+  createdByEmail: 'createdByEmail',
+  updatedByEmail: 'updatedByEmail',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PromoCampaignScalarFieldEnum = (typeof PromoCampaignScalarFieldEnum)[keyof typeof PromoCampaignScalarFieldEnum]
+
+
+export const PromoRedemptionScalarFieldEnum = {
+  id: 'id',
+  promoCampaignId: 'promoCampaignId',
+  userId: 'userId',
+  userEmailSnapshot: 'userEmailSnapshot',
+  workspaceId: 'workspaceId',
+  plan: 'plan',
+  status: 'status',
+  idempotencyKey: 'idempotencyKey',
+  currency: 'currency',
+  originalAmount: 'originalAmount',
+  discountAmount: 'discountAmount',
+  firstChargeAmount: 'firstChargeAmount',
+  trialEndsAt: 'trialEndsAt',
+  nextChargeAt: 'nextChargeAt',
+  nextChargeAmount: 'nextChargeAmount',
+  cancelBefore: 'cancelBefore',
+  paymentMethodAttached: 'paymentMethodAttached',
+  redeemedAt: 'redeemedAt',
+  activatedAt: 'activatedAt',
+  convertedAt: 'convertedAt',
+  cancelledAt: 'cancelledAt',
+  expiredAt: 'expiredAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PromoRedemptionScalarFieldEnum = (typeof PromoRedemptionScalarFieldEnum)[keyof typeof PromoRedemptionScalarFieldEnum]
+
+
+export const PromoAuditEventScalarFieldEnum = {
+  id: 'id',
+  promoCampaignId: 'promoCampaignId',
+  promoRedemptionId: 'promoRedemptionId',
+  actorUserId: 'actorUserId',
+  actorEmail: 'actorEmail',
+  action: 'action',
+  before: 'before',
+  after: 'after',
+  createdAt: 'createdAt'
+} as const
+
+export type PromoAuditEventScalarFieldEnum = (typeof PromoAuditEventScalarFieldEnum)[keyof typeof PromoAuditEventScalarFieldEnum]
 
 
 export const WorkspaceMemberScalarFieldEnum = {
@@ -423,6 +500,14 @@ export const JsonNullValueInput = {
 } as const
 
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {

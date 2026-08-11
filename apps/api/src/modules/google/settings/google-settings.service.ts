@@ -17,6 +17,10 @@ import {
   GoogleDriveService,
 } from "../drive/google-drive.service.js";
 
+import {
+  buildMyPocketRootFolderName,
+} from "../drive/google-root-folder-name.js";
+
 
 import {
   SheetInitializerService,
@@ -236,6 +240,7 @@ export class GoogleSettingsService {
     folderMetadata:{
       name?:string | null;
     },
+    workspaceType:WorkspaceTemplateType,
     ownerEmail?:string | null,
   ):void{
 
@@ -245,7 +250,8 @@ export class GoogleSettingsService {
     }
 
     const expectedName =
-      this.buildAutoCreatedRootFolderName(
+      buildMyPocketRootFolderName(
+        workspaceType,
         ownerEmail,
       );
 
@@ -533,6 +539,7 @@ export class GoogleSettingsService {
 
     this.assertManualStorageFolderName(
       folderMetadata,
+      workspaceType,
       ownerEmail,
     );
 
@@ -760,21 +767,6 @@ export class GoogleSettingsService {
       );
     }
 
-    if(installRootFolderId){
-
-      const installFolderMetadata =
-        await this.driveService
-          .getFileMetadata(
-            workspaceId,
-            installRootFolderId,
-          );
-
-      this.assertManualStorageFolderName(
-        installFolderMetadata,
-        ownerEmail,
-      );
-    }
-
     const workspace =
       await this.workspaceRepository
         .findWorkspaceById(
@@ -793,6 +785,22 @@ export class GoogleSettingsService {
     const workspaceType =
       workspace.type as
         WorkspaceTemplateType;
+
+    if(installRootFolderId){
+
+      const installFolderMetadata =
+        await this.driveService
+          .getFileMetadata(
+            workspaceId,
+            installRootFolderId,
+          );
+
+      this.assertManualStorageFolderName(
+        installFolderMetadata,
+        workspaceType,
+        ownerEmail,
+      );
+    }
 
     const before =
       await this.classifyManualSpreadsheet(
@@ -1312,28 +1320,6 @@ export class GoogleSettingsService {
 
 
 
-  private buildAutoCreatedRootFolderName(
-    ownerEmail?:string | null,
-  ):string{
-
-    const normalizedEmail =
-      ownerEmail
-        ?.trim()
-        .toLowerCase()
-        .replace(
-          /\s+/g,
-          "",
-        );
-
-    if(!normalizedEmail){
-
-      return "MyPocket AI";
-    }
-
-    return `MyPocket AI (${normalizedEmail})`;
-  }
-
-
   async autoCreateSheet(
     workspaceId:string,
     title:string,
@@ -1342,12 +1328,6 @@ export class GoogleSettingsService {
   ){
 
     void title;
-
-    const rootFolderName =
-      this.buildAutoCreatedRootFolderName(
-        ownerEmail,
-      );
-
 
     const workspace =
       await this.workspaceRepository
@@ -1361,6 +1341,13 @@ export class GoogleSettingsService {
         workspace?.type
         ??
         "PERSONAL";
+
+
+    const rootFolderName =
+      buildMyPocketRootFolderName(
+        workspaceType,
+        ownerEmail,
+      );
 
 
 

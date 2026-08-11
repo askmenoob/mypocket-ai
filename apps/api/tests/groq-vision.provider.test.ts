@@ -73,6 +73,7 @@ test(
                       amount:"12,50",
                       currency:"MYR",
                       merchantName:"Kedai Makan",
+                      receiptType:"DINING",
                       transactionDate:"2026-08-10",
                       description:"Lunch",
                       rawText:"KEDAI MAKAN RM12.50",
@@ -113,6 +114,10 @@ test(
       result.value.model,
       "qwen/qwen3.6-27b",
     );
+    assert.equal(
+      result.value.receiptType,
+      "DINING",
+    );
     assert.match(
       request!.messages[0].content[1].image_url.url,
       /^data:image\/jpeg;base64,/,
@@ -128,6 +133,10 @@ test(
     assert.match(
       request!.messages[0].content[0].text,
       /YYYY-MM-DD/,
+    );
+    assert.match(
+      request!.messages[0].content[0].text,
+      /FUEL.*GROCERIES.*DINING/i,
     );
   },
 );
@@ -314,6 +323,57 @@ test(
     }
     assert.equal(result.value.amount, "67.20");
     assert.equal(result.value.currency, "RM");
+  },
+);
+
+
+test(
+  "uses strong receipt evidence to correct a fuel receipt classification",
+  async () => {
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async () =>
+          new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      amount:"341.92",
+                      currency:"MYR",
+                      merchantName:"Shell",
+                      receiptType:"RETAIL",
+                      rawText:[
+                        "Shell",
+                        "Pump 1  FS Diesel",
+                        "RM 4.070/L  84.010 L",
+                        "Grand Total 341.92",
+                      ].join("\n"),
+                      confidence:0.94,
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          ),
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"shell.jpg",
+      });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.receiptType, "FUEL");
+    assert.equal(result.value.classificationSource, "EVIDENCE");
   },
 );
 

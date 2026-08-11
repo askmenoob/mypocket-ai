@@ -27,6 +27,45 @@ export const GoogleSheetMode = {
 export type GoogleSheetMode = (typeof GoogleSheetMode)[keyof typeof GoogleSheetMode]
 
 
+export const PromoCampaignType = {
+  FREE_TRIAL_DAYS: 'FREE_TRIAL_DAYS',
+  PERCENTAGE: 'PERCENTAGE',
+  FIXED_AMOUNT: 'FIXED_AMOUNT'
+} as const
+
+export type PromoCampaignType = (typeof PromoCampaignType)[keyof typeof PromoCampaignType]
+
+
+export const PromoCampaignStatus = {
+  DRAFT: 'DRAFT',
+  ENABLED: 'ENABLED',
+  DISABLED: 'DISABLED',
+  EXPIRED: 'EXPIRED',
+  ARCHIVED: 'ARCHIVED'
+} as const
+
+export type PromoCampaignStatus = (typeof PromoCampaignStatus)[keyof typeof PromoCampaignStatus]
+
+
+export const PromoFirstChargeBehavior = {
+  CHARGE_DISCOUNTED_NOW: 'CHARGE_DISCOUNTED_NOW',
+  DEFER_UNTIL_TRIAL_END: 'DEFER_UNTIL_TRIAL_END'
+} as const
+
+export type PromoFirstChargeBehavior = (typeof PromoFirstChargeBehavior)[keyof typeof PromoFirstChargeBehavior]
+
+
+export const PromoRedemptionStatus = {
+  RESERVED: 'RESERVED',
+  ACTIVE: 'ACTIVE',
+  CONVERTED: 'CONVERTED',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED'
+} as const
+
+export type PromoRedemptionStatus = (typeof PromoRedemptionStatus)[keyof typeof PromoRedemptionStatus]
+
+
 export const WorkspaceRole = {
   OWNER: 'OWNER',
   ADMIN: 'ADMIN',

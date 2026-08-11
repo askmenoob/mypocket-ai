@@ -43,6 +43,18 @@ export interface TransactionSyncPayload {
   source?:string;
 
 
+  aiConfidence?:number;
+
+
+  receiptUrl?:string;
+
+
+  receiptType?:string;
+
+
+  receiptClassificationSource?:string;
+
+
   createdById?:string;
 
 

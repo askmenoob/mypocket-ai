@@ -564,14 +564,6 @@ export type WorkspaceBotSettingsUncheckedUpdateOneWithoutWorkspaceNestedInput = 
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceBotSettingsUpdateToOneWithWhereWithoutWorkspaceInput, Prisma.WorkspaceBotSettingsUpdateWithoutWorkspaceInput>, Prisma.WorkspaceBotSettingsUncheckedUpdateWithoutWorkspaceInput>
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type WorkspaceBotSettingsCreateWithoutWorkspaceInput = {
   id?: string
   botEnabled?: boolean

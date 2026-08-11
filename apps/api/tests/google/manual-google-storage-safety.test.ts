@@ -1452,6 +1452,15 @@ test(
         "utf8",
       );
 
+    const rootFolderNameSource =
+      readFileSync(
+        resolve(
+          currentDirectory,
+          "../../src/modules/google/drive/google-root-folder-name.ts",
+        ),
+        "utf8",
+      );
+
     const settingsControllerSource =
       readFileSync(
         resolve(
@@ -1501,12 +1510,27 @@ test(
 
     assert.match(
       settingsServiceSource,
-      /buildAutoCreatedRootFolderName/,
+      /buildMyPocketRootFolderName/,
     );
 
     assert.match(
-      settingsServiceSource,
-      /MyPocket AI \(\$\{normalizedEmail\}\)/,
+      rootFolderNameSource,
+      /PERSONAL_PRO:\s*"Personal Pro"/,
+    );
+
+    assert.match(
+      rootFolderNameSource,
+      /FAMILY:\s*"Family"/,
+    );
+
+    assert.match(
+      rootFolderNameSource,
+      /BUSINESS:\s*"Business"/,
+    );
+
+    assert.match(
+      rootFolderNameSource,
+      /\$\{baseName\} \(\$\{normalizedEmail\}\)/,
     );
 
     assert.match(

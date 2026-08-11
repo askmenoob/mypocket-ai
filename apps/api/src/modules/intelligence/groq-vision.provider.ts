@@ -16,6 +16,25 @@ export interface ReceiptVisionInput {
 }
 
 
+export type ReceiptType =
+  | "FUEL"
+  | "GROCERIES"
+  | "DINING"
+  | "TRANSPORT"
+  | "UTILITIES"
+  | "RETAIL"
+  | "HEALTHCARE"
+  | "ACCOMMODATION"
+  | "SERVICES"
+  | "OTHER";
+
+
+export type ReceiptClassificationSource =
+  | "GROQ"
+  | "EVIDENCE"
+  | "MEMORY";
+
+
 export interface ReceiptVisionCandidate {
 
   amount?:string;
@@ -27,6 +46,12 @@ export interface ReceiptVisionCandidate {
   transactionDate?:string;
 
   description?:string;
+
+  receiptType?:ReceiptType;
+
+  categoryName?:string;
+
+  classificationSource?:ReceiptClassificationSource;
 
   rawText:string;
 
@@ -68,7 +93,7 @@ const DEFAULT_MAX_BYTES =
 
 
 const DEFAULT_PROMPT =
-  "Read this receipt or document. Return JSON only with amount, currency, merchantName, transactionDate, description, rawText, and confidence. The amount must be the final amount actually paid by the customer, usually labelled TOTAL, GRAND TOTAL, TOTAL PAID, NET TOTAL, AMOUNT PAID, JUMLAH BAYAR, JUMLAH DIBAYAR, or TL when TL appears as the receipt total label at the start of an amount line. Prefer that final payable total over subtotal, item totals, tax, service charge, discount, rounding, cash tendered, or change. If multiple totals exist, choose the final amount due/paid. Use YYYY-MM-DD for transactionDate when the printed receipt date is visible; otherwise use null. Do not invent missing values; use null for fields that are not visible. Preserve the original language and currency. confidence must be a number from 0 to 1 reflecting extraction certainty.";
+  "Read this receipt or document. Return JSON only with amount, currency, merchantName, transactionDate, description, receiptType, rawText, and confidence. receiptType must be exactly one of FUEL, GROCERIES, DINING, TRANSPORT, UTILITIES, RETAIL, HEALTHCARE, ACCOMMODATION, SERVICES, or OTHER. Use FUEL for petrol, diesel, fuel pumps, RON grades, litres, or service-station fuel purchases; GROCERIES for supermarkets and household groceries; DINING for restaurants, cafes, and prepared food. Classify using the merchant, purchased items, pump or terminal details, and receipt wording rather than the merchant name alone. The amount must be the final amount actually paid by the customer, usually labelled TOTAL, GRAND TOTAL, TOTAL PAID, NET TOTAL, AMOUNT PAID, JUMLAH BAYAR, JUMLAH DIBAYAR, or TL when TL appears as the receipt total label at the start of an amount line. Prefer that final payable total over subtotal, item totals, tax, service charge, discount, rounding, cash tendered, or change. If multiple totals exist, choose the final amount due/paid. Use YYYY-MM-DD for transactionDate when the printed receipt date is visible; otherwise use null. Do not invent missing values; use null for fields that are not visible. Preserve the original language and currency. confidence must be a number from 0 to 1 reflecting extraction certainty.";
 
 
 export class GroqVisionProvider {
@@ -359,6 +384,13 @@ export class GroqVisionProvider {
         root.description,
       );
 
+    const classification =
+      this.classifyReceipt(
+        root.receiptType,
+        merchantName,
+        rawText,
+      );
+
     const confidence =
       this.normalizeConfidence(
         root.confidence,
@@ -383,6 +415,7 @@ export class GroqVisionProvider {
         ...(description
           ? {description}
           : {}),
+        ...classification,
         rawText,
         ...(confidence !== undefined
           ? {confidence}
@@ -392,6 +425,137 @@ export class GroqVisionProvider {
           this.options.model,
       },
     };
+
+  }
+
+
+  private classifyReceipt(
+    modelValue:unknown,
+    merchantName:string,
+    rawText:string,
+  ):Pick<
+    ReceiptVisionCandidate,
+    "receiptType" | "classificationSource"
+  >{
+
+    const evidenceType =
+      this.inferReceiptTypeFromEvidence(
+        merchantName,
+        rawText,
+      );
+
+    if(evidenceType){
+
+      return {
+        receiptType:evidenceType,
+        classificationSource:"EVIDENCE",
+      };
+
+    }
+
+    const receiptType =
+      this.normalizeReceiptType(
+        modelValue,
+      );
+
+    return receiptType
+      ? {
+          receiptType,
+          classificationSource:"GROQ",
+        }
+      : {};
+
+  }
+
+
+  private normalizeReceiptType(
+    value:unknown,
+  ):ReceiptType | undefined{
+
+    const normalized =
+      this.asString(
+        value,
+      )
+        .trim()
+        .toUpperCase()
+        .replace(/[\s-]+/g, "_");
+
+    const aliases:
+      Record<string, ReceiptType> = {
+        FUEL:"FUEL",
+        PETROL:"FUEL",
+        GAS_STATION:"FUEL",
+        GROCERIES:"GROCERIES",
+        GROCERY:"GROCERIES",
+        SUPERMARKET:"GROCERIES",
+        DINING:"DINING",
+        RESTAURANT:"DINING",
+        FOOD:"DINING",
+        TRANSPORT:"TRANSPORT",
+        TRANSPORTATION:"TRANSPORT",
+        UTILITIES:"UTILITIES",
+        UTILITY:"UTILITIES",
+        BILLS:"UTILITIES",
+        RETAIL:"RETAIL",
+        SHOPPING:"RETAIL",
+        HEALTHCARE:"HEALTHCARE",
+        HEALTH:"HEALTHCARE",
+        PHARMACY:"HEALTHCARE",
+        ACCOMMODATION:"ACCOMMODATION",
+        HOTEL:"ACCOMMODATION",
+        SERVICES:"SERVICES",
+        SERVICE:"SERVICES",
+        OTHER:"OTHER",
+        OTHERS:"OTHER",
+      };
+
+    return aliases[normalized];
+
+  }
+
+
+  private inferReceiptTypeFromEvidence(
+    merchantName:string,
+    rawText:string,
+  ):ReceiptType | undefined{
+
+    const merchant =
+      merchantName.toLowerCase();
+
+    const text =
+      `${merchantName}\n${rawText}`
+        .toLowerCase();
+
+    const fuelMerchant =
+      /\b(?:shell|petronas|petron|caltex|bhpetrol|esso)\b/i
+        .test(
+          merchant,
+        );
+
+    const fuelEvidence =
+      /\b(?:pump|fuel|petrol|diesel|ron\s*9[57]|litres?|liters?|[0-9]+(?:\.[0-9]+)?\s*l\b|rm\s*\/\s*l|minyak)\b/i
+        .test(
+          text,
+        );
+
+    if(fuelEvidence && fuelMerchant){
+
+      return "FUEL";
+
+    }
+
+    if(
+      /\b(?:99\s*speed\s*mart|lotus'?s?|tesco|giant|aeon\s*big|econsave|jaya\s*grocer|village\s*grocer)\b/i
+        .test(
+          merchant,
+        )
+    ){
+
+      return "GROCERIES";
+
+    }
+
+    return undefined;
 
   }
 

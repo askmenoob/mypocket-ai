@@ -212,6 +212,116 @@ model BillingWebhookEvent {
   @@index([externalId])
 }
 
+enum PromoCampaignType {
+  FREE_TRIAL_DAYS
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum PromoCampaignStatus {
+  DRAFT
+  ENABLED
+  DISABLED
+  EXPIRED
+  ARCHIVED
+}
+
+enum PromoFirstChargeBehavior {
+  CHARGE_DISCOUNTED_NOW
+  DEFER_UNTIL_TRIAL_END
+}
+
+enum PromoRedemptionStatus {
+  RESERVED
+  ACTIVE
+  CONVERTED
+  CANCELLED
+  EXPIRED
+}
+
+model PromoCampaign {
+  id                       String                       @id @default(cuid())
+  code                     String                       @unique
+  name                     String
+  description              String?
+  type                     PromoCampaignType
+  status                   PromoCampaignStatus          @default(DRAFT)
+  firstChargeBehavior      PromoFirstChargeBehavior
+  discountValue            Decimal                      @default(0) @db.Decimal(10, 2)
+  freeTrialDays            Int?
+  currency                 String                       @default("MYR")
+  applicablePlans          String[]
+  startsAt                 DateTime
+  endsAt                   DateTime
+  totalRedemptionLimit     Int?
+  perUserRedemptionLimit   Int                          @default(1)
+  newUsersOnly             Boolean                      @default(false)
+  requiresPaymentMethod    Boolean                      @default(false)
+  autoConvert              Boolean                      @default(false)
+  archivedAt               DateTime?
+  createdByEmail           String
+  updatedByEmail           String
+  createdAt                DateTime                     @default(now())
+  updatedAt                DateTime                     @updatedAt
+  redemptions              PromoRedemption[]
+  auditEvents              PromoAuditEvent[]
+
+  @@index([status, startsAt, endsAt])
+  @@index([createdAt])
+}
+
+model PromoRedemption {
+  id                    String                  @id @default(cuid())
+  promoCampaignId       String
+  userId                String
+  userEmailSnapshot     String
+  workspaceId           String
+  plan                  String
+  status                PromoRedemptionStatus   @default(RESERVED)
+  idempotencyKey        String                  @unique
+  currency              String                  @default("MYR")
+  originalAmount        Decimal                 @db.Decimal(10, 2)
+  discountAmount        Decimal                 @db.Decimal(10, 2)
+  firstChargeAmount     Decimal                 @db.Decimal(10, 2)
+  trialEndsAt           DateTime?
+  nextChargeAt          DateTime?
+  nextChargeAmount      Decimal?                @db.Decimal(10, 2)
+  cancelBefore          DateTime?
+  paymentMethodAttached Boolean                 @default(false)
+  redeemedAt            DateTime                @default(now())
+  activatedAt           DateTime?
+  convertedAt           DateTime?
+  cancelledAt           DateTime?
+  expiredAt             DateTime?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  campaign              PromoCampaign           @relation(fields: [promoCampaignId], references: [id], onDelete: Restrict)
+  auditEvents           PromoAuditEvent[]
+
+  @@index([promoCampaignId, userId])
+  @@index([userId, status])
+  @@index([workspaceId, status])
+  @@index([status, nextChargeAt])
+}
+
+model PromoAuditEvent {
+  id                String           @id @default(cuid())
+  promoCampaignId   String
+  promoRedemptionId String?
+  actorUserId       String?
+  actorEmail        String
+  action            String
+  before            Json?
+  after             Json?
+  createdAt         DateTime         @default(now())
+  campaign          PromoCampaign    @relation(fields: [promoCampaignId], references: [id], onDelete: Restrict)
+  redemption        PromoRedemption? @relation(fields: [promoRedemptionId], references: [id], onDelete: Restrict)
+
+  @@index([promoCampaignId, createdAt])
+  @@index([promoRedemptionId, createdAt])
+  @@index([actorEmail, createdAt])
+}
+
 model WorkspaceMember {
   id                  String        @id @default(cuid())
   userId              String

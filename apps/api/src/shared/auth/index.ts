@@ -7,3 +7,5 @@ export * from "./require-role.js";
 export * from "./token.service.js";
 
 export * from "./super-admin.js";
+
+export * from "./require-super-admin.js";

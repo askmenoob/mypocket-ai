@@ -1,5 +1,7 @@
 import { AppIcon } from "./app-icon";
 import { AdminUserManagement } from "./admin-user-management";
+import { PromoCodeSettings } from "./promo-code-settings";
+import { PromoQuoteDisclosure } from "./promo-quote-disclosure";
 import {
   dashboardDateInputValue,
   resolveDashboardDateRange,
@@ -234,6 +236,7 @@ type DashboardNotification = {
 const BILLING_PLAN_OPTIONS:Array<{
   plan:BillingPlan;
   name:string;
+  amount:number;
   price:string;
   description:string;
 }> = [
@@ -243,6 +246,9 @@ const BILLING_PLAN_OPTIONS:Array<{
 
     name:
       "Personal Pro",
+
+    amount:
+      9,
 
     price:
       "RM9 / month",
@@ -258,6 +264,9 @@ const BILLING_PLAN_OPTIONS:Array<{
     name:
       "Family",
 
+    amount:
+      19,
+
     price:
       "RM19 / month",
 
@@ -271,6 +280,9 @@ const BILLING_PLAN_OPTIONS:Array<{
 
     name:
       "Business / Company",
+
+    amount:
+      49,
 
     price:
       "RM49 / month",
@@ -310,6 +322,22 @@ function billingPlanLabel(
 }
 
 
+function billingPlanAmount(
+  plan:string | null | undefined,
+){
+
+  return BILLING_PLAN_OPTIONS
+    .find(
+      (option) =>
+        option.plan === plan,
+    )
+    ?.amount
+    ??
+    0;
+
+}
+
+
 function billingStatusLabel(
   status:string | null | undefined,
 ){
@@ -326,6 +354,16 @@ function billingStatusLabel(
 
   if(status === "RETRYING"){
     return "Payment retrying";
+  }
+
+
+  if(status === "PLAN_CHANGE_PAYMENT_PENDING"){
+    return "Upgrade payment pending";
+  }
+
+
+  if(status === "PLAN_CHANGE_REVIEW_REQUIRED"){
+    return "Payment review required";
   }
 
 
@@ -1376,6 +1414,62 @@ function App(){
       setPendingInviteToken(
         inviteMatch[1],
       );
+    }
+
+    const isHitPayReturn =
+      window.location.pathname
+        === "/billing/hitpay/return";
+
+    if(isHitPayReturn){
+      const returnStatus =
+        new URLSearchParams(
+          window.location.search,
+        )
+          .get("status")
+          ?.trim()
+          .toLowerCase()
+        ??
+        "";
+
+      const paymentCanceled =
+        [
+          "cancelled",
+          "canceled",
+          "cancel",
+        ].includes(
+          returnStatus,
+        );
+
+      const paymentFailed =
+        [
+          "failed",
+          "failure",
+          "declined",
+        ].includes(
+          returnStatus,
+        );
+
+      setNotice(
+        paymentCanceled
+          ? "Payment was cancelled. No subscription access was activated."
+          : paymentFailed
+            ? "Payment was not completed. You can retry safely from subscription settings."
+            : "Payment attempt received. MyPocket is verifying the signed HitPay confirmation before activating access.",
+      );
+
+      window.history.replaceState(
+        null,
+        document.title,
+        "/#dashboard",
+      );
+
+      if(token){
+        loadAll(
+          token,
+        );
+      }
+
+      return;
     }
 
     const hash =
@@ -6150,10 +6244,20 @@ function Dashboard(
       if(
         billing?.pendingPlan
         === plan
+        &&
+        [
+          "PLAN_CHANGE_PAYMENT_PENDING",
+          "PLAN_CHANGE_REVIEW_REQUIRED",
+        ].includes(
+          billing.status,
+        )
       ){
 
         setActionMessage(
-          `${billingPlanLabel(plan)} is already scheduled for the next billing cycle.`,
+          billing.status
+            === "PLAN_CHANGE_PAYMENT_PENDING"
+              ? `Payment for ${billingPlanLabel(plan)} is processing. Access changes after the signed HitPay confirmation.`
+              : `Payment for ${billingPlanLabel(plan)} needs review before access can change.`,
         );
 
         return;
@@ -6179,6 +6283,9 @@ function Dashboard(
             pendingPlan:BillingPlan;
             status:string;
             effective:string;
+            paymentStatus?:string;
+            amountDueNow:number;
+            currency:string;
             reused:boolean;
           }>(
             "/billing/hitpay/plan",
@@ -6195,11 +6302,25 @@ function Dashboard(
           );
 
 
-        setActionMessage(
-          result.reused
-            ? `${billingPlanLabel(plan)} is already scheduled for the next billing cycle.`
-            : `${billingPlanLabel(plan)} will take effect on the next billing cycle.`,
-        );
+        if(result.effective === "AFTER_PAYMENT"){
+
+          setActionMessage(
+            result.paymentStatus === "REVIEW_REQUIRED"
+              ? `Payment for ${billingPlanLabel(plan)} needs review before access can change.`
+              : result.reused
+                ? `Payment for ${billingPlanLabel(plan)} is processing. Access changes after the signed HitPay confirmation.`
+                : `HitPay charged RM${result.amountDueNow.toFixed(2)}. We are verifying the signed HitPay confirmation before activating ${billingPlanLabel(plan)}.`,
+          );
+
+        }else{
+
+          setActionMessage(
+            result.reused
+              ? `${billingPlanLabel(plan)} is already scheduled as a downgrade.`
+              : `${billingPlanLabel(plan)} downgrade is scheduled for the next billing cycle.`,
+          );
+
+        }
 
 
         props.refresh();
@@ -6370,9 +6491,29 @@ function Dashboard(
 
               {
                 pendingBillingPlan
-                  ? `Next: ${billingPlanLabel(
-                      pendingBillingPlan,
-                    )}`
+                  ? currentBillingStatus
+                      === "PLAN_CHANGE_PAYMENT_PENDING"
+                    ? `Payment: ${billingPlanLabel(
+                        pendingBillingPlan,
+                      )}`
+                    : currentBillingStatus
+                        === "PLAN_CHANGE_REVIEW_REQUIRED"
+                      ? `Review: ${billingPlanLabel(
+                          pendingBillingPlan,
+                        )}`
+                      : billingPlanAmount(
+                          pendingBillingPlan,
+                        )
+                          >
+                        billingPlanAmount(
+                          currentBillingPlan,
+                        )
+                        ? `Pay now: ${billingPlanLabel(
+                            pendingBillingPlan,
+                          )}`
+                        : `Next: ${billingPlanLabel(
+                            pendingBillingPlan,
+                          )}`
                   : billingStatusLabel(
                       currentBillingStatus,
                     )
@@ -7805,14 +7946,20 @@ function Dashboard(
           )}
 
           {isSuperAdmin && activeView === "super-admin" && (
-            <AdminUserManagement
-              users={props.data.adminUsers}
-              busyUserId={packageBusyUserId}
-              message={actionMessage}
-              onRefresh={props.refresh}
-              onUpdatePackage={updateUserPackage}
-              onSuperAdminUserAction={superAdminUserAction}
-            />
+            <>
+              <PromoCodeSettings
+                apiBase={API_BASE}
+                token={localStorage.getItem(STORAGE.token) ?? ""}
+              />
+              <AdminUserManagement
+                users={props.data.adminUsers}
+                busyUserId={packageBusyUserId}
+                message={actionMessage}
+                onRefresh={props.refresh}
+                onUpdatePackage={updateUserPackage}
+                onSuperAdminUserAction={superAdminUserAction}
+              />
+            </>
           )}
 
           {canManageMembers && activeView === "admin" && (
@@ -8222,9 +8369,29 @@ function Dashboard(
                   <p>
                     {
                       pendingBillingPlan
-                        ? `${billingPlanLabel(
-                            pendingBillingPlan,
-                          )} is scheduled for the next billing cycle.`
+                        ? currentBillingStatus
+                            === "PLAN_CHANGE_PAYMENT_PENDING"
+                          ? `${billingPlanLabel(
+                              pendingBillingPlan,
+                            )} payment is being verified before access changes.`
+                          : currentBillingStatus
+                              === "PLAN_CHANGE_REVIEW_REQUIRED"
+                            ? `${billingPlanLabel(
+                                pendingBillingPlan,
+                              )} payment needs review before access changes.`
+                            : billingPlanAmount(
+                                pendingBillingPlan,
+                              )
+                                >
+                              billingPlanAmount(
+                                currentBillingPlan,
+                              )
+                              ? `${billingPlanLabel(
+                                  pendingBillingPlan,
+                                )} is ready for an immediate balance payment.`
+                              : `${billingPlanLabel(
+                                  pendingBillingPlan,
+                                )} downgrade is scheduled for the next billing cycle.`
                         : canManageBilling
                           ? "View available packages or manage your current subscription."
                           : "Subscription changes can only be made by the workspace Owner."
@@ -8423,6 +8590,12 @@ function BillingPlanModal(
     );
 
 
+  const currentBillingAmount =
+    billingPlanAmount(
+      props.currentBillingPlan,
+    );
+
+
   return (
     <div
       className="billingModalBackdrop"
@@ -8480,13 +8653,53 @@ function BillingPlanModal(
         {props.pendingPlan && (
           <div className="billingPendingNotice">
             <strong>
-              Plan change scheduled
+              {
+                props.billingStatus
+                  === "PLAN_CHANGE_PAYMENT_PENDING"
+                  ? "Payment processing"
+                  : props.billingStatus
+                      === "PLAN_CHANGE_REVIEW_REQUIRED"
+                    ? "Payment review required"
+                    : billingPlanAmount(
+                        props.pendingPlan,
+                      )
+                        >
+                      currentBillingAmount
+                      ? "Immediate upgrade available"
+                      : "Downgrade scheduled"
+              }
             </strong>
 
             <span>
-              {billingPlanLabel(
-                props.pendingPlan,
-              )} will become active after the next successful billing cycle.
+              {
+                props.billingStatus
+                  === "PLAN_CHANGE_PAYMENT_PENDING"
+                  ? `${billingPlanLabel(
+                      props.pendingPlan,
+                    )} activates after the signed HitPay confirmation.`
+                  : props.billingStatus
+                      === "PLAN_CHANGE_REVIEW_REQUIRED"
+                    ? `${billingPlanLabel(
+                        props.pendingPlan,
+                      )} remains locked until the payment is reconciled.`
+                    : billingPlanAmount(
+                        props.pendingPlan,
+                      )
+                        >
+                      currentBillingAmount
+                      ? `Pay the RM${(
+                          billingPlanAmount(
+                            props.pendingPlan,
+                          )
+                          -
+                          currentBillingAmount
+                        ).toFixed(2)} balance now to activate ${billingPlanLabel(
+                          props.pendingPlan,
+                        )}.`
+                      : `${billingPlanLabel(
+                          props.pendingPlan,
+                        )} becomes active on the next billing cycle.`
+              }
             </span>
           </div>
         )}
@@ -8508,6 +8721,11 @@ function BillingPlanModal(
           </div>
         )}
 
+        <PromoQuoteDisclosure
+          apiBase={API_BASE}
+          token={localStorage.getItem(STORAGE.token) ?? ""}
+        />
+
         <div className="billingPlanGrid">
           {BILLING_PLAN_OPTIONS.map(
             (
@@ -8525,6 +8743,53 @@ function BillingPlanModal(
               const isCurrentAccess =
                 props.currentAccessPlan
                 === option.plan;
+
+              const amountDifference =
+                Number(
+                  (
+                    option.amount
+                    -
+                    currentBillingAmount
+                  ).toFixed(2),
+                );
+
+              const isUpgrade =
+                recurringBillingAvailable
+                &&
+                amountDifference > 0;
+
+              const isDowngrade =
+                recurringBillingAvailable
+                &&
+                amountDifference < 0;
+
+              const paymentPending =
+                isPending
+                &&
+                props.billingStatus
+                  === "PLAN_CHANGE_PAYMENT_PENDING";
+
+              const paymentReview =
+                isPending
+                &&
+                props.billingStatus
+                  === "PLAN_CHANGE_REVIEW_REQUIRED";
+
+              const scheduledDowngrade =
+                isPending
+                &&
+                !paymentPending
+                &&
+                !paymentReview
+                &&
+                amountDifference <= 0;
+
+              const anotherPendingPlan =
+                Boolean(
+                  props.pendingPlan
+                  &&
+                  !isPending,
+                );
 
               const personalProBlocked =
                 option.plan
@@ -8560,7 +8825,13 @@ function BillingPlanModal(
                   props.busyPlan,
                 )
                 ||
-                isPending
+                paymentPending
+                ||
+                paymentReview
+                ||
+                scheduledDowngrade
+                ||
+                anotherPendingPlan
                 ||
                 activeBillingPlan
                 ||
@@ -8582,10 +8853,20 @@ function BillingPlanModal(
                 buttonLabel =
                   "Processing...";
 
-              }else if(isPending){
+              }else if(paymentPending){
 
                 buttonLabel =
-                  "Scheduled";
+                  "Payment processing";
+
+              }else if(paymentReview){
+
+                buttonLabel =
+                  "Payment review";
+
+              }else if(scheduledDowngrade){
+
+                buttonLabel =
+                  "Scheduled downgrade";
 
               }else if(continueCheckout){
 
@@ -8611,10 +8892,15 @@ function BillingPlanModal(
                 buttonLabel =
                   "Unavailable for Family";
 
-              }else if(recurringBillingAvailable){
+              }else if(isUpgrade){
 
                 buttonLabel =
-                  "Switch next cycle";
+                  `Pay RM${amountDifference.toFixed(2)} & switch now`;
+
+              }else if(isDowngrade){
+
+                buttonLabel =
+                  "Schedule downgrade";
 
               }
 
@@ -8655,7 +8941,15 @@ function BillingPlanModal(
 
                     {isPending && (
                       <span className="billingPlanBadge pending">
-                        Next cycle
+                        {
+                          paymentPending
+                            ? "Payment pending"
+                            : paymentReview
+                              ? "Review required"
+                              : isUpgrade
+                                ? "Pay balance now"
+                                : "Next cycle"
+                        }
                       </span>
                     )}
                   </div>
@@ -8690,7 +8984,11 @@ function BillingPlanModal(
           </span>
 
           <span>
-            Plan changes for an active subscription take effect on the next successful billing cycle.
+            Upgrades charge only the price difference immediately through HitPay. Access changes after the signed payment confirmation.
+          </span>
+
+          <span>
+            Downgrades take effect on the next billing cycle.
           </span>
         </footer>
       </section>
