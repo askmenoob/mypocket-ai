@@ -1,0 +1,314 @@
+/* Setup journey — uses the same palette and visual language as imai.my. */
+.wizardShell{
+  --wizard-cream:#fbfaf6;
+  --wizard-ink:#082d25;
+  --wizard-ink-soft:#47655e;
+  --wizard-green:#069b68;
+  --wizard-green-deep:#073d31;
+  --wizard-line:#dfe5da;
+  min-height:100vh;
+  padding:20px;
+  place-items:center;
+  overflow-x:hidden;
+  background:var(--wizard-cream);
+  color:var(--wizard-ink);
+  font-family:Inter,"Avenir Next",Avenir,"Segoe UI",sans-serif;
+}
+
+.wizardShell :focus-visible{outline:3px solid #30c98c;outline-offset:3px}
+
+.wizardPanel{
+  width:min(1464px,100%);
+  min-height:min(900px,calc(100vh - 40px));
+  display:grid;
+  grid-template-columns:390px minmax(0,1fr);
+  overflow:hidden;
+  border:1px solid var(--wizard-line);
+  border-radius:28px;
+  background:#fff;
+  box-shadow:0 22px 64px rgba(8,45,37,.08);
+}
+
+.wizardSide{
+  position:relative;
+  display:flex;
+  min-width:0;
+  flex-direction:column;
+  overflow:hidden;
+  padding:34px 28px 0;
+  border-right:1px solid var(--wizard-line);
+  background:radial-gradient(circle at 20% 100%,rgba(22,185,121,.08),transparent 32%),var(--wizard-cream);
+  color:var(--wizard-ink);
+}
+
+.wizardBrand{display:flex;align-items:center;gap:12px;color:var(--wizard-ink)}
+.wizardBrand img{width:48px;height:48px;object-fit:contain}
+.wizardBrand strong{font-size:27px;font-weight:900;letter-spacing:-.045em}
+
+.wizardSide h1{
+  margin:30px 14px 24px;
+  font-size:42px;
+  line-height:1.02;
+  letter-spacing:-.055em;
+}
+
+.stepList{position:relative;z-index:2;display:grid;gap:5px;margin:0}
+.stepList::before{content:"";position:absolute;top:33px;bottom:33px;left:26px;width:2px;background:#d9ded6}
+
+.step{
+  position:relative;
+  z-index:1;
+  display:grid;
+  min-width:0;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  padding:11px 12px 11px 5px;
+  border:0;
+  border-radius:18px;
+  background:transparent;
+  color:var(--wizard-ink);
+  text-align:left;
+  transition:background 180ms ease,transform 180ms ease;
+}
+.step:hover{transform:translateX(2px);background:rgba(6,155,104,.06)}
+.step.active{background:#eaf4ed}
+
+.step .stepNumber{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border:1px solid #d8ddd6;
+  border-radius:50%;
+  background:#efefec;
+  color:#7d8985;
+  font-size:16px;
+  font-weight:850;
+}
+.step.done .stepNumber{border-color:var(--wizard-green);background:var(--wizard-green);color:#fff}
+.step.active .stepNumber{border-color:var(--wizard-green-deep);background:var(--wizard-green-deep);color:#fff;box-shadow:0 0 0 5px rgba(6,155,104,.1)}
+
+.step .stepCopy{
+  width:auto;
+  height:auto;
+  display:grid;
+  min-width:0;
+  place-items:initial;
+  gap:3px;
+  border-radius:0;
+  background:transparent;
+}
+.stepCopy strong,.stepCopy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stepCopy strong{font-size:15px;font-weight:850}
+.stepCopy small{color:var(--wizard-ink-soft);font-size:12px}
+.step .stepState{
+  width:auto;
+  height:auto;
+  max-width:75px;
+  display:block;
+  border-radius:0;
+  background:transparent;
+  color:#7a8984;
+  font-size:10px;
+  font-weight:800;
+  line-height:1.2;
+  text-align:right;
+}
+.step.active .stepState,.step.done .stepState{color:var(--wizard-green)}
+
+.wizardMascot{position:absolute;right:6px;bottom:-132px;left:12px;height:355px;pointer-events:none}
+.wizardMascot::before,.wizardMascot::after{content:"";position:absolute;bottom:105px;width:82px;height:130px;border-radius:100% 0;background:rgba(110,163,107,.1);transform:rotate(-16deg)}
+.wizardMascot::before{left:8px}
+.wizardMascot::after{right:0;transform:scaleX(-1) rotate(-16deg)}
+.wizardMascot img{position:relative;z-index:1;width:100%;height:100%;object-fit:contain;object-position:center top}
+
+.wizardMain{min-width:0;padding:40px 54px 32px;display:flex;flex-direction:column;background:#fff}
+.wizardMobileHeader{display:none}
+
+.wizardProgressSummary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  width:min(800px,100%);
+  margin:0 auto;
+  color:var(--wizard-ink-soft);
+  font-size:15px;
+}
+.wizardProgressSummary span:first-child{color:var(--wizard-green-deep);font-weight:800}
+
+.wizardMobileProgress{
+  position:relative;
+  width:min(800px,100%);
+  height:42px;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  align-items:center;
+  margin:8px auto 0;
+}
+.wizardMobileProgress::before,.wizardProgressFill{content:"";position:absolute;top:20px;left:10%;right:10%;height:2px;border-radius:99px;background:#e1e5df}
+.wizardProgressFill{right:auto;width:0;max-width:80%;background:var(--wizard-green);transition:width 240ms ease}
+.wizardProgressNode{position:relative;z-index:1;width:31px;height:31px;display:grid;place-items:center;justify-self:center;border-radius:50%;background:#efefec;color:#78847f;font-size:13px;font-weight:850}
+.wizardProgressNode.active{background:var(--wizard-green);color:#fff}
+.wizardProgressNode.visited{box-shadow:inset 0 0 0 2px #c5cec9;background:#fff;color:#6d7b76}
+
+.wizardInlineNotice,.wizardError{
+  width:min(800px,100%);
+  display:grid;
+  gap:3px;
+  margin:14px auto 0;
+  padding:13px 16px;
+  border:1px solid #b9e5d3;
+  border-radius:14px;
+  background:#edfaf4;
+  color:var(--wizard-green-deep);
+  font-size:13px;
+}
+.wizardInlineNotice small{color:var(--wizard-ink-soft)}
+.wizardError{border-color:#f0c9c9;background:#fff6f6;color:#8f3131}
+
+.wizardContent{width:min(820px,100%);margin:0 auto;padding:24px 0 4px;animation:wizardContentIn 220ms ease both}
+@keyframes wizardContentIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.wizardContent h2{margin:0;color:var(--wizard-ink);font-size:clamp(38px,4.1vw,56px);line-height:1.02;letter-spacing:-.055em}
+.wizardLead,.wizardWelcomeIntro p{margin:20px 0 0;color:var(--wizard-ink-soft);font-size:17px;line-height:1.7}
+.wizardLead strong{color:var(--wizard-green)}
+
+.wizardWelcomeIntro{display:grid;grid-template-columns:minmax(0,1fr) 170px;align-items:center;gap:24px}
+.wizardWelcomeMascot{width:160px;height:160px;object-fit:contain;filter:drop-shadow(0 14px 22px rgba(8,45,37,.12))}
+.wizardTime{width:max-content;display:inline-flex;align-items:center;gap:8px;margin-top:20px;padding:9px 14px;border-radius:999px;background:#eaf5ec;color:var(--wizard-green);font-size:15px;font-weight:800}
+.wizardTime svg{width:19px;height:19px}
+
+.wizardFeatureList{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:30px;padding:24px 0;border-top:1px solid var(--wizard-line);border-bottom:1px solid var(--wizard-line)}
+.wizardFeatureList.compact{grid-template-columns:1fr;gap:12px;padding:20px 0}
+.wizardFeature{display:flex;align-items:center;gap:12px;min-width:0}
+.wizardFeatureIcon{width:48px;height:48px;display:grid;place-items:center;flex:0 0 auto;border-radius:15px;background:#eaf5ec;color:var(--wizard-green)}
+.wizardFeatureIcon svg{width:25px;height:25px}
+.wizardFeature > div{display:grid;gap:4px}
+.wizardFeature strong{color:var(--wizard-ink);font-size:15px;line-height:1.25}
+.wizardFeature span:not(.wizardFeatureIcon){color:var(--wizard-ink-soft);font-size:12px;line-height:1.45}
+
+.wizardTerms{display:flex;align-items:flex-start;gap:14px;margin-top:22px;padding:16px 18px;border:1px solid #e5dfcf;border-radius:15px;background:#fffdf8;color:var(--wizard-ink-soft);font-size:14px;line-height:1.55;cursor:pointer}
+.wizardTerms.accepted{border-color:#b9e5d3;background:#f3fbf7}
+.wizardTerms input{width:21px;height:21px;margin:1px 0 0;accent-color:var(--wizard-green);flex:0 0 auto}
+.wizardTerms a,.wizardSkip,.wizardTextButton{color:var(--wizard-green);font-weight:750}
+
+.wizardActionRow{display:grid;grid-template-columns:minmax(120px,170px) minmax(240px,1fr);gap:12px;margin-top:24px}
+.wizardActionRow.single{grid-template-columns:1fr}
+.wizardPrimary,.wizardBack{min-height:54px;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:12px 20px;border-radius:11px;font-weight:850}
+.wizardPrimary{border:1px solid var(--wizard-green);background:linear-gradient(100deg,var(--wizard-green),#08a978);color:#fff;box-shadow:0 12px 22px rgba(6,155,104,.16)}
+.wizardPrimary:hover:not(:disabled){filter:brightness(.96)}
+.wizardPrimary:disabled{border-color:#d9dfdc;background:#eef1ef;color:#96a29e;box-shadow:none}
+.wizardBack{border:1px solid var(--wizard-line);background:#fff;color:var(--wizard-green-deep)}
+.wizardGoogleMark{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#fff;color:#4285f4;font-size:17px;font-weight:900}
+.wizardSkip,.wizardTextButton{display:block;margin:13px auto 0;padding:5px;border:0;border-bottom:1px dashed currentColor;background:transparent;font-size:13px}
+
+.wizardTrustNote,.wizardSuccessCard,.wizardMemberSummary,.wizardConnectionCard{display:flex;align-items:center;gap:14px;margin-top:20px;padding:16px 18px;border:1px solid #e6e0cf;border-radius:15px;background:#fffdf8}
+.wizardTrustNote > svg,.wizardSuccessCard > svg,.wizardMemberSummary > svg,.wizardConnectionCard > svg{width:31px;height:31px;flex:0 0 auto;color:var(--wizard-green)}
+.wizardTrustNote div,.wizardSuccessCard div,.wizardMemberSummary div,.wizardConnectionCard div{min-width:0;display:grid;flex:1;gap:3px}
+.wizardTrustNote span,.wizardSuccessCard span,.wizardMemberSummary span,.wizardConnectionCard span,.wizardConnectionCard small{color:var(--wizard-ink-soft);font-size:13px}
+.wizardSuccessCard{border-color:#b9e5d3;background:#f1fbf6}
+.wizardSuccessCard a{color:var(--wizard-green);font-size:13px;font-weight:800}
+
+.wizardWorkspaceSummary{display:grid;gap:5px;margin-top:24px;padding:18px 20px;border-left:4px solid var(--wizard-green);background:#f4faf6}
+.wizardWorkspaceSummary span,.wizardWorkspaceSummary small{color:var(--wizard-ink-soft);font-size:13px}
+.wizardWorkspaceSummary strong{font-size:19px}
+.wizardPlanChoices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+.wizardPlanChoice{position:relative;min-height:150px;display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:17px;border:1px solid var(--wizard-line);border-radius:16px;background:#fff}
+.wizardPlanChoice.selected{border-color:var(--wizard-green);background:#f1fbf6;box-shadow:inset 0 0 0 1px var(--wizard-green)}
+.wizardPlanChoice > svg{width:29px;height:29px;color:var(--wizard-green)}
+.wizardPlanChoice strong{font-size:15px}
+.wizardPlanChoice span{color:var(--wizard-ink-soft);font-size:12px;line-height:1.45}
+.wizardPlanChoice small{margin-top:auto;color:var(--wizard-green);font-weight:800}
+.wizardMemberSummary{background:#f6fbf8;border-color:var(--wizard-line)}
+.wizardFootnote{margin:14px 0 0;color:var(--wizard-ink-soft);font-size:12px}
+
+.wizardConnectionCard{display:grid;grid-template-columns:auto minmax(0,1fr) auto;margin-top:26px;border-color:var(--wizard-line);background:#f8fbf9}
+.wizardConnectionCard.connected{border-color:#b9e5d3;background:#f1fbf6}
+.wizardTextButton{margin:0}
+.wizardInstructions{display:grid;gap:10px;margin:22px 0 0;padding:0;list-style:none;counter-reset:wizard-instructions}
+.wizardInstructions li{display:flex;align-items:center;gap:11px;color:var(--wizard-ink-soft);font-size:14px;counter-increment:wizard-instructions}
+.wizardInstructions li::before{content:counter(wizard-instructions);width:26px;height:26px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;background:#eaf5ec;color:var(--wizard-green);font-size:12px;font-weight:850}
+.wizardSecondaryLinks,.wizardFinishExtras{display:flex;justify-content:center;gap:22px}
+
+.wizardFinishHeading{display:flex;align-items:flex-start;gap:18px}
+.wizardFinishIcon{width:62px;height:62px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;background:#f0f2ef;color:#7d8985}
+.wizardFinishIcon.ready{background:#e4f7ed;color:var(--wizard-green)}
+.wizardFinishIcon svg{width:34px;height:34px}
+.wizardFinishHeading h2{font-size:44px}
+.wizardFinishHeading .wizardLead{margin-top:10px}
+.wizardReviewList{display:grid;gap:8px;margin-top:28px}
+.wizardReviewList button{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:12px;padding:13px 15px;border:1px solid var(--wizard-line);border-radius:12px;background:#fff;color:var(--wizard-ink);text-align:left}
+.wizardReviewList button:hover{background:#f7fbf8}
+.wizardReviewList button > span{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;font-weight:850}
+.wizardReviewList button > span.done{background:#e4f7ed;color:var(--wizard-green)}
+.wizardReviewList button > span.pending{background:#eef1ef;color:#8b9893}
+.wizardReviewList small{color:var(--wizard-ink-soft)}
+
+@media(max-width:980px){
+  .wizardShell{min-height:100svh;padding:0;display:block;background:var(--wizard-cream)}
+  .wizardPanel{width:100%;min-height:100svh;display:block;border:0;border-radius:0;box-shadow:none}
+  .wizardSide{display:none}
+  .wizardMain{min-height:100svh;display:block;padding:24px clamp(20px,6vw,54px) max(28px,env(safe-area-inset-bottom));background:var(--wizard-cream)}
+  .wizardMobileHeader{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+  .wizardMobileHeader .wizardBrand img{width:42px;height:42px}
+  .wizardMobileHeader .wizardBrand strong{font-size:24px}
+  .wizardProgressSummary,.wizardMobileProgress,.wizardInlineNotice,.wizardError,.wizardContent{width:100%}
+  .wizardContent{padding-top:26px}
+  .wizardWelcomeIntro{grid-template-columns:minmax(0,1fr) 128px;gap:8px}
+  .wizardWelcomeMascot{width:128px;height:128px}
+}
+
+@media(max-width:720px){
+  .wizardMain{padding:22px 20px max(26px,env(safe-area-inset-bottom))}
+  .wizardProgressSummary{font-size:13px}
+  .wizardProgressSummary span:last-child{display:none}
+  .wizardMobileProgress{height:52px;margin-top:6px}
+  .wizardMobileProgress::before,.wizardProgressFill{top:25px}
+  .wizardProgressNode{width:34px;height:34px}
+  .wizardContent{padding-top:20px}
+  .wizardContent h2{font-size:clamp(35px,10.5vw,44px);line-height:1.05}
+  .wizardLead,.wizardWelcomeIntro p{margin-top:16px;font-size:16px;line-height:1.6}
+  .wizardWelcomeIntro{position:relative;display:block;padding-right:0}
+  .wizardWelcomeIntro > div{position:relative;z-index:1}
+  .wizardWelcomeMascot{position:absolute;top:86px;right:-8px;z-index:0;width:106px;height:106px;opacity:.96}
+  .wizardWelcomeIntro p{padding-right:114px}
+  .wizardTime{margin-top:17px}
+  .wizardFeatureList,.wizardFeatureList.compact{grid-template-columns:1fr;gap:14px;margin-top:24px;padding:20px 0}
+  .wizardFeatureIcon{width:52px;height:52px}
+  .wizardFeature strong{font-size:16px}
+  .wizardFeature span:not(.wizardFeatureIcon){font-size:13px}
+  .wizardTerms{margin-top:18px;padding:15px}
+  .wizardActionRow,.wizardActionRow.single,.wizardActionRow.finish{grid-template-columns:1fr;gap:9px}
+  .wizardActionRow .wizardPrimary{grid-row:1}
+  .wizardActionRow .wizardBack{grid-row:2;min-height:46px;border:0;background:transparent}
+  .wizardPlanChoices{grid-template-columns:1fr}
+  .wizardPlanChoice{min-height:auto;display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center}
+  .wizardPlanChoice > svg{grid-row:1 / span 2}
+  .wizardPlanChoice span{grid-column:2}
+  .wizardPlanChoice small{grid-column:3;grid-row:1 / span 2;margin:0}
+  .wizardConnectionCard{grid-template-columns:auto minmax(0,1fr)}
+  .wizardConnectionCard .wizardTextButton{grid-column:2;justify-self:start}
+  .wizardSecondaryLinks,.wizardFinishExtras{align-items:center;flex-direction:column;gap:2px}
+  .wizardFinishHeading{display:block}
+  .wizardFinishIcon{margin-bottom:16px}
+  .wizardFinishHeading h2{font-size:38px}
+  .wizardReviewList button{grid-template-columns:28px minmax(0,1fr)}
+  .wizardReviewList small{grid-column:2}
+}
+
+@media(max-width:390px){
+  .wizardMain{padding-right:16px;padding-left:16px}
+  .wizardMobileHeader{margin-bottom:22px}
+  .wizardMobileHeader .wizardBrand img{width:38px;height:38px}
+  .wizardMobileHeader .wizardBrand strong{font-size:22px}
+  .wizardWelcomeMascot{right:-2px;width:94px;height:94px}
+  .wizardWelcomeIntro p{padding-right:104px}
+  .wizardContent h2{font-size:34px}
+  .wizardProgressNode{width:31px;height:31px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .wizardContent{animation:none}
+  .wizardProgressFill,.step{transition:none}
+}

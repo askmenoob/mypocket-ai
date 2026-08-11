@@ -17,6 +17,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 import "./public-landing.css";
+import "./setup-wizard.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
@@ -2727,6 +2728,13 @@ function TokenGate(
 
 }
 
+type WizardStepId =
+  | "welcome"
+  | "google"
+  | "workspace"
+  | "whatsapp"
+  | "finish";
+
 function SetupWizard(
   props:{
     data:DashboardData;
@@ -2746,10 +2754,6 @@ function SetupWizard(
     closeWhatsAppQr:() => void;
   },
 ){
-
-  const [step, setStep] =
-    useState(0);
-
   const workspaceType =
     props.data.me?.workspace?.type ||
     props.data.google?.templateType ||
@@ -2808,539 +2812,552 @@ function SetupWizard(
     &&
     whatsappReady;
 
-  const steps =
-    [
-      "Welcome",
-      "Terms",
-      "Google",
-      "Workspace",
-      "WhatsApp",
-      ...(isShared ? ["Members"] : []),
-      "Subscription",
-      "Finish",
-    ];
+  const wizardSteps:Array<{
+    id:WizardStepId;
+    label:string;
+    description:string;
+  }> = [
+    {
+      id:"welcome",
+      label:"Mula",
+      description:"Kenali MyPocket AI",
+    },
+    {
+      id:"google",
+      label:"Google",
+      description:"Sambungkan Sheet & Drive",
+    },
+    {
+      id:"workspace",
+      label:"Ruang kewangan",
+      description:"Semak ruang & akses",
+    },
+    {
+      id:"whatsapp",
+      label:"WhatsApp",
+      description:"Sambungkan bot",
+    },
+    {
+      id:"finish",
+      label:"Sedia digunakan",
+      description:"Semak dan mula",
+    },
+  ];
+
+  function normalizedStepId(value:string):WizardStepId{
+    const target = value.trim().toLowerCase();
+
+    if(target === "google") return "google";
+    if(target === "whatsapp") return "whatsapp";
+    if(["workspace", "members", "subscription"].includes(target)){
+      return "workspace";
+    }
+    if(target === "finish") return "finish";
+    return "welcome";
+  }
+
+  const [step, setStep] = useState(() => {
+    const initialId = normalizedStepId(
+      props.preferredStep || stored(STORAGE.wizardStep),
+    );
+    return wizardSteps.findIndex((item) => item.id === initialId);
+  });
+
+  const currentStep = wizardSteps[step] || wizardSteps[0];
+  const progress = (step / (wizardSteps.length - 1)) * 100;
+  const minutesLeft = Math.max(0, 4 - step);
 
   useEffect(() => {
+    if(!props.preferredStep) return;
+    const target = normalizedStepId(props.preferredStep);
+    const index = wizardSteps.findIndex((item) => item.id === target);
+    if(index >= 0) setStep(index);
+  }, [props.preferredStep]);
 
-    const target =
-      (
-        props.preferredStep
-        ||
-        stored(STORAGE.wizardStep)
-      )
-        .trim()
-        .toLowerCase();
+  useEffect(() => {
+    localStorage.setItem(
+      STORAGE.wizardStep,
+      currentStep.id,
+    );
+  }, [currentStep.id]);
 
-    if(!target){
-      return;
-    }
+  const googleTechnicalMessage =
+    /google|refresh token|spreadsheet|sheet/i.test(
+      `${props.notice} ${props.state.error || ""}`,
+    );
 
-    const index =
-      steps.findIndex(
-        (item) => item.toLowerCase() === target,
-      );
+  const generalNotice =
+    props.notice && !googleTechnicalMessage
+      ? props.notice === "Terms accepted."
+        ? "Persetujuan anda telah disimpan."
+        : props.notice
+      : "";
 
-    if(index >= 0){
-      setStep(index);
-    }
+  function stepIsDone(id:WizardStepId){
+    if(id === "welcome") return props.termsAccepted;
+    if(id === "google") return hasGoogleSheet;
+    if(id === "workspace") return Boolean(props.data.me?.workspace);
+    if(id === "whatsapp") return whatsappReady;
+    return setupReady;
+  }
 
-  }, [
-    props.preferredStep,
-    steps.join("|"),
-  ]);
+  function stepStatus(id:WizardStepId, index:number){
+    if(props.state.loading && index === step) return "Sedang diperiksa";
+    if(index === step) return "Sedang disediakan";
+    return stepIsDone(id) ? "Berjaya" : "Belum dibuat";
+  }
 
-  const current =
-    steps[step];
+  function goTo(id:WizardStepId){
+    const index = wizardSteps.findIndex((item) => item.id === id);
+    if(index >= 0) setStep(index);
+  }
 
   function next(){
-    setStep(
-      Math.min(
-        step + 1,
-        steps.length - 1,
-      ),
-    );
+    setStep((current) => Math.min(current + 1, wizardSteps.length - 1));
   }
 
   function back(){
-    setStep(
-      Math.max(
-        step - 1,
-        0,
-      ),
-    );
-  }
-
-  function finishActionLabel(){
-
-    if(!props.termsAccepted){
-
-      return "Accept terms first";
-
-    }
-
-
-    if(!hasGoogleSheet){
-
-      return "Connect Google Sheet";
-
-    }
-
-
-    if(
-      whatsappRequired
-      &&
-      !hasWhatsApp
-    ){
-
-      return "Pair WhatsApp bot";
-
-    }
-
-
-    return "Open Dashboard";
-
+    setStep((current) => Math.max(current - 1, 0));
   }
 
   function handleFinishAction(){
-
     if(!props.termsAccepted){
-
-      setStep(
-        steps.indexOf(
-          "Terms",
-        ),
-      );
-
+      goTo("welcome");
       return;
-
     }
-
-
     if(!hasGoogleSheet){
-
-      props.connectGoogleSheet();
+      goTo("google");
       return;
-
     }
-
-
-    if(
-      whatsappRequired
-      &&
-      !hasWhatsApp
-    ){
-
-      setStep(
-        steps.indexOf(
-          "WhatsApp",
-        ),
-      );
-
+    if(whatsappRequired && !hasWhatsApp){
+      goTo("whatsapp");
       return;
-
     }
-
-
     props.finishOnboarding();
-
   }
 
-  function handlePrimaryAction(){
-
-    if(
-      current === "Google"
-      &&
-      !hasGoogleSheet
-    ){
-
-      props.connectGoogleSheet();
-      return;
-
-    }
-
-
-    if(current === "Finish"){
-
+  async function recordFirstTransaction(){
+    if(!setupReady){
       handleFinishAction();
       return;
-
     }
-
-
-    next();
-
+    await props.finishOnboarding();
+    window.location.hash = "#transactions";
   }
 
-  function primaryActionLabel(){
-
-    if(
-      current === "Google"
-      &&
-      !hasGoogleSheet
-    ){
-
-      return "Connect Google Sheet";
-
-    }
-
-
-    if(current === "Finish"){
-
-      return finishActionLabel();
-
-    }
-
-
-    return "Next";
-
-  }
+  const planLabels:Record<string, string> = {
+    PERSONAL:"Personal Pro",
+    FAMILY:"Family",
+    BUSINESS:"Business / Company",
+  };
 
   return (
     <main className="wizardShell">
       <section className="wizardPanel">
         <div className="wizardSide">
-          <LogoBlock />
-          <h1>Setup MyPocket AI</h1>
-          <p>
-            Selesaikan setup pertama untuk aktifkan bot, dashboard dan Google Sheet sync.
-          </p>
+          <div className="wizardBrand">
+            <img src="/mypocket-mark.png" alt="" />
+            <strong>MyPocket AI</strong>
+          </div>
+          <h1>Sediakan<br />MyPocket anda</h1>
 
-          <div className="stepList">
-            {steps.map((item, index) => (
+          <nav className="stepList" aria-label="Langkah penyediaan">
+            {wizardSteps.map((item, index) => {
+              const done = stepIsDone(item.id);
+              const active = index === step;
+              return (
               <button
-                className={index === step ? "step active" : "step"}
+                className={`step${active ? " active" : ""}${done ? " done" : ""}`}
                 onClick={() => setStep(index)}
-                key={item}
+                key={item.id}
+                aria-current={active ? "step" : undefined}
               >
-                <span>{index + 1}</span>
-                {item}
+                <span className="stepNumber">{done && !active ? "✓" : index + 1}</span>
+                <span className="stepCopy">
+                  <strong>{item.label}</strong>
+                  <small>{item.description}</small>
+                </span>
+                <span className="stepState">{stepStatus(item.id, index)}</span>
               </button>
-            ))}
+              );
+            })}
+          </nav>
+
+          <div className="wizardMascot" aria-hidden="true">
+            <img src="/mypocket-robot-wave.webp" alt="" />
           </div>
         </div>
 
         <div className="wizardMain">
-          {props.notice && (
-            <div
-              className="notice"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {props.notice}
+          <header className="wizardMobileHeader">
+            <div className="wizardBrand">
+              <img src="/mypocket-mark.png" alt="" />
+              <strong>MyPocket AI</strong>
+            </div>
+          </header>
+
+          <div className="wizardProgressSummary">
+            <span>Langkah {step + 1} daripada {wizardSteps.length}</span>
+            <span>
+              {minutesLeft > 0
+                ? `lebih kurang ${minutesLeft} minit lagi`
+                : "semakan terakhir"}
+            </span>
+          </div>
+
+          <div className="wizardMobileProgress" aria-hidden="true">
+            <span className="wizardProgressFill" style={{width:`${progress}%`}} />
+            {wizardSteps.map((item, index) => {
+              const completed = index < step && stepIsDone(item.id);
+              const visitedPending = index < step && !completed;
+              return (
+                <span
+                  className={
+                    `wizardProgressNode${completed || index === step ? " active" : ""}`
+                    + `${visitedPending ? " visited" : ""}`
+                  }
+                  key={item.id}
+                >
+                  {completed ? "✓" : index + 1}
+                </span>
+              );
+            })}
+          </div>
+
+          {generalNotice && (
+            <div className="wizardInlineNotice" role="status" aria-live="polite">
+              {generalNotice}
             </div>
           )}
 
-          {current === "Welcome" && (
-            <WizardCard
-              title="Selamat datang ke MyPocket AI"
-              text="Mulakan dengan 3 perkara penting: sambung Google Sheet, pair WhatsApp bot jika digunakan, kemudian rekod transaksi pertama supaya dashboard mula hidup."
-            >
-              <Checklist
-                items={[
-                  "Sambung Google Sheet sebagai tempat data kewangan anda",
-                  "Pair WhatsApp bot untuk rekod expense dan income dari chat",
-                  "Semak workspace dan akses ahli sebelum mula digunakan",
-                  "Install PWA supaya dashboard mudah dibuka di phone",
-                ]}
-              />
-            </WizardCard>
+          {currentStep.id === "google" && !hasGoogleSheet && (
+            <div className="wizardInlineNotice" role="status" aria-live="polite">
+              <strong>Google belum disambungkan.</strong>
+              <span>
+                Sambungkan akaun Google untuk menyediakan Sheet dan Drive anda.
+              </span>
+              {(googleTechnicalMessage || props.state.error) && (
+                <small>Tiada data diubah. Anda boleh cuba semula dengan selamat.</small>
+              )}
+            </div>
           )}
 
-          {current === "Terms" && (
-            <WizardCard
-              title="Terms & Privacy"
-              text="Sila baca dan setuju sebelum menggunakan servis."
-            >
-              <div className="termsBox">
-                <p>
-                  MyPocket AI menyediakan platform automasi bot, dashboard dan sync Google Sheet.
-                </p>
-                <p>
-                  Data kewangan utama disimpan dan disusun di Google Sheet milik user atau workspace.
-                </p>
-                <p>
-                  Sistem hanya menyimpan data minimum yang diperlukan untuk operasi seperti akaun, workspace, token sambungan, nombor WhatsApp yang dipautkan, status bot, permission dan rekod transaksi untuk fungsi dashboard/sync.
-                </p>
-                <p>
-                  MyPocket AI tidak meminta password Google atau WhatsApp anda. Anda boleh disconnect integrasi bila-bila masa.
-                </p>
-                <p>
-                  Untuk Family dan Business workspace, Owner/Admin bertanggungjawab memastikan ahli yang dipautkan mempunyai kebenaran yang sah.
-                </p>
-              </div>
+          <section className="wizardContent" key={currentStep.id}>
+            {currentStep.id === "welcome" && (
+              <>
+                <div className="wizardWelcomeIntro">
+                  <div>
+                    <h2>Jom sediakan MyPocket anda</h2>
+                    <p>
+                      Kami akan bantu anda sambungkan Google, semak ruang kewangan,
+                      dan sediakan WhatsApp supaya semuanya terus boleh digunakan.
+                    </p>
+                    <span className="wizardTime">
+                      <WizardFeatureIcon name="clock" />
+                      Hanya 3–5 minit
+                    </span>
+                  </div>
+                  <img
+                    className="wizardWelcomeMascot"
+                    src="/mypocket-mark.png"
+                    alt="Maskot MyPocket AI tersenyum"
+                  />
+                </div>
 
-              <button
-                className={props.termsAccepted ? "primary done" : "primary"}
-                onClick={props.acceptTerms}
-              >
-                {props.termsAccepted ? "Terms accepted" : "I agree"}
-              </button>
-            </WizardCard>
-          )}
+                <div className="wizardFeatureList">
+                  <WizardFeature
+                    icon="shield"
+                    title="Selamat & peribadi"
+                    text="Data kewangan kekal di akaun Google anda sendiri."
+                  />
+                  <WizardFeature
+                    icon="sync"
+                    title="Sentiasa terkini"
+                    text="Sheet, Drive dan dashboard diselaraskan secara automatik."
+                  />
+                  <WizardFeature
+                    icon="folder"
+                    title="Mudah diakses"
+                    text="Rekod kewangan boleh dicapai bila-bila masa."
+                  />
+                </div>
 
-          {current === "Google" && (
-            <WizardCard
-              title="Google Sheet setup"
-              text="Pastikan Google Sheet sudah connected. Jika belum, sambung dahulu supaya transaksi dan workspace boleh sync dengan betul."
-            >
-              <StatusGrid
-                rows={[
-                  ["Status", props.data.google?.spreadsheetId ? "Connected" : "Not connected"],
-                  ["Template", props.data.google?.templateType || "PERSONAL"],
-                  ["Spreadsheet", props.data.google?.spreadsheetTitle || "-"],
-                  ["Next action", props.data.google?.spreadsheetId ? "Review dashboard or record first transaction" : "Connect Google Sheet before continuing"],
-                ]}
-              />
+                <label className={`wizardTerms${props.termsAccepted ? " accepted" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={props.termsAccepted}
+                    onChange={() => {
+                      if(!props.termsAccepted) props.acceptTerms();
+                    }}
+                  />
+                  <span>
+                    Saya bersetuju dengan <a href="/terms" target="_blank">Terma</a>
+                    {" "}dan <a href="/privacy" target="_blank">Privasi</a> MyPocket AI.
+                  </span>
+                </label>
 
-              {props.data.google?.spreadsheetId && (
-                <a
-                  className="primaryLink"
-                  href={`https://docs.google.com/spreadsheets/d/${props.data.google.spreadsheetId}`}
-                  target="_blank"
-                >
-                  Open Google Sheet
-                </a>
-              )}
-
-              {!props.data.google?.spreadsheetId && (
-                <button
-                  className="primary"
-                  onClick={props.connectGoogleSheet}
-                >
-                  Connect Google Sheet
-                </button>
-              )}
-            </WizardCard>
-          )}
-
-          {current === "Workspace" && (
-            <WizardCard
-              title="Workspace type"
-              text="Type workspace menentukan permission command dan cara ahli WhatsApp dipautkan."
-            >
-              <StatusGrid
-                rows={[
-                  ["Workspace", props.data.me?.workspace?.name || "-"],
-                  ["Type", workspaceType],
-                  ["Role", props.data.me?.workspace?.role || "-"],
-                ]}
-              />
-
-              <p className="hint">
-                Personal workspace boleh guna bot terus. Family dan Business akan memerlukan mapping nombor WhatsApp kepada ahli.
-              </p>
-            </WizardCard>
-          )}
-
-          {current === "WhatsApp" && (
-            <WizardCard
-              title="WhatsApp bot pairing"
-              text={
-                isWhatsAppConnected
-                  ? "WhatsApp bot sudah paired. QR tidak diperlukan lagi untuk setup ini."
-                  : "Scan QR untuk pair nombor WhatsApp yang akan menjadi bot MyPocket."
-              }
-            >
-              <StatusGrid
-                rows={[
-                  ["Instance", props.data.whatsapp?.instance?.instanceName || "imai-dev"],
-                  ["Status", isWhatsAppConnected ? "Connected" : props.data.whatsapp?.instance?.status || "Not paired"],
-                  ["Members linked", `${linked}/${props.data.members.length}`],
-                ]}
-              />
-
-              <p className="hint">
-                {isWhatsAppConnected
-                  ? "Bot sudah aktif. Jika mahu tukar nombor bot, disconnect/restart instance dahulu sebelum buka QR baru."
-                  : "Buka QR, kemudian di WhatsApp pergi ke Linked devices → Link a device → scan QR."}
-              </p>
-
-              <button
-                className="secondary"
-                onClick={props.refresh}
-              >
-                Recheck status
-              </button>
-
-              {!isWhatsAppConnected && (
-                <button
-                  className="primary"
-                  onClick={() => props.openWhatsAppQr("wizard")}
-                >
-                  Open WhatsApp QR
-                </button>
-              )}
-
-              {!isWhatsAppConnected && (
-                <button
-                  className="secondary"
-                  onClick={() => props.resetWhatsAppInstance()}
-                >
-                  Generate fresh QR
-                </button>
-              )}
-
-              {props.whatsAppQr.open && props.whatsAppQr.mode === "wizard" && (
-                <WhatsAppQrPanel
-                  qr={props.whatsAppQr}
-                  secondsLeft={props.qrSecondsLeft}
-                  inline
-                  openQr={() => props.openWhatsAppQr("wizard")}
-                  resetQr={() => props.resetWhatsAppInstance("wizard")}
-                  closeQr={props.closeWhatsAppQr}
-                />
-              )}
-            </WizardCard>
-          )}
-
-          {current === "Members" && (
-            <WizardCard
-              title="Member WhatsApp mapping"
-              text="Family/Business perlu link nombor WhatsApp kepada ahli supaya command tidak digunakan oleh user yang salah."
-            >
-              <div className="memberList">
-                {props.data.members.length === 0 && (
-                  <div
-                    className="hint"
-                    role="status"
-                    aria-live="polite"
+                <div className="wizardActionRow single">
+                  <button
+                    className="wizardPrimary"
+                    onClick={next}
+                    disabled={!props.termsAccepted}
                   >
-                    Tiada ahli lagi / No members have been added yet.
+                    Mulakan setup
+                  </button>
+                </div>
+              </>
+            )}
+
+            {currentStep.id === "google" && (
+              <>
+                <h2>Sambungkan Google</h2>
+                <p className="wizardLead">
+                  MyPocket AI menggunakan Google Sheet untuk menyusun rekod kewangan
+                  dan Google Drive untuk menyimpan resit serta dokumen anda.
+                  <strong> Data anda kekal milik anda.</strong>
+                </p>
+
+                <div className="wizardFeatureList compact">
+                  <WizardFeature
+                    icon="shield"
+                    title="Selamat & peribadi"
+                    text="Kami hanya meminta akses yang diperlukan."
+                  />
+                  <WizardFeature
+                    icon="sync"
+                    title="Sentiasa terkini"
+                    text="Perubahan diselaraskan merentas peranti anda."
+                  />
+                  <WizardFeature
+                    icon="folder"
+                    title="Sheet & Drive siap untuk anda"
+                    text="Template, folder resit dan laporan disediakan automatik."
+                  />
+                </div>
+
+                {hasGoogleSheet ? (
+                  <div className="wizardSuccessCard">
+                    <WizardFeatureIcon name="check" />
+                    <div>
+                      <strong>Google sudah disambungkan</strong>
+                      <span>{props.data.google?.spreadsheetTitle || "Google Sheet MyPocket anda"}</span>
+                    </div>
+                    <a
+                      href={`https://docs.google.com/spreadsheets/d/${props.data.google?.spreadsheetId}`}
+                      target="_blank"
+                    >
+                      Buka Sheet
+                    </a>
+                  </div>
+                ) : (
+                  <div className="wizardTrustNote">
+                    <WizardFeatureIcon name="lock" />
+                    <div>
+                      <strong>Data anda kekal milik anda</strong>
+                      <span>Anda boleh mencabut akses pada bila-bila masa.</span>
+                    </div>
                   </div>
                 )}
 
-                {props.data.members.map((member) => (
-                  <div
-                    className="member"
-                    key={member.memberId}
+                <div className="wizardActionRow">
+                  <button className="wizardBack" onClick={back}>Kembali</button>
+                  <button
+                    className="wizardPrimary"
+                    onClick={hasGoogleSheet ? next : props.connectGoogleSheet}
                   >
+                    {!hasGoogleSheet && <span className="wizardGoogleMark">G</span>}
+                    {hasGoogleSheet ? "Teruskan" : "Sambungkan akaun Google"}
+                  </button>
+                </div>
+                {!hasGoogleSheet && (
+                  <button className="wizardSkip" onClick={next}>Buat kemudian</button>
+                )}
+              </>
+            )}
+
+            {currentStep.id === "workspace" && (
+              <>
+                <h2>Ruang kewangan anda</h2>
+                <p className="wizardLead">
+                  Semak ruang yang akan digunakan. Tetapan ini menentukan cara ahli,
+                  transaksi dan WhatsApp diuruskan.
+                </p>
+
+                <div className="wizardWorkspaceSummary">
+                  <span>Ruang semasa</span>
+                  <strong>{props.data.me?.workspace?.name || "MyPocket Workspace"}</strong>
+                  <small>Peranan anda: {props.data.me?.workspace?.role || "OWNER"}</small>
+                </div>
+
+                <div className="wizardPlanChoices" aria-label="Jenis ruang kewangan">
+                  {[
+                    ["PERSONAL", "Personal Pro", "Kewangan peribadi & automasi AI"],
+                    ["FAMILY", "Family", "Rekod dikongsi bersama keluarga"],
+                    ["BUSINESS", "Business", "Kawalan pasukan & laporan lengkap"],
+                  ].map(([id, label, description]) => (
+                    <div
+                      className={`wizardPlanChoice${workspaceType === id ? " selected" : ""}`}
+                      key={id}
+                      aria-current={workspaceType === id ? "true" : undefined}
+                    >
+                      <WizardFeatureIcon
+                        name={id === "PERSONAL" ? "wallet" : id === "FAMILY" ? "people" : "building"}
+                      />
+                      <strong>{label}</strong>
+                      <span>{description}</span>
+                      {workspaceType === id && <small>Pelan semasa</small>}
+                    </div>
+                  ))}
+                </div>
+
+                {isShared && (
+                  <div className="wizardMemberSummary">
+                    <WizardFeatureIcon name="people" />
                     <div>
-                      <strong>{member.role} {member.name || member.email}</strong>
-                      <span>{member.whatsappPhoneNumber || "belum linked"}</span>
+                      <strong>{props.data.members.length} ahli dalam ruang ini</strong>
+                      <span>{linked} nombor WhatsApp sudah dipautkan.</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            </WizardCard>
-          )}
+                )}
 
-          {current === "Subscription" && (
-            <WizardCard
-              title="Subscription"
-              text="Untuk sekarang status subscription disediakan sebagai placeholder dashboard. Billing sebenar boleh diaktifkan dalam sprint kemudian."
-            >
-              <div className="planBox">
-                <strong>Pro Plan</strong>
-                <span>Active for developer workspace</span>
-              </div>
+                <p className="wizardFootnote">
+                  Jenis ruang dan ahli boleh diuruskan kemudian melalui Settings.
+                </p>
 
-              <Checklist
-                items={[
-                  "Personal: bot + dashboard + Google Sheet",
-                  "Family: multi-member permission",
-                  "Business: team control dan audit lebih lengkap",
-                ]}
-              />
-            </WizardCard>
-          )}
+                <div className="wizardActionRow">
+                  <button className="wizardBack" onClick={back}>Kembali</button>
+                  <button className="wizardPrimary" onClick={next}>Teruskan ke WhatsApp</button>
+                </div>
+              </>
+            )}
 
-          {current === "Finish" && (
-            <WizardCard
-              title={setupReady ? "Setup ready" : "Complete setup"}
-              text={
-                setupReady
-                  ? "Semua item wajib sudah selesai. Anda boleh buka dashboard sekarang."
-                  : "Selesaikan item wajib sebelum membuka dashboard."
-              }
-            >
-              <SetupChecklist
-                items={[
-                  {
-                    done:
-                      props.termsAccepted,
+            {currentStep.id === "whatsapp" && (
+              <>
+                <h2>{hasWhatsApp ? "WhatsApp sudah sedia" : "Sambungkan WhatsApp"}</h2>
+                <p className="wizardLead">
+                  {hasWhatsApp
+                    ? "Bot MyPocket sudah boleh menerima arahan dan resit daripada WhatsApp anda."
+                    : "Imbas kod QR untuk merekod transaksi, resit dan voice note terus daripada WhatsApp."}
+                </p>
 
-                    text:
-                      props.termsAccepted
-                        ? "Terms accepted"
-                        : "Accept terms first",
-                  },
+                <div className={`wizardConnectionCard${hasWhatsApp ? " connected" : ""}`}>
+                  <WizardFeatureIcon name="message" />
+                  <div>
+                    <span>Status sambungan</span>
+                    <strong>{hasWhatsApp ? "Berjaya disambungkan" : "Belum disambungkan"}</strong>
+                    <small>
+                      {hasWhatsApp
+                        ? props.data.whatsapp?.instance?.instanceName || "Bot MyPocket AI"
+                        : "Gunakan nombor yang akan menjadi bot MyPocket."}
+                    </small>
+                  </div>
+                  <button className="wizardTextButton" onClick={props.refresh}>
+                    Semak semula
+                  </button>
+                </div>
 
-                  {
-                    done:
-                      hasGoogleSheet,
+                {!hasWhatsApp && (
+                  <ol className="wizardInstructions">
+                    <li>Buka WhatsApp dan pilih <strong>Linked devices</strong>.</li>
+                    <li>Tekan <strong>Link a device</strong>.</li>
+                    <li>Imbas QR yang MyPocket paparkan.</li>
+                  </ol>
+                )}
 
-                    text:
-                      hasGoogleSheet
-                        ? "Google Sheet connected"
-                        : "Connect Google Sheet",
-                  },
+                {!hasWhatsApp && props.whatsAppQr.open && props.whatsAppQr.mode === "wizard" && (
+                  <WhatsAppQrPanel
+                    qr={props.whatsAppQr}
+                    secondsLeft={props.qrSecondsLeft}
+                    inline
+                    openQr={() => props.openWhatsAppQr("wizard")}
+                    resetQr={() => props.resetWhatsAppInstance("wizard")}
+                    closeQr={props.closeWhatsAppQr}
+                  />
+                )}
 
-                  {
-                    done:
-                      whatsappReady,
+                <div className="wizardActionRow">
+                  <button className="wizardBack" onClick={back}>Kembali</button>
+                  <button
+                    className="wizardPrimary"
+                    onClick={hasWhatsApp ? next : () => props.openWhatsAppQr("wizard")}
+                  >
+                    {hasWhatsApp ? "Teruskan" : "Paparkan kod QR"}
+                  </button>
+                </div>
 
-                    text:
-                      hasWhatsApp
-                        ? "WhatsApp bot connected"
-                        : whatsappRequired
-                          ? "Open WhatsApp QR and pair bot"
-                          : "WhatsApp pairing can be completed later",
-                  },
+                {!hasWhatsApp && (
+                  <div className="wizardSecondaryLinks">
+                    <button className="wizardSkip" onClick={next}>
+                      {whatsappRequired ? "Sediakan kemudian" : "Buat kemudian"}
+                    </button>
+                    <button className="wizardSkip" onClick={() => props.resetWhatsAppInstance("wizard")}>
+                      Jana QR baharu
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
 
-                  {
-                    done:
-                      setupReady,
+            {currentStep.id === "finish" && (
+              <>
+                <div className="wizardFinishHeading">
+                  <span className={`wizardFinishIcon${setupReady ? " ready" : ""}`}>
+                    <WizardFeatureIcon name={setupReady ? "check" : "clock"} />
+                  </span>
+                  <div>
+                    <h2>{setupReady ? "MyPocket anda sudah sedia" : "Hampir siap"}</h2>
+                    <p className="wizardLead">
+                      {setupReady
+                        ? "Semua perkara penting telah disediakan. Anda boleh mula merekod sekarang."
+                        : "Lengkapkan perkara wajib di bawah sebelum membuka dashboard."}
+                    </p>
+                  </div>
+                </div>
 
-                    text:
-                      setupReady
-                        ? "Ready to record first transaction"
-                        : "Complete setup before first transaction",
-                  },
-                ]}
-              />
+                <div className="wizardReviewList">
+                  {[
+                    ["welcome", "Terma & Privasi", props.termsAccepted],
+                    ["google", "Google Sheet & Drive", hasGoogleSheet],
+                    ["workspace", `Ruang ${planLabels[workspaceType] || workspaceType}`, true],
+                    ["whatsapp", "Bot WhatsApp", whatsappReady],
+                  ].map(([id, label, done]) => (
+                    <button key={String(id)} onClick={() => goTo(id as WizardStepId)}>
+                      <span className={done ? "done" : "pending"}>{done ? "✓" : "•"}</span>
+                      <strong>{String(label)}</strong>
+                      <small>{done ? "Berjaya" : "Belum dibuat"}</small>
+                    </button>
+                  ))}
+                </div>
 
-              <button
-                className="primary"
-                onClick={handleFinishAction}
-              >
-                {finishActionLabel()}
-              </button>
+                <div className="wizardActionRow finish">
+                  <button className="wizardBack" onClick={back}>Kembali</button>
+                  <button className="wizardPrimary" onClick={handleFinishAction}>
+                    {setupReady ? "Buka dashboard" : "Lengkapkan setup"}
+                  </button>
+                </div>
 
-              <button
-                className="secondary"
-                onClick={props.installApp}
-              >
-                Install on phone
-              </button>
-            </WizardCard>
-          )}
+                {setupReady && (
+                  <div className="wizardFinishExtras">
+                    <button className="wizardSkip" onClick={recordFirstTransaction}>
+                      Rekod transaksi pertama
+                    </button>
+                    <button className="wizardSkip" onClick={props.installApp}>
+                      Pasang aplikasi di telefon
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
 
-          <div className="wizardActions">
-            <button
-              className="secondary"
-              onClick={back}
-              disabled={step === 0}
-            >
-              Back
-            </button>
-
-            <button
-              className="primary"
-              onClick={handlePrimaryAction}
-            >
-              {primaryActionLabel()}
-            </button>
-          </div>
-
-          {props.state.error && (
+          {props.state.error && !googleTechnicalMessage && (
             <div
-              className="errorBox"
+              className="wizardError"
               role="alert"
               aria-live="assertive"
               aria-atomic="true"
             >
-              {props.state.error}
+              Sesuatu belum berjaya diselesaikan. Semak sambungan anda dan cuba lagi.
             </div>
           )}
         </div>
@@ -3348,6 +3365,61 @@ function SetupWizard(
     </main>
   );
 
+}
+
+type WizardIconName =
+  | "shield"
+  | "sync"
+  | "folder"
+  | "clock"
+  | "lock"
+  | "check"
+  | "wallet"
+  | "people"
+  | "building"
+  | "message";
+
+function WizardFeatureIcon(props:{name:WizardIconName}){
+  const common = {
+    fill:"none",
+    stroke:"currentColor",
+    strokeWidth:1.9,
+    strokeLinecap:"round" as const,
+    strokeLinejoin:"round" as const,
+  };
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...common}>
+      {props.name === "shield" && <path d="M12 3 5.5 5.7v5.5c0 4.2 2.7 7.8 6.5 9.8 3.8-2 6.5-5.6 6.5-9.8V5.7L12 3Zm-2.2 9.1 1.5 1.5 3.3-3.5" />}
+      {props.name === "sync" && <path d="M20 7v5h-5M4 17v-5h5m9.6-3.2A7.5 7.5 0 0 0 6.2 6.5L4 9m16 6-2.2 2.5A7.5 7.5 0 0 1 5.4 15.2" />}
+      {props.name === "folder" && <path d="M3.5 6.5h6l2 2h9v9.8a1.7 1.7 0 0 1-1.7 1.7H5.2a1.7 1.7 0 0 1-1.7-1.7V6.5Zm0 4h17" />}
+      {props.name === "clock" && <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>}
+      {props.name === "lock" && <><rect x="5.5" y="10" width="13" height="10" rx="2" /><path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10m-3.5 4v2" /></>}
+      {props.name === "check" && <><circle cx="12" cy="12" r="9" /><path d="m8 12.2 2.6 2.6 5.5-5.8" /></>}
+      {props.name === "wallet" && <><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-10Z" /><path d="M4 9h16m-5 4h5" /></>}
+      {props.name === "people" && <><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.3" /><path d="M3.5 19c.3-3.5 2.2-5.5 5.5-5.5s5.2 2 5.5 5.5m.2-4.6c2.9-.2 4.8 1.5 5 4.6" /></>}
+      {props.name === "building" && <><path d="M5 21V5l7-2v18M12 8h7v13M8 8v1m0 3v1m0 3v1m7-5v1m0 3v1M3 21h18" /></>}
+      {props.name === "message" && <><path d="M4 5.5h16v11H9l-5 4v-15Z" /><path d="M8 10h8m-8 3h5" /></>}
+    </svg>
+  );
+}
+
+function WizardFeature(
+  props:{
+    icon:WizardIconName;
+    title:string;
+    text:string;
+  },
+){
+  return (
+    <div className="wizardFeature">
+      <span className="wizardFeatureIcon"><WizardFeatureIcon name={props.icon} /></span>
+      <div>
+        <strong>{props.title}</strong>
+        <span>{props.text}</span>
+      </div>
+    </div>
+  );
 }
 
 function TransactionFilterControls(
