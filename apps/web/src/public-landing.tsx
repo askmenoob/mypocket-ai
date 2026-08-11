@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type LandingIconName =
   | "arrow"
@@ -156,7 +156,7 @@ function LandingIcon({ name }: { name: LandingIconName }) {
 function LandingBrand() {
   return (
     <span className="mpBrand">
-      <img src="/icon.svg" alt="" />
+      <img src="/mypocket-mark.png" alt="" />
       <strong>MyPocket AI</strong>
     </span>
   );
@@ -279,13 +279,88 @@ function PricingPlan({
 }
 
 export function PublicLandingPage() {
+  const landingRef = useRef<HTMLElement | null>(null);
   const [activeCapability, setActiveCapability] =
-    useState<CapabilityKey>("receipts");
+    useState<CapabilityKey>("whatsapp");
   const capability =
-    capabilities.find((item) => item.key === activeCapability) ?? capabilities[1];
+    capabilities.find((item) => item.key === activeCapability) ?? capabilities[0];
+
+  useEffect(() => {
+    const landing = landingRef.current;
+    if (!landing) {
+      return;
+    }
+
+    const revealItems = Array.from(
+      landing.querySelectorAll<HTMLElement>("[data-reveal]"),
+    );
+    const storySteps = Array.from(
+      landing.querySelectorAll<HTMLElement>("[data-story-step]"),
+    );
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    landing.classList.add("mpRevealReady");
+
+    const supportsIntersectionObserver = "IntersectionObserver" in window;
+
+    if (prefersReducedMotion || !supportsIntersectionObserver) {
+      revealItems.forEach((item) => item.classList.add("is-visible"));
+    }
+
+    const revealObserver = prefersReducedMotion || !supportsIntersectionObserver
+      ? null
+      : new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) {
+              return;
+            }
+
+            entry.target.classList.add("is-visible");
+            revealObserver?.unobserve(entry.target);
+          });
+        },
+        { rootMargin: "0px 0px -10% 0px", threshold: 0.16 },
+      );
+
+    revealItems.forEach((item) => revealObserver?.observe(item));
+
+    if (!supportsIntersectionObserver) {
+      landing.classList.add("mpStoryStatic");
+      return () => revealObserver?.disconnect();
+    }
+
+    const storyObserver = new IntersectionObserver(
+      (entries) => {
+        const activeEntry = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
+        const key = activeEntry?.target.getAttribute(
+          "data-capability",
+        ) as CapabilityKey | null;
+
+        if (key) {
+          setActiveCapability(key);
+        }
+      },
+      {
+        rootMargin: "-28% 0px -44% 0px",
+        threshold: [0.2, 0.45, 0.7],
+      },
+    );
+
+    storySteps.forEach((step) => storyObserver.observe(step));
+
+    return () => {
+      revealObserver?.disconnect();
+      storyObserver.disconnect();
+    };
+  }, []);
 
   return (
-    <main className="mpLanding" id="top">
+    <main className="mpLanding" id="top" ref={landingRef}>
       <header className="mpNav">
         <div className="mpNavInner">
           <a className="mpBrandLink" href="#top" aria-label="MyPocket AI home">
@@ -300,7 +375,8 @@ export function PublicLandingPage() {
           <div className="mpNavActions">
             <a className="mpSignIn" href="https://app.imai.my">Sign In</a>
             <CtaLink href="https://app.imai.my" className="mpButtonPrimary mpNavCta">
-              Start with MyPocket AI
+              <span className="mpNavCtaLong">Start with MyPocket AI</span>
+              <span className="mpNavCtaShort">Get started</span>
             </CtaLink>
           </div>
         </div>
@@ -308,13 +384,16 @@ export function PublicLandingPage() {
 
       <section className="mpHero" aria-labelledby="mp-hero-title">
         <div className="mpHeroInner">
-          <div className="mpHeroCopy">
+          <div className="mpHeroCopy" data-reveal="up">
             <h1 id="mp-hero-title">
-              Your money, organised. Right from <span>WhatsApp.</span>
+              <span className="mpHeroLine">Your money,</span>
+              <span className="mpHeroLine">organised. Right</span>
+              <span className="mpHeroLine">from <em>WhatsApp.</em></span>
             </h1>
             <p>
-              Record expenses, scan receipts, send voice notes and keep
-              your dashboard and Google Sheet in sync.
+              Record expenses, scan receipts, send voice notes
+              <br />
+              {" "}and keep your dashboard and Google Sheet in sync.
             </p>
             <div className="mpHeroActions">
               <CtaLink href="https://app.imai.my" className="mpButtonPrimary">
@@ -328,12 +407,12 @@ export function PublicLandingPage() {
             </div>
           </div>
 
-          <div className="mpHeroStage" aria-label="MyPocket AI assistant preview">
+          <div className="mpHeroStage" aria-label="MyPocket AI assistant preview" data-reveal="from-right">
             <div className="mpHeroShape" aria-hidden="true"></div>
             <img
               className="mpHeroRobot"
-              src="/mypocket-robot.webp?v=2"
-              alt="MyPocket AI robot assistant holding a magnifying glass"
+              src="/mypocket-robot-wave.webp"
+              alt="MyPocket AI robot assistant waving"
               fetchPriority="high"
             />
             <div className="mpActivity mpActivityReceipt">
@@ -355,31 +434,80 @@ export function PublicLandingPage() {
         </div>
 
         <div className="mpValueRail">
-          <article><span><LandingIcon name="message" /></span><div><strong>WhatsApp-first</strong><p>Chat naturally. We handle the admin.</p></div></article>
-          <article><span><LandingIcon name="sync" /></span><div><strong>AI-assisted</strong><p>Receipts, voice and everyday money language.</p></div></article>
-          <article><span><LandingIcon name="lock" /></span><div><strong>Workspace private</strong><p>Your records stay inside your workspace.</p></div></article>
+          <article data-reveal="up"><span><LandingIcon name="message" /></span><div><strong>WhatsApp-first</strong><p>Chat naturally on WhatsApp. We handle the rest.</p></div></article>
+          <article data-reveal="up"><span><LandingIcon name="sync" /></span><div><strong>AI-assisted</strong><p>Smart understanding and helpful summaries.</p></div></article>
+          <article data-reveal="up"><span><LandingIcon name="lock" /></span><div><strong>Workspace private</strong><p>Your data stays in your workspace, always.</p></div></article>
         </div>
       </section>
 
-      <section className="mpProblem" aria-labelledby="mp-problem-title">
-        <div className="mpProblemInner">
-          <div className="mpProblemCopy">
-            <h2 id="mp-problem-title">Finance shouldn’t feel like admin<span>.</span></h2>
-            <p>One message should be enough to keep your records accurate.</p>
-            <div className="mpProblemList">
-              <article><span><LandingIcon name="receipt" /></span><div><h3>Receipts become records</h3><p>Scan, review and confirm before anything is saved.</p></div></article>
-              <article><span><LandingIcon name="microphone" /></span><div><h3>Voice becomes action</h3><p>Say “bot” and record expenses naturally.</p></div></article>
-              <article><span><LandingIcon name="sync" /></span><div><h3>Everything stays in sync</h3><p>Dashboard, Google Sheet and Drive update together.</p></div></article>
+      <section className="mpCapabilities mpScrolly" id="features" aria-labelledby="mp-features-title">
+        <div className="mpSectionInner">
+          <div className="mpScrollyHeading" data-reveal="up">
+            <p className="mpSectionLabel">Capabilities</p>
+            <h2 id="mp-features-title">One place for the whole money routine<span>.</span></h2>
+            <p>Scroll through the ways MyPocket turns everyday messages into organised records.</p>
+          </div>
+
+          <div className="mpScrollyLayout">
+            <div className="mpScrollySteps">
+              {capabilities.map((item, index) => (
+                <article
+                  className={`mpScrollyStep ${item.key === activeCapability ? "is-active" : ""}`}
+                  data-capability={item.key}
+                  data-story-step
+                  key={item.key}
+                >
+                  <button
+                    aria-pressed={item.key === activeCapability}
+                    onClick={() => setActiveCapability(item.key)}
+                    onFocus={() => setActiveCapability(item.key)}
+                    type="button"
+                  >
+                    <b>{String(index + 1).padStart(2, "0")}</b>
+                    <span><LandingIcon name={item.icon} /></span>
+                    {item.label}
+                  </button>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
+                  <ul>
+                    {item.bullets.map((bullet) => (
+                      <li key={bullet}><LandingIcon name="check" />{bullet}</li>
+                    ))}
+                  </ul>
+                  <div className="mpMobileStoryPreview">
+                    <CapabilityPreview capability={item.key} />
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="mpScrollySticky">
+              <div className="mpStoryVisual" data-reveal="scale">
+                <div className="mpStoryTopline">
+                  <span aria-live="polite" role="status">{capability.label}</span>
+                  <div
+                    aria-label={`Feature ${capabilities.findIndex((item) => item.key === activeCapability) + 1} of ${capabilities.length}`}
+                    aria-valuemax={capabilities.length}
+                    aria-valuemin={1}
+                    aria-valuenow={capabilities.findIndex((item) => item.key === activeCapability) + 1}
+                    role="progressbar"
+                  >
+                    {capabilities.map((item) => (
+                      <i className={item.key === activeCapability ? "active" : ""} key={item.key}></i>
+                    ))}
+                  </div>
+                </div>
+                <div className="mpStoryPreview">
+                  <CapabilityPreview capability={activeCapability} key={activeCapability} />
+                  <img src="/mypocket-robot.webp?v=2" alt="" loading="lazy" />
+                </div>
+              </div>
             </div>
           </div>
-          <div className="mpProblemVisual" aria-hidden="true">
-            <div></div>
-            <img src="/mypocket-robot.webp?v=2" alt="" loading="lazy" />
-          </div>
         </div>
       </section>
 
-      <section className="mpHow" id="how" aria-labelledby="mp-how-title">
+      <section className="mpHow" id="how" aria-labelledby="mp-how-title" data-reveal="up">
         <div className="mpHowInner">
           <h2 id="mp-how-title">From message to money record in three steps<span>.</span></h2>
           <div className="mpStepRail">
@@ -410,40 +538,7 @@ export function PublicLandingPage() {
         </div>
       </section>
 
-      <section className="mpCapabilities" id="features" aria-labelledby="mp-features-title">
-        <div className="mpSectionInner">
-          <h2 id="mp-features-title">One place for the whole money routine<span>.</span></h2>
-          <div className="mpTabs" role="tablist" aria-label="MyPocket AI capabilities">
-            {capabilities.map((item) => (
-              <button
-                aria-selected={item.key === activeCapability}
-                className={item.key === activeCapability ? "active" : ""}
-                key={item.key}
-                onClick={() => setActiveCapability(item.key)}
-                role="tab"
-                type="button"
-              >
-                <LandingIcon name={item.icon} />
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <div className="mpCapabilityPanel" role="tabpanel">
-            <div className="mpCapabilityCopy">
-              <h3>{capability.title}</h3>
-              <p>{capability.body}</p>
-              <ul>
-                {capability.bullets.map((bullet) => (
-                  <li key={bullet}><LandingIcon name="check" />{bullet}</li>
-                ))}
-              </ul>
-            </div>
-            <CapabilityPreview capability={activeCapability} />
-          </div>
-        </div>
-      </section>
-
-      <section className="mpPricing" id="pricing" aria-labelledby="mp-pricing-title">
+      <section className="mpPricing" id="pricing" aria-labelledby="mp-pricing-title" data-reveal="up">
         <div className="mpSectionInner">
           <div className="mpPricingHead">
             <h2 id="mp-pricing-title">Simple plans. Serious control<span>.</span></h2>
@@ -457,21 +552,7 @@ export function PublicLandingPage() {
         </div>
       </section>
 
-      <section className="mpTrust" aria-labelledby="mp-trust-title">
-        <div className="mpSectionInner mpTrustInner">
-          <div>
-            <h2 id="mp-trust-title">Your finances. Your control<span>.</span></h2>
-            <p>MyPocket AI uses authorised connections and never asks for your Google or WhatsApp password.</p>
-          </div>
-          <div className="mpTrustPoints">
-            <article><LandingIcon name="lock" /><h3>Workspace separation</h3><p>Personal, family and business records remain scoped to the right workspace.</p></article>
-            <article><LandingIcon name="check" /><h3>Confirmation first</h3><p>A receipt is only uploaded and recorded after you type !confirm.</p></article>
-            <article><LandingIcon name="sync" /><h3>Connected, not trapped</h3><p>Your Google integration can be reviewed or disconnected from the dashboard.</p></article>
-          </div>
-        </div>
-      </section>
-
-      <section className="mpFaq" id="faq" aria-labelledby="mp-faq-title">
+      <section className="mpFaq" id="faq" aria-labelledby="mp-faq-title" data-reveal="up">
         <div className="mpSectionInner mpFaqInner">
           <h2 id="mp-faq-title">Questions, answered clearly<span>.</span></h2>
           <div className="mpFaqList">
@@ -495,7 +576,7 @@ export function PublicLandingPage() {
         </div>
       </section>
 
-      <section className="mpFinalCta" aria-labelledby="mp-final-title">
+      <section className="mpFinalCta" aria-labelledby="mp-final-title" data-reveal="up">
         <div className="mpFinalShape" aria-hidden="true"></div>
         <div>
           <h2 id="mp-final-title">Make money admin feel effortless.</h2>
