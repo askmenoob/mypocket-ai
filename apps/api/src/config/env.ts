@@ -37,6 +37,11 @@ const EnvSchema = z.object({
 
   JWT_SECRET: z.string().min(32),
 
+  JWT_EXPIRES_IN:
+    z.string()
+      .min(2)
+      .default("12h"),
+
   DATABASE_URL: z.string(),
 
   REDIS_URL: z.string(),
@@ -139,19 +144,21 @@ const EnvSchema = z.object({
     z.enum([
       "sandbox",
       "production",
-    ]),
+    ])
+      .default("sandbox"),
 
   HITPAY_API_BASE_URL:
     z.string()
-      .url(),
+      .url()
+      .default("https://api.sandbox.hit-pay.com"),
 
   HITPAY_API_KEY:
     z.string()
-      .min(40),
+      .default(""),
 
   HITPAY_SALT:
     z.string()
-      .min(32),
+      .default(""),
 
   HITPAY_WEBHOOK_SALT:
     z.string()
@@ -160,85 +167,74 @@ const EnvSchema = z.object({
 
   HITPAY_WEBHOOK_URL:
     z.string()
-      .url(),
+      .default(""),
 
   HITPAY_RETURN_URL:
     z.string()
-      .url(),
+      .default(""),
 
   HITPAY_PLAN_PERSONAL_PRO_ID:
     z.string()
-      .uuid(),
+      .default(""),
 
   HITPAY_PLAN_FAMILY_ID:
     z.string()
-      .uuid(),
+      .default(""),
 
   HITPAY_PLAN_BUSINESS_ID:
     z.string()
-      .uuid(),
+      .default(""),
 
 }).superRefine(
   (
     value,
     context,
   ) => {
-    const issues =
-      hitPayEnvironmentIssues({
-        environment:
-          value.HITPAY_ENVIRONMENT,
-        apiBaseUrl:
-          value.HITPAY_API_BASE_URL,
-        webhookUrl:
-          value.HITPAY_WEBHOOK_URL,
-        personalProPlanId:
-          value.HITPAY_PLAN_PERSONAL_PRO_ID,
-        familyPlanId:
-          value.HITPAY_PLAN_FAMILY_ID,
-        businessPlanId:
-          value.HITPAY_PLAN_BUSINESS_ID,
-      });
+    if(value.BILLING_CHECKOUT_PROVIDER === "hitpay"){
+      const requiredHitPayValues = [
+        ["HITPAY_API_KEY", value.HITPAY_API_KEY],
+        ["HITPAY_SALT", value.HITPAY_SALT],
+        ["HITPAY_WEBHOOK_URL", value.HITPAY_WEBHOOK_URL],
+        ["HITPAY_RETURN_URL", value.HITPAY_RETURN_URL],
+        ["HITPAY_PLAN_PERSONAL_PRO_ID", value.HITPAY_PLAN_PERSONAL_PRO_ID],
+        ["HITPAY_PLAN_FAMILY_ID", value.HITPAY_PLAN_FAMILY_ID],
+        ["HITPAY_PLAN_BUSINESS_ID", value.HITPAY_PLAN_BUSINESS_ID],
+      ] as const;
 
-    for(const issue of issues){
-      context.addIssue({
-        code:
-          "custom",
-        message:
-          issue,
-        path:
-          issue.startsWith(
-            "HITPAY_API_BASE_URL",
-          )
-            ? ["HITPAY_API_BASE_URL"]
-            : issue.startsWith(
-              "HITPAY_WEBHOOK_URL",
-            )
-              ? ["HITPAY_WEBHOOK_URL"]
-              : ["HITPAY_PLAN_PERSONAL_PRO_ID"],
-      });
-    }
+      for(const [name, configured] of requiredHitPayValues){
+        if(!configured){
+          context.addIssue({
+            code: "custom",
+            message: `${name}_REQUIRED_FOR_HITPAY`,
+            path: [name],
+          });
+        }
+      }
 
-    const chipIssues =
-      chipEnvironmentIssues({
-        environment:
-          value.CHIP_ENVIRONMENT,
-        apiBaseUrl:
-          value.CHIP_API_BASE_URL,
-        webhookUrl:
-          value.CHIP_WEBHOOK_URL,
-      });
+      if(requiredHitPayValues.every(([, configured]) => configured)){
+        const issues =
+          hitPayEnvironmentIssues({
+            environment: value.HITPAY_ENVIRONMENT,
+            apiBaseUrl: value.HITPAY_API_BASE_URL,
+            webhookUrl: value.HITPAY_WEBHOOK_URL,
+            personalProPlanId: value.HITPAY_PLAN_PERSONAL_PRO_ID,
+            familyPlanId: value.HITPAY_PLAN_FAMILY_ID,
+            businessPlanId: value.HITPAY_PLAN_BUSINESS_ID,
+          });
 
-    for(const issue of chipIssues){
-      context.addIssue({
-        code:
-          "custom",
-        message:
-          issue,
-        path:
-          issue.startsWith("CHIP_WEBHOOK_URL")
-            ? ["CHIP_WEBHOOK_URL"]
-            : ["CHIP_API_BASE_URL"],
-      });
+        for(const issue of issues){
+          context.addIssue({
+            code: "custom",
+            message: issue,
+            path:
+              issue.startsWith("HITPAY_API_BASE_URL")
+                ? ["HITPAY_API_BASE_URL"]
+                : issue.startsWith("HITPAY_WEBHOOK_URL")
+                  ? ["HITPAY_WEBHOOK_URL"]
+                  : ["HITPAY_PLAN_PERSONAL_PRO_ID"],
+          });
+        }
+      }
     }
 
     if(value.BILLING_CHECKOUT_PROVIDER === "chip"){
@@ -261,6 +257,29 @@ const EnvSchema = z.object({
               [name],
           });
         }
+      }
+
+      const chipIssues =
+        chipEnvironmentIssues({
+          environment:
+            value.CHIP_ENVIRONMENT,
+          apiBaseUrl:
+            value.CHIP_API_BASE_URL,
+          webhookUrl:
+            value.CHIP_WEBHOOK_URL,
+        });
+
+      for(const issue of chipIssues){
+        context.addIssue({
+          code:
+            "custom",
+          message:
+            issue,
+          path:
+            issue.startsWith("CHIP_WEBHOOK_URL")
+              ? ["CHIP_WEBHOOK_URL"]
+              : ["CHIP_API_BASE_URL"],
+        });
       }
     }
   },

@@ -80,9 +80,18 @@ test("checkout promotion migration is additive and links one billing attempt", (
     new URL("../prisma/migrations/20260812143000_link_promotions_to_billing_attempts/migration.sql", import.meta.url),
     "utf8",
   );
+  const schema = readFileSync(
+    new URL("../prisma/schema.prisma", import.meta.url),
+    "utf8",
+  );
+  const service = readFileSync(
+    new URL("../src/modules/billing/chip-billing.service.ts", import.meta.url),
+    "utf8",
+  );
 
   assert.match(migration, /ADD COLUMN "billingPaymentAttemptId" TEXT/u);
-  assert.match(migration, /BillingPaymentAttemptStatus.*PREAUTHORIZED/su);
+  assert.match(schema, /BillingPaymentAttemptStatus[\s\S]*?PENDING/su);
+  assert.match(service, /preauthorized\s*\?\s*"PENDING"\s*:\s*"PAID"/su);
   assert.match(migration, /ON DELETE SET NULL/u);
   assert.doesNotMatch(migration, /DROP TABLE|DROP COLUMN|TRUNCATE/iu);
 });

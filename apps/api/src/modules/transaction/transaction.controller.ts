@@ -51,12 +51,6 @@ export class TransactionController {
     const user =
       request.user as any;
 
-    console.log(
-      "TRANSACTION JWT USER:",
-      JSON.stringify(user, null, 2)
-    );
-
-
     const result =
       await this.service
         .getTransactions(

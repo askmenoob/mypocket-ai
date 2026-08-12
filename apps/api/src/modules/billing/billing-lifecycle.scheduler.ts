@@ -123,6 +123,9 @@ export class BillingLifecycleScheduler {
         status: "SCHEDULED",
         paymentAttemptId: null,
         dueAt: { lte: chargeCutoff },
+        workspaceBillingSubscription: {
+          provider: "CHIP",
+        },
       },
       orderBy: { dueAt: "asc" },
       take: 20,

@@ -1,6 +1,9 @@
 import type {
   FastifyInstance,
 } from "fastify";
+import {
+  env,
+} from "../../config/index.js";
 
 
 export class TokenService {
@@ -20,17 +23,18 @@ export class TokenService {
   ) {
 
 
-    return this.app.jwt.sign({
-
-      userId,
-
-      email,
-
-      workspaceId,
-
-      role,
-
-    });
+    return this.app.jwt.sign(
+      {
+        userId,
+        email,
+        workspaceId,
+        role,
+      },
+      {
+        expiresIn:
+          env.JWT_EXPIRES_IN,
+      },
+    );
 
 
   }

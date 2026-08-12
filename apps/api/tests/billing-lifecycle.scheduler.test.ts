@@ -19,5 +19,30 @@ test("automatic renewal charges become eligible only at the exact due time", () 
   );
 
   assert.match(paymentStart, /dueAt:\s*\{\s*lte:\s*chargeCutoff\s*\}/u);
+  assert.match(
+    paymentStart,
+    /workspaceBillingSubscription:\s*\{\s*provider:\s*"CHIP"/u,
+  );
   assert.doesNotMatch(paymentStart, /30\s*\*\s*DAY_MS/u);
+});
+
+test("legacy subscriptions receive renewal reminders but never become CHIP charges", () => {
+  const source = readFileSync(
+    resolve(process.cwd(), "src/modules/billing/billing-lifecycle.scheduler.ts"),
+    "utf8",
+  );
+  const renewalCreation = source.slice(
+    source.indexOf("private async createUpcomingRenewals"),
+    source.indexOf("private async startUpcomingPayments"),
+  );
+  const paymentStart = source.slice(
+    source.indexOf("private async startUpcomingPayments"),
+    source.indexOf("private async createReminderDeliveries"),
+  );
+
+  assert.doesNotMatch(renewalCreation, /provider:\s*"CHIP"/u);
+  assert.match(
+    paymentStart,
+    /workspaceBillingSubscription:\s*\{\s*provider:\s*"CHIP"/u,
+  );
 });
