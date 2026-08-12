@@ -7796,6 +7796,7 @@ function Dashboard(
                     </span>
                     <input
                       type="url"
+                      aria-label="Advanced Google Drive Folder URL"
                       value={legacyManualRootFolderUrl}
                       placeholder="https://drive.google.com/drive/folders/..."
                       onChange={(event) => {
@@ -7813,6 +7814,7 @@ function Dashboard(
                     </span>
                     <input
                       type="url"
+                      aria-label="Advanced Working Google Sheet URL"
                       value={legacyManualWorkingSheetUrl}
                       placeholder="https://docs.google.com/spreadsheets/d/..."
                       onChange={(event) => {
@@ -7830,6 +7832,7 @@ function Dashboard(
                     </span>
                     <input
                       type="url"
+                      aria-label="Advanced Backup Google Sheet URL (optional)"
                       value={legacyManualBackupSheetUrl}
                       placeholder="https://docs.google.com/spreadsheets/d/..."
                       onChange={(event) => {

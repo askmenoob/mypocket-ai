@@ -3305,6 +3305,7 @@ export function PremiumDashboard(
                   </span>
                   <input
                     type="url"
+                    aria-label="Advanced Google Drive Folder URL"
                     value={manualRootFolderUrl}
                     placeholder="https://drive.google.com/drive/folders/..."
                     onChange={(event) => {
@@ -3326,6 +3327,7 @@ export function PremiumDashboard(
                   </span>
                   <input
                     type="url"
+                    aria-label="Advanced Working Google Sheet URL"
                     value={manualWorkingSheetUrl}
                     placeholder="https://docs.google.com/spreadsheets/d/..."
                     onChange={(event) => {
@@ -3347,6 +3349,7 @@ export function PremiumDashboard(
                   </span>
                   <input
                     type="url"
+                    aria-label="Advanced Backup Google Sheet URL (optional)"
                     value={manualBackupSheetUrl}
                     placeholder="https://docs.google.com/spreadsheets/d/..."
                     onChange={(event) => {

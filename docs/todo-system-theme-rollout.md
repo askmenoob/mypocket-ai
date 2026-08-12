@@ -36,7 +36,7 @@ Legend: `[ ]` pending, `[~]` in progress, `[x]` completed, `[!]` blocked.
 ## Quality gates
 
 - [x] No visual change alters authorization, workspace isolation, billing activation, webhook verification, or data writes.
-- [~] Contrast, visible focus, labels, and reduced-motion safeguards are present; a dedicated screen-reader and full keyboard-only audit remains follow-up hardening.
+- [~] Contrast, visible focus, labels, and reduced-motion safeguards are present. A production control audit found and fixed three unnamed Advanced Google Recovery URL fields, with a source contract added; a full assistive-technology session with an external screen reader remains follow-up hardening.
 - [x] No page-level horizontal overflow at 360/375/390/393 px logical widths; wide data tables retain intentional internal scrolling.
 - [x] Desktop/tablet/mobile visual regression captures reviewed against the accepted theme.
 - [x] Web TypeScript and production build pass.
