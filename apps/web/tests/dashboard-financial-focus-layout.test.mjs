@@ -12,6 +12,11 @@ const focusStyles = await readFile(
   "utf8",
 );
 
+const appSource = await readFile(
+  new URL("../src/app-bootstrap.tsx", import.meta.url),
+  "utf8",
+);
+
 test("financial dashboard gives recent transactions and WhatsApp stable layout hooks", () => {
   assert.equal(
     (dashboardSource.match(/className="pd-recent-transactions-panel"/g) || []).length,
@@ -76,4 +81,14 @@ test("dashboard spacing and narrow WhatsApp content are responsive", () => {
     focusStyles,
     /@media \(max-width: 720px\)[\s\S]*?\.appShell \.pd-focus-dashboard\s*\{[\s\S]*?gap:\s*16px;/,
   );
+});
+
+test("mobile center action opens the connected WhatsApp bot", () => {
+  assert.match(appSource, /const whatsAppShortcutNumber\s*=/);
+  assert.match(appSource, /props\.data\.whatsapp\?\.instance\?\.phoneNumber/);
+  assert.match(appSource, /const mobileWhatsAppUrl\s*=/);
+  assert.match(appSource, /https:\/\/wa\.me\//);
+  assert.match(appSource, /className="mobileAddAction"[\s\S]*href=\{mobileWhatsAppUrl\}/);
+  assert.match(appSource, /<AppIcon name="whatsapp"/);
+  assert.match(focusStyles, /\.appShell \.mobileNav a\s*\{/);
 });

@@ -1637,15 +1637,19 @@
     backdrop-filter: blur(18px);
   }
 
-  .appShell .mobileNav button {
+  .appShell .mobileNav button,
+  .appShell .mobileNav a {
     min-width: 0;
     min-height: 58px;
+    display: grid;
+    place-items: center;
     gap: 4px;
     padding: 6px 2px;
     color: #526a64;
     border: 0;
     border-radius: 7px;
     background: transparent;
+    text-decoration: none;
   }
 
   .appShell .mobileNav button.active {

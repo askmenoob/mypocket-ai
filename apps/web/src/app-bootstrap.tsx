@@ -2759,13 +2759,6 @@ function TokenGate(){
           </a>
         </div>
 
-        <img
-          className="loginSafetyBox"
-          src="/mypocket-login-safe.png?v=1"
-          alt=""
-          aria-hidden="true"
-        />
-
         <picture className="loginMascotPicture">
           <source
             media="(max-width: 720px)"
@@ -2773,8 +2766,8 @@ function TokenGate(){
           />
           <img
             className="loginMascot"
-            src="/mypocket-mascot-login-v2.png?v=1"
-            alt="Maskot MyPocket AI bersandar dan menunjukkan butang log masuk Google"
+            src="/mypocket-login-mascot-safe-v3.png?v=1"
+            alt="Maskot MyPocket AI bersandar pada peti keselamatan dan menunjukkan butang log masuk Google"
           />
         </picture>
       </section>
@@ -4736,6 +4729,40 @@ function Dashboard(
     isWhatsAppInstanceConnected(
       props.data.whatsapp?.instance?.status,
     );
+
+  const whatsAppShortcutNumber =
+    String(
+      props.data.whatsapp?.instance?.phoneNumber
+      ??
+      "",
+    )
+      .replace(
+        /\D/g,
+        "",
+      );
+
+  const whatsAppShortcutAlias =
+    String(
+      props.data.whatsapp?.instance?.botAlias
+      ??
+      "bot",
+    )
+      .replace(
+        /^[@!]+/,
+        "",
+      )
+      .trim()
+    ||
+    "bot";
+
+  const mobileWhatsAppUrl =
+    `https://wa.me/${
+      whatsAppShortcutNumber
+    }?text=${
+      encodeURIComponent(
+        `${whatsAppShortcutAlias} `,
+      )
+    }`;
 
   const hasDashboardGoogleSheet =
     Boolean(
@@ -8769,19 +8796,20 @@ function Dashboard(
               </button>
             ))}
 
-          <button
-            type="button"
+          <a
             className="mobileAddAction"
-            aria-label={dashboardText.addTransaction}
-            onClick={() => showActionMessage(
+            href={mobileWhatsAppUrl}
+            aria-label={
               dashboardLanguage === "ms"
-                ? "Untuk tambah transaksi, hantar mesej kepada WhatsApp bot seperti: makan nasi RM8 TNG."
-                : "To add a transaction, send a WhatsApp bot message like: lunch mamak RM8 TNG.",
-            )}
+                ? "Buka WhatsApp untuk tambah transaksi"
+                : "Open WhatsApp to add a transaction"
+            }
           >
-            <span aria-hidden="true">+</span>
-            <small>{dashboardText.addTransaction}</small>
-          </button>
+            <span aria-hidden="true">
+              <AppIcon name="whatsapp" size={23} strokeWidth={2.2} />
+            </span>
+            <small>WhatsApp</small>
+          </a>
 
           {navItems
             .filter((item) => item.view === "commitments")
