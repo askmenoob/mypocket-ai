@@ -24,20 +24,13 @@ const transactionControllerSource =
   );
 
 test(
-  "legacy HitPay credentials are required only when HitPay is active",
+  "runtime accepts only disabled or CHIP billing modes",
   () => {
-    assert.match(
-      envSource,
-      /BILLING_CHECKOUT_PROVIDER === "hitpay"/,
-    );
-    assert.match(
-      envSource,
-      /HITPAY_API_KEY_REQUIRED_FOR_HITPAY|\$\{name\}_REQUIRED_FOR_HITPAY/,
-    );
     assert.doesNotMatch(
       envSource,
-      /HITPAY_API_KEY:\s*z\.string\(\)\s*\.min\(/,
+      /HITPAY_|"hitpay"/,
     );
+    assert.match(envSource, /"disabled",[\s\S]*?"chip"/);
   },
 );
 
@@ -54,7 +47,6 @@ test(
       "CHIP_WEBHOOK_PUBLIC_KEY",
       "CHIP_WEBHOOK_URL",
       "CHIP_RETURN_URL",
-      "HITPAY_WEBHOOK_SALT",
     ]){
       assert.match(
         envSource,

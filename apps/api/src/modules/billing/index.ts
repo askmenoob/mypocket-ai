@@ -8,18 +8,9 @@ import {
 } from "../../config/index.js";
 import { requireSuperAdmin } from "../../shared/auth/index.js";
 
-import {
-  activeHitPayWebhookPath,
-} from "../../config/hitpay-environment.js";
-
-import {
-  BillingController,
-} from "./billing.controller.js";
-
-import {
-  BillingService,
-} from "./billing.service.js";
 import { BillingSettingsController } from "./billing-settings.controller.js";
+import { BillingSubscriptionController } from "./billing-subscription.controller.js";
+import { BillingSubscriptionService } from "./billing-subscription.service.js";
 import { activeChipWebhookPath } from "../../config/chip-environment.js";
 import { ChipBillingController } from "./chip-billing.controller.js";
 import { ChipBillingService } from "./chip-billing.service.js";
@@ -134,15 +125,9 @@ async (
   );
 
 
-  const service =
-    new BillingService(
-      app,
-    );
-
-
-  const controller =
-    new BillingController(
-      service,
+  const subscriptionController =
+    new BillingSubscriptionController(
+      new BillingSubscriptionService(app),
     );
 
   const settingsController =
@@ -163,7 +148,7 @@ async (
         app.authenticate,
       ],
     },
-    controller.getSubscription,
+    subscriptionController.getSubscription,
   );
 
   app.get(
@@ -233,36 +218,6 @@ async (
       env.CHIP_ENVIRONMENT,
     ),
     chipController.receiveWebhook,
-  );
-
-
-  app.post(
-    "/billing/hitpay/checkout",
-    {
-      preHandler:[
-        app.authenticate,
-      ],
-    },
-    controller.createCheckout,
-  );
-
-
-  app.put(
-    "/billing/hitpay/plan",
-    {
-      preHandler:[
-        app.authenticate,
-      ],
-    },
-    controller.changePlan,
-  );
-
-
-  app.post(
-    activeHitPayWebhookPath(
-      env.HITPAY_ENVIRONMENT,
-    ),
-    controller.receiveWebhook,
   );
 
 };

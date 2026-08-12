@@ -5,15 +5,11 @@ import {
 
 export type BillingProviderMode =
   | "disabled"
-  | "hitpay"
   | "chip";
 
 
 export type ActiveBillingProvider =
-  Exclude<
-    BillingProviderMode,
-    "disabled"
-  >;
+  "chip";
 
 
 export function assertBillingProviderCallAllowed(

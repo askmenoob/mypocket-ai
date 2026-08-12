@@ -7,63 +7,29 @@ import {
 
 
 test(
-  "disabled billing blocks every provider call",
-  () => {
-    for(const provider of ["hitpay", "chip"] as const){
-      assert.throws(
-        () => assertBillingProviderCallAllowed(
-          "disabled",
-          provider,
-        ),
-        (error:any) =>
-          error?.code === "BILLING_CHECKOUT_DISABLED"
-          && error?.statusCode === 503,
-      );
-    }
-  },
-);
-
-
-test(
-  "CHIP mode blocks legacy HitPay calls",
+  "disabled billing blocks CHIP calls",
   () => {
     assert.throws(
       () => assertBillingProviderCallAllowed(
+        "disabled",
         "chip",
-        "hitpay",
       ),
       (error:any) =>
-        error?.code === "BILLING_PROVIDER_INACTIVE"
+        error?.code === "BILLING_CHECKOUT_DISABLED"
         && error?.statusCode === 503,
     );
-
-    assert.doesNotThrow(
-      () => assertBillingProviderCallAllowed(
-        "chip",
-        "chip",
-      ),
-    );
   },
 );
 
 
 test(
-  "HitPay mode allows only HitPay during rollback",
+  "CHIP mode allows only the supported CHIP provider",
   () => {
     assert.doesNotThrow(
       () => assertBillingProviderCallAllowed(
-        "hitpay",
-        "hitpay",
-      ),
-    );
-
-    assert.throws(
-      () => assertBillingProviderCallAllowed(
-        "hitpay",
+        "chip",
         "chip",
       ),
-      (error:any) =>
-        error?.code === "BILLING_PROVIDER_INACTIVE",
     );
   },
 );

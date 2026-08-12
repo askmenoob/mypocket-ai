@@ -7,11 +7,10 @@ Legend: `[ ]` pending, `[~]` in progress, `[x]` completed, `[!]` blocked.
 ## Safety and compatibility
 
 - [x] Capture source branch, HEAD, working-tree state, and unrelated receipt work.
-- [x] Confirm existing HitPay billing data/webhook history must be preserved.
-- [x] Add a reversible runtime gate that blocks every new HitPay checkout and plan charge.
-- [x] Keep legacy HitPay webhook ingestion available for historical/in-flight reconciliation only.
-- [x] Ensure no HitPay API call can be initiated while `BILLING_CHECKOUT_PROVIDER=disabled` or after CHIP becomes active.
-- [x] Document rollback to the previous provider without deleting billing data.
+- [x] Retire every active HitPay checkout, plan-change, webhook, client, environment, script, and UI path.
+- [x] Keep only immutable historical migration files until the sandbox data is safely removed after backup.
+- [x] Restrict the runtime provider gate to `disabled` or `chip`; HitPay cannot be selected again.
+- [x] Remove HitPay secrets from runtime after the retirement release is deployed.
 
 Runtime evidence (2026-08-12): focused provider-switch tests 3/3 pass, API TypeScript build passes, `mypocket.service` is active, local/public health returns HTTP 200, and the runtime gate is `BILLING_CHECKOUT_PROVIDER=chip` with `CHIP_ENVIRONMENT=test`.
 
@@ -22,7 +21,7 @@ Runtime evidence (2026-08-12): focused provider-switch tests 3/3 pass, API TypeS
 - [x] Add provider-neutral purchase, recurring-token, renewal, grace, suspension, and reminder fields.
 - [x] Add provider-neutral payment attempt/idempotency records where required.
 - [x] Add global billing settings for annual discount percentage and grace periods.
-- [x] Preserve all existing `HITPAY` rows without destructive conversion.
+- [x] Preserve the earlier migration chain while retiring sandbox HitPay rows through a separately backed-up cleanup.
 - [x] Add an additive Prisma migration with database constraints and indexes.
 - [x] Regenerate and review the tracked Prisma client.
 - [x] Prove the full migration chain on isolated PostgreSQL, back up the live database, then apply the additive migration through the database-owner path.
@@ -82,7 +81,7 @@ Migration evidence (2026-08-12): the full chain first passed in an ephemeral Pos
 - [x] Focused pricing/discount/date arithmetic tests pass.
 - [x] Focused authorization, webhook-signature, replay, idempotency, and concurrency tests pass.
 - [x] Focused WhatsApp grace/suspension command tests pass.
-- [x] Existing receipt, voice, transaction, promotion, Google, and HitPay-history tests remain green.
+- [x] Existing receipt, voice, transaction, promotion, Google, and CHIP tests remain green after HitPay runtime removal.
 - [x] Full API tests and TypeScript build pass.
 - [x] Full web TypeScript/Vite build passes.
 - [~] CHIP Test Mode hosted card checkout and signed success activation are verified for RM19 monthly and RM228 yearly payments. CHIP reports FPX, Touch 'n Go, DuitNow QR, Visa, Mastercard, and other manual methods as enabled; completed sandbox payments for the remaining manual methods are still pending.
@@ -94,14 +93,15 @@ Migration evidence (2026-08-12): the full chain first passed in an ephemeral Pos
 
 ## Rollback and current runtime state
 
-- Runtime is `BILLING_CHECKOUT_PROVIDER=chip` in CHIP Test Mode. New HitPay checkout calls remain blocked, while legacy signed HitPay webhook ingestion is preserved for historical/in-flight reconciliation.
-- To roll back application code, restore the pre-Sprint-N source archive and rebuild API/web while leaving the additive database objects in place. Do not reverse the migration or delete billing history during an emergency rollback.
-- To return to HitPay later, first restore verified HitPay credentials, run the focused provider-switch and signed-webhook tests, then change only the provider gate to `hitpay` and restart the API. Existing provider-neutral and CHIP tables remain dormant.
+- Runtime is `BILLING_CHECKOUT_PROVIDER=chip` in CHIP Test Mode. HitPay is not a supported runtime provider and has no route, client, webhook, configuration, or marketing path.
+- To roll back application code, restore the immediately preceding source/database backups and rebuild API/web. Do not edit or remove an already-applied migration file.
+- The default provider for every new subscription and webhook row is CHIP. Returning to HitPay would require a separately reviewed new implementation; it is not a configuration switch.
 - The pre-migration custom database dump is the last-resort disaster-recovery artifact. Restoring it is destructive and requires a maintenance window, exact target verification, and a separate explicit approval.
 - Deployment evidence (2026-08-12): 267/267 API tests pass, the recurring-token and renewal-safety tests pass, API and web builds pass, Prisma validates, all 23 migrations are current, API/web services are active, public health/web return HTTP 200, and an unsigned CHIP webhook is rejected with HTTP 401.
 - Credential checkpoint (2026-08-12): CHIP Test Mode API key, Brand ID, webhook public key, webhook URL, and return URL are installed and cross-checked without exposing their values. The configured webhook callback and public key match the CHIP portal record.
 - Sandbox checkout evidence (2026-08-12): Family monthly automatic renewal completed at RM19 by sandbox Mastercard, followed by Family yearly automatic renewal at RM228 by sandbox Visa. Both CHIP purchases report `is_test=true`, both signed `purchase.paid` events are `PROCESSED_ACTIVATED`, and paid coverage now extends through 2027-09-12.
 - Recurring-token correction (2026-08-12): CHIP marks the paid Purchase itself with `is_recurring_token=true`; its Purchase ID is the token even when `recurring_token` is null. The webhook handler now follows that official contract, 12/12 focused CHIP tests pass, and the active yearly token was safely backfilled after a fresh database backup.
-- Renewal and legacy-access hardening (2026-08-12): automatic CHIP token charges start only at the exact due time; legacy HitPay rows can generate reminder/grace records but are excluded from CHIP automatic charges. Active legacy rows with an existing period end now receive additive due/grace backfill. Inactive HitPay credentials are no longer required when CHIP is active; new dashboard JWTs expire after 12 hours and transaction routes no longer print JWT payloads.
+- Renewal hardening (2026-08-12): automatic CHIP token charges start only at the exact due time. New dashboard JWTs expire after 12 hours and transaction routes no longer print JWT payloads.
+- HitPay retirement (2026-08-12): the user confirmed all HitPay activity was sandbox-only. Active HitPay runtime code, routes, configuration, scripts, tests, documentation, secrets, and sandbox database rows were retired after recoverable backups; historical migration files remain immutable.
 - Source publication (2026-08-12): production commits `d00aa75`, `ef895b8`, and `c3075fa` are pushed to `codex/prod-readiness-20260803`. Live-money enablement remains blocked by the hosted lifecycle gates above.
 - Rollback artifacts: `.env.backup-chip-activation-20260812-075800` plus scoped source/dist backups under `.deploy-backups/chip-refund-hotfix-*`, `.deploy-backups/chip-access-plan-*`, `.deploy-backups/chip-downgrade-label-*`, and `.deploy-backups/chip-recurring-hotfix-*`; pre-backfill database dump `.deploy-backups/chip-recurring-data-20260812-084007.dump`.

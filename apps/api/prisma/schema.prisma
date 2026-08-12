@@ -164,7 +164,7 @@ model WorkspaceBillingSubscription {
   ownerUserId            String
   plan                   String
   status                 String               @default("PENDING")
-  provider               String               @default("HITPAY")
+  provider               String               @default("CHIP")
   providerPlanId         String
   pendingPlan            String?
   pendingProviderPlanId  String?
@@ -211,7 +211,7 @@ model WorkspaceBillingSubscription {
 model BillingWebhookEvent {
   id                             String    @id @default(cuid())
   workspaceBillingSubscriptionId String?
-  provider                       String    @default("HITPAY")
+  provider                       String    @default("CHIP")
   eventKey                       String    @unique
   signature                      String
   eventObject                    String
