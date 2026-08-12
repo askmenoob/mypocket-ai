@@ -23,6 +23,10 @@ test("policies disclose operator, digital delivery, refunds, and support", async
 
   for (const required of [
     "RIFTECH ENTERPRISE",
+    "201803398437 (002913082-T)",
+    "NO. 7, JALAN TANJUNG API-API 30/241",
+    "40460 SHAH ALAM, SELANGOR",
+    "Sole proprietorship",
     "support@imai.my",
     "+60 10-325 0032",
     "Digital Delivery Policy",
@@ -61,4 +65,7 @@ test("privacy and terms use the submitted CHIP support identity", async () => {
     assert.match(page, /support@imai\.my/);
     assert.doesNotMatch(page, /admin@imai\.my/);
   }
+
+  assert.match(terms, /201803398437 \(002913082-T\)/);
+  assert.match(terms, /NO\. 7, JALAN TANJUNG API-API 30\/241/);
 });

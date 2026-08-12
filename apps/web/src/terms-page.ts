@@ -447,6 +447,9 @@ export function renderTermsPage(): void {
 
           <p>
             MyPocket AI is operated in Malaysia by RIFTECH ENTERPRISE.
+            SSM registration: 201803398437 (002913082-T), sole proprietorship.
+            Registered business address: NO. 7, JALAN TANJUNG API-API 30/241,
+            SEKSYEN 30, 40460 SHAH ALAM, SELANGOR, MALAYSIA.
             Questions may be sent to
             <a href="mailto:support@imai.my"> support@imai.my</a> or by
             calling <a href="tel:+60103250032">+60 10-325 0032</a>.

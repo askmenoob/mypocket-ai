@@ -6,6 +6,20 @@ const merchantIdentity = `
     <dl>
       <div><dt>Service</dt><dd>MyPocket AI</dd></div>
       <div><dt>Operator</dt><dd>RIFTECH ENTERPRISE</dd></div>
+      <div><dt>SSM registration</dt><dd>201803398437 (002913082-T)</dd></div>
+      <div><dt>Business type</dt><dd>Sole proprietorship</dd></div>
+      <div><dt>Registration status</dt><dd>Active</dd></div>
+      <div>
+        <dt>Registered address</dt>
+        <dd>
+          <address>
+            NO. 7, JALAN TANJUNG API-API 30/241<br />
+            SEKSYEN 30<br />
+            40460 SHAH ALAM, SELANGOR<br />
+            MALAYSIA
+          </address>
+        </dd>
+      </div>
       <div><dt>Business</dt><dd>Malaysian web and mobile software-as-a-service</dd></div>
       <div><dt>Website</dt><dd><a href="https://imai.my">https://imai.my</a></dd></div>
       <div><dt>Email</dt><dd><a href="mailto:support@imai.my">support@imai.my</a></dd></div>
@@ -224,6 +238,7 @@ export function renderMerchantPolicyPage(pathname: MerchantPolicyPath): void {
       .merchant-card dl div { display:grid; grid-template-columns:130px minmax(0,1fr); gap:16px; }
       .merchant-card dt { color:#60736f; font-size:14px; font-weight:700; }
       .merchant-card dd { margin:0; color:#173b3b; font-weight:650; overflow-wrap:anywhere; }
+      .merchant-card address { font-style:normal; line-height:1.55; }
       .policy-footer { margin-top:34px; padding-top:24px; border-top:1px solid #e3ecea; display:flex; flex-wrap:wrap; justify-content:center; gap:10px 18px; color:#718482; font-size:14px; text-align:center; }
       @media (max-width:600px) { .policy-shell{width:min(100% - 20px,900px);margin:20px auto}.policy-card{border-radius:18px;padding:28px 22px}.policy-nav{width:min(100% - 28px,960px);padding:14px 0}.merchant-card dl div{grid-template-columns:1fr;gap:0} }
     </style>
