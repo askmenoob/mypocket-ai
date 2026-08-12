@@ -80,18 +80,18 @@ const statusLabel = (
       .toUpperCase();
 
   if (
+    status.includes("DISCONNECT") ||
+    status.includes("CLOSE")
+  ){
+    return text.disconnected;
+  }
+
+  if (
     status.includes("CONNECTED") ||
     status === "READY" ||
     status === "OPEN"
   ){
     return text.connected;
-  }
-
-  if (
-    status.includes("DISCONNECT") ||
-    status.includes("CLOSE")
-  ){
-    return text.disconnected;
   }
 
   return value
@@ -1664,6 +1664,9 @@ export function PremiumDashboard(
       language,
     );
 
+  const whatsappConnected =
+    whatsappStatus === text.connected;
+
   async function handleSaveBotAlias(){
 
     if(!props.canManageWhatsApp){
@@ -2943,6 +2946,60 @@ export function PremiumDashboard(
               />
               {text.recheckStatus}
             </button>
+          </div>
+
+          <div
+            className={`pd-whatsapp-mascot-state ${
+              whatsappConnected
+                ? "is-connected"
+                : "is-disconnected"
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            <img
+              src={
+                whatsappConnected
+                  ? "/mypocket-whatsapp-connected.png?v=1"
+                  : "/mypocket-whatsapp-disconnected.png?v=1"
+              }
+              alt=""
+              aria-hidden="true"
+            />
+
+            <div>
+              <strong>
+                {
+                  whatsappConnected
+                    ? (
+                      language === "ms"
+                        ? "WhatsApp sudah bersambung"
+                        : "WhatsApp is connected"
+                    )
+                    : (
+                      language === "ms"
+                        ? "WhatsApp belum bersambung"
+                        : "WhatsApp is not connected"
+                    )
+                }
+              </strong>
+
+              <span>
+                {
+                  whatsappConnected
+                    ? (
+                      language === "ms"
+                        ? "Kabel bot aktif dan sedia menerima rekod."
+                        : "Your bot cable is active and ready for records."
+                    )
+                    : (
+                      language === "ms"
+                        ? "Sambungkan plug untuk mula menggunakan bot."
+                        : "Connect the plug to start using the bot."
+                    )
+                }
+              </span>
+            </div>
           </div>
         </DashboardPanel>
 

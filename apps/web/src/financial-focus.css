@@ -939,6 +939,67 @@
   overflow-wrap: anywhere;
 }
 
+.appShell .pd-whatsapp-mascot-state {
+  position: relative;
+  display: grid;
+  min-height: 244px;
+  margin: 18px -18px -18px;
+  padding: 20px 18px 18px;
+  overflow: hidden;
+  border-top: 1px solid var(--ff-line);
+  border-radius: 0 0 12px 12px;
+  background: linear-gradient(180deg, #f7fcf9 0%, #edf8f3 100%);
+}
+
+.appShell .pd-whatsapp-mascot-state::before {
+  content: "";
+  position: absolute;
+  inset: 22px 24px auto;
+  height: 150px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(0, 155, 115, .13), transparent 68%);
+}
+
+.appShell .pd-whatsapp-mascot-state img {
+  position: relative;
+  z-index: 1;
+  align-self: end;
+  justify-self: center;
+  width: min(208px, 88%);
+  height: 178px;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 16px 20px rgba(3, 68, 56, .13));
+}
+
+.appShell .pd-whatsapp-mascot-state > div {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+  margin-top: -4px;
+  text-align: center;
+}
+
+.appShell .pd-whatsapp-mascot-state strong {
+  color: var(--ff-ink-strong);
+  font-size: 12px;
+}
+
+.appShell .pd-whatsapp-mascot-state span {
+  color: var(--ff-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.appShell .pd-whatsapp-mascot-state.is-disconnected {
+  background: linear-gradient(180deg, #fffdf8 0%, #f8f4e9 100%);
+}
+
+.appShell .pd-whatsapp-mascot-state.is-disconnected::before {
+  background: radial-gradient(circle, rgba(207, 144, 31, .13), transparent 68%);
+}
+
 .appShell .pd-panel {
   padding: 18px 0;
   border: 0;
@@ -1176,6 +1237,68 @@
 }
 
 @media (max-width: 720px) {
+  .appShell .pd-panel.pd-whatsapp-panel {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-color: rgba(154, 201, 184, .66);
+    background: rgba(255, 255, 255, .58);
+    box-shadow: 0 18px 44px rgba(3, 68, 56, .08);
+    backdrop-filter: blur(14px) saturate(118%);
+    -webkit-backdrop-filter: blur(14px) saturate(118%);
+  }
+
+  .appShell .pd-panel.pd-whatsapp-panel::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(160deg, rgba(255, 255, 255, .76), rgba(236, 249, 243, .48));
+  }
+
+  .appShell .pd-panel.pd-whatsapp-panel > :not(.pd-whatsapp-mascot-state) {
+    position: relative;
+    z-index: 2;
+  }
+
+  .appShell .pd-whatsapp-mascot-state {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    display: block;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    pointer-events: none;
+  }
+
+  .appShell .pd-whatsapp-mascot-state::before {
+    inset: auto -12% -10% 22%;
+    height: 72%;
+    background: radial-gradient(circle, rgba(0, 155, 115, .2), transparent 70%);
+  }
+
+  .appShell .pd-whatsapp-mascot-state img {
+    position: absolute;
+    right: -30px;
+    bottom: -52px;
+    width: 76%;
+    max-width: 330px;
+    height: 76%;
+    opacity: .22;
+    object-position: right bottom;
+    filter: saturate(.9) drop-shadow(0 18px 20px rgba(3, 68, 56, .12));
+  }
+
+  .appShell .pd-whatsapp-mascot-state > div {
+    display: none;
+  }
+
   .appShell {
     --ff-mobile-nav-height: 82px;
     min-height: 100dvh;
@@ -1259,6 +1382,15 @@
   .appShell .appFullWidthGrid {
     gap: 12px;
     padding: 16px;
+  }
+
+  .appShell .pd-whatsapp-mascot-state {
+    min-height: 220px;
+    margin: 16px -16px -16px;
+  }
+
+  .appShell .pd-whatsapp-mascot-state img {
+    height: 160px;
   }
 
   .appShell .appFullWidthGrid > .panel,

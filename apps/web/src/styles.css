@@ -38,18 +38,84 @@ a{color:inherit}
 }
 
 .loginCard{
-  width:min(560px,100%);
+  width:min(680px,calc(100% - 430px));
+  min-height:590px;
+  position:relative;
+  display:flex;
+  align-items:center;
+  overflow:visible;
   background:white;
   border:1px solid var(--border);
   border-radius:28px;
   box-shadow:var(--shadow);
-  padding:34px;
+  padding:58px;
+}
+
+.loginContent{
+  width:100%;
+  min-width:0;
+  position:relative;
+  z-index:2;
+}
+
+.loginMascotPicture{
+  position:absolute;
+  z-index:3;
+  width:430px;
+  right:-340px;
+  bottom:-54px;
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 28px 28px rgba(3,68,56,.18));
+}
+
+.loginMascot{
+  display:block;
+  width:100%;
+  height:auto;
+}
+
+.loginSafetyBox{
+  position:absolute;
+  z-index:2;
+  width:270px;
+  height:auto;
+  right:-286px;
+  bottom:-34px;
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 24px 24px rgba(3,68,56,.18));
+}
+
+@media (min-width:721px) and (max-width:1100px){
+  .loginCard{
+    width:min(560px,calc(100% - 300px));
+    min-height:560px;
+    padding:40px 36px;
+    transform:translateX(-124px);
+  }
+
+  .loginCard h1{
+    font-size:36px;
+  }
+
+  .loginMascotPicture{
+    width:330px;
+    right:-278px;
+    bottom:-38px;
+  }
+
+  .loginSafetyBox{
+    width:214px;
+    right:-232px;
+    bottom:-26px;
+  }
 }
 
 .loginCard h1,
 .wizardSide h1{
   margin:24px 0 12px;
-  font-size:34px;
+  font-size:42px;
   letter-spacing:-.05em;
 }
 
@@ -71,7 +137,7 @@ a{color:inherit}
   display:flex;
   align-items:flex-start;
   gap:10px;
-  margin:18px 0 2px;
+  margin:22px 0 2px;
   padding:13px 14px;
   border:1px solid #bfe9df;
   border-radius:14px;
@@ -1143,8 +1209,11 @@ button.primaryLink{
 
   .loginScreen,
   .wizardShell{
+    width:100%;
+    grid-template-columns:minmax(0,1fr);
     padding:14px;
     align-items:start;
+    overflow:hidden;
   }
 
   .loginCard,
@@ -1154,7 +1223,48 @@ button.primaryLink{
   }
 
   .loginCard{
-    padding:24px;
+    width:min(100%,calc(100vw - 28px)) !important;
+    max-width:calc(100vw - 28px) !important;
+    min-width:0;
+    min-height:unset;
+    display:block;
+    overflow:hidden;
+    padding:28px 24px 252px;
+    transform:none;
+  }
+
+  .loginContent{
+    width:100%;
+    max-width:100%;
+    overflow-wrap:anywhere;
+  }
+
+  .loginTrustNote,
+  .googleButton{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+  }
+
+  .googleButton{
+    padding:10px 12px;
+    text-align:center;
+    white-space:normal;
+  }
+
+  .loginCard h1{
+    font-size:34px;
+  }
+
+  .loginSafetyBox{
+    display:none;
+  }
+
+  .loginMascotPicture{
+    width:250px;
+    right:-24px;
+    bottom:-62px;
+    filter:drop-shadow(0 18px 18px rgba(3,68,56,.14));
   }
 
   .topbar{
@@ -1370,18 +1480,30 @@ button.primaryLink{
 .googleButton{
   width:100%;
   min-height:52px;
-  border:1px solid var(--border);
+  border:1px solid #006f4c;
   border-radius:14px;
-  background:#fff;
-  color:var(--text);
+  background:linear-gradient(135deg,#008c66,#006f4c);
+  color:#fff;
   display:flex;
   align-items:center;
   justify-content:center;
   gap:12px;
   text-decoration:none;
   font-weight:900;
-  box-shadow:0 12px 34px rgba(11,34,37,.07);
-  margin:22px 0 16px;
+  box-shadow:0 14px 32px rgba(0,111,76,.2);
+  margin:24px 0 0;
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+}
+
+.googleButton:hover{
+  transform:translateY(-2px);
+  background:linear-gradient(135deg,#009b73,#007957);
+  box-shadow:0 18px 38px rgba(0,111,76,.27);
+}
+
+.googleButton:focus-visible{
+  outline:3px solid rgba(0,155,115,.28);
+  outline-offset:3px;
 }
 
 .googleButton span{
@@ -1390,7 +1512,7 @@ button.primaryLink{
   border-radius:50%;
   display:grid;
   place-items:center;
-  background:#f3f7f6;
+  background:#fff;
   color:#4285f4;
   font-weight:1000;
 }

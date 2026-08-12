@@ -38,6 +38,27 @@ test("WhatsApp integration occupies the rail directly below transaction period",
   );
 });
 
+test("WhatsApp rail fills its open space with a live mascot connection state", () => {
+  const disconnectedCheck = dashboardSource.indexOf('status.includes("DISCONNECT")');
+  const connectedCheck = dashboardSource.indexOf('status.includes("CONNECTED")');
+
+  assert.ok(disconnectedCheck >= 0);
+  assert.ok(connectedCheck > disconnectedCheck);
+  assert.match(dashboardSource, /const whatsappConnected\s*=/);
+  assert.match(dashboardSource, /className={`pd-whatsapp-mascot-state/);
+  assert.match(dashboardSource, /mypocket-whatsapp-connected\.png/);
+  assert.match(dashboardSource, /mypocket-whatsapp-disconnected\.png/);
+  assert.match(focusStyles, /\.appShell \.pd-whatsapp-mascot-state\s*\{[\s\S]*min-height:/);
+  assert.match(focusStyles, /\.appShell \.pd-whatsapp-mascot-state img\s*\{[\s\S]*object-fit: contain/);
+});
+
+test("mobile WhatsApp card becomes readable glass over the status mascot", () => {
+  assert.match(focusStyles, /@media \(max-width: 720px\)[\s\S]*\.pd-panel\.pd-whatsapp-panel\s*\{[\s\S]*backdrop-filter: blur/);
+  assert.match(focusStyles, /@media \(max-width: 720px\)[\s\S]*\.pd-whatsapp-mascot-state\s*\{[\s\S]*position: absolute/);
+  assert.match(focusStyles, /@media \(max-width: 720px\)[\s\S]*\.pd-whatsapp-mascot-state img\s*\{[\s\S]*opacity: \.22/);
+  assert.match(focusStyles, /\.pd-panel\.pd-whatsapp-panel > :not\(\.pd-whatsapp-mascot-state\)/);
+});
+
 test("dashboard spacing and narrow WhatsApp content are responsive", () => {
   assert.match(
     focusStyles,

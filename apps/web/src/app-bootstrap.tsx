@@ -2676,11 +2676,7 @@ function App(){
   if(!token){
 
     return (
-      <TokenGate
-        health={data.health}
-        error={state.error}
-        installApp={installApp}
-      />
+      <TokenGate />
     );
 
   }
@@ -2732,52 +2728,55 @@ function App(){
 
 }
 
-function TokenGate(
-  props:{
-    health:any | null;
-    error:string | null;
-    installApp:() => void;
-  },
-){
+function TokenGate(){
 
   return (
     <main className="loginScreen">
       <section className="loginCard">
-        <LogoBlock />
+        <div className="loginContent">
+          <LogoBlock />
 
-        <h1>MyPocket AI Dashboard</h1>
-        <p>
-          Log masuk untuk membuka workspace dan setup wizard MyPocket AI.
-        </p>
+          <h1>Selamat kembali.</h1>
+          <p>
+            Log masuk untuk membuka workspace dan meneruskan rekod kewangan
+            anda bersama MyPocket AI.
+          </p>
 
-        <div className="loginTrustNote">
-          <span aria-hidden="true">✓</span>
-          <small>
-            Log masuk hanya berkongsi nama dan alamat e-mel anda. Kebenaran
-            untuk fail MyPocket diminta secara berasingan selepas log masuk.
-          </small>
+          <div className="loginTrustNote">
+            <span aria-hidden="true">✓</span>
+            <small>
+              Google hanya berkongsi nama dan alamat e-mel anda semasa log
+              masuk. Akses Sheet dan Drive diminta kemudian dengan jelas.
+            </small>
+          </div>
+
+          <a
+            className="googleButton"
+            href={googleLoginUrl()}
+          >
+            <span aria-hidden="true">G</span>
+            Log masuk dengan Google
+          </a>
         </div>
 
-        <a
-          className="googleButton"
-          href={googleLoginUrl()}
-        >
-          <span>G</span>
-          Log masuk dengan Google
-        </a>
+        <img
+          className="loginSafetyBox"
+          src="/mypocket-login-safe.png?v=1"
+          alt=""
+          aria-hidden="true"
+        />
 
-        <button
-          className="secondary"
-          onClick={props.installApp}
-        >
-          Install PWA on phone
-        </button>
-
-        <div className="loginStatus">
-          API:
-          {" "}
-          {props.health ? "Healthy" : props.error || "Checking"}
-        </div>
+        <picture className="loginMascotPicture">
+          <source
+            media="(max-width: 720px)"
+            srcSet="/mypocket-mascot-login-mobile.png?v=1"
+          />
+          <img
+            className="loginMascot"
+            src="/mypocket-mascot-login-v2.png?v=1"
+            alt="Maskot MyPocket AI bersandar dan menunjukkan butang log masuk Google"
+          />
+        </picture>
       </section>
     </main>
   );
