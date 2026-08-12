@@ -338,6 +338,7 @@ export type BillingRenewalWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"BillingRenewal"> | Date | string
   workspaceBillingSubscription?: Prisma.XOR<Prisma.WorkspaceBillingSubscriptionScalarRelationFilter, Prisma.WorkspaceBillingSubscriptionWhereInput>
   paymentAttempt?: Prisma.XOR<Prisma.BillingPaymentAttemptNullableScalarRelationFilter, Prisma.BillingPaymentAttemptWhereInput> | null
+  promoRedemption?: Prisma.XOR<Prisma.PromoRedemptionNullableScalarRelationFilter, Prisma.PromoRedemptionWhereInput> | null
   reminderDeliveries?: Prisma.BillingReminderDeliveryListRelationFilter
 }
 
@@ -364,6 +365,7 @@ export type BillingRenewalOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   workspaceBillingSubscription?: Prisma.WorkspaceBillingSubscriptionOrderByWithRelationInput
   paymentAttempt?: Prisma.BillingPaymentAttemptOrderByWithRelationInput
+  promoRedemption?: Prisma.PromoRedemptionOrderByWithRelationInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryOrderByRelationAggregateInput
 }
 
@@ -393,6 +395,7 @@ export type BillingRenewalWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"BillingRenewal"> | Date | string
   workspaceBillingSubscription?: Prisma.XOR<Prisma.WorkspaceBillingSubscriptionScalarRelationFilter, Prisma.WorkspaceBillingSubscriptionWhereInput>
   paymentAttempt?: Prisma.XOR<Prisma.BillingPaymentAttemptNullableScalarRelationFilter, Prisma.BillingPaymentAttemptWhereInput> | null
+  promoRedemption?: Prisma.XOR<Prisma.PromoRedemptionNullableScalarRelationFilter, Prisma.PromoRedemptionWhereInput> | null
   reminderDeliveries?: Prisma.BillingReminderDeliveryListRelationFilter
 }, "id" | "paymentAttemptId" | "invoiceReference">
 
@@ -471,6 +474,7 @@ export type BillingRenewalCreateInput = {
   updatedAt?: Date | string
   workspaceBillingSubscription: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutRenewalsInput
   paymentAttempt?: Prisma.BillingPaymentAttemptCreateNestedOneWithoutRenewalInput
+  promoRedemption?: Prisma.PromoRedemptionCreateNestedOneWithoutConversionBillingRenewalInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryCreateNestedManyWithoutBillingRenewalInput
 }
 
@@ -495,6 +499,7 @@ export type BillingRenewalUncheckedCreateInput = {
   canceledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  promoRedemption?: Prisma.PromoRedemptionUncheckedCreateNestedOneWithoutConversionBillingRenewalInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryUncheckedCreateNestedManyWithoutBillingRenewalInput
 }
 
@@ -519,6 +524,7 @@ export type BillingRenewalUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaceBillingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneRequiredWithoutRenewalsNestedInput
   paymentAttempt?: Prisma.BillingPaymentAttemptUpdateOneWithoutRenewalNestedInput
+  promoRedemption?: Prisma.PromoRedemptionUpdateOneWithoutConversionBillingRenewalNestedInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryUpdateManyWithoutBillingRenewalNestedInput
 }
 
@@ -543,6 +549,7 @@ export type BillingRenewalUncheckedUpdateInput = {
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  promoRedemption?: Prisma.PromoRedemptionUncheckedUpdateOneWithoutConversionBillingRenewalNestedInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryUncheckedUpdateManyWithoutBillingRenewalNestedInput
 }
 
@@ -799,6 +806,22 @@ export type BillingRenewalUpdateOneWithoutReminderDeliveriesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.BillingRenewalUpdateToOneWithWhereWithoutReminderDeliveriesInput, Prisma.BillingRenewalUpdateWithoutReminderDeliveriesInput>, Prisma.BillingRenewalUncheckedUpdateWithoutReminderDeliveriesInput>
 }
 
+export type BillingRenewalCreateNestedOneWithoutPromoRedemptionInput = {
+  create?: Prisma.XOR<Prisma.BillingRenewalCreateWithoutPromoRedemptionInput, Prisma.BillingRenewalUncheckedCreateWithoutPromoRedemptionInput>
+  connectOrCreate?: Prisma.BillingRenewalCreateOrConnectWithoutPromoRedemptionInput
+  connect?: Prisma.BillingRenewalWhereUniqueInput
+}
+
+export type BillingRenewalUpdateOneWithoutPromoRedemptionNestedInput = {
+  create?: Prisma.XOR<Prisma.BillingRenewalCreateWithoutPromoRedemptionInput, Prisma.BillingRenewalUncheckedCreateWithoutPromoRedemptionInput>
+  connectOrCreate?: Prisma.BillingRenewalCreateOrConnectWithoutPromoRedemptionInput
+  upsert?: Prisma.BillingRenewalUpsertWithoutPromoRedemptionInput
+  disconnect?: Prisma.BillingRenewalWhereInput | boolean
+  delete?: Prisma.BillingRenewalWhereInput | boolean
+  connect?: Prisma.BillingRenewalWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.BillingRenewalUpdateToOneWithWhereWithoutPromoRedemptionInput, Prisma.BillingRenewalUpdateWithoutPromoRedemptionInput>, Prisma.BillingRenewalUncheckedUpdateWithoutPromoRedemptionInput>
+}
+
 export type BillingRenewalCreateWithoutWorkspaceBillingSubscriptionInput = {
   id?: string
   invoiceReference: string
@@ -819,6 +842,7 @@ export type BillingRenewalCreateWithoutWorkspaceBillingSubscriptionInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   paymentAttempt?: Prisma.BillingPaymentAttemptCreateNestedOneWithoutRenewalInput
+  promoRedemption?: Prisma.PromoRedemptionCreateNestedOneWithoutConversionBillingRenewalInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryCreateNestedManyWithoutBillingRenewalInput
 }
 
@@ -842,6 +866,7 @@ export type BillingRenewalUncheckedCreateWithoutWorkspaceBillingSubscriptionInpu
   canceledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  promoRedemption?: Prisma.PromoRedemptionUncheckedCreateNestedOneWithoutConversionBillingRenewalInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryUncheckedCreateNestedManyWithoutBillingRenewalInput
 }
 
@@ -917,6 +942,7 @@ export type BillingRenewalCreateWithoutPaymentAttemptInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaceBillingSubscription: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutRenewalsInput
+  promoRedemption?: Prisma.PromoRedemptionCreateNestedOneWithoutConversionBillingRenewalInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryCreateNestedManyWithoutBillingRenewalInput
 }
 
@@ -940,6 +966,7 @@ export type BillingRenewalUncheckedCreateWithoutPaymentAttemptInput = {
   canceledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  promoRedemption?: Prisma.PromoRedemptionUncheckedCreateNestedOneWithoutConversionBillingRenewalInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryUncheckedCreateNestedManyWithoutBillingRenewalInput
 }
 
@@ -979,6 +1006,7 @@ export type BillingRenewalUpdateWithoutPaymentAttemptInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaceBillingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneRequiredWithoutRenewalsNestedInput
+  promoRedemption?: Prisma.PromoRedemptionUpdateOneWithoutConversionBillingRenewalNestedInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryUpdateManyWithoutBillingRenewalNestedInput
 }
 
@@ -1002,6 +1030,7 @@ export type BillingRenewalUncheckedUpdateWithoutPaymentAttemptInput = {
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  promoRedemption?: Prisma.PromoRedemptionUncheckedUpdateOneWithoutConversionBillingRenewalNestedInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryUncheckedUpdateManyWithoutBillingRenewalNestedInput
 }
 
@@ -1026,6 +1055,7 @@ export type BillingRenewalCreateWithoutReminderDeliveriesInput = {
   updatedAt?: Date | string
   workspaceBillingSubscription: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutRenewalsInput
   paymentAttempt?: Prisma.BillingPaymentAttemptCreateNestedOneWithoutRenewalInput
+  promoRedemption?: Prisma.PromoRedemptionCreateNestedOneWithoutConversionBillingRenewalInput
 }
 
 export type BillingRenewalUncheckedCreateWithoutReminderDeliveriesInput = {
@@ -1049,6 +1079,7 @@ export type BillingRenewalUncheckedCreateWithoutReminderDeliveriesInput = {
   canceledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  promoRedemption?: Prisma.PromoRedemptionUncheckedCreateNestedOneWithoutConversionBillingRenewalInput
 }
 
 export type BillingRenewalCreateOrConnectWithoutReminderDeliveriesInput = {
@@ -1088,6 +1119,7 @@ export type BillingRenewalUpdateWithoutReminderDeliveriesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaceBillingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneRequiredWithoutRenewalsNestedInput
   paymentAttempt?: Prisma.BillingPaymentAttemptUpdateOneWithoutRenewalNestedInput
+  promoRedemption?: Prisma.PromoRedemptionUpdateOneWithoutConversionBillingRenewalNestedInput
 }
 
 export type BillingRenewalUncheckedUpdateWithoutReminderDeliveriesInput = {
@@ -1111,6 +1143,119 @@ export type BillingRenewalUncheckedUpdateWithoutReminderDeliveriesInput = {
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  promoRedemption?: Prisma.PromoRedemptionUncheckedUpdateOneWithoutConversionBillingRenewalNestedInput
+}
+
+export type BillingRenewalCreateWithoutPromoRedemptionInput = {
+  id?: string
+  invoiceReference: string
+  status?: $Enums.BillingRenewalStatus
+  plan: string
+  billingInterval: $Enums.BillingInterval
+  renewalMethod: $Enums.BillingRenewalMethod
+  currency?: string
+  amountDue: runtime.Decimal | runtime.DecimalJsLike | number | string
+  periodStart: Date | string
+  periodEnd: Date | string
+  dueAt: Date | string
+  graceEndsAt: Date | string
+  paidAt?: Date | string | null
+  failedAt?: Date | string | null
+  expiredAt?: Date | string | null
+  canceledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  workspaceBillingSubscription: Prisma.WorkspaceBillingSubscriptionCreateNestedOneWithoutRenewalsInput
+  paymentAttempt?: Prisma.BillingPaymentAttemptCreateNestedOneWithoutRenewalInput
+  reminderDeliveries?: Prisma.BillingReminderDeliveryCreateNestedManyWithoutBillingRenewalInput
+}
+
+export type BillingRenewalUncheckedCreateWithoutPromoRedemptionInput = {
+  id?: string
+  workspaceBillingSubscriptionId: string
+  paymentAttemptId?: string | null
+  invoiceReference: string
+  status?: $Enums.BillingRenewalStatus
+  plan: string
+  billingInterval: $Enums.BillingInterval
+  renewalMethod: $Enums.BillingRenewalMethod
+  currency?: string
+  amountDue: runtime.Decimal | runtime.DecimalJsLike | number | string
+  periodStart: Date | string
+  periodEnd: Date | string
+  dueAt: Date | string
+  graceEndsAt: Date | string
+  paidAt?: Date | string | null
+  failedAt?: Date | string | null
+  expiredAt?: Date | string | null
+  canceledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reminderDeliveries?: Prisma.BillingReminderDeliveryUncheckedCreateNestedManyWithoutBillingRenewalInput
+}
+
+export type BillingRenewalCreateOrConnectWithoutPromoRedemptionInput = {
+  where: Prisma.BillingRenewalWhereUniqueInput
+  create: Prisma.XOR<Prisma.BillingRenewalCreateWithoutPromoRedemptionInput, Prisma.BillingRenewalUncheckedCreateWithoutPromoRedemptionInput>
+}
+
+export type BillingRenewalUpsertWithoutPromoRedemptionInput = {
+  update: Prisma.XOR<Prisma.BillingRenewalUpdateWithoutPromoRedemptionInput, Prisma.BillingRenewalUncheckedUpdateWithoutPromoRedemptionInput>
+  create: Prisma.XOR<Prisma.BillingRenewalCreateWithoutPromoRedemptionInput, Prisma.BillingRenewalUncheckedCreateWithoutPromoRedemptionInput>
+  where?: Prisma.BillingRenewalWhereInput
+}
+
+export type BillingRenewalUpdateToOneWithWhereWithoutPromoRedemptionInput = {
+  where?: Prisma.BillingRenewalWhereInput
+  data: Prisma.XOR<Prisma.BillingRenewalUpdateWithoutPromoRedemptionInput, Prisma.BillingRenewalUncheckedUpdateWithoutPromoRedemptionInput>
+}
+
+export type BillingRenewalUpdateWithoutPromoRedemptionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceReference?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumBillingRenewalStatusFieldUpdateOperationsInput | $Enums.BillingRenewalStatus
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
+  renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  amountDue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  periodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  periodEnd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  dueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  graceEndsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workspaceBillingSubscription?: Prisma.WorkspaceBillingSubscriptionUpdateOneRequiredWithoutRenewalsNestedInput
+  paymentAttempt?: Prisma.BillingPaymentAttemptUpdateOneWithoutRenewalNestedInput
+  reminderDeliveries?: Prisma.BillingReminderDeliveryUpdateManyWithoutBillingRenewalNestedInput
+}
+
+export type BillingRenewalUncheckedUpdateWithoutPromoRedemptionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  workspaceBillingSubscriptionId?: Prisma.StringFieldUpdateOperationsInput | string
+  paymentAttemptId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invoiceReference?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumBillingRenewalStatusFieldUpdateOperationsInput | $Enums.BillingRenewalStatus
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
+  renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  amountDue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  periodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  periodEnd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  dueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  graceEndsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reminderDeliveries?: Prisma.BillingReminderDeliveryUncheckedUpdateManyWithoutBillingRenewalNestedInput
 }
 
 export type BillingRenewalCreateManyWorkspaceBillingSubscriptionInput = {
@@ -1155,6 +1300,7 @@ export type BillingRenewalUpdateWithoutWorkspaceBillingSubscriptionInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paymentAttempt?: Prisma.BillingPaymentAttemptUpdateOneWithoutRenewalNestedInput
+  promoRedemption?: Prisma.PromoRedemptionUpdateOneWithoutConversionBillingRenewalNestedInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryUpdateManyWithoutBillingRenewalNestedInput
 }
 
@@ -1178,6 +1324,7 @@ export type BillingRenewalUncheckedUpdateWithoutWorkspaceBillingSubscriptionInpu
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  promoRedemption?: Prisma.PromoRedemptionUncheckedUpdateOneWithoutConversionBillingRenewalNestedInput
   reminderDeliveries?: Prisma.BillingReminderDeliveryUncheckedUpdateManyWithoutBillingRenewalNestedInput
 }
 
@@ -1257,6 +1404,7 @@ export type BillingRenewalSelect<ExtArgs extends runtime.Types.Extensions.Intern
   updatedAt?: boolean
   workspaceBillingSubscription?: boolean | Prisma.WorkspaceBillingSubscriptionDefaultArgs<ExtArgs>
   paymentAttempt?: boolean | Prisma.BillingRenewal$paymentAttemptArgs<ExtArgs>
+  promoRedemption?: boolean | Prisma.BillingRenewal$promoRedemptionArgs<ExtArgs>
   reminderDeliveries?: boolean | Prisma.BillingRenewal$reminderDeliveriesArgs<ExtArgs>
   _count?: boolean | Prisma.BillingRenewalCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["billingRenewal"]>
@@ -1338,6 +1486,7 @@ export type BillingRenewalOmit<ExtArgs extends runtime.Types.Extensions.Internal
 export type BillingRenewalInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   workspaceBillingSubscription?: boolean | Prisma.WorkspaceBillingSubscriptionDefaultArgs<ExtArgs>
   paymentAttempt?: boolean | Prisma.BillingRenewal$paymentAttemptArgs<ExtArgs>
+  promoRedemption?: boolean | Prisma.BillingRenewal$promoRedemptionArgs<ExtArgs>
   reminderDeliveries?: boolean | Prisma.BillingRenewal$reminderDeliveriesArgs<ExtArgs>
   _count?: boolean | Prisma.BillingRenewalCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -1355,6 +1504,7 @@ export type $BillingRenewalPayload<ExtArgs extends runtime.Types.Extensions.Inte
   objects: {
     workspaceBillingSubscription: Prisma.$WorkspaceBillingSubscriptionPayload<ExtArgs>
     paymentAttempt: Prisma.$BillingPaymentAttemptPayload<ExtArgs> | null
+    promoRedemption: Prisma.$PromoRedemptionPayload<ExtArgs> | null
     reminderDeliveries: Prisma.$BillingReminderDeliveryPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1774,6 +1924,7 @@ export interface Prisma__BillingRenewalClient<T, Null = never, ExtArgs extends r
   readonly [Symbol.toStringTag]: "PrismaPromise"
   workspaceBillingSubscription<T extends Prisma.WorkspaceBillingSubscriptionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkspaceBillingSubscriptionDefaultArgs<ExtArgs>>): Prisma.Prisma__WorkspaceBillingSubscriptionClient<runtime.Types.Result.GetResult<Prisma.$WorkspaceBillingSubscriptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   paymentAttempt<T extends Prisma.BillingRenewal$paymentAttemptArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BillingRenewal$paymentAttemptArgs<ExtArgs>>): Prisma.Prisma__BillingPaymentAttemptClient<runtime.Types.Result.GetResult<Prisma.$BillingPaymentAttemptPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  promoRedemption<T extends Prisma.BillingRenewal$promoRedemptionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BillingRenewal$promoRedemptionArgs<ExtArgs>>): Prisma.Prisma__PromoRedemptionClient<runtime.Types.Result.GetResult<Prisma.$PromoRedemptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   reminderDeliveries<T extends Prisma.BillingRenewal$reminderDeliveriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BillingRenewal$reminderDeliveriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BillingReminderDeliveryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2241,6 +2392,25 @@ export type BillingRenewal$paymentAttemptArgs<ExtArgs extends runtime.Types.Exte
    */
   include?: Prisma.BillingPaymentAttemptInclude<ExtArgs> | null
   where?: Prisma.BillingPaymentAttemptWhereInput
+}
+
+/**
+ * BillingRenewal.promoRedemption
+ */
+export type BillingRenewal$promoRedemptionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PromoRedemption
+   */
+  select?: Prisma.PromoRedemptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PromoRedemption
+   */
+  omit?: Prisma.PromoRedemptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PromoRedemptionInclude<ExtArgs> | null
+  where?: Prisma.PromoRedemptionWhereInput
 }
 
 /**

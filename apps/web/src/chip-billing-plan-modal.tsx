@@ -47,6 +47,16 @@ type Quote = {
   annualDiscountBasisPoints:number;
   discountAmountSen:number;
   amountDueSen:number;
+  promotion?:{
+    campaign:{ code:string; name:string; type:string };
+    disclosure:{
+      firstChargeAmount:number;
+      trialEndsAt:string | null;
+      nextChargeAt:string | null;
+      nextChargeAmount:number | null;
+      summary:string;
+    };
+  };
 };
 
 type MethodsResponse = {
@@ -143,6 +153,7 @@ export function ChipBillingPlanModal(props:{
     interval:ChipBillingInterval;
     renewalMethod:ChipRenewalMethod;
     preferredPaymentMethod?:string;
+    promoCode?:string;
   }) => void;
 }){
   const initialPlan = plans.some((item) => item.plan === props.currentAccessPlan)
@@ -157,12 +168,15 @@ export function ChipBillingPlanModal(props:{
   const [methodNames, setMethodNames] = useState<Record<string, string>>({});
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [optionsMessage, setOptionsMessage] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromoCode, setAppliedPromoCode] = useState("");
 
   const query = useMemo(() => new URLSearchParams({
     plan:selectedPlan,
     interval,
     renewalMethod,
-  }).toString(), [selectedPlan, interval, renewalMethod]);
+    ...(appliedPromoCode ? { promoCode:appliedPromoCode } : {}),
+  }).toString(), [selectedPlan, interval, renewalMethod, appliedPromoCode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -238,7 +252,13 @@ export function ChipBillingPlanModal(props:{
           <label><span>Renewal</span><select value={renewalMethod} onChange={(event) => setRenewalMethod(event.target.value as ChipRenewalMethod)}><option value="AUTOMATIC">Automatic renewal</option><option value="MANUAL">Manual payment</option></select></label>
           <label><span>Payment method</span><select value={preferredPaymentMethod} onChange={(event) => setPreferredPaymentMethod(event.target.value)} disabled={loadingOptions || methods.length === 0}><option value="">Let CHIP show all available methods</option>{methods.map((method) => <option value={method} key={method}>{friendlyMethod(method, methodNames)}</option>)}</select></label>
         </div>
+        <div className="chipPromoCheckout">
+          <label><span>Promotion code</span><input value={promoCode} onChange={(event) => setPromoCode(event.target.value.toUpperCase())} placeholder="Optional code" maxLength={32} /></label>
+          <button type="button" disabled={loadingOptions || promoCode.trim().length < 3} onClick={() => setAppliedPromoCode(promoCode.trim().toUpperCase())}>Apply promotion</button>
+          {appliedPromoCode && <button type="button" className="ghost" onClick={() => { setAppliedPromoCode(""); setPromoCode(""); }}>Remove</button>}
+        </div>
         {optionsMessage && <p className="chipBillingOptionsMessage" role="status">{optionsMessage}</p>}
+        {quote?.promotion && <div className="promo-quote-result" role="status"><header><strong>{quote.promotion.campaign.code}: {quote.promotion.campaign.name}</strong><span>Applied at checkout</span></header><p>{quote.promotion.disclosure.summary}</p></div>}
 
         <div className="billingPlanGrid">
           {plans.map((option) => {
@@ -255,7 +275,7 @@ export function ChipBillingPlanModal(props:{
 
         <div className="chipBillingSummary">
           <div><span>Amount due</span><strong>RM{amount.toFixed(2)}</strong><small>{intervalLabel[interval]} · {renewalMethod === "AUTOMATIC" ? "automatic renewal" : "manual renewal"}{annualDiscount > 0 ? ` · ${annualDiscount}% annual discount` : ""}</small></div>
-          <button type="button" disabled={!canContinue} onClick={() => props.selectPlan({ plan:selectedPlan, interval, renewalMethod, ...(preferredPaymentMethod ? { preferredPaymentMethod } : {}) })}>{props.busyPlan ? "Preparing secure checkout…" : isDowngrade ? "Schedule downgrade" : "Continue to secure CHIP payment"}</button>
+          <button type="button" disabled={!canContinue} onClick={() => props.selectPlan({ plan:selectedPlan, interval, renewalMethod, ...(preferredPaymentMethod ? { preferredPaymentMethod } : {}), ...(appliedPromoCode ? { promoCode:appliedPromoCode } : {}) })}>{props.busyPlan ? "Preparing secure checkout…" : isDowngrade ? "Schedule downgrade" : quote?.promotion?.disclosure.firstChargeAmount === 0 ? "Verify card and start trial" : "Continue to secure CHIP payment"}</button>
         </div>
 
         {Boolean(props.renewalHistory?.length) && <section className="chipRenewalHistory" aria-labelledby="chip-renewal-history-title"><div><h3 id="chip-renewal-history-title">Renewal history</h3><span>Latest billing records are retained for review.</span></div><div className="chipRenewalHistoryScroll"><table><thead><tr><th>Reference</th><th>Plan</th><th>Period</th><th>Amount</th><th>Due</th><th>Status</th></tr></thead><tbody>{props.renewalHistory?.map((renewal) => <tr key={renewal.id}><td>{renewal.invoiceReference}</td><td>{renewal.plan.replaceAll("_", " ")}</td><td>{intervalLabel[renewal.billingInterval]}</td><td>{renewal.currency} {Number(renewal.amountDue).toFixed(2)}</td><td>{displayDate(renewal.dueAt)}</td><td>{renewal.status}</td></tr>)}</tbody></table></div></section>}

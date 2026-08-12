@@ -67,6 +67,7 @@ export type ChipCreatePurchaseInput = {
   reference: string;
   send_receipt: boolean;
   force_recurring: boolean;
+  skip_capture?: boolean;
   payment_method_whitelist?: string[];
   success_redirect: string;
   failure_redirect: string;
@@ -115,6 +116,7 @@ export class ChipClient {
     brandId: string;
     amountSen: number;
     recurring?: boolean;
+    preauthorization?: boolean;
   }) {
     this.assertUuid(input.brandId, "CHIP_BRAND_ID_INVALID");
     if (!Number.isSafeInteger(input.amountSen) || input.amountSen < 0) {
@@ -132,6 +134,9 @@ export class ChipClient {
     });
     if (input.recurring !== undefined) {
       query.set("recurring", String(input.recurring));
+    }
+    if (input.preauthorization !== undefined) {
+      query.set("preauthorization", String(input.preauthorization));
     }
 
     return this.request<{

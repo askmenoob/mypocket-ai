@@ -5268,6 +5268,37 @@ button.successGhost:hover:not(:disabled) {
   font: inherit;
 }
 
+.chipPromoCheckout {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  align-items: end;
+  gap: 12px;
+  margin: 12px 24px 0;
+}
+
+.chipPromoCheckout label {
+  display: grid;
+  gap: 7px;
+  color: #23463f;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.chipPromoCheckout input,
+.chipPromoCheckout button {
+  min-height: 44px;
+}
+
+.chipPromoCheckout input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid #bed8d2;
+  border-radius: 11px;
+  color: #173b34;
+  background: #ffffff;
+  font: inherit;
+}
+
 .chipBillingOptionsMessage {
   margin: 12px 24px 0;
   padding: 10px 13px;
@@ -5543,6 +5574,11 @@ button.successGhost:hover:not(:disabled) {
 @media (max-width: 820px) {
   .chipBillingControls {
     grid-template-columns: 1fr;
+  }
+
+  .chipPromoCheckout {
+    grid-template-columns: 1fr;
+    margin: 12px 14px 0;
   }
 
   .chipBillingStatusGrid {

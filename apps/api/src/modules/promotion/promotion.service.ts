@@ -29,6 +29,14 @@ type PromotionActor = {
   workspaceId:string;
 };
 
+type CheckoutPromotionInput = {
+  code:string;
+  plan:"PERSONAL_PRO" | "FAMILY" | "BUSINESS";
+  originalAmount:number;
+  currency:"MYR";
+  paymentMethodAttached:boolean;
+};
+
 function isUniqueConstraintError(error:unknown):boolean{
   return Boolean(
     error
@@ -242,112 +250,216 @@ export class PromotionService {
     };
   }
 
-  async redeem(actor:PromotionActor, input:PromotionRedeemInput){
-    const normalizedCode = normalizePromotionCode(input.code);
-    let hashedKey = "";
+  async quoteForCheckout(
+    actor:PromotionActor,
+    input:CheckoutPromotionInput,
+  ){
+    const quote = await this.quote(actor, input);
+    if(!quote.eligible){
+      throw new AppError(
+        "PROMO_NOT_ELIGIBLE",
+        `Promotion is not eligible: ${quote.reasons.join(",")}`,
+        409,
+      );
+    }
+    return quote;
+  }
 
-    for(let attempt = 1; attempt <= 3; attempt += 1){
-      try{
-        return await this.app.prisma.$transaction(async (tx) => {
-        const campaign = await tx.promoCampaign.findUnique({
-          where:{ code:normalizedCode },
-        });
-        if(!campaign){
-          throw new AppError("PROMO_NOT_FOUND", "Promotion code is not valid", 404);
-        }
-
-        hashedKey = promotionIdempotencyKey(actor.userId, campaign.id, input.idempotencyKey);
-        const replay = await tx.promoRedemption.findUnique({ where:{ idempotencyKey:hashedKey } });
-        if(replay){
-          if(replay.userId !== actor.userId || replay.promoCampaignId !== campaign.id){
-            throw new AppError("PROMO_IDEMPOTENCY_CONFLICT", "Idempotency key conflict", 409);
-          }
-          return { replayed:true, redemption:this.redemptionSnapshot(replay) };
-        }
-
-        const now = new Date();
-        const eligibility = await this.eligibilityContext(tx, campaign, actor.userId, input, now);
-        if(!eligibility.eligible){
-          throw new AppError(
-            "PROMO_NOT_ELIGIBLE",
-            `Promotion is not eligible: ${eligibility.reasons.join(",")}`,
-            409,
-          );
-        }
-
-        const user = await tx.user.findUnique({
-          where:{ id:actor.userId },
-          select:{ email:true },
-        });
-        if(!user || user.email.trim().toLowerCase() !== actor.email.trim().toLowerCase()){
-          throw new AppError("PROMO_ACTOR_MISMATCH", "Promotion actor is invalid", 403);
-        }
-
-        const disclosure = buildPromotionDisclosure({
-          campaign:this.toPolicyCampaign(campaign),
-          originalAmount:input.originalAmount,
-          currency:input.currency,
-          now,
-        });
-        const isTrial = campaign.type === "FREE_TRIAL_DAYS";
-        const redemption = await tx.promoRedemption.create({
-          data:{
-            promoCampaignId:campaign.id,
-            userId:actor.userId,
-            userEmailSnapshot:user.email,
-            workspaceId:actor.workspaceId,
-            plan:input.plan,
-            status:isTrial ? "ACTIVE" : "RESERVED",
-            idempotencyKey:hashedKey,
-            currency:input.currency,
-            originalAmount:input.originalAmount,
-            discountAmount:disclosure.discountAmount,
-            firstChargeAmount:disclosure.firstChargeAmount,
-            trialEndsAt:disclosure.trialEndsAt ? new Date(disclosure.trialEndsAt) : null,
-            nextChargeAt:disclosure.nextChargeAt ? new Date(disclosure.nextChargeAt) : null,
-            nextChargeAmount:disclosure.nextChargeAmount,
-            cancelBefore:disclosure.cancelBefore ? new Date(disclosure.cancelBefore) : null,
-            paymentMethodAttached:input.paymentMethodAttached,
-            activatedAt:isTrial ? now : null,
-          },
-        });
-        await tx.promoAuditEvent.create({
-          data:{
-            promoCampaignId:campaign.id,
-            promoRedemptionId:redemption.id,
-            actorUserId:actor.userId,
-            actorEmail:user.email,
-            action:"PROMO_REDEEMED",
-            after:this.redemptionSnapshot(redemption) as Prisma.InputJsonValue,
-          },
-        });
-
-        return { replayed:false, redemption:this.redemptionSnapshot(redemption), disclosure };
-        }, { isolationLevel:"Serializable" });
-      }catch(error){
-        if(isSerializationConflict(error) && attempt < 3){
-          continue;
-        }
-        if(isUniqueConstraintError(error) && hashedKey){
-          const replay = await this.app.prisma.promoRedemption.findUnique({
-            where:{ idempotencyKey:hashedKey },
-          });
-          if(replay && replay.userId === actor.userId){
-            return { replayed:true, redemption:this.redemptionSnapshot(replay) };
-          }
-        }
-        if(isSerializationConflict(error)){
-          throw new AppError(
-            "PROMO_CONCURRENT_REDEMPTION_RETRY",
-            "Promotion redemption was busy; retry with the same idempotency key",
-            409,
-          );
-        }
-        throw error;
-      }
+  async reservePromotionForCheckout(
+    tx:Prisma.TransactionClient,
+    actor:PromotionActor,
+    input:CheckoutPromotionInput & {
+      requestId:string;
+      billingPaymentAttemptId:string;
+    },
+  ){
+    const campaign = await tx.promoCampaign.findUnique({
+      where:{ code:normalizePromotionCode(input.code) },
+    });
+    if(!campaign){
+      throw new AppError("PROMO_NOT_FOUND", "Promotion code is not valid", 404);
     }
 
-    throw new AppError("PROMO_REDEMPTION_FAILED", "Promotion redemption failed", 409);
+    const hashedKey = promotionIdempotencyKey(
+      actor.userId,
+      campaign.id,
+      `checkout:${actor.workspaceId}:${input.requestId}`,
+    );
+    const replay = await tx.promoRedemption.findUnique({
+      where:{ idempotencyKey:hashedKey },
+    });
+    if(replay){
+      if(
+        replay.userId !== actor.userId
+        || replay.workspaceId !== actor.workspaceId
+        || replay.billingPaymentAttemptId !== input.billingPaymentAttemptId
+      ){
+        throw new AppError("PROMO_IDEMPOTENCY_CONFLICT", "Idempotency key conflict", 409);
+      }
+      return replay;
+    }
+
+    const now = new Date();
+    const eligibility = await this.eligibilityContext(tx, campaign, actor.userId, input, now);
+    if(!eligibility.eligible){
+      throw new AppError(
+        "PROMO_NOT_ELIGIBLE",
+        `Promotion is not eligible: ${eligibility.reasons.join(",")}`,
+        409,
+      );
+    }
+    const user = await tx.user.findUnique({
+      where:{ id:actor.userId },
+      select:{ email:true },
+    });
+    if(!user || user.email.trim().toLowerCase() !== actor.email.trim().toLowerCase()){
+      throw new AppError("PROMO_ACTOR_MISMATCH", "Promotion actor is invalid", 403);
+    }
+    const disclosure = buildPromotionDisclosure({
+      campaign:this.toPolicyCampaign(campaign),
+      originalAmount:input.originalAmount,
+      currency:input.currency,
+      now,
+    });
+    const redemption = await tx.promoRedemption.create({
+      data:{
+        promoCampaignId:campaign.id,
+        billingPaymentAttemptId:input.billingPaymentAttemptId,
+        userId:actor.userId,
+        userEmailSnapshot:user.email,
+        workspaceId:actor.workspaceId,
+        plan:input.plan,
+        status:"RESERVED",
+        idempotencyKey:hashedKey,
+        currency:input.currency,
+        originalAmount:input.originalAmount,
+        discountAmount:disclosure.discountAmount,
+        firstChargeAmount:disclosure.firstChargeAmount,
+        trialEndsAt:disclosure.trialEndsAt ? new Date(disclosure.trialEndsAt) : null,
+        nextChargeAt:disclosure.nextChargeAt ? new Date(disclosure.nextChargeAt) : null,
+        nextChargeAmount:disclosure.nextChargeAmount,
+        cancelBefore:disclosure.cancelBefore ? new Date(disclosure.cancelBefore) : null,
+        paymentMethodAttached:false,
+      },
+    });
+    await tx.promoAuditEvent.create({
+      data:{
+        promoCampaignId:campaign.id,
+        promoRedemptionId:redemption.id,
+        actorUserId:actor.userId,
+        actorEmail:user.email,
+        action:"PROMO_CHECKOUT_RESERVED",
+        after:this.redemptionSnapshot(redemption) as Prisma.InputJsonValue,
+      },
+    });
+    return redemption;
+  }
+
+  async activatePromotionAfterConfirmation(
+    tx:Prisma.TransactionClient,
+    billingPaymentAttemptId:string,
+    activatedAt:Date,
+  ){
+    const current = await tx.promoRedemption.findUnique({
+      where:{ billingPaymentAttemptId },
+      include:{ campaign:{ select:{ autoConvert:true } } },
+    });
+    if(!current){
+      return null;
+    }
+    if(current.status !== "RESERVED"){
+      return { ...current, autoConvert:current.campaign.autoConvert };
+    }
+    const updated = await tx.promoRedemption.update({
+      where:{ id:current.id },
+      data:{
+        status:"ACTIVE",
+        paymentMethodAttached:true,
+        activatedAt,
+      },
+    });
+    await tx.promoAuditEvent.create({
+      data:{
+        promoCampaignId:current.promoCampaignId,
+        promoRedemptionId:current.id,
+        actorUserId:current.userId,
+        actorEmail:current.userEmailSnapshot,
+        action:"PROMO_ACTIVATED_BY_SIGNED_PAYMENT",
+        before:{ status:current.status },
+        after:{ status:updated.status, activatedAt:activatedAt.toISOString() },
+      },
+    });
+    return { ...updated, autoConvert:current.campaign.autoConvert };
+  }
+
+  async cancelPromotionReservation(
+    tx:Prisma.TransactionClient,
+    billingPaymentAttemptId:string,
+    reason:string,
+  ){
+    const current = await tx.promoRedemption.findUnique({
+      where:{ billingPaymentAttemptId },
+    });
+    if(!current || current.status !== "RESERVED"){
+      return current;
+    }
+    const cancelledAt = new Date();
+    const updated = await tx.promoRedemption.update({
+      where:{ id:current.id },
+      data:{ status:"CANCELLED", cancelledAt },
+    });
+    await tx.promoAuditEvent.create({
+      data:{
+        promoCampaignId:current.promoCampaignId,
+        promoRedemptionId:current.id,
+        actorUserId:current.userId,
+        actorEmail:current.userEmailSnapshot,
+        action:"PROMO_CHECKOUT_CANCELLED",
+        before:{ status:current.status },
+        after:{ status:updated.status, reason, cancelledAt:cancelledAt.toISOString() },
+      },
+    });
+    return updated;
+  }
+
+  async convertPromotionAfterPaidRenewal(
+    tx:Prisma.TransactionClient,
+    billingPaymentAttemptId:string,
+    convertedAt:Date,
+  ){
+    const current = await tx.promoRedemption.findFirst({
+      where:{
+        status:"ACTIVE",
+        conversionBillingRenewal:{ paymentAttemptId:billingPaymentAttemptId },
+      },
+    });
+    if(!current){
+      return null;
+    }
+    const updated = await tx.promoRedemption.update({
+      where:{ id:current.id },
+      data:{ status:"CONVERTED", convertedAt },
+    });
+    await tx.promoAuditEvent.create({
+      data:{
+        promoCampaignId:current.promoCampaignId,
+        promoRedemptionId:current.id,
+        actorUserId:current.userId,
+        actorEmail:current.userEmailSnapshot,
+        action:"PROMO_CONVERTED_BY_SIGNED_PAYMENT",
+        before:{ status:current.status },
+        after:{ status:updated.status, convertedAt:convertedAt.toISOString() },
+      },
+    });
+    return updated;
+  }
+
+  async redeem(_actor:PromotionActor, _input:PromotionRedeemInput){
+    throw new AppError(
+      "PROMO_CHECKOUT_REQUIRED",
+      "Apply promotion codes through billing checkout so payment verification and activation stay atomic",
+      409,
+    );
   }
 
   async cancelRedemption(actor:PromotionActor, redemptionId:string){
@@ -434,8 +546,12 @@ export class PromotionService {
   ){
     const [user, totalRedemptions, userRedemptions, priorPaidSubscriptions] = await Promise.all([
       prisma.user.findUnique({ where:{ id:userId }, select:{ createdAt:true } }),
-      prisma.promoRedemption.count({ where:{ promoCampaignId:campaign.id } }),
-      prisma.promoRedemption.count({ where:{ promoCampaignId:campaign.id, userId } }),
+      prisma.promoRedemption.count({
+        where:{ promoCampaignId:campaign.id, status:{ in:["RESERVED", "ACTIVE", "CONVERTED"] } },
+      }),
+      prisma.promoRedemption.count({
+        where:{ promoCampaignId:campaign.id, userId, status:{ in:["RESERVED", "ACTIVE", "CONVERTED"] } },
+      }),
       prisma.workspaceBillingSubscription.count({
         where:{ ownerUserId:userId, lastPaymentAt:{ not:null } },
       }),

@@ -14,7 +14,7 @@ const { ChipBillingService } = await import(
 
 const checkoutId = "11111111-1111-4111-8111-111111111111";
 
-function makeHarness(){
+function makeHarness(options:{ conversionPromo?:boolean } = {}){
   const writes:Array<{ target:string; data:Record<string, unknown> }> = [];
   const lookups:Array<Record<string, unknown>> = [];
   const seenEvents = new Set<string>();
@@ -75,6 +75,20 @@ function makeHarness(){
     billingRenewal:{ upsert:async (input:any) => record("renewal", { data:input.update }) },
     billingRecurringToken:{ upsert:async (input:any) => record("token", { data:input.create }) },
     billingReminderDelivery:{ upsert:async (input:any) => record("reminder", { data:input.create }) },
+    promoRedemption:{
+      findUnique:async () => null,
+      findFirst:async () => options.conversionPromo
+        ? {
+            id:"redemption-1",
+            promoCampaignId:"campaign-1",
+            userId:"owner-1",
+            userEmailSnapshot:"owner@example.com",
+            status:"ACTIVE",
+          }
+        : null,
+      update:async (input:any) => record("promo.redemption", input),
+    },
+    promoAuditEvent:{ create:async (input:any) => record("promo.audit", input) },
   };
   const app:any = {
     prisma:{
@@ -116,6 +130,30 @@ test("signed paid webhook stores the purchase id when CHIP marks it as the recur
   assert.equal(fixture.writes.find((item) => item.target === "billing")?.data.accessState, "ACTIVE");
   assert.equal(fixture.writes.find((item) => item.target === "token")?.data.providerTokenId, checkoutId);
   assert.equal(fixture.writes.find((item) => item.target === "reminder")?.data.reminderType, "ACCESS_REACTIVATED");
+});
+
+test("signed paid renewal converts the linked active promotion", async () => {
+  const fixture = makeHarness({ conversionPromo:true });
+  const paid = delivery({
+    event_type:"purchase.paid",
+    id:checkoutId,
+    status:"paid",
+    is_test:true,
+    updated_on:1788211200,
+    payment:{ amount:1900, currency:"MYR", paid_on:1788211200 },
+    purchase:{ total:1900, currency:"MYR" },
+  });
+
+  await fixture.service.receiveWebhook(paid);
+
+  assert.equal(
+    fixture.writes.find((item) => item.target === "promo.redemption")?.data.status,
+    "CONVERTED",
+  );
+  assert.equal(
+    fixture.writes.find((item) => item.target === "promo.audit")?.data.action,
+    "PROMO_CONVERTED_BY_SIGNED_PAYMENT",
+  );
 });
 
 test("signed refund suspends writes without deleting subscription data", async () => {

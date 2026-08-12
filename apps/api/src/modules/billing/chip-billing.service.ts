@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { env } from "../../config/index.js";
 import type { Prisma } from "../../generated/prisma/client.js";
 import { AppError } from "../../shared/errors/app-error.js";
+import { PromotionService } from "../promotion/promotion.service.js";
 import {
   buildRenewalSchedule,
   calculateProratedUpgrade,
@@ -46,9 +47,24 @@ export class ChipBillingService {
   async getQuote(actor: SessionActor, input: ChipPaymentMethodsQuery) {
     await this.assertOwner(actor);
     const quote = await this.quote(input.plan, input.interval);
+    const promotion = input.promoCode
+      ? await new PromotionService(this.app).quoteForCheckout(actor, {
+          code:input.promoCode,
+          plan:input.plan,
+          originalAmount:quote.amountDueSen / 100,
+          currency:"MYR",
+          paymentMethodAttached:input.renewalMethod === "AUTOMATIC",
+        })
+      : null;
 
     return {
       ...quote,
+      ...(promotion
+        ? {
+            amountDueSen:Math.round(promotion.disclosure.firstChargeAmount * 100),
+            promotion,
+          }
+        : {}),
       renewalMethod: input.renewalMethod,
       currency: "MYR" as const,
     };
@@ -58,10 +74,28 @@ export class ChipBillingService {
     assertBillingProviderCallAllowed(env.BILLING_CHECKOUT_PROVIDER, "chip");
     await this.assertOwner(actor);
     const quote = await this.quote(input.plan, input.interval);
+    const promotion = input.promoCode
+      ? await new PromotionService(this.app).quoteForCheckout(actor, {
+          code:input.promoCode,
+          plan:input.plan,
+          originalAmount:quote.amountDueSen / 100,
+          currency:"MYR",
+          paymentMethodAttached:input.renewalMethod === "AUTOMATIC",
+        })
+      : null;
+    const amountDueSen = promotion
+      ? Math.round(promotion.disclosure.firstChargeAmount * 100)
+      : quote.amountDueSen;
+    const isPreauthorization = Boolean(
+      promotion
+      && amountDueSen === 0
+      && promotion.disclosure.requiresPaymentMethod,
+    );
     const response = await this.client().listPaymentMethods({
       brandId: this.requiredEnvironment("CHIP_BRAND_ID", env.CHIP_BRAND_ID),
-      amountSen: quote.amountDueSen,
+      amountSen: amountDueSen,
       recurring: input.renewalMethod === "AUTOMATIC",
+      preauthorization:isPreauthorization || undefined,
     });
 
     const available = Array.isArray(response.available_payment_methods)
@@ -75,7 +109,11 @@ export class ChipBillingService {
       available,
       names: response.names ?? {},
       cardMethods: response.card_methods ?? [],
-      quote,
+      quote:{
+        ...quote,
+        amountDueSen,
+        ...(promotion ? { promotion } : {}),
+      },
     };
   }
 
@@ -134,6 +172,7 @@ export class ChipBillingService {
     });
     const now = new Date();
     let amountDueSen = fullQuote.amountDueSen;
+    let promotionQuote: Awaited<ReturnType<PromotionService["quoteForCheckout"]>> | null = null;
     let coverageStart: Date;
     let coverageEnd: Date;
     let attemptType = "NEW";
@@ -172,7 +211,34 @@ export class ChipBillingService {
       attemptType = currentBilling?.accessState === "ACTIVE" ? "RENEWAL" : "NEW";
     }
 
-    if (amountDueSen <= 0) {
+    const promotionOriginalAmountSen = amountDueSen;
+    if(input.promoCode){
+      promotionQuote = await new PromotionService(this.app).quoteForCheckout(actor, {
+        code:input.promoCode,
+        plan:input.plan,
+        originalAmount:amountDueSen / 100,
+        currency:"MYR",
+        paymentMethodAttached:input.renewalMethod === "AUTOMATIC",
+      });
+      amountDueSen = Math.round(promotionQuote.disclosure.firstChargeAmount * 100);
+      if(promotionQuote.disclosure.trialEndsAt){
+        coverageEnd = new Date(promotionQuote.disclosure.trialEndsAt);
+      }
+    }
+
+    const isPreauthorization = Boolean(
+      promotionQuote
+      && amountDueSen === 0
+      && promotionQuote.disclosure.requiresPaymentMethod,
+    );
+    if(isPreauthorization && input.renewalMethod !== "AUTOMATIC"){
+      throw new AppError(
+        "PROMO_AUTOMATIC_RENEWAL_REQUIRED",
+        "This trial requires automatic renewal and a verified card.",
+        409,
+      );
+    }
+    if (amountDueSen <= 0 && !isPreauthorization) {
       throw new AppError(
         "BILLING_PAYMENT_AMOUNT_ZERO",
         "No immediate charge is due for this plan change.",
@@ -191,6 +257,9 @@ export class ChipBillingService {
             status: { in: [...ACTIVE_ATTEMPT_STATUSES] },
             expiresAt: { gt: now },
             checkoutUrl: { not: null },
+            promoRedemption: input.promoCode
+              ? { is:{ campaign:{ code:input.promoCode } } }
+              : { is:null },
           },
           orderBy: { createdAt: "desc" },
         })
@@ -203,6 +272,7 @@ export class ChipBillingService {
       brandId: this.requiredEnvironment("CHIP_BRAND_ID", env.CHIP_BRAND_ID),
       amountSen: amountDueSen,
       recurring: input.renewalMethod === "AUTOMATIC",
+      preauthorization:isPreauthorization || undefined,
     });
     const availableMethods = methods.available_payment_methods.filter(
       (method) => typeof method === "string" && /^[a-z0-9_]+$/u.test(method),
@@ -286,16 +356,27 @@ export class ChipBillingService {
           billingInterval: input.interval,
           renewalMethod: input.renewalMethod,
           currency: "MYR",
-          baseAmount: fullQuote.baseAmountSen / 100,
+          baseAmount: promotionOriginalAmountSen / 100,
           discountAmount:
-            Math.max(0, fullQuote.baseAmountSen - amountDueSen) / 100,
+            Math.max(0, promotionOriginalAmountSen - amountDueSen) / 100,
           amountDue: amountDueSen / 100,
           coverageStart,
           coverageEnd,
           expiresAt,
         },
       });
-      return { subscription, attempt };
+      const promoRedemption = input.promoCode && input.requestId
+        ? await new PromotionService(this.app).reservePromotionForCheckout(tx, actor, {
+            code:input.promoCode,
+            plan:input.plan,
+            originalAmount:promotionOriginalAmountSen / 100,
+            currency:"MYR",
+            paymentMethodAttached:true,
+            requestId:input.requestId,
+            billingPaymentAttemptId:attempt.id,
+          })
+        : null;
+      return { subscription, attempt, promoRedemption };
     }, { isolationLevel: "Serializable" });
 
     let purchase: ChipPurchase;
@@ -327,12 +408,19 @@ export class ChipBillingService {
             plan: input.plan,
             interval: input.interval,
             renewalMethod: input.renewalMethod,
+            ...(prepared.promoRedemption
+              ? {
+                  promoRedemptionId:prepared.promoRedemption.id,
+                  promoCode:input.promoCode ?? "",
+                }
+              : {}),
           },
         },
         brand_id: this.requiredEnvironment("CHIP_BRAND_ID", env.CHIP_BRAND_ID),
         reference,
         send_receipt: true,
         force_recurring: input.renewalMethod === "AUTOMATIC",
+        ...(isPreauthorization ? { skip_capture:true } : {}),
         ...(paymentMethodWhitelist && paymentMethodWhitelist.length > 0
           ? { payment_method_whitelist: paymentMethodWhitelist }
           : {}),
@@ -344,20 +432,43 @@ export class ChipBillingService {
         platform: "web",
       });
     } catch (error) {
-      await this.app.prisma.billingPaymentAttempt.update({
-        where: { id: prepared.attempt.id },
-        data: {
-          status: "FAILED",
-          failedAt: new Date(),
-          failureCode: error instanceof AppError ? error.code : "CHIP_CREATE_FAILED",
-          failureMessage: "CHIP checkout could not be created.",
-        },
+      await this.app.prisma.$transaction(async (tx) => {
+        await tx.billingPaymentAttempt.update({
+          where: { id: prepared.attempt.id },
+          data: {
+            status: "FAILED",
+            failedAt: new Date(),
+            failureCode: error instanceof AppError ? error.code : "CHIP_CREATE_FAILED",
+            failureMessage: "CHIP checkout could not be created.",
+          },
+        });
+        await new PromotionService(this.app).cancelPromotionReservation(
+          tx,
+          prepared.attempt.id,
+          "CHIP_CREATE_FAILED",
+        );
       });
       throw error;
     }
 
     this.assertPurchaseEnvironment(purchase);
     if (!purchase.id || !purchase.checkout_url) {
+      await this.app.prisma.$transaction(async (tx) => {
+        await tx.billingPaymentAttempt.update({
+          where:{ id:prepared.attempt.id },
+          data:{
+            status:"FAILED",
+            failedAt:new Date(),
+            failureCode:"CHIP_CHECKOUT_RESPONSE_INCOMPLETE",
+            failureMessage:"CHIP returned an incomplete checkout response.",
+          },
+        });
+        await new PromotionService(this.app).cancelPromotionReservation(
+          tx,
+          prepared.attempt.id,
+          "CHIP_CHECKOUT_RESPONSE_INCOMPLETE",
+        );
+      });
       throw new AppError(
         "CHIP_CHECKOUT_RESPONSE_INCOMPLETE",
         "CHIP returned an incomplete checkout response.",
@@ -607,7 +718,7 @@ export class ChipBillingService {
 
     const purchase = await this.client().retrievePurchase(attempt.providerCheckoutId);
     this.assertPurchaseEnvironment(purchase);
-    if (purchase.status === "paid") {
+    if (purchase.status === "paid" || purchase.status === "preauthorized") {
       return {
         reconciled: false,
         reason: "SIGNED_WEBHOOK_REQUIRED" as const,
@@ -615,14 +726,21 @@ export class ChipBillingService {
     }
     if (["error", "blocked", "expired", "cancelled"].includes(purchase.status)) {
       const status = purchase.status === "expired" ? "EXPIRED" : "FAILED";
-      await this.app.prisma.billingPaymentAttempt.update({
-        where: { id: attempt.id },
-        data: {
-          status,
-          failedAt: new Date(),
-          failureCode: `RECONCILED_${purchase.status.toUpperCase()}`,
-          failureMessage: "CHIP checkout ended without a successful payment.",
-        },
+      await this.app.prisma.$transaction(async (tx) => {
+        await tx.billingPaymentAttempt.update({
+          where: { id: attempt.id },
+          data: {
+            status,
+            failedAt: new Date(),
+            failureCode: `RECONCILED_${purchase.status.toUpperCase()}`,
+            failureMessage: "CHIP checkout ended without a successful payment.",
+          },
+        });
+        await new PromotionService(this.app).cancelPromotionReservation(
+          tx,
+          attempt.id,
+          `RECONCILED_${purchase.status.toUpperCase()}`,
+        );
       });
       return { reconciled: true, status };
     }
@@ -686,8 +804,13 @@ export class ChipBillingService {
         }
 
         const processedAt = new Date();
+        const preauthorized =
+          payload.event_type === "purchase.preauthorized"
+          && payload.status === "preauthorized"
+          && Number(attempt.amountDue) === 0;
         const successful =
-          payload.event_type === "purchase.paid" && payload.status === "paid";
+          (payload.event_type === "purchase.paid" && payload.status === "paid")
+          || preauthorized;
         const failed =
           payload.event_type === "purchase.payment_failure" ||
           payload.event_type === "purchase.subscription_charge_failure" ||
@@ -699,7 +822,9 @@ export class ChipBillingService {
           ["refunded", "chargeback"].includes(payload.status);
 
         if (successful) {
-          this.assertPaidAmount(payload, Number(attempt.amountDue));
+          if(Number(attempt.amountDue) > 0){
+            this.assertPaidAmount(payload, Number(attempt.amountDue));
+          }
           const subscription = attempt.workspaceBillingSubscription;
           const coverageStart = attempt.coverageStart ?? processedAt;
           const coverageEnd = attempt.coverageEnd;
@@ -718,14 +843,26 @@ export class ChipBillingService {
           await tx.billingPaymentAttempt.update({
             where: { id: attempt.id },
             data: {
-              status: "PAID",
+              status: preauthorized ? "PENDING" : "PAID",
               providerPaymentId: payload.id,
-              paidAt: this.unixDate(payload.payment?.paid_on) ?? processedAt,
+              paidAt: preauthorized
+                ? null
+                : this.unixDate(payload.payment?.paid_on) ?? processedAt,
               failedAt: null,
               failureCode: null,
               failureMessage: null,
             },
           });
+          const activatedPromotion = await new PromotionService(this.app).activatePromotionAfterConfirmation(
+            tx,
+            attempt.id,
+            processedAt,
+          );
+          await new PromotionService(this.app).convertPromotionAfterPaidRenewal(
+            tx,
+            attempt.id,
+            processedAt,
+          );
           await tx.workspaceBillingSubscription.update({
             where: { id: subscription.id },
             data: {
@@ -754,8 +891,8 @@ export class ChipBillingService {
               nextRenewalAt: coverageEnd,
               paymentDueAt: dueAt,
               graceEndsAt,
-              lastPaymentAt: processedAt,
-              lastPaymentStatus: "SUCCEEDED",
+              lastPaymentAt: Number(attempt.amountDue) > 0 ? processedAt : null,
+              lastPaymentStatus: Number(attempt.amountDue) > 0 ? "SUCCEEDED" : "PREAUTHORIZED",
               suspendedAt: null,
               reactivatedAt:
                 subscription.accessState === "SUSPENDED" ? processedAt : null,
@@ -782,26 +919,67 @@ export class ChipBillingService {
             where: { id: subscription.workspaceId },
             data: { type: this.workspaceType(attempt.plan as BillingPlan) },
           });
-          await tx.billingRenewal.upsert({
-            where: { paymentAttemptId: attempt.id },
-            create: {
-              workspaceBillingSubscriptionId: subscription.id,
-              paymentAttemptId: attempt.id,
-              invoiceReference: attempt.reference,
-              status: "PAID",
-              plan: attempt.plan,
-              billingInterval: attempt.billingInterval,
-              renewalMethod: attempt.renewalMethod,
-              currency: "MYR",
-              amountDue: attempt.amountDue,
-              periodStart: coverageStart,
-              periodEnd: coverageEnd,
-              dueAt,
-              graceEndsAt,
-              paidAt: processedAt,
-            },
-            update: { status: "PAID", paidAt: processedAt },
-          });
+          if(!preauthorized){
+            await tx.billingRenewal.upsert({
+              where: { paymentAttemptId: attempt.id },
+              create: {
+                workspaceBillingSubscriptionId: subscription.id,
+                paymentAttemptId: attempt.id,
+                invoiceReference: attempt.reference,
+                status: "PAID",
+                plan: attempt.plan,
+                billingInterval: attempt.billingInterval,
+                renewalMethod: attempt.renewalMethod,
+                currency: "MYR",
+                amountDue: attempt.amountDue,
+                periodStart: coverageStart,
+                periodEnd: coverageEnd,
+                dueAt,
+                graceEndsAt,
+                paidAt: processedAt,
+              },
+              update: { status: "PAID", paidAt: processedAt },
+            });
+          }
+          if(activatedPromotion?.trialEndsAt && activatedPromotion.autoConvert !== false){
+            const trialCharge = Number(
+              activatedPromotion.nextChargeAmount
+              ?? activatedPromotion.originalAmount,
+            );
+            const trialDueAt =
+              activatedPromotion.nextChargeAt
+              ?? activatedPromotion.trialEndsAt;
+            const conversionRenewal = await tx.billingRenewal.upsert({
+              where:{ invoiceReference:`promo:${activatedPromotion.id}:conversion` },
+              create:{
+                workspaceBillingSubscriptionId:subscription.id,
+                invoiceReference:`promo:${activatedPromotion.id}:conversion`,
+                status:"SCHEDULED",
+                plan:attempt.plan,
+                billingInterval:attempt.billingInterval,
+                renewalMethod:attempt.renewalMethod,
+                currency:"MYR",
+                amountDue:trialCharge,
+                periodStart:trialDueAt,
+                periodEnd:buildRenewalSchedule({
+                  paidAt:trialDueAt,
+                  paidThroughAt:trialDueAt,
+                  interval:attempt.billingInterval,
+                  plan:attempt.plan as BillingPlan,
+                }).coverageEnd,
+                dueAt:trialDueAt,
+                graceEndsAt:new Date(
+                  trialDueAt.getTime()
+                  + getGraceDays(attempt.plan as BillingPlan) * 86_400_000,
+                ),
+              },
+              update:{},
+            });
+            await tx.promoRedemption.update({
+              where:{ id:activatedPromotion.id },
+              data:{ conversionBillingRenewalId:conversionRenewal.id },
+            });
+          }
           const recurringToken =
             payload.recurring_token ??
             (payload.is_recurring_token ? purchaseId : null);
@@ -853,6 +1031,11 @@ export class ChipBillingService {
               failureMessage: "CHIP reported an unsuccessful payment.",
             },
           });
+          await new PromotionService(this.app).cancelPromotionReservation(
+            tx,
+            attempt.id,
+            `CHIP_${payload.status.toUpperCase()}`,
+          );
           await tx.workspaceBillingSubscription.update({
             where: { id: attempt.workspaceBillingSubscriptionId },
             data: {

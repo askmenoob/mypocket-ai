@@ -2863,6 +2863,8 @@ export type PromoCampaignScalarFieldEnum = (typeof PromoCampaignScalarFieldEnum)
 export const PromoRedemptionScalarFieldEnum = {
   id: 'id',
   promoCampaignId: 'promoCampaignId',
+  billingPaymentAttemptId: 'billingPaymentAttemptId',
+  conversionBillingRenewalId: 'conversionBillingRenewalId',
   userId: 'userId',
   userEmailSnapshot: 'userEmailSnapshot',
   workspaceId: 'workspaceId',

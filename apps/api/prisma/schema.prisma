@@ -320,6 +320,7 @@ model BillingPaymentAttempt {
 
   workspaceBillingSubscription WorkspaceBillingSubscription @relation(fields: [workspaceBillingSubscriptionId], references: [id], onDelete: Cascade)
   renewal                     BillingRenewal?
+  promoRedemption             PromoRedemption?
 
   @@unique([provider, providerCheckoutId])
   @@unique([provider, providerPaymentId])
@@ -351,6 +352,7 @@ model BillingRenewal {
 
   workspaceBillingSubscription WorkspaceBillingSubscription @relation(fields: [workspaceBillingSubscriptionId], references: [id], onDelete: Cascade)
   paymentAttempt             BillingPaymentAttempt?        @relation(fields: [paymentAttemptId], references: [id], onDelete: SetNull)
+  promoRedemption            PromoRedemption?
   reminderDeliveries        BillingReminderDelivery[]
 
   @@index([workspaceBillingSubscriptionId, status, dueAt])
@@ -469,8 +471,10 @@ model PromoCampaign {
 }
 
 model PromoRedemption {
-  id                    String                  @id @default(cuid())
-  promoCampaignId       String
+  id                         String                  @id @default(cuid())
+  promoCampaignId            String
+  billingPaymentAttemptId    String?                 @unique
+  conversionBillingRenewalId String?                 @unique
   userId                String
   userEmailSnapshot     String
   workspaceId           String
@@ -494,6 +498,8 @@ model PromoRedemption {
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
   campaign              PromoCampaign           @relation(fields: [promoCampaignId], references: [id], onDelete: Restrict)
+  billingPaymentAttempt BillingPaymentAttempt?   @relation(fields: [billingPaymentAttemptId], references: [id], onDelete: SetNull)
+  conversionBillingRenewal BillingRenewal?        @relation(fields: [conversionBillingRenewalId], references: [id], onDelete: SetNull)
   auditEvents           PromoAuditEvent[]
 
   @@index([promoCampaignId, userId])

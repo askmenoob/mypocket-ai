@@ -24,12 +24,28 @@ export const chipCheckoutSchema = z.object({
     .regex(/^[a-z0-9_]+$/u)
     .optional(),
   requestId: z.string().uuid().optional(),
+  promoCode: z.string().trim().min(3).max(32)
+    .transform((value) => value.toUpperCase().replace(/\s+/gu, "-"))
+    .pipe(z.string().regex(/^[A-Z0-9][A-Z0-9_-]{2,31}$/u))
+    .optional(),
+}).superRefine((value, context) => {
+  if(value.promoCode && !value.requestId){
+    context.addIssue({
+      code:"custom",
+      path:["requestId"],
+      message:"A request ID is required when applying a promotion",
+    });
+  }
 });
 
 export const chipPaymentMethodsQuerySchema = z.object({
   plan: paidBillingPlanSchema,
   interval: chipBillingIntervalSchema,
   renewalMethod: chipRenewalMethodSchema,
+  promoCode: z.string().trim().min(3).max(32)
+    .transform((value) => value.toUpperCase().replace(/\s+/gu, "-"))
+    .pipe(z.string().regex(/^[A-Z0-9][A-Z0-9_-]{2,31}$/u))
+    .optional(),
 });
 
 export type ChipCheckoutInput = z.infer<typeof chipCheckoutSchema>;

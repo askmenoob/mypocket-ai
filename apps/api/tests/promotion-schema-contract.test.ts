@@ -74,3 +74,15 @@ test("migration installs disabled CUBA14, immutable audit and no HitPay dependen
   assert.match(routes, /\[app\.authenticate, requireSuperAdmin\]/u);
   assert.doesNotMatch(`${routes}\n${service}`, /hitpay|hit-pay/iu);
 });
+
+test("checkout promotion migration is additive and links one billing attempt", () => {
+  const migration = readFileSync(
+    new URL("../prisma/migrations/20260812143000_link_promotions_to_billing_attempts/migration.sql", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(migration, /ADD COLUMN "billingPaymentAttemptId" TEXT/u);
+  assert.match(migration, /BillingPaymentAttemptStatus.*PREAUTHORIZED/su);
+  assert.match(migration, /ON DELETE SET NULL/u);
+  assert.doesNotMatch(migration, /DROP TABLE|DROP COLUMN|TRUNCATE/iu);
+});

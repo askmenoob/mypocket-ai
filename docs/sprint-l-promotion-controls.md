@@ -2,11 +2,11 @@
 
 ## Boundary
 
-Promotions are owned by MyPocket. The module does not import HitPay, create a provider coupon, or mutate provider state. The existing HitPay checkout and return paths remain unchanged.
+Promotions are owned by MyPocket. The module does not create provider coupons or store discounts in CHIP. CHIP receives only the server-calculated amount and signed checkout metadata.
 
 ## Data and migration
 
-Migration `20260811103000_add_promotion_controls` is additive and has not been applied. It creates:
+Migration `20260811103000_add_promotion_controls` is applied. It creates:
 
 - `PromoCampaign` for code configuration and lifecycle;
 - `PromoRedemption` for user, plan, pricing, trial and conversion state;
@@ -23,21 +23,22 @@ All promotion management routes use `[app.authenticate, requireSuperAdmin]`. Thi
 
 ## Concurrency and history
 
-Redemption uses a serializable transaction. Eligibility counts and create happen in the same transaction. Prisma `P2034` serialization conflicts retry at most three times; after that the API fails closed with a retry response and requires the same client idempotency key. Concurrent replay with the same key returns the existing redemption and creates no duplicate audit event.
+Checkout reservation uses the same serializable transaction as the billing attempt. Eligibility counts and reservation creation therefore cannot drift apart. Cancelled or failed attempts do not consume the campaign quota. A second additive migration, `20260812143000_link_promotions_to_billing_attempts`, links one redemption to one payment attempt and links a converting trial to its scheduled renewal.
 
 ## Integration sequence
 
-1. Reconcile the additive schema and generated Prisma client with the target integration branch.
-2. Run `prisma validate` and review the SQL without applying it.
-3. Merge the promotion module and the `app.ts` registration.
-4. Reconcile the isolated `PromoCodeSettings` and `PromoQuoteDisclosure` components into the current Super Admin and billing modal bootstrap.
-5. Run all API tests, API build, web typecheck/build and `git diff --check`.
-6. Back up the production database before applying the migration.
-7. Apply the migration in a controlled deployment; confirm `CUBA14` remains disabled.
-8. Use Super Admin to review dates and limits before enabling any campaign.
+1. Back up the production database and apply only the additive checkout-link migration.
+2. Confirm the checkout calculates promo eligibility and amount again on the server.
+3. Confirm zero-value trials create a CHIP card preauthorization, not an unpaid activation.
+4. Activate access only after a signed `purchase.preauthorized` or `purchase.paid` webhook.
+5. Create the conversion renewal at trial end and mark the redemption `CONVERTED` only after its signed paid webhook.
+6. Cancel reserved redemptions on provider creation failure, failed webhook, cancellation, or expiry.
+7. Keep the legacy public `/promotion/redeem` path fail-closed with `PROMO_CHECKOUT_REQUIRED`.
 
-## Deliberate activation gate
+## Atomic activation contract
 
-The billing modal calls only `/promotion/quote`. It discloses trial expiry, first and next charge, next charge date, cancellation deadline, payment-method requirement and conversion behavior. It explicitly creates no redemption, checkout or payment.
+The CHIP billing modal includes an optional promo field. Quote and payment-method discovery accept the code for disclosure, but the final checkout repeats all eligibility and pricing checks inside the server transaction. The client cannot provide a price or claim that a payment method is attached.
 
-Connecting an accepted redemption to paid checkout/access activation remains a separate integration gate. Do not call `/promotion/redeem` from checkout until the billing owner defines the atomic activation contract and proves provider/webhook/database reconciliation. Until then, user activation is **partial**, while campaign administration, eligibility, audit, disclosure and idempotency are source-complete.
+`CUBA14` requires automatic renewal and a CHIP recurring-capable card. The RM0 purchase uses preauthorization; its billing attempt remains `PENDING` because no money was captured. Access and the 14-day trial start only after a valid signed webhook, and the normal plan amount is scheduled for the trial end. Failed or unsigned callbacks never activate access. Direct legacy redemption is intentionally blocked to prevent bypassing payment verification.
+
+Fresh verification on 2026-08-12: Prisma validate/generate passed, 19 focused promotion/CHIP tests passed, the full API suite passed 218/218, API and web production builds passed, and `git diff --check` passed after generated-client normalization.

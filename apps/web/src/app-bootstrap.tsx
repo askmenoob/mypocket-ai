@@ -6473,6 +6473,7 @@ function Dashboard(
       interval:ChipBillingInterval;
       renewalMethod:ChipRenewalMethod;
       preferredPaymentMethod?:string;
+      promoCode?:string;
     },
   ){
 

@@ -43,6 +43,8 @@ export type PromoRedemptionSumAggregateOutputType = {
 export type PromoRedemptionMinAggregateOutputType = {
   id: string | null
   promoCampaignId: string | null
+  billingPaymentAttemptId: string | null
+  conversionBillingRenewalId: string | null
   userId: string | null
   userEmailSnapshot: string | null
   workspaceId: string | null
@@ -70,6 +72,8 @@ export type PromoRedemptionMinAggregateOutputType = {
 export type PromoRedemptionMaxAggregateOutputType = {
   id: string | null
   promoCampaignId: string | null
+  billingPaymentAttemptId: string | null
+  conversionBillingRenewalId: string | null
   userId: string | null
   userEmailSnapshot: string | null
   workspaceId: string | null
@@ -97,6 +101,8 @@ export type PromoRedemptionMaxAggregateOutputType = {
 export type PromoRedemptionCountAggregateOutputType = {
   id: number
   promoCampaignId: number
+  billingPaymentAttemptId: number
+  conversionBillingRenewalId: number
   userId: number
   userEmailSnapshot: number
   workspaceId: number
@@ -140,6 +146,8 @@ export type PromoRedemptionSumAggregateInputType = {
 export type PromoRedemptionMinAggregateInputType = {
   id?: true
   promoCampaignId?: true
+  billingPaymentAttemptId?: true
+  conversionBillingRenewalId?: true
   userId?: true
   userEmailSnapshot?: true
   workspaceId?: true
@@ -167,6 +175,8 @@ export type PromoRedemptionMinAggregateInputType = {
 export type PromoRedemptionMaxAggregateInputType = {
   id?: true
   promoCampaignId?: true
+  billingPaymentAttemptId?: true
+  conversionBillingRenewalId?: true
   userId?: true
   userEmailSnapshot?: true
   workspaceId?: true
@@ -194,6 +204,8 @@ export type PromoRedemptionMaxAggregateInputType = {
 export type PromoRedemptionCountAggregateInputType = {
   id?: true
   promoCampaignId?: true
+  billingPaymentAttemptId?: true
+  conversionBillingRenewalId?: true
   userId?: true
   userEmailSnapshot?: true
   workspaceId?: true
@@ -308,6 +320,8 @@ export type PromoRedemptionGroupByArgs<ExtArgs extends runtime.Types.Extensions.
 export type PromoRedemptionGroupByOutputType = {
   id: string
   promoCampaignId: string
+  billingPaymentAttemptId: string | null
+  conversionBillingRenewalId: string | null
   userId: string
   userEmailSnapshot: string
   workspaceId: string
@@ -358,6 +372,8 @@ export type PromoRedemptionWhereInput = {
   NOT?: Prisma.PromoRedemptionWhereInput | Prisma.PromoRedemptionWhereInput[]
   id?: Prisma.StringFilter<"PromoRedemption"> | string
   promoCampaignId?: Prisma.StringFilter<"PromoRedemption"> | string
+  billingPaymentAttemptId?: Prisma.StringNullableFilter<"PromoRedemption"> | string | null
+  conversionBillingRenewalId?: Prisma.StringNullableFilter<"PromoRedemption"> | string | null
   userId?: Prisma.StringFilter<"PromoRedemption"> | string
   userEmailSnapshot?: Prisma.StringFilter<"PromoRedemption"> | string
   workspaceId?: Prisma.StringFilter<"PromoRedemption"> | string
@@ -381,12 +397,16 @@ export type PromoRedemptionWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"PromoRedemption"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PromoRedemption"> | Date | string
   campaign?: Prisma.XOR<Prisma.PromoCampaignScalarRelationFilter, Prisma.PromoCampaignWhereInput>
+  billingPaymentAttempt?: Prisma.XOR<Prisma.BillingPaymentAttemptNullableScalarRelationFilter, Prisma.BillingPaymentAttemptWhereInput> | null
+  conversionBillingRenewal?: Prisma.XOR<Prisma.BillingRenewalNullableScalarRelationFilter, Prisma.BillingRenewalWhereInput> | null
   auditEvents?: Prisma.PromoAuditEventListRelationFilter
 }
 
 export type PromoRedemptionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   promoCampaignId?: Prisma.SortOrder
+  billingPaymentAttemptId?: Prisma.SortOrderInput | Prisma.SortOrder
+  conversionBillingRenewalId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   userEmailSnapshot?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
@@ -410,11 +430,15 @@ export type PromoRedemptionOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   campaign?: Prisma.PromoCampaignOrderByWithRelationInput
+  billingPaymentAttempt?: Prisma.BillingPaymentAttemptOrderByWithRelationInput
+  conversionBillingRenewal?: Prisma.BillingRenewalOrderByWithRelationInput
   auditEvents?: Prisma.PromoAuditEventOrderByRelationAggregateInput
 }
 
 export type PromoRedemptionWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  billingPaymentAttemptId?: string
+  conversionBillingRenewalId?: string
   idempotencyKey?: string
   AND?: Prisma.PromoRedemptionWhereInput | Prisma.PromoRedemptionWhereInput[]
   OR?: Prisma.PromoRedemptionWhereInput[]
@@ -442,12 +466,16 @@ export type PromoRedemptionWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"PromoRedemption"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PromoRedemption"> | Date | string
   campaign?: Prisma.XOR<Prisma.PromoCampaignScalarRelationFilter, Prisma.PromoCampaignWhereInput>
+  billingPaymentAttempt?: Prisma.XOR<Prisma.BillingPaymentAttemptNullableScalarRelationFilter, Prisma.BillingPaymentAttemptWhereInput> | null
+  conversionBillingRenewal?: Prisma.XOR<Prisma.BillingRenewalNullableScalarRelationFilter, Prisma.BillingRenewalWhereInput> | null
   auditEvents?: Prisma.PromoAuditEventListRelationFilter
-}, "id" | "idempotencyKey">
+}, "id" | "billingPaymentAttemptId" | "conversionBillingRenewalId" | "idempotencyKey">
 
 export type PromoRedemptionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   promoCampaignId?: Prisma.SortOrder
+  billingPaymentAttemptId?: Prisma.SortOrderInput | Prisma.SortOrder
+  conversionBillingRenewalId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   userEmailSnapshot?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
@@ -483,6 +511,8 @@ export type PromoRedemptionScalarWhereWithAggregatesInput = {
   NOT?: Prisma.PromoRedemptionScalarWhereWithAggregatesInput | Prisma.PromoRedemptionScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"PromoRedemption"> | string
   promoCampaignId?: Prisma.StringWithAggregatesFilter<"PromoRedemption"> | string
+  billingPaymentAttemptId?: Prisma.StringNullableWithAggregatesFilter<"PromoRedemption"> | string | null
+  conversionBillingRenewalId?: Prisma.StringNullableWithAggregatesFilter<"PromoRedemption"> | string | null
   userId?: Prisma.StringWithAggregatesFilter<"PromoRedemption"> | string
   userEmailSnapshot?: Prisma.StringWithAggregatesFilter<"PromoRedemption"> | string
   workspaceId?: Prisma.StringWithAggregatesFilter<"PromoRedemption"> | string
@@ -532,12 +562,16 @@ export type PromoRedemptionCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   campaign: Prisma.PromoCampaignCreateNestedOneWithoutRedemptionsInput
+  billingPaymentAttempt?: Prisma.BillingPaymentAttemptCreateNestedOneWithoutPromoRedemptionInput
+  conversionBillingRenewal?: Prisma.BillingRenewalCreateNestedOneWithoutPromoRedemptionInput
   auditEvents?: Prisma.PromoAuditEventCreateNestedManyWithoutRedemptionInput
 }
 
 export type PromoRedemptionUncheckedCreateInput = {
   id?: string
   promoCampaignId: string
+  billingPaymentAttemptId?: string | null
+  conversionBillingRenewalId?: string | null
   userId: string
   userEmailSnapshot: string
   workspaceId: string
@@ -588,12 +622,16 @@ export type PromoRedemptionUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   campaign?: Prisma.PromoCampaignUpdateOneRequiredWithoutRedemptionsNestedInput
+  billingPaymentAttempt?: Prisma.BillingPaymentAttemptUpdateOneWithoutPromoRedemptionNestedInput
+  conversionBillingRenewal?: Prisma.BillingRenewalUpdateOneWithoutPromoRedemptionNestedInput
   auditEvents?: Prisma.PromoAuditEventUpdateManyWithoutRedemptionNestedInput
 }
 
 export type PromoRedemptionUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   promoCampaignId?: Prisma.StringFieldUpdateOperationsInput | string
+  billingPaymentAttemptId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  conversionBillingRenewalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userEmailSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -622,6 +660,8 @@ export type PromoRedemptionUncheckedUpdateInput = {
 export type PromoRedemptionCreateManyInput = {
   id?: string
   promoCampaignId: string
+  billingPaymentAttemptId?: string | null
+  conversionBillingRenewalId?: string | null
   userId: string
   userEmailSnapshot: string
   workspaceId: string
@@ -675,6 +715,8 @@ export type PromoRedemptionUpdateManyMutationInput = {
 export type PromoRedemptionUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   promoCampaignId?: Prisma.StringFieldUpdateOperationsInput | string
+  billingPaymentAttemptId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  conversionBillingRenewalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userEmailSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -699,6 +741,11 @@ export type PromoRedemptionUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type PromoRedemptionNullableScalarRelationFilter = {
+  is?: Prisma.PromoRedemptionWhereInput | null
+  isNot?: Prisma.PromoRedemptionWhereInput | null
+}
+
 export type PromoRedemptionListRelationFilter = {
   every?: Prisma.PromoRedemptionWhereInput
   some?: Prisma.PromoRedemptionWhereInput
@@ -712,6 +759,8 @@ export type PromoRedemptionOrderByRelationAggregateInput = {
 export type PromoRedemptionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   promoCampaignId?: Prisma.SortOrder
+  billingPaymentAttemptId?: Prisma.SortOrder
+  conversionBillingRenewalId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   userEmailSnapshot?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
@@ -746,6 +795,8 @@ export type PromoRedemptionAvgOrderByAggregateInput = {
 export type PromoRedemptionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   promoCampaignId?: Prisma.SortOrder
+  billingPaymentAttemptId?: Prisma.SortOrder
+  conversionBillingRenewalId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   userEmailSnapshot?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
@@ -773,6 +824,8 @@ export type PromoRedemptionMaxOrderByAggregateInput = {
 export type PromoRedemptionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   promoCampaignId?: Prisma.SortOrder
+  billingPaymentAttemptId?: Prisma.SortOrder
+  conversionBillingRenewalId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   userEmailSnapshot?: Prisma.SortOrder
   workspaceId?: Prisma.SortOrder
@@ -804,9 +857,68 @@ export type PromoRedemptionSumOrderByAggregateInput = {
   nextChargeAmount?: Prisma.SortOrder
 }
 
-export type PromoRedemptionNullableScalarRelationFilter = {
-  is?: Prisma.PromoRedemptionWhereInput | null
-  isNot?: Prisma.PromoRedemptionWhereInput | null
+export type PromoRedemptionCreateNestedOneWithoutBillingPaymentAttemptInput = {
+  create?: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutBillingPaymentAttemptInput, Prisma.PromoRedemptionUncheckedCreateWithoutBillingPaymentAttemptInput>
+  connectOrCreate?: Prisma.PromoRedemptionCreateOrConnectWithoutBillingPaymentAttemptInput
+  connect?: Prisma.PromoRedemptionWhereUniqueInput
+}
+
+export type PromoRedemptionUncheckedCreateNestedOneWithoutBillingPaymentAttemptInput = {
+  create?: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutBillingPaymentAttemptInput, Prisma.PromoRedemptionUncheckedCreateWithoutBillingPaymentAttemptInput>
+  connectOrCreate?: Prisma.PromoRedemptionCreateOrConnectWithoutBillingPaymentAttemptInput
+  connect?: Prisma.PromoRedemptionWhereUniqueInput
+}
+
+export type PromoRedemptionUpdateOneWithoutBillingPaymentAttemptNestedInput = {
+  create?: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutBillingPaymentAttemptInput, Prisma.PromoRedemptionUncheckedCreateWithoutBillingPaymentAttemptInput>
+  connectOrCreate?: Prisma.PromoRedemptionCreateOrConnectWithoutBillingPaymentAttemptInput
+  upsert?: Prisma.PromoRedemptionUpsertWithoutBillingPaymentAttemptInput
+  disconnect?: Prisma.PromoRedemptionWhereInput | boolean
+  delete?: Prisma.PromoRedemptionWhereInput | boolean
+  connect?: Prisma.PromoRedemptionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PromoRedemptionUpdateToOneWithWhereWithoutBillingPaymentAttemptInput, Prisma.PromoRedemptionUpdateWithoutBillingPaymentAttemptInput>, Prisma.PromoRedemptionUncheckedUpdateWithoutBillingPaymentAttemptInput>
+}
+
+export type PromoRedemptionUncheckedUpdateOneWithoutBillingPaymentAttemptNestedInput = {
+  create?: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutBillingPaymentAttemptInput, Prisma.PromoRedemptionUncheckedCreateWithoutBillingPaymentAttemptInput>
+  connectOrCreate?: Prisma.PromoRedemptionCreateOrConnectWithoutBillingPaymentAttemptInput
+  upsert?: Prisma.PromoRedemptionUpsertWithoutBillingPaymentAttemptInput
+  disconnect?: Prisma.PromoRedemptionWhereInput | boolean
+  delete?: Prisma.PromoRedemptionWhereInput | boolean
+  connect?: Prisma.PromoRedemptionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PromoRedemptionUpdateToOneWithWhereWithoutBillingPaymentAttemptInput, Prisma.PromoRedemptionUpdateWithoutBillingPaymentAttemptInput>, Prisma.PromoRedemptionUncheckedUpdateWithoutBillingPaymentAttemptInput>
+}
+
+export type PromoRedemptionCreateNestedOneWithoutConversionBillingRenewalInput = {
+  create?: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutConversionBillingRenewalInput, Prisma.PromoRedemptionUncheckedCreateWithoutConversionBillingRenewalInput>
+  connectOrCreate?: Prisma.PromoRedemptionCreateOrConnectWithoutConversionBillingRenewalInput
+  connect?: Prisma.PromoRedemptionWhereUniqueInput
+}
+
+export type PromoRedemptionUncheckedCreateNestedOneWithoutConversionBillingRenewalInput = {
+  create?: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutConversionBillingRenewalInput, Prisma.PromoRedemptionUncheckedCreateWithoutConversionBillingRenewalInput>
+  connectOrCreate?: Prisma.PromoRedemptionCreateOrConnectWithoutConversionBillingRenewalInput
+  connect?: Prisma.PromoRedemptionWhereUniqueInput
+}
+
+export type PromoRedemptionUpdateOneWithoutConversionBillingRenewalNestedInput = {
+  create?: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutConversionBillingRenewalInput, Prisma.PromoRedemptionUncheckedCreateWithoutConversionBillingRenewalInput>
+  connectOrCreate?: Prisma.PromoRedemptionCreateOrConnectWithoutConversionBillingRenewalInput
+  upsert?: Prisma.PromoRedemptionUpsertWithoutConversionBillingRenewalInput
+  disconnect?: Prisma.PromoRedemptionWhereInput | boolean
+  delete?: Prisma.PromoRedemptionWhereInput | boolean
+  connect?: Prisma.PromoRedemptionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PromoRedemptionUpdateToOneWithWhereWithoutConversionBillingRenewalInput, Prisma.PromoRedemptionUpdateWithoutConversionBillingRenewalInput>, Prisma.PromoRedemptionUncheckedUpdateWithoutConversionBillingRenewalInput>
+}
+
+export type PromoRedemptionUncheckedUpdateOneWithoutConversionBillingRenewalNestedInput = {
+  create?: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutConversionBillingRenewalInput, Prisma.PromoRedemptionUncheckedCreateWithoutConversionBillingRenewalInput>
+  connectOrCreate?: Prisma.PromoRedemptionCreateOrConnectWithoutConversionBillingRenewalInput
+  upsert?: Prisma.PromoRedemptionUpsertWithoutConversionBillingRenewalInput
+  disconnect?: Prisma.PromoRedemptionWhereInput | boolean
+  delete?: Prisma.PromoRedemptionWhereInput | boolean
+  connect?: Prisma.PromoRedemptionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PromoRedemptionUpdateToOneWithWhereWithoutConversionBillingRenewalInput, Prisma.PromoRedemptionUpdateWithoutConversionBillingRenewalInput>, Prisma.PromoRedemptionUncheckedUpdateWithoutConversionBillingRenewalInput>
 }
 
 export type PromoRedemptionCreateNestedManyWithoutCampaignInput = {
@@ -879,6 +991,270 @@ export type PromoRedemptionUpdateOneWithoutAuditEventsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PromoRedemptionUpdateToOneWithWhereWithoutAuditEventsInput, Prisma.PromoRedemptionUpdateWithoutAuditEventsInput>, Prisma.PromoRedemptionUncheckedUpdateWithoutAuditEventsInput>
 }
 
+export type PromoRedemptionCreateWithoutBillingPaymentAttemptInput = {
+  id?: string
+  userId: string
+  userEmailSnapshot: string
+  workspaceId: string
+  plan: string
+  status?: $Enums.PromoRedemptionStatus
+  idempotencyKey: string
+  currency?: string
+  originalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discountAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  firstChargeAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  trialEndsAt?: Date | string | null
+  nextChargeAt?: Date | string | null
+  nextChargeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cancelBefore?: Date | string | null
+  paymentMethodAttached?: boolean
+  redeemedAt?: Date | string
+  activatedAt?: Date | string | null
+  convertedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  expiredAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  campaign: Prisma.PromoCampaignCreateNestedOneWithoutRedemptionsInput
+  conversionBillingRenewal?: Prisma.BillingRenewalCreateNestedOneWithoutPromoRedemptionInput
+  auditEvents?: Prisma.PromoAuditEventCreateNestedManyWithoutRedemptionInput
+}
+
+export type PromoRedemptionUncheckedCreateWithoutBillingPaymentAttemptInput = {
+  id?: string
+  promoCampaignId: string
+  conversionBillingRenewalId?: string | null
+  userId: string
+  userEmailSnapshot: string
+  workspaceId: string
+  plan: string
+  status?: $Enums.PromoRedemptionStatus
+  idempotencyKey: string
+  currency?: string
+  originalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discountAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  firstChargeAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  trialEndsAt?: Date | string | null
+  nextChargeAt?: Date | string | null
+  nextChargeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cancelBefore?: Date | string | null
+  paymentMethodAttached?: boolean
+  redeemedAt?: Date | string
+  activatedAt?: Date | string | null
+  convertedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  expiredAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditEvents?: Prisma.PromoAuditEventUncheckedCreateNestedManyWithoutRedemptionInput
+}
+
+export type PromoRedemptionCreateOrConnectWithoutBillingPaymentAttemptInput = {
+  where: Prisma.PromoRedemptionWhereUniqueInput
+  create: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutBillingPaymentAttemptInput, Prisma.PromoRedemptionUncheckedCreateWithoutBillingPaymentAttemptInput>
+}
+
+export type PromoRedemptionUpsertWithoutBillingPaymentAttemptInput = {
+  update: Prisma.XOR<Prisma.PromoRedemptionUpdateWithoutBillingPaymentAttemptInput, Prisma.PromoRedemptionUncheckedUpdateWithoutBillingPaymentAttemptInput>
+  create: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutBillingPaymentAttemptInput, Prisma.PromoRedemptionUncheckedCreateWithoutBillingPaymentAttemptInput>
+  where?: Prisma.PromoRedemptionWhereInput
+}
+
+export type PromoRedemptionUpdateToOneWithWhereWithoutBillingPaymentAttemptInput = {
+  where?: Prisma.PromoRedemptionWhereInput
+  data: Prisma.XOR<Prisma.PromoRedemptionUpdateWithoutBillingPaymentAttemptInput, Prisma.PromoRedemptionUncheckedUpdateWithoutBillingPaymentAttemptInput>
+}
+
+export type PromoRedemptionUpdateWithoutBillingPaymentAttemptInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userEmailSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumPromoRedemptionStatusFieldUpdateOperationsInput | $Enums.PromoRedemptionStatus
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  originalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  firstChargeAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  trialEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextChargeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextChargeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cancelBefore?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paymentMethodAttached?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  redeemedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  activatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  convertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  campaign?: Prisma.PromoCampaignUpdateOneRequiredWithoutRedemptionsNestedInput
+  conversionBillingRenewal?: Prisma.BillingRenewalUpdateOneWithoutPromoRedemptionNestedInput
+  auditEvents?: Prisma.PromoAuditEventUpdateManyWithoutRedemptionNestedInput
+}
+
+export type PromoRedemptionUncheckedUpdateWithoutBillingPaymentAttemptInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  promoCampaignId?: Prisma.StringFieldUpdateOperationsInput | string
+  conversionBillingRenewalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userEmailSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumPromoRedemptionStatusFieldUpdateOperationsInput | $Enums.PromoRedemptionStatus
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  originalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  firstChargeAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  trialEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextChargeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextChargeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cancelBefore?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paymentMethodAttached?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  redeemedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  activatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  convertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditEvents?: Prisma.PromoAuditEventUncheckedUpdateManyWithoutRedemptionNestedInput
+}
+
+export type PromoRedemptionCreateWithoutConversionBillingRenewalInput = {
+  id?: string
+  userId: string
+  userEmailSnapshot: string
+  workspaceId: string
+  plan: string
+  status?: $Enums.PromoRedemptionStatus
+  idempotencyKey: string
+  currency?: string
+  originalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discountAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  firstChargeAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  trialEndsAt?: Date | string | null
+  nextChargeAt?: Date | string | null
+  nextChargeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cancelBefore?: Date | string | null
+  paymentMethodAttached?: boolean
+  redeemedAt?: Date | string
+  activatedAt?: Date | string | null
+  convertedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  expiredAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  campaign: Prisma.PromoCampaignCreateNestedOneWithoutRedemptionsInput
+  billingPaymentAttempt?: Prisma.BillingPaymentAttemptCreateNestedOneWithoutPromoRedemptionInput
+  auditEvents?: Prisma.PromoAuditEventCreateNestedManyWithoutRedemptionInput
+}
+
+export type PromoRedemptionUncheckedCreateWithoutConversionBillingRenewalInput = {
+  id?: string
+  promoCampaignId: string
+  billingPaymentAttemptId?: string | null
+  userId: string
+  userEmailSnapshot: string
+  workspaceId: string
+  plan: string
+  status?: $Enums.PromoRedemptionStatus
+  idempotencyKey: string
+  currency?: string
+  originalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discountAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  firstChargeAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  trialEndsAt?: Date | string | null
+  nextChargeAt?: Date | string | null
+  nextChargeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cancelBefore?: Date | string | null
+  paymentMethodAttached?: boolean
+  redeemedAt?: Date | string
+  activatedAt?: Date | string | null
+  convertedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  expiredAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditEvents?: Prisma.PromoAuditEventUncheckedCreateNestedManyWithoutRedemptionInput
+}
+
+export type PromoRedemptionCreateOrConnectWithoutConversionBillingRenewalInput = {
+  where: Prisma.PromoRedemptionWhereUniqueInput
+  create: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutConversionBillingRenewalInput, Prisma.PromoRedemptionUncheckedCreateWithoutConversionBillingRenewalInput>
+}
+
+export type PromoRedemptionUpsertWithoutConversionBillingRenewalInput = {
+  update: Prisma.XOR<Prisma.PromoRedemptionUpdateWithoutConversionBillingRenewalInput, Prisma.PromoRedemptionUncheckedUpdateWithoutConversionBillingRenewalInput>
+  create: Prisma.XOR<Prisma.PromoRedemptionCreateWithoutConversionBillingRenewalInput, Prisma.PromoRedemptionUncheckedCreateWithoutConversionBillingRenewalInput>
+  where?: Prisma.PromoRedemptionWhereInput
+}
+
+export type PromoRedemptionUpdateToOneWithWhereWithoutConversionBillingRenewalInput = {
+  where?: Prisma.PromoRedemptionWhereInput
+  data: Prisma.XOR<Prisma.PromoRedemptionUpdateWithoutConversionBillingRenewalInput, Prisma.PromoRedemptionUncheckedUpdateWithoutConversionBillingRenewalInput>
+}
+
+export type PromoRedemptionUpdateWithoutConversionBillingRenewalInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userEmailSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumPromoRedemptionStatusFieldUpdateOperationsInput | $Enums.PromoRedemptionStatus
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  originalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  firstChargeAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  trialEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextChargeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextChargeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cancelBefore?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paymentMethodAttached?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  redeemedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  activatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  convertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  campaign?: Prisma.PromoCampaignUpdateOneRequiredWithoutRedemptionsNestedInput
+  billingPaymentAttempt?: Prisma.BillingPaymentAttemptUpdateOneWithoutPromoRedemptionNestedInput
+  auditEvents?: Prisma.PromoAuditEventUpdateManyWithoutRedemptionNestedInput
+}
+
+export type PromoRedemptionUncheckedUpdateWithoutConversionBillingRenewalInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  promoCampaignId?: Prisma.StringFieldUpdateOperationsInput | string
+  billingPaymentAttemptId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userEmailSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumPromoRedemptionStatusFieldUpdateOperationsInput | $Enums.PromoRedemptionStatus
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  originalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  firstChargeAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  trialEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextChargeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextChargeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cancelBefore?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paymentMethodAttached?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  redeemedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  activatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  convertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditEvents?: Prisma.PromoAuditEventUncheckedUpdateManyWithoutRedemptionNestedInput
+}
+
 export type PromoRedemptionCreateWithoutCampaignInput = {
   id?: string
   userId: string
@@ -903,11 +1279,15 @@ export type PromoRedemptionCreateWithoutCampaignInput = {
   expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  billingPaymentAttempt?: Prisma.BillingPaymentAttemptCreateNestedOneWithoutPromoRedemptionInput
+  conversionBillingRenewal?: Prisma.BillingRenewalCreateNestedOneWithoutPromoRedemptionInput
   auditEvents?: Prisma.PromoAuditEventCreateNestedManyWithoutRedemptionInput
 }
 
 export type PromoRedemptionUncheckedCreateWithoutCampaignInput = {
   id?: string
+  billingPaymentAttemptId?: string | null
+  conversionBillingRenewalId?: string | null
   userId: string
   userEmailSnapshot: string
   workspaceId: string
@@ -965,6 +1345,8 @@ export type PromoRedemptionScalarWhereInput = {
   NOT?: Prisma.PromoRedemptionScalarWhereInput | Prisma.PromoRedemptionScalarWhereInput[]
   id?: Prisma.StringFilter<"PromoRedemption"> | string
   promoCampaignId?: Prisma.StringFilter<"PromoRedemption"> | string
+  billingPaymentAttemptId?: Prisma.StringNullableFilter<"PromoRedemption"> | string | null
+  conversionBillingRenewalId?: Prisma.StringNullableFilter<"PromoRedemption"> | string | null
   userId?: Prisma.StringFilter<"PromoRedemption"> | string
   userEmailSnapshot?: Prisma.StringFilter<"PromoRedemption"> | string
   workspaceId?: Prisma.StringFilter<"PromoRedemption"> | string
@@ -1014,11 +1396,15 @@ export type PromoRedemptionCreateWithoutAuditEventsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   campaign: Prisma.PromoCampaignCreateNestedOneWithoutRedemptionsInput
+  billingPaymentAttempt?: Prisma.BillingPaymentAttemptCreateNestedOneWithoutPromoRedemptionInput
+  conversionBillingRenewal?: Prisma.BillingRenewalCreateNestedOneWithoutPromoRedemptionInput
 }
 
 export type PromoRedemptionUncheckedCreateWithoutAuditEventsInput = {
   id?: string
   promoCampaignId: string
+  billingPaymentAttemptId?: string | null
+  conversionBillingRenewalId?: string | null
   userId: string
   userEmailSnapshot: string
   workspaceId: string
@@ -1084,11 +1470,15 @@ export type PromoRedemptionUpdateWithoutAuditEventsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   campaign?: Prisma.PromoCampaignUpdateOneRequiredWithoutRedemptionsNestedInput
+  billingPaymentAttempt?: Prisma.BillingPaymentAttemptUpdateOneWithoutPromoRedemptionNestedInput
+  conversionBillingRenewal?: Prisma.BillingRenewalUpdateOneWithoutPromoRedemptionNestedInput
 }
 
 export type PromoRedemptionUncheckedUpdateWithoutAuditEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   promoCampaignId?: Prisma.StringFieldUpdateOperationsInput | string
+  billingPaymentAttemptId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  conversionBillingRenewalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userEmailSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1115,6 +1505,8 @@ export type PromoRedemptionUncheckedUpdateWithoutAuditEventsInput = {
 
 export type PromoRedemptionCreateManyCampaignInput = {
   id?: string
+  billingPaymentAttemptId?: string | null
+  conversionBillingRenewalId?: string | null
   userId: string
   userEmailSnapshot: string
   workspaceId: string
@@ -1163,11 +1555,15 @@ export type PromoRedemptionUpdateWithoutCampaignInput = {
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  billingPaymentAttempt?: Prisma.BillingPaymentAttemptUpdateOneWithoutPromoRedemptionNestedInput
+  conversionBillingRenewal?: Prisma.BillingRenewalUpdateOneWithoutPromoRedemptionNestedInput
   auditEvents?: Prisma.PromoAuditEventUpdateManyWithoutRedemptionNestedInput
 }
 
 export type PromoRedemptionUncheckedUpdateWithoutCampaignInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  billingPaymentAttemptId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  conversionBillingRenewalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userEmailSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1195,6 +1591,8 @@ export type PromoRedemptionUncheckedUpdateWithoutCampaignInput = {
 
 export type PromoRedemptionUncheckedUpdateManyWithoutCampaignInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  billingPaymentAttemptId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  conversionBillingRenewalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   userEmailSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1253,6 +1651,8 @@ export type PromoRedemptionCountOutputTypeCountAuditEventsArgs<ExtArgs extends r
 export type PromoRedemptionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   promoCampaignId?: boolean
+  billingPaymentAttemptId?: boolean
+  conversionBillingRenewalId?: boolean
   userId?: boolean
   userEmailSnapshot?: boolean
   workspaceId?: boolean
@@ -1276,6 +1676,8 @@ export type PromoRedemptionSelect<ExtArgs extends runtime.Types.Extensions.Inter
   createdAt?: boolean
   updatedAt?: boolean
   campaign?: boolean | Prisma.PromoCampaignDefaultArgs<ExtArgs>
+  billingPaymentAttempt?: boolean | Prisma.PromoRedemption$billingPaymentAttemptArgs<ExtArgs>
+  conversionBillingRenewal?: boolean | Prisma.PromoRedemption$conversionBillingRenewalArgs<ExtArgs>
   auditEvents?: boolean | Prisma.PromoRedemption$auditEventsArgs<ExtArgs>
   _count?: boolean | Prisma.PromoRedemptionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["promoRedemption"]>
@@ -1283,6 +1685,8 @@ export type PromoRedemptionSelect<ExtArgs extends runtime.Types.Extensions.Inter
 export type PromoRedemptionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   promoCampaignId?: boolean
+  billingPaymentAttemptId?: boolean
+  conversionBillingRenewalId?: boolean
   userId?: boolean
   userEmailSnapshot?: boolean
   workspaceId?: boolean
@@ -1306,11 +1710,15 @@ export type PromoRedemptionSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   createdAt?: boolean
   updatedAt?: boolean
   campaign?: boolean | Prisma.PromoCampaignDefaultArgs<ExtArgs>
+  billingPaymentAttempt?: boolean | Prisma.PromoRedemption$billingPaymentAttemptArgs<ExtArgs>
+  conversionBillingRenewal?: boolean | Prisma.PromoRedemption$conversionBillingRenewalArgs<ExtArgs>
 }, ExtArgs["result"]["promoRedemption"]>
 
 export type PromoRedemptionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   promoCampaignId?: boolean
+  billingPaymentAttemptId?: boolean
+  conversionBillingRenewalId?: boolean
   userId?: boolean
   userEmailSnapshot?: boolean
   workspaceId?: boolean
@@ -1334,11 +1742,15 @@ export type PromoRedemptionSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   createdAt?: boolean
   updatedAt?: boolean
   campaign?: boolean | Prisma.PromoCampaignDefaultArgs<ExtArgs>
+  billingPaymentAttempt?: boolean | Prisma.PromoRedemption$billingPaymentAttemptArgs<ExtArgs>
+  conversionBillingRenewal?: boolean | Prisma.PromoRedemption$conversionBillingRenewalArgs<ExtArgs>
 }, ExtArgs["result"]["promoRedemption"]>
 
 export type PromoRedemptionSelectScalar = {
   id?: boolean
   promoCampaignId?: boolean
+  billingPaymentAttemptId?: boolean
+  conversionBillingRenewalId?: boolean
   userId?: boolean
   userEmailSnapshot?: boolean
   workspaceId?: boolean
@@ -1363,28 +1775,38 @@ export type PromoRedemptionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type PromoRedemptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "promoCampaignId" | "userId" | "userEmailSnapshot" | "workspaceId" | "plan" | "status" | "idempotencyKey" | "currency" | "originalAmount" | "discountAmount" | "firstChargeAmount" | "trialEndsAt" | "nextChargeAt" | "nextChargeAmount" | "cancelBefore" | "paymentMethodAttached" | "redeemedAt" | "activatedAt" | "convertedAt" | "cancelledAt" | "expiredAt" | "createdAt" | "updatedAt", ExtArgs["result"]["promoRedemption"]>
+export type PromoRedemptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "promoCampaignId" | "billingPaymentAttemptId" | "conversionBillingRenewalId" | "userId" | "userEmailSnapshot" | "workspaceId" | "plan" | "status" | "idempotencyKey" | "currency" | "originalAmount" | "discountAmount" | "firstChargeAmount" | "trialEndsAt" | "nextChargeAt" | "nextChargeAmount" | "cancelBefore" | "paymentMethodAttached" | "redeemedAt" | "activatedAt" | "convertedAt" | "cancelledAt" | "expiredAt" | "createdAt" | "updatedAt", ExtArgs["result"]["promoRedemption"]>
 export type PromoRedemptionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   campaign?: boolean | Prisma.PromoCampaignDefaultArgs<ExtArgs>
+  billingPaymentAttempt?: boolean | Prisma.PromoRedemption$billingPaymentAttemptArgs<ExtArgs>
+  conversionBillingRenewal?: boolean | Prisma.PromoRedemption$conversionBillingRenewalArgs<ExtArgs>
   auditEvents?: boolean | Prisma.PromoRedemption$auditEventsArgs<ExtArgs>
   _count?: boolean | Prisma.PromoRedemptionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PromoRedemptionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   campaign?: boolean | Prisma.PromoCampaignDefaultArgs<ExtArgs>
+  billingPaymentAttempt?: boolean | Prisma.PromoRedemption$billingPaymentAttemptArgs<ExtArgs>
+  conversionBillingRenewal?: boolean | Prisma.PromoRedemption$conversionBillingRenewalArgs<ExtArgs>
 }
 export type PromoRedemptionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   campaign?: boolean | Prisma.PromoCampaignDefaultArgs<ExtArgs>
+  billingPaymentAttempt?: boolean | Prisma.PromoRedemption$billingPaymentAttemptArgs<ExtArgs>
+  conversionBillingRenewal?: boolean | Prisma.PromoRedemption$conversionBillingRenewalArgs<ExtArgs>
 }
 
 export type $PromoRedemptionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "PromoRedemption"
   objects: {
     campaign: Prisma.$PromoCampaignPayload<ExtArgs>
+    billingPaymentAttempt: Prisma.$BillingPaymentAttemptPayload<ExtArgs> | null
+    conversionBillingRenewal: Prisma.$BillingRenewalPayload<ExtArgs> | null
     auditEvents: Prisma.$PromoAuditEventPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     promoCampaignId: string
+    billingPaymentAttemptId: string | null
+    conversionBillingRenewalId: string | null
     userId: string
     userEmailSnapshot: string
     workspaceId: string
@@ -1802,6 +2224,8 @@ readonly fields: PromoRedemptionFieldRefs;
 export interface Prisma__PromoRedemptionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   campaign<T extends Prisma.PromoCampaignDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PromoCampaignDefaultArgs<ExtArgs>>): Prisma.Prisma__PromoCampaignClient<runtime.Types.Result.GetResult<Prisma.$PromoCampaignPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  billingPaymentAttempt<T extends Prisma.PromoRedemption$billingPaymentAttemptArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PromoRedemption$billingPaymentAttemptArgs<ExtArgs>>): Prisma.Prisma__BillingPaymentAttemptClient<runtime.Types.Result.GetResult<Prisma.$BillingPaymentAttemptPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  conversionBillingRenewal<T extends Prisma.PromoRedemption$conversionBillingRenewalArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PromoRedemption$conversionBillingRenewalArgs<ExtArgs>>): Prisma.Prisma__BillingRenewalClient<runtime.Types.Result.GetResult<Prisma.$BillingRenewalPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   auditEvents<T extends Prisma.PromoRedemption$auditEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PromoRedemption$auditEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PromoAuditEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1834,6 +2258,8 @@ export interface Prisma__PromoRedemptionClient<T, Null = never, ExtArgs extends 
 export interface PromoRedemptionFieldRefs {
   readonly id: Prisma.FieldRef<"PromoRedemption", 'String'>
   readonly promoCampaignId: Prisma.FieldRef<"PromoRedemption", 'String'>
+  readonly billingPaymentAttemptId: Prisma.FieldRef<"PromoRedemption", 'String'>
+  readonly conversionBillingRenewalId: Prisma.FieldRef<"PromoRedemption", 'String'>
   readonly userId: Prisma.FieldRef<"PromoRedemption", 'String'>
   readonly userEmailSnapshot: Prisma.FieldRef<"PromoRedemption", 'String'>
   readonly workspaceId: Prisma.FieldRef<"PromoRedemption", 'String'>
@@ -2254,6 +2680,44 @@ export type PromoRedemptionDeleteManyArgs<ExtArgs extends runtime.Types.Extensio
    * Limit how many PromoRedemptions to delete.
    */
   limit?: number
+}
+
+/**
+ * PromoRedemption.billingPaymentAttempt
+ */
+export type PromoRedemption$billingPaymentAttemptArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BillingPaymentAttempt
+   */
+  select?: Prisma.BillingPaymentAttemptSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BillingPaymentAttempt
+   */
+  omit?: Prisma.BillingPaymentAttemptOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BillingPaymentAttemptInclude<ExtArgs> | null
+  where?: Prisma.BillingPaymentAttemptWhereInput
+}
+
+/**
+ * PromoRedemption.conversionBillingRenewal
+ */
+export type PromoRedemption$conversionBillingRenewalArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BillingRenewal
+   */
+  select?: Prisma.BillingRenewalSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BillingRenewal
+   */
+  omit?: Prisma.BillingRenewalOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BillingRenewalInclude<ExtArgs> | null
+  where?: Prisma.BillingRenewalWhereInput
 }
 
 /**
