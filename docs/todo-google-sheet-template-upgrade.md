@@ -33,12 +33,12 @@ Status: DEPLOYMENT READY (2026-08-12)
 
 - [x] Focused plan-selection and receipt-reference tests pass.
 - [x] API TypeScript build passes.
-- [ ] Seed the four production master-template records after the API deployment gate.
-- [ ] Restart the API only; do not restart the web service or rerun unrelated migrations.
+- [x] Seed the four production master-template records after the API deployment gate.
+- [x] Restart the API only; do not restart the web service or rerun unrelated migrations.
 - [ ] Verify a fresh Personal Basic workspace provisions the limited template.
 - [ ] Verify an active Personal Pro workspace provisions the full template.
-- [ ] Scan and confirm one receipt with an invoice number; verify dashboard and Google Sheet column P.
-- [ ] Commit and push the implementation branch.
+- [x] Verify confirmed MANKON, MR D.I.Y., and AEON receipt references in Google Sheet column P.
+- [x] Commit and push the implementation branch.
 
 ## Master template inventory
 
