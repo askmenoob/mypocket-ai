@@ -190,13 +190,13 @@ export function renderTermsPage(): void {
         <h1>Terms of Service</h1>
 
         <p class="legal-date">
-          Last updated: July 29, 2026
+          Last updated: August 13, 2026
         </p>
 
         <p class="legal-intro">
           These Terms of Service govern your access to and use of the
-          MyPocket AI website and any related services made available
-          through imai.my.
+          MyPocket AI website and related digital services made available
+          through imai.my by RIFTECH ENTERPRISE.
         </p>
 
         <section>
@@ -332,7 +332,25 @@ export function renderTermsPage(): void {
         </section>
 
         <section>
-          <h2>8. Availability and Modifications</h2>
+          <h2>8. Subscriptions, payment, and delivery</h2>
+
+          <p>
+            Plan features, billing intervals, discounts, renewal terms, and
+            the total payable are shown before checkout. A paid plan is
+            activated only after successful payment confirmation. MyPocket AI
+            supplies digital services only; no physical goods are shipped.
+          </p>
+
+          <p>
+            Cancellation stops future renewal charges and normally preserves
+            access until the end of the paid period. See the
+            <a href="/refund-policy"> Refund Policy</a> and
+            <a href="/shipping-policy"> Digital Delivery Policy</a>.
+          </p>
+        </section>
+
+        <section>
+          <h2>9. Availability and Modifications</h2>
 
           <p>
             We may update, modify, suspend, restrict or discontinue any
@@ -346,7 +364,7 @@ export function renderTermsPage(): void {
         </section>
 
         <section>
-          <h2>9. Disclaimer of Warranties</h2>
+          <h2>10. Disclaimer of Warranties</h2>
 
           <p>
             The website and related services are provided on an
@@ -362,7 +380,7 @@ export function renderTermsPage(): void {
         </section>
 
         <section>
-          <h2>10. Limitation of Liability</h2>
+          <h2>11. Limitation of Liability</h2>
 
           <p>
             To the maximum extent permitted by applicable law, MyPocket
@@ -379,7 +397,7 @@ export function renderTermsPage(): void {
         </section>
 
         <section>
-          <h2>11. Suspension and Termination</h2>
+          <h2>12. Suspension and Termination</h2>
 
           <p>
             We may suspend, restrict or terminate access where we
@@ -390,7 +408,7 @@ export function renderTermsPage(): void {
         </section>
 
         <section>
-          <h2>12. Privacy</h2>
+          <h2>13. Privacy</h2>
 
           <p>
             Personal information submitted through the website will be
@@ -400,7 +418,7 @@ export function renderTermsPage(): void {
         </section>
 
         <section>
-          <h2>13. Changes to These Terms</h2>
+          <h2>14. Changes to These Terms</h2>
 
           <p>
             We may revise these Terms of Service from time to time. The
@@ -415,7 +433,7 @@ export function renderTermsPage(): void {
         </section>
 
         <section>
-          <h2>14. Governing Law</h2>
+          <h2>15. Governing Law</h2>
 
           <p>
             These Terms of Service are governed by the laws of Malaysia.
@@ -425,16 +443,20 @@ export function renderTermsPage(): void {
         </section>
 
         <section>
-          <h2>15. Contact</h2>
+          <h2>16. Contact and merchant identity</h2>
 
           <p>
-            Questions regarding these Terms of Service may be submitted
-            through the official MyPocket AI website.
+            MyPocket AI is operated in Malaysia by RIFTECH ENTERPRISE.
+            Questions may be sent to
+            <a href="mailto:support@imai.my"> support@imai.my</a> or by
+            calling <a href="tel:+60103250032">+60 10-325 0032</a>.
           </p>
         </section>
 
         <footer class="legal-footer">
-          © 2026 MyPocket AI. All rights reserved.
+          <a href="/refund-policy">Refund Policy</a> ·
+          <a href="/shipping-policy">Digital Delivery Policy</a><br />
+          © 2026 MyPocket AI. Operated by RIFTECH ENTERPRISE.
         </footer>
       </article>
     </main>

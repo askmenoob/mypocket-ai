@@ -124,10 +124,11 @@ export function renderPrivacyPage(): void {
 
     <main>
       <h1>Privacy Policy</h1>
-      <p class="updated">Last updated: August 2, 2026</p>
+      <p class="updated">Last updated: August 13, 2026</p>
 
       <p>
-        This Privacy Policy explains how MyPocket AI collects, uses,
+        MyPocket AI is operated by RIFTECH ENTERPRISE. This Privacy Policy
+        explains how MyPocket AI collects, uses,
         stores, shares, protects, retains, and deletes personal
         information when you use imai.my, app.imai.my, api.imai.my, and
         related MyPocket AI services.
@@ -273,7 +274,7 @@ export function renderPrivacyPage(): void {
         You may request access, correction, export, or deletion of your
         personal information and Google user data by contacting us through
         the official contact channel on <a href="https://imai.my">imai.my</a>
-        or by emailing <a href="mailto:admin@imai.my">admin@imai.my</a>.
+        or by emailing <a href="mailto:support@imai.my">support@imai.my</a>.
         We may need to verify your identity before completing a request.
       </p>
 
@@ -341,15 +342,20 @@ export function renderPrivacyPage(): void {
         Privacy-related questions, Google data requests, and deletion
         requests may be submitted through the official contact channel on
         <a href="https://imai.my">imai.my</a> or by emailing
-        <a href="mailto:admin@imai.my">admin@imai.my</a>.
+        <a href="mailto:support@imai.my">support@imai.my</a> or by calling
+        <a href="tel:+60103250032">+60 10-325 0032</a>.
       </p>
 
       <footer>
         <a href="/terms">Terms of Service</a>
         &nbsp;·&nbsp;
+        <a href="/refund-policy">Refund Policy</a>
+        &nbsp;·&nbsp;
+        <a href="/shipping-policy">Digital Delivery</a>
+        &nbsp;·&nbsp;
         <a href="/">MyPocket AI</a>
 
-        <p>&copy; 2026 MyPocket AI. All rights reserved.</p>
+        <p>&copy; 2026 MyPocket AI. Operated by RIFTECH ENTERPRISE.</p>
       </footer>
     </main>
   `;

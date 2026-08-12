@@ -34,6 +34,8 @@ createServer((req, res) => {
     [
       "/privacy",
       "/terms",
+      "/refund-policy",
+      "/shipping-policy",
       "/blog",
       "/help",
       "/guides",

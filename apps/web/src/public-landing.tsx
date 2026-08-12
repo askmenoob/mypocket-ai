@@ -594,10 +594,16 @@ export function PublicLandingPage() {
           <nav aria-label="Footer navigation">
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
+            <a href="/refund-policy">Refunds</a>
+            <a href="/shipping-policy">Digital delivery</a>
             <a href="/help">Help</a>
             <a href="/blog">Blog</a>
           </nav>
-          <span>© 2026 MyPocket AI</span>
+          <span>
+            © 2026 MyPocket AI · RIFTECH ENTERPRISE ·
+            <a href="mailto:support@imai.my"> support@imai.my</a> ·
+            <a href="tel:+60103250032"> +60 10-325 0032</a>
+          </span>
         </div>
       </footer>
     </main>

@@ -1,4 +1,5 @@
 import { renderPrivacyPage } from "./privacy-page";
+import { renderMerchantPolicyPage } from "./merchant-policy-page";
 import { renderResourcePage } from "./resource-page";
 import { renderTermsPage } from "./terms-page";
 
@@ -11,6 +12,8 @@ if (pathname === "/terms") {
   renderTermsPage();
 } else if (pathname === "/privacy") {
   renderPrivacyPage();
+} else if (pathname === "/refund-policy" || pathname === "/shipping-policy") {
+  renderMerchantPolicyPage(pathname);
 } else if (["/blog", "/help", "/guides", "/guides/whatsapp-bot", "/updates"].includes(pathname)) {
   renderResourcePage(pathname);
 } else {
