@@ -2661,12 +2661,34 @@ function App(){
   ){
 
     return (
-      <main className="loginScreen">
-        <section className="loginCard">
-          <LogoBlock />
+      <main className="workspaceLoadingScreen">
+        <section
+          className="workspaceLoadingCard"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div className="workspaceLoadingMascot" aria-hidden="true">
+            <span className="workspaceLoadingHalo" />
+            <img
+              src="/mypocket-robot-wave.webp?v=1"
+              alt=""
+            />
+          </div>
 
-          <h1>Loading workspace...</h1>
-          <p>Sedang semak status setup workspace anda.</p>
+          <div className="workspaceLoadingContent">
+            <LogoBlock />
+            <h1>Sedang menyediakan workspace anda</h1>
+            <p>
+              MyPocket sedang menyemak tetapan dan sambungan anda.
+              Hanya seketika.
+            </p>
+            <div className="workspaceLoadingProgress" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <small>Data kewangan anda kekal selamat semasa proses ini.</small>
+          </div>
         </section>
       </main>
     );

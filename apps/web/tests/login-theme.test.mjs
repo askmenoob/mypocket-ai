@@ -33,3 +33,15 @@ test("login mascot and Google action have responsive themed styling", () => {
   assert.match(styles, /\.googleButton\s*\{[\s\S]*#006f4c/);
   assert.match(styles, /@media\(max-width:720px\)[\s\S]*\.loginMascotPicture\s*\{/);
 });
+
+test("workspace loading uses a dedicated responsive mascot card", () => {
+  assert.match(app, /className="workspaceLoadingCard"/);
+  assert.match(app, /mypocket-robot-wave\.webp/);
+  assert.match(app, /className="workspaceLoadingProgress"/);
+  assert.match(app, /aria-live="polite"/);
+  assert.match(styles, /\.workspaceLoadingCard\s*\{/);
+  assert.match(
+    styles,
+    /@media\(max-width:720px\)[\s\S]*\.workspaceLoadingCard\s*\{/,
+  );
+});
