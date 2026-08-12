@@ -17,6 +17,13 @@ config({
   path: path.resolve(__dirname, "../../../../.env"),
 });
 
+const emptyStringToUndefined = (
+  value: unknown,
+) =>
+  typeof value === "string" && value.trim().length === 0
+    ? undefined
+    : value;
+
 const EnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
@@ -39,7 +46,7 @@ const EnvSchema = z.object({
 
   JWT_EXPIRES_IN:
     z.string()
-      .min(2)
+      .regex(/^\d+[smhd]$/)
       .default("12h"),
 
   DATABASE_URL: z.string(),
@@ -116,29 +123,44 @@ const EnvSchema = z.object({
       .default("https://gate.chip-in.asia/api/v1"),
 
   CHIP_API_KEY:
-    z.string()
-      .min(20)
-      .optional(),
+    z.preprocess(
+      emptyStringToUndefined,
+      z.string()
+        .min(20)
+        .optional(),
+    ),
 
   CHIP_BRAND_ID:
-    z.string()
-      .uuid()
-      .optional(),
+    z.preprocess(
+      emptyStringToUndefined,
+      z.string()
+        .uuid()
+        .optional(),
+    ),
 
   CHIP_WEBHOOK_PUBLIC_KEY:
-    z.string()
-      .min(64)
-      .optional(),
+    z.preprocess(
+      emptyStringToUndefined,
+      z.string()
+        .min(64)
+        .optional(),
+    ),
 
   CHIP_WEBHOOK_URL:
-    z.string()
-      .url()
-      .optional(),
+    z.preprocess(
+      emptyStringToUndefined,
+      z.string()
+        .url()
+        .optional(),
+    ),
 
   CHIP_RETURN_URL:
-    z.string()
-      .url()
-      .optional(),
+    z.preprocess(
+      emptyStringToUndefined,
+      z.string()
+        .url()
+        .optional(),
+    ),
 
   HITPAY_ENVIRONMENT:
     z.enum([
@@ -161,9 +183,12 @@ const EnvSchema = z.object({
       .default(""),
 
   HITPAY_WEBHOOK_SALT:
-    z.string()
-      .min(32)
-      .optional(),
+    z.preprocess(
+      emptyStringToUndefined,
+      z.string()
+        .min(32)
+        .optional(),
+    ),
 
   HITPAY_WEBHOOK_URL:
     z.string()

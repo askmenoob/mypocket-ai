@@ -1,6 +1,6 @@
 # Google Sheet Template Upgrade
 
-Status: DEPLOYMENT READY (2026-08-12)
+Status: DEPLOYED / BASIC CANARY BLOCKED BY MASTER SHARING (2026-08-12)
 
 ## Template design and safety
 
@@ -39,6 +39,8 @@ Status: DEPLOYMENT READY (2026-08-12)
 - [ ] Verify an active Personal Pro workspace provisions the full template.
 - [x] Verify confirmed MANKON, MR D.I.Y., and AEON receipt references in Google Sheet column P.
 - [x] Commit and push the implementation branch.
+
+Canary evidence (2026-08-12): an isolated Personal Basic provisioning attempt reached the real template import boundary but the master export returned HTTP 401. Personal Pro, Family, and Business master exports return HTTP 200. No customer workspace, transaction, or Drive folder was changed; the temporary database workspace was removed and a pre-canary backup is retained. The Basic master must be changed to `Anyone with the link — Viewer`, then both isolated Basic and Pro canaries must be rerun and their temporary Drive folders trashed.
 
 ## Master template inventory
 

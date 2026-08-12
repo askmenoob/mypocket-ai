@@ -90,7 +90,7 @@ Migration evidence (2026-08-12): the full chain first passed in an ephemeral Pos
 - [x] Review diff for secrets, unrelated files, generated noise, and destructive SQL.
 - [x] Apply the live additive migration only after explicit deployment approval and verified backup.
 - [!] Enable CHIP production only after merchant approval, production credentials, and sandbox E2E evidence are present.
-- [ ] Commit/push only after all applicable gates above are evidenced.
+- [x] Commit/push the verified Test Mode implementation while keeping live-money activation blocked.
 
 ## Rollback and current runtime state
 
@@ -98,8 +98,10 @@ Migration evidence (2026-08-12): the full chain first passed in an ephemeral Pos
 - To roll back application code, restore the pre-Sprint-N source archive and rebuild API/web while leaving the additive database objects in place. Do not reverse the migration or delete billing history during an emergency rollback.
 - To return to HitPay later, first restore verified HitPay credentials, run the focused provider-switch and signed-webhook tests, then change only the provider gate to `hitpay` and restart the API. Existing provider-neutral and CHIP tables remain dormant.
 - The pre-migration custom database dump is the last-resort disaster-recovery artifact. Restoring it is destructive and requires a maintenance window, exact target verification, and a separate explicit approval.
-- Deployment evidence (2026-08-12): 246/246 API tests pass, the recurring-token hotfix has 12/12 focused CHIP tests passing, API and web builds pass, Prisma validates, API/web services are active, public health/web return HTTP 200, and an unsigned CHIP webhook is rejected with HTTP 401.
+- Deployment evidence (2026-08-12): 266/266 API tests pass, the recurring-token and renewal-safety tests pass, API and web builds pass, Prisma validates, all 23 migrations are current, API/web services are active, public health/web return HTTP 200, and an unsigned CHIP webhook is rejected with HTTP 401.
 - Credential checkpoint (2026-08-12): CHIP Test Mode API key, Brand ID, webhook public key, webhook URL, and return URL are installed and cross-checked without exposing their values. The configured webhook callback and public key match the CHIP portal record.
 - Sandbox checkout evidence (2026-08-12): Family monthly automatic renewal completed at RM19 by sandbox Mastercard, followed by Family yearly automatic renewal at RM228 by sandbox Visa. Both CHIP purchases report `is_test=true`, both signed `purchase.paid` events are `PROCESSED_ACTIVATED`, and paid coverage now extends through 2027-09-12.
 - Recurring-token correction (2026-08-12): CHIP marks the paid Purchase itself with `is_recurring_token=true`; its Purchase ID is the token even when `recurring_token` is null. The webhook handler now follows that official contract, 12/12 focused CHIP tests pass, and the active yearly token was safely backfilled after a fresh database backup.
+- Renewal and legacy-access hardening (2026-08-12): automatic CHIP token charges start only at the exact due time; legacy HitPay rows can generate reminder/grace records but are excluded from CHIP automatic charges. Active legacy rows with an existing period end now receive additive due/grace backfill. Inactive HitPay credentials are no longer required when CHIP is active; new dashboard JWTs expire after 12 hours and transaction routes no longer print JWT payloads.
+- Source publication (2026-08-12): production commits `d00aa75`, `ef895b8`, and `c3075fa` are pushed to `codex/prod-readiness-20260803`. Live-money enablement remains blocked by the hosted lifecycle gates above.
 - Rollback artifacts: `.env.backup-chip-activation-20260812-075800` plus scoped source/dist backups under `.deploy-backups/chip-refund-hotfix-*`, `.deploy-backups/chip-access-plan-*`, `.deploy-backups/chip-downgrade-label-*`, and `.deploy-backups/chip-recurring-hotfix-*`; pre-backfill database dump `.deploy-backups/chip-recurring-data-20260812-084007.dump`.
