@@ -2,6 +2,14 @@ import { AppIcon } from "./app-icon";
 import { AdminUserManagement } from "./admin-user-management";
 import { PromoCodeSettings } from "./promo-code-settings";
 import { PromoQuoteDisclosure } from "./promo-quote-disclosure";
+import { BillingSettingsPanel } from "./billing-settings-panel";
+import {
+  ChipBillingPlanModal,
+  resolveChipAccessPlan,
+  type ChipBillingInterval,
+  type ChipBillingPlan,
+  type ChipRenewalMethod,
+} from "./chip-billing-plan-modal";
 import {
   dashboardDateInputValue,
   resolveDashboardDateRange,
@@ -18,6 +26,7 @@ import { createRoot } from "react-dom/client";
 import "./styles.css";
 import "./public-landing.css";
 import "./setup-wizard.css";
+import "./system-theme.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
@@ -155,7 +164,28 @@ type BillingSubscriptionData = {
     lastPaymentAt:string | null;
     lastPaymentStatus:string | null;
     canceledAt:string | null;
+    billingInterval:ChipBillingInterval;
+    renewalMethod:ChipRenewalMethod;
+    accessState:string;
+    paidThroughAt:string | null;
+    nextRenewalAt:string | null;
+    paymentDueAt:string | null;
+    graceEndsAt:string | null;
+    autoRenewEnabled:boolean;
+    cancelAtPeriodEnd:boolean;
   } | null;
+  renewalHistory:Array<{
+    id:string;
+    invoiceReference:string;
+    status:string;
+    plan:string;
+    billingInterval:ChipBillingInterval;
+    renewalMethod:ChipRenewalMethod;
+    currency:string;
+    amountDue:string | number;
+    dueAt:string;
+    paidAt:string | null;
+  }>;
 };
 
 
@@ -1431,11 +1461,13 @@ function App(){
       );
     }
 
-    const isHitPayReturn =
+    const isBillingReturn =
       window.location.pathname
-        === "/billing/hitpay/return";
+        .startsWith("/billing/")
+      && window.location.pathname
+        .endsWith("/return");
 
-    if(isHitPayReturn){
+    if(isBillingReturn){
       const returnStatus =
         new URLSearchParams(
           window.location.search,
@@ -1469,7 +1501,7 @@ function App(){
           ? "Payment was cancelled. No subscription access was activated."
           : paymentFailed
             ? "Payment was not completed. You can retry safely from subscription settings."
-            : "Payment attempt received. MyPocket is verifying the signed HitPay confirmation before activating access.",
+            : "Payment attempt received. MyPocket is verifying CHIP's signed confirmation before activating access.",
       );
 
       window.history.replaceState(
@@ -3871,7 +3903,7 @@ function Dashboard(
       "MEMBER"
     ) as MemberRole;
 
-  const currentAccessPlan =
+  const legacyAccessPlan =
     props.data.billing?.access?.plan
     ||
     props.data.me?.subscriptionPlan
@@ -3884,6 +3916,13 @@ function Dashboard(
     props.data.billing?.billing?.plan
     ??
     null;
+
+  const currentAccessPlan =
+    resolveChipAccessPlan({
+      billingPlan:currentBillingPlan,
+      accessState:props.data.billing?.billing?.accessState,
+      legacyPlan:legacyAccessPlan,
+    });
 
   const pendingBillingPlan =
     props.data.billing?.billing?.pendingPlan
@@ -6343,8 +6382,15 @@ function Dashboard(
 
 
   async function selectBillingPlan(
-    plan:BillingPlan,
+    selection:{
+      plan:ChipBillingPlan;
+      interval:ChipBillingInterval;
+      renewalMethod:ChipRenewalMethod;
+      preferredPaymentMethod?:string;
+    },
   ){
+
+    const plan = selection.plan;
 
     if(!canManageBilling){
 
@@ -6374,12 +6420,6 @@ function Dashboard(
     }
 
 
-    const billing =
-      props.data.billing?.billing
-      ??
-      null;
-
-
     setBillingBusyPlan(
       plan,
     );
@@ -6389,168 +6429,37 @@ function Dashboard(
 
     try{
 
-      if(
-        billing?.pendingPlan
-        === plan
-        &&
-        [
-          "PLAN_CHANGE_PAYMENT_PENDING",
-          "PLAN_CHANGE_REVIEW_REQUIRED",
-        ].includes(
-          billing.status,
-        )
-      ){
-
-        setActionMessage(
-          billing.status
-            === "PLAN_CHANGE_PAYMENT_PENDING"
-              ? `Payment for ${billingPlanLabel(plan)} is processing. Access changes after the signed HitPay confirmation.`
-              : `Payment for ${billingPlanLabel(plan)} needs review before access can change.`,
-        );
-
-        return;
-
-      }
-
-
-      if(
-        billing
-        &&
-        [
-          "ACTIVE",
-          "SCHEDULED",
-          "RETRYING",
-        ].includes(
-          billing.status,
-        )
-      ){
-
-        const result =
-          await api<{
-            currentPlan:BillingPlan;
-            pendingPlan:BillingPlan;
-            status:string;
-            effective:string;
-            paymentStatus?:string;
-            amountDueNow:number;
-            currency:string;
-            reused:boolean;
-          }>(
-            "/billing/hitpay/plan",
-            token,
-            {
-              method:
-                "PUT",
-
-              body:
-                JSON.stringify({
-                  plan,
-                }),
-            },
-          );
-
-
-        if(result.effective === "AFTER_PAYMENT"){
-
-          setActionMessage(
-            result.paymentStatus === "REVIEW_REQUIRED"
-              ? `Payment for ${billingPlanLabel(plan)} needs review before access can change.`
-              : result.reused
-                ? `Payment for ${billingPlanLabel(plan)} is processing. Access changes after the signed HitPay confirmation.`
-                : `HitPay charged RM${result.amountDueNow.toFixed(2)}. We are verifying the signed HitPay confirmation before activating ${billingPlanLabel(plan)}.`,
-          );
-
-        }else{
-
-          setActionMessage(
-            result.reused
-              ? `${billingPlanLabel(plan)} is already scheduled as a downgrade.`
-              : `${billingPlanLabel(plan)} downgrade is scheduled for the next billing cycle.`,
-          );
-
-        }
-
-
-        props.refresh();
-
-        return;
-
-      }
-
-
-      if(
-        billing?.checkoutUrl
-        &&
-        billing.plan === plan
-        &&
-        [
-          "CHECKOUT_PENDING",
-          "PENDING",
-        ].includes(
-          billing.status,
-        )
-      ){
-
-        window.location.assign(
-          billing.checkoutUrl,
-        );
-
-        return;
-
-      }
-
-
-      if(
-        billing
-        &&
-        ![
-          "CANCELED",
-          "INACTIVE",
-          "EXPIRED",
-        ].includes(
-          billing.status,
-        )
-      ){
-
-        throw new Error(
-          "This subscription is still being processed. Please refresh before choosing another plan.",
-        );
-
-      }
-
-
       const result =
         await api<{
-          checkoutUrl:string;
-          plan:BillingPlan;
-          reused:boolean;
+          checkoutUrl?:string;
+          plan:ChipBillingPlan;
+          reused?:boolean;
+          scheduled?:boolean;
+          effectiveAt?:string;
         }>(
-          "/billing/hitpay/checkout",
+          "/billing/checkout",
           token,
           {
             method:
               "POST",
 
-            body:
-              JSON.stringify({
-                plan,
-              }),
+              body:
+                JSON.stringify({
+                  ...selection,
+                  requestId:
+                    crypto.randomUUID(),
+                }),
           },
         );
 
-
-      if(!result.checkoutUrl){
-
-        throw new Error(
-          "HitPay checkout URL was not returned.",
-        );
-
+      if(result.scheduled){
+        setActionMessage(`${billingPlanLabel(plan)} downgrade is scheduled after the current paid period.`);
+        props.refresh();
+      }else if(result.checkoutUrl){
+        window.location.assign(result.checkoutUrl);
+      }else{
+        throw new Error("CHIP checkout URL was not returned.");
       }
-
-
-      window.location.assign(
-        result.checkoutUrl,
-      );
 
     }catch(error){
 
@@ -6568,6 +6477,28 @@ function Dashboard(
 
     }
 
+  }
+
+  async function cancelAutomaticRenewal(){
+    const token = stored(STORAGE.token);
+    if(!token || !window.confirm("Cancel automatic renewal? Access remains active until the paid-through date.")){
+      return;
+    }
+    setBillingBusyPlan(currentBillingPlan);
+    setBillingError("");
+    try{
+      const result = await api<{ accessUntil:string | null }>(
+        "/billing/cancel-renewal",
+        token,
+        { method:"POST", body:JSON.stringify({}) },
+      );
+      setActionMessage(`Automatic renewal canceled. Access remains active until ${result.accessUntil ? new Date(result.accessUntil).toLocaleDateString("en-MY") : "the end of the paid period"}.`);
+      props.refresh();
+    }catch(error){
+      setBillingError(error instanceof Error ? error.message : "Automatic renewal could not be canceled.");
+    }finally{
+      setBillingBusyPlan(null);
+    }
   }
 
 
@@ -8104,6 +8035,10 @@ function Dashboard(
 
           {isSuperAdmin && activeView === "super-admin" && (
             <>
+              <BillingSettingsPanel
+                apiBase={API_BASE}
+                token={localStorage.getItem(STORAGE.token) ?? ""}
+              />
               <PromoCodeSettings
                 apiBase={API_BASE}
                 token={localStorage.getItem(STORAGE.token) ?? ""}
@@ -8606,7 +8541,9 @@ function Dashboard(
         </button>
 
         {billingOpen && (
-          <BillingPlanModal
+          <ChipBillingPlanModal
+            apiBase={API_BASE}
+            token={stored(STORAGE.token)}
             workspaceType={
               workspaceType as WorkspaceType
             }
@@ -8622,13 +8559,13 @@ function Dashboard(
             billingStatus={
               currentBillingStatus
             }
-            checkoutUrl={
-              props.data.billing
-                ?.billing
-                ?.checkoutUrl
-              ??
-              null
-            }
+            accessState={props.data.billing?.billing?.accessState}
+            currentInterval={props.data.billing?.billing?.billingInterval}
+            paidThroughAt={props.data.billing?.billing?.paidThroughAt}
+            paymentDueAt={props.data.billing?.billing?.paymentDueAt}
+            graceEndsAt={props.data.billing?.billing?.graceEndsAt}
+            cancelAtPeriodEnd={props.data.billing?.billing?.cancelAtPeriodEnd}
+            renewalHistory={props.data.billing?.renewalHistory}
             canManage={
               canManageBilling
             }
@@ -8641,6 +8578,7 @@ function Dashboard(
             close={() =>
               setBillingOpen(false)
             }
+            cancelRenewal={cancelAutomaticRenewal}
             selectPlan={
               selectBillingPlan
             }
@@ -8833,7 +8771,7 @@ function BillingPlanModal(
                   === "PLAN_CHANGE_PAYMENT_PENDING"
                   ? `${billingPlanLabel(
                       props.pendingPlan,
-                    )} activates after the signed HitPay confirmation.`
+                    )} activates after the signed payment confirmation.`
                   : props.billingStatus
                       === "PLAN_CHANGE_REVIEW_REQUIRED"
                     ? `${billingPlanLabel(
@@ -9137,11 +9075,11 @@ function BillingPlanModal(
 
         <footer className="billingModalFooter">
           <span>
-            Payments are processed securely by HitPay.
+            Payments are processed securely by CHIP.
           </span>
 
           <span>
-            Upgrades charge only the price difference immediately through HitPay. Access changes after the signed payment confirmation.
+            Upgrades charge only the price difference immediately through CHIP. Access changes after the signed payment confirmation.
           </span>
 
           <span>
