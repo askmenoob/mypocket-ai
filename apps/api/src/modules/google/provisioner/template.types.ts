@@ -4,6 +4,11 @@ export type WorkspaceTemplateType =
   | "BUSINESS";
 
 
+export type PersonalTemplateTier =
+  | "BASIC"
+  | "PRO";
+
+
 
 export interface TemplateProvisionInput {
 
@@ -16,6 +21,10 @@ export interface TemplateProvisionInput {
     string;
 workspaceType:
     WorkspaceTemplateType;
+
+
+  personalTier?:
+    PersonalTemplateTier;
 
 }
 

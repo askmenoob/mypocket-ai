@@ -76,6 +76,14 @@ test(
       read(
         "../src/modules/google/initializer/sheet-initializer.service.ts",
       );
+    const googleSettings =
+      read(
+        "../src/modules/google/settings/google-settings.service.ts",
+      );
+    const updateUtils =
+      read(
+        "../src/modules/google/templates/template-update.utils.ts",
+      );
 
     assert.match(
       migration,
@@ -92,6 +100,22 @@ test(
     assert.match(
       initializer,
       /"Receipt Reference"/,
+    );
+    assert.doesNotMatch(
+      googleSettings,
+      /Transactions!A:[MO]"/,
+    );
+    assert.match(
+      googleSettings,
+      /Transactions!A:P/,
+    );
+    assert.match(
+      googleSettings,
+      /transaction\.receiptReference/,
+    );
+    assert.match(
+      updateUtils,
+      /normalizeSheetRow\([\s\S]*?16,/,
     );
   },
 );

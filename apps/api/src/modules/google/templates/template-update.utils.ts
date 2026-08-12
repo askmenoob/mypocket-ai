@@ -202,7 +202,7 @@ export function buildTransactionSnapshot(
   const header =
     normalizeSheetRow(
       rows[0] ?? [],
-      15,
+      16,
     );
 
   const transactionIds:

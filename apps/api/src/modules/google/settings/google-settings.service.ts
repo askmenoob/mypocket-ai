@@ -62,6 +62,7 @@ import {
 
 
 import type {
+  PersonalTemplateTier,
   WorkspaceTemplateType,
 } from "../provisioner/template.types.js";
 
@@ -1343,9 +1344,20 @@ export class GoogleSettingsService {
         "PERSONAL";
 
 
+    const personalTier:
+      PersonalTemplateTier | undefined =
+        workspaceType === "PERSONAL"
+          ? this.resolvePersonalTemplateTier(
+            workspace?.billingSubscription,
+          )
+          : undefined;
+
+
     const rootFolderName =
       buildMyPocketRootFolderName(
-        workspaceType,
+        personalTier === "PRO"
+          ? "PERSONAL_PRO"
+          : workspaceType,
         ownerEmail,
       );
 
@@ -1359,6 +1371,8 @@ export class GoogleSettingsService {
 
           workspaceType:
             workspaceType,
+
+          personalTier,
 
           rootFolderName,
 
@@ -1440,6 +1454,32 @@ export class GoogleSettingsService {
       backfilledTransactions:
         backfill.count,
     };
+
+  }
+
+
+  private resolvePersonalTemplateTier(
+    subscription:
+      | {
+        plan:string;
+        status:string;
+        accessState:string;
+      }
+      | null
+      | undefined,
+  ):PersonalTemplateTier{
+
+    return subscription?.plan === "PERSONAL_PRO"
+      && subscription.status === "ACTIVE"
+      && [
+        "ACTIVE",
+        "PAYMENT_DUE",
+        "GRACE",
+      ].includes(
+        subscription.accessState,
+      )
+        ? "PRO"
+        : "BASIC";
 
   }
 
@@ -1673,7 +1713,7 @@ export class GoogleSettingsService {
                 context.setting.spreadsheetId,
 
               range:
-                "Transactions!A:O",
+                "Transactions!A:P",
             },
           ),
       ]);
@@ -1699,13 +1739,13 @@ export class GoogleSettingsService {
     const currentHeader =
       normalizeSheetRow(
         currentHeaderRows[0] ?? [],
-        15,
+        16,
       );
 
     const masterHeader =
       normalizeSheetRow(
         masterHeaderRows[0] ?? [],
-        15,
+        16,
       );
 
     if(
@@ -1841,7 +1881,7 @@ export class GoogleSettingsService {
                   context.setting.spreadsheetId,
 
                 range:
-                  "Transactions!A:O",
+                  "Transactions!A:P",
               },
             ),
         ]);
@@ -2267,6 +2307,12 @@ export class GoogleSettingsService {
             merchant:true,
 
             paymentMethod:true,
+
+            createdBy:{
+              select:{
+                email:true,
+              },
+            },
           },
 
           orderBy:{
@@ -2325,7 +2371,7 @@ export class GoogleSettingsService {
                 currentSpreadsheetId,
 
               range:
-                "Transactions!A:O",
+                "Transactions!A:P",
             },
           );
 
@@ -2516,6 +2562,18 @@ export class GoogleSettingsService {
 
           transactionIso,
 
+          transaction.createdById
+          ??
+          "",
+
+          transaction.createdBy?.email
+          ??
+          "",
+
+          transaction.receiptReference
+          ??
+          "",
+
         ];
 
         await this.sheetsService
@@ -2525,7 +2583,7 @@ export class GoogleSettingsService {
               spreadsheetId,
 
               range:
-                "Transactions!A:M",
+                "Transactions!A:P",
 
               values,
             },
@@ -2569,6 +2627,12 @@ export class GoogleSettingsService {
             merchant:true,
 
             paymentMethod:true,
+
+            createdBy:{
+              select:{
+                email:true,
+              },
+            },
           },
 
           orderBy:{
@@ -2639,6 +2703,18 @@ export class GoogleSettingsService {
 
         transactionIso,
 
+        transaction.createdById
+        ??
+        "",
+
+        transaction.createdBy?.email
+        ??
+        "",
+
+        transaction.receiptReference
+        ??
+        "",
+
       ];
 
 
@@ -2658,7 +2734,7 @@ export class GoogleSettingsService {
               spreadsheetId,
 
               range:
-                "Transactions!A:M",
+                "Transactions!A:P",
 
               values,
 

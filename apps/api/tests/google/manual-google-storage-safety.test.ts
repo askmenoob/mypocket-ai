@@ -374,7 +374,7 @@ function createHarness(
         if(
           readInput.range
           ===
-          "Transactions!A:O"
+          "Transactions!A:P"
         ){
 
           return (
@@ -960,7 +960,7 @@ test(
             &&
             entry.range
             ===
-            "Transactions!A:O",
+            "Transactions!A:P",
         ),
     );
 

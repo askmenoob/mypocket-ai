@@ -7,6 +7,10 @@ import {
   GoogleTemplateRepository,
 } from "./google-template.repository.js";
 
+import type {
+  GoogleTemplateTier,
+} from "./google-template.types.js";
+
 
 
 export class GoogleTemplateService {
@@ -37,29 +41,42 @@ export class GoogleTemplateService {
       | "PERSONAL"
       | "FAMILY"
       | "BUSINESS",
+
+    tier?:
+      GoogleTemplateTier,
   ){
 
 
     const template =
-      await this.repository
-        .findActiveByType(
-          type,
-        );
+      type === "PERSONAL"
+      &&
+      tier
+        ? await this.repository
+          .findActivePersonalByTier(
+            tier,
+          )
+        : await this.repository
+          .findActiveByType(
+            type,
+          );
 
 
 
     if(!template){
 
       throw new Error(
-        `Google template not found: ${type}`
+        `Google template not found: ${type}${tier ? `:${tier}` : ""}`
       );
 
     }
 
 
     const expectedName =
-      type
-        .toLowerCase();
+      type === "PERSONAL"
+      &&
+      tier
+        ? tier.toLowerCase()
+        : type.toLowerCase();
 
 
     if(

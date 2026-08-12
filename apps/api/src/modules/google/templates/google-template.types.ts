@@ -4,6 +4,11 @@ export type WorkspaceTemplateType =
   | "BUSINESS";
 
 
+export type GoogleTemplateTier =
+  | "BASIC"
+  | "PRO";
+
+
 
 export interface GoogleTemplateRecord {
 

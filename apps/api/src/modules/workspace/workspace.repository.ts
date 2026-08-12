@@ -68,6 +68,17 @@ export class WorkspaceRepository {
           workspaceId,
       },
 
+      include:{
+        billingSubscription:
+          true,
+
+        owner:{
+          select:{
+            email:true,
+          },
+        },
+      },
+
     });
 
   }

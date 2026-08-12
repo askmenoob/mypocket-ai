@@ -11,7 +11,7 @@ Record<
   string
 > = {
   PERSONAL:
-    "Personal Pro",
+    "Personal Basic",
   PERSONAL_PRO:
     "Personal Pro",
   FAMILY:

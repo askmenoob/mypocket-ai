@@ -46,5 +46,37 @@ export class GoogleTemplateRepository {
   }
 
 
+  async findActivePersonalByTier(
+    tier:
+      | "BASIC"
+      | "PRO",
+  ){
+
+    return this.prisma.googleTemplate.findFirst({
+
+      where:{
+        type:
+          "PERSONAL",
+
+        active:
+          true,
+
+        version:{
+          startsWith:
+            tier === "BASIC"
+              ? "basic-"
+              : "pro-",
+        },
+      },
+
+      orderBy:{
+        createdAt:
+          "desc",
+      },
+    });
+
+  }
+
+
 
 }

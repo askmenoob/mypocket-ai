@@ -14,7 +14,7 @@ test(
         "PERSONAL",
         "  NikazFarhKB@Gmail.com  ",
       ),
-      "MyPocket AI Personal Pro (nikazfarhkb@gmail.com)",
+      "MyPocket AI Personal Basic (nikazfarhkb@gmail.com)",
     );
 
     assert.equal(

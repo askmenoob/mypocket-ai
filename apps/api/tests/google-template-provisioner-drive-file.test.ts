@@ -18,13 +18,21 @@ test(
     const copies:Array<any> = [];
 
     provisioner.templateService = {
-      getTemplate:async () => ({
+      getTemplate:async (
+        type:string,
+        tier:string,
+      ) => {
+        assert.equal(type, "PERSONAL");
+        assert.equal(tier, "BASIC");
+
+        return ({
         type:"PERSONAL",
-        name:"MyPocket Personal Finance",
+        name:"MyPocket Personal Basic Finance",
         spreadsheetId:"public-template",
-        version:"1.0",
+        version:"basic-2.0.0",
         active:true,
-      }),
+        });
+      },
     };
     provisioner.driveService = {
       createWorkspaceFolderStructure:
@@ -44,7 +52,7 @@ test(
 
           return {
             id:"user-owned-sheet",
-            name:"MyPocket Personal Finance",
+            name:"MyPocket Personal Basic Finance",
             url:"https://docs.google.com/spreadsheets/d/user-owned-sheet/edit",
           };
         },
@@ -58,7 +66,7 @@ test(
 
           return {
             id:"backup-sheet",
-            name:"MyPocket Personal Finance Backup - DO NOT DELETE",
+            name:"MyPocket Personal Basic Finance Backup - DO NOT DELETE",
             url:"https://docs.google.com/spreadsheets/d/backup-sheet/edit",
           };
         },
@@ -69,8 +77,9 @@ test(
         .provision({
           workspaceId:"workspace-1",
           workspaceType:"PERSONAL",
+          personalTier:"BASIC",
           rootFolderName:
-            "MyPocket AI Personal Pro (nikaazfar@gmail.com)",
+            "MyPocket AI Personal Basic (nikaazfar@gmail.com)",
         });
 
     assert.deepEqual(
@@ -78,7 +87,7 @@ test(
       [[
         "workspace-1",
         "public-template",
-        "MyPocket Personal Finance",
+        "MyPocket Personal Basic Finance",
         "reports",
       ]],
     );

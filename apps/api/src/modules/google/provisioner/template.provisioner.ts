@@ -64,6 +64,10 @@ export class TemplateProvisioner {
       await this.templateService
         .getTemplate(
           input.workspaceType,
+
+          input.workspaceType === "PERSONAL"
+            ? input.personalTier
+            : undefined,
         );
 
 
