@@ -550,6 +550,7 @@ function DashboardPanel(
   props:{
     title:string;
     titleImage?:string;
+    className?:string;
     action?:{
       label:string;
       onClick:() => void;
@@ -558,7 +559,13 @@ function DashboardPanel(
   },
 ){
   return (
-    <article className="pd-panel">
+    <article
+      className={
+        props.className
+          ? `pd-panel ${props.className}`
+          : "pd-panel"
+      }
+    >
       <header className="pd-panel-header">
         <div className="pd-panel-title">
           {props.titleImage && (
@@ -2757,6 +2764,190 @@ export function PremiumDashboard(
 
       <section className="pd-content-grid">
         <DashboardPanel
+          className="pd-whatsapp-panel"
+          title={text.whatsappIntegration}
+          titleImage="/dashboard-icons/whatsapp-logo.png"
+          action={{
+            label:text.manage,
+            onClick:props.onOpenWhatsApp,
+          }}
+        >
+          <div className="pd-wa-layout">
+            <div className="pd-status-list">
+              <div className="pd-status-row">
+                <span>{text.instance}</span>
+                <strong>
+                  {props.data?.whatsapp?.instance?.instanceName ||
+                    "imai.dev"}
+                </strong>
+              </div>
+
+              <div className="pd-status-row">
+                <span>{text.status}</span>
+                <strong>● {whatsappStatus}</strong>
+              </div>
+              <div className="pd-status-row">
+                <span>{text.trigger}</span>
+                <strong>
+                  @{currentBotAlias} / !
+                </strong>
+              </div>
+
+
+              <div className="pd-status-row">
+                <span>{text.members}</span>
+                <strong>
+                  {linkedMembers} / {members.length} {text.membersLinked}
+                </strong>
+              </div>
+
+              <div className="pd-status-row">
+                <span>{text.lastSync}</span>
+                <strong>
+                  {new Date().toLocaleString("en-MY")}
+                </strong>
+              </div>
+            </div>
+
+            <div className="pd-members">
+              {members.length === 0 && (
+                <div
+                  className="pd-empty-state"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {
+                    language === "ms"
+                      ? "Tiada ahli workspace untuk dipaparkan."
+                      : "No workspace members to display."
+                  }
+                </div>
+              )}
+
+              {members
+                .slice(0, 4)
+                .map((member:any) => (
+                  <div
+                    className="pd-member"
+                    key={member.memberId}
+                  >
+                    <span className="pd-member-check">
+                      <AppIcon
+                        name="check"
+                        size={13}
+                        strokeWidth={2.2}
+                      />
+                    </span>
+
+                    <div>
+                      <strong>
+                        {member.role}{" "}
+                        {member.name || member.email}
+                      </strong>
+
+                      <span>
+                        {member.whatsappPhoneNumber ||
+                          text.notLinked}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+            {props.canManageWhatsApp && (
+              <form
+                className="pd-alias-card"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleSaveBotAlias();
+                }}
+              >
+                <label htmlFor="pd-whatsapp-bot-alias">
+                  {text.aliasLabel}
+                </label>
+
+                <div className="pd-alias-row">
+                  <input
+                    id="pd-whatsapp-bot-alias"
+                    className="pd-alias-input"
+                    value={botAlias}
+                    maxLength={33}
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="mypocket"
+                    aria-label={text.aliasLabel}
+                    onChange={(event) =>
+                      setBotAlias(
+                        event.target.value,
+                      )
+                    }
+                  />
+
+                  <button
+                    type="submit"
+                    className="pd-button primary"
+                    disabled={
+                      aliasSaving
+                      ||
+                      botAlias.trim().length < 2
+                    }
+                  >
+                    {aliasSaving
+                      ? text.saving
+                      : text.saveAlias}
+                  </button>
+                </div>
+
+                <span className="pd-alias-help">
+                  {text.aliasHelp.replace(
+                    "{alias}",
+                    botAlias.trim() || currentBotAlias,
+                  )}
+                </span>
+
+                {aliasMessage && (
+                  <span
+                    className="pd-alias-message"
+                    aria-live="polite"
+                  >
+                    {aliasMessage}
+                  </span>
+                )}
+              </form>
+            )}
+
+          <div className="pd-actions">
+            <button
+              className="pd-button danger"
+              onClick={props.onOpenWhatsApp}
+            >
+              <img
+                className="pd-disconnect-image"
+                src="/dashboard-icons/disconnect-whatsapp.png"
+                alt=""
+                aria-hidden="true"
+              />
+
+              {text.disconnectWhatsApp}
+            </button>
+
+            <button
+              className="pd-button"
+              onClick={props.onRefresh}
+            >
+              <AppIcon
+                name="refresh"
+                size={14}
+                strokeWidth={2}
+              />
+              {text.recheckStatus}
+            </button>
+          </div>
+        </DashboardPanel>
+
+        <DashboardPanel
+          className="pd-recent-transactions-panel"
           title={`${text.recentTransactions} · ${props.transactionFilterLabel}`}
           action={{
             label:text.viewAll,
@@ -2942,187 +3133,6 @@ export function PremiumDashboard(
           </div>
         </DashboardPanel>
 
-        <DashboardPanel
-          title={text.whatsappIntegration}
-          titleImage="/dashboard-icons/whatsapp-logo.png"
-          action={{
-            label:text.manage,
-            onClick:props.onOpenWhatsApp,
-          }}
-        >
-          <div className="pd-wa-layout">
-            <div className="pd-status-list">
-              <div className="pd-status-row">
-                <span>{text.instance}</span>
-                <strong>
-                  {props.data?.whatsapp?.instance?.instanceName ||
-                    "imai.dev"}
-                </strong>
-              </div>
-
-              <div className="pd-status-row">
-                <span>{text.status}</span>
-                <strong>● {whatsappStatus}</strong>
-              </div>
-              <div className="pd-status-row">
-                <span>{text.trigger}</span>
-                <strong>
-                  @{currentBotAlias} / !
-                </strong>
-              </div>
-
-
-              <div className="pd-status-row">
-                <span>{text.members}</span>
-                <strong>
-                  {linkedMembers} / {members.length} {text.membersLinked}
-                </strong>
-              </div>
-
-              <div className="pd-status-row">
-                <span>{text.lastSync}</span>
-                <strong>
-                  {new Date().toLocaleString("en-MY")}
-                </strong>
-              </div>
-            </div>
-
-            <div className="pd-members">
-              {members.length === 0 && (
-                <div
-                  className="pd-empty-state"
-                  role="status"
-                  aria-live="polite"
-                >
-                  {
-                    language === "ms"
-                      ? "Tiada ahli workspace untuk dipaparkan."
-                      : "No workspace members to display."
-                  }
-                </div>
-              )}
-
-              {members
-                .slice(0, 4)
-                .map((member:any) => (
-                  <div
-                    className="pd-member"
-                    key={member.memberId}
-                  >
-                    <span className="pd-member-check">
-                      <AppIcon
-                        name="check"
-                        size={13}
-                        strokeWidth={2.2}
-                      />
-                    </span>
-
-                    <div>
-                      <strong>
-                        {member.role}{" "}
-                        {member.name || member.email}
-                      </strong>
-
-                      <span>
-                        {member.whatsappPhoneNumber ||
-                          text.notLinked}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-            {props.canManageWhatsApp && (
-              <form
-                className="pd-alias-card"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void handleSaveBotAlias();
-                }}
-              >
-                <label htmlFor="pd-whatsapp-bot-alias">
-                  {text.aliasLabel}
-                </label>
-
-                <div className="pd-alias-row">
-                  <input
-                    id="pd-whatsapp-bot-alias"
-                    className="pd-alias-input"
-                    value={botAlias}
-                    maxLength={33}
-                    autoComplete="off"
-                    spellCheck={false}
-                    placeholder="mypocket"
-                    aria-label={text.aliasLabel}
-                    onChange={(event) =>
-                      setBotAlias(
-                        event.target.value,
-                      )
-                    }
-                  />
-
-                  <button
-                    type="submit"
-                    className="pd-button primary"
-                    disabled={
-                      aliasSaving
-                      ||
-                      botAlias.trim().length < 2
-                    }
-                  >
-                    {aliasSaving
-                      ? text.saving
-                      : text.saveAlias}
-                  </button>
-                </div>
-
-                <span className="pd-alias-help">
-                  {text.aliasHelp.replace(
-                    "{alias}",
-                    botAlias.trim() || currentBotAlias,
-                  )}
-                </span>
-
-                {aliasMessage && (
-                  <span
-                    className="pd-alias-message"
-                    aria-live="polite"
-                  >
-                    {aliasMessage}
-                  </span>
-                )}
-              </form>
-            )}
-
-          <div className="pd-actions">
-            <button
-              className="pd-button danger"
-              onClick={props.onOpenWhatsApp}
-            >
-              <img
-                className="pd-disconnect-image"
-                src="/dashboard-icons/disconnect-whatsapp.png"
-                alt=""
-                aria-hidden="true"
-              />
-
-              {text.disconnectWhatsApp}
-            </button>
-
-            <button
-              className="pd-button"
-              onClick={props.onRefresh}
-            >
-              <AppIcon
-                name="refresh"
-                size={14}
-                strokeWidth={2}
-              />
-              {text.recheckStatus}
-            </button>
-          </div>
-        </DashboardPanel>
       </section>
 
       <section className="pd-bottom-grid">

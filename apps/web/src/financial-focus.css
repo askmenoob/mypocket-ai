@@ -276,8 +276,19 @@
   padding: 30px;
 }
 
+.appShell .main.superAdminMain > section.grid.appFullWidthGrid.superAdminGrid {
+  display: grid !important;
+  gap: 18px !important;
+  padding: 30px !important;
+}
+
 .appShell .appFullWidthGrid > .panel,
-.appShell .appFullWidthGrid > :is(.admin-users-shell, .promo-admin-shell) {
+.appShell .appFullWidthGrid > :is(
+  .admin-users-shell,
+  .promo-admin-shell,
+  .billingAdminPanel
+) {
+  margin: 0;
   padding: 24px;
   border: 1px solid var(--ff-line);
   border-radius: 8px;
@@ -307,11 +318,389 @@
   box-shadow: none;
 }
 
+/* Super Admin uses the same quiet ledger palette as the signed-in dashboard. */
+.appShell .promo-admin-form fieldset {
+  min-width: 0;
+  padding: 12px 14px 14px;
+  border-color: var(--ff-line-strong);
+  background: #ffffff;
+}
+
+.appShell .promo-admin-form fieldset label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  color: var(--ff-ink);
+  cursor: pointer;
+}
+
+.appShell .promo-admin-form input[type="checkbox"] {
+  flex: 0 0 18px;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  border-radius: 4px;
+  accent-color: var(--ff-green-dark);
+  box-shadow: none;
+}
+
+.appShell .promo-admin-form input[type="checkbox"]:focus-visible {
+  outline: 3px solid rgba(0, 111, 76, .24);
+  outline-offset: 3px;
+}
+
+.appShell .superAdminMain .admin-users-shell {
+  width: 100% !important;
+  min-height: 0;
+  margin: 0 !important;
+  padding: 24px !important;
+  color: var(--ff-ink);
+  border-color: var(--ff-line);
+  background: #ffffff;
+  box-shadow: none;
+}
+
+/* Beat the legacy full-width Super Admin rules that use !important margins. */
+.appShell .main.superAdminMain
+> section.grid.appFullWidthGrid.superAdminGrid
+> .admin-users-shell {
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+.appShell .superAdminMain .admin-users-eyebrow {
+  color: var(--ff-green-dark);
+}
+
+.appShell .superAdminMain .admin-users-title-row h2,
+.appShell .superAdminMain .admin-users-heading p {
+  color: var(--ff-ink-strong);
+}
+
+.appShell .superAdminMain .admin-users-heading p {
+  color: var(--ff-muted);
+}
+
+.appShell .superAdminMain .admin-users-refresh {
+  color: #ffffff;
+  border-color: var(--ff-green-dark);
+  background: var(--ff-green-dark);
+  box-shadow: none;
+}
+
+.appShell .superAdminMain .admin-users-refresh:hover:not(:disabled) {
+  color: #ffffff;
+  border-color: #005d41;
+  background: #005d41;
+}
+
+.appShell .superAdminMain .admin-users-stats article {
+  min-height: 94px;
+  color: var(--ff-ink);
+  border-color: var(--ff-line);
+  background: var(--ff-context);
+  box-shadow: none;
+}
+
+.appShell .superAdminMain .admin-stat-icon {
+  color: var(--ff-green-dark);
+  border-color: #b9ddce;
+  background: var(--ff-green-soft);
+  box-shadow: none;
+}
+
+.appShell .superAdminMain .admin-users-stats article div > span,
+.appShell .superAdminMain .admin-users-stats article small {
+  color: var(--ff-muted);
+}
+
+.appShell .superAdminMain .admin-users-stats article strong {
+  color: var(--ff-ink-strong);
+}
+
+.appShell .superAdminMain .admin-users-search,
+.appShell .superAdminMain .admin-users-select select,
+.appShell .superAdminMain .admin-filter-clear {
+  color: var(--ff-ink);
+  border-color: var(--ff-line-strong);
+  background: #ffffff;
+}
+
+.appShell .superAdminMain .admin-users-search input {
+  color: var(--ff-ink);
+  background: transparent;
+}
+
+.appShell .superAdminMain .admin-users-search input::placeholder {
+  color: var(--ff-muted);
+  opacity: .86;
+}
+
+.appShell .superAdminMain .admin-users-search:focus-within,
+.appShell .superAdminMain .admin-users-select select:focus {
+  border-color: var(--ff-green-dark);
+  box-shadow: 0 0 0 3px rgba(0, 111, 76, .12);
+}
+
+.appShell .superAdminMain .admin-filter-clear:hover:not(:disabled) {
+  color: var(--ff-green-dark);
+  border-color: var(--ff-green-dark);
+  background: var(--ff-context);
+}
+
+.appShell .superAdminMain .admin-users-message {
+  color: var(--ff-ink);
+  border-color: #b9ddce;
+  background: var(--ff-context);
+}
+
+.appShell .superAdminMain .admin-users-table-wrap {
+  overflow-x: auto !important;
+  border-color: var(--ff-line);
+  background: #ffffff;
+}
+
+.appShell .superAdminMain .admin-users-table thead th {
+  color: #31564d;
+  border-bottom-color: var(--ff-line-strong);
+  background: var(--ff-context);
+}
+
+.appShell .superAdminMain .admin-users-table tbody tr,
+.appShell .superAdminMain .admin-users-table tbody tr:nth-child(even) {
+  background: #ffffff;
+}
+
+.appShell .superAdminMain .admin-users-table tbody tr:nth-child(even) {
+  background: #f8fbf9;
+}
+
+.appShell .superAdminMain .admin-users-table tbody tr:hover {
+  background: var(--ff-context);
+}
+
+.appShell .superAdminMain .admin-users-table tbody td {
+  color: var(--ff-ink);
+  border-bottom-color: var(--ff-line);
+}
+
+.appShell .superAdminMain :is(
+  .admin-user-identity strong,
+  .admin-workspace-detail strong,
+  .admin-date-detail strong
+) {
+  color: var(--ff-ink-strong);
+}
+
+.appShell .superAdminMain :is(
+  .admin-user-identity > div > span,
+  .admin-workspace-detail span,
+  .admin-date-detail > span,
+  .admin-package-display span,
+  .admin-muted
+) {
+  color: var(--ff-muted);
+}
+
+.appShell .superAdminMain .admin-user-avatar {
+  color: #ffffff;
+  border-color: #b9ddce;
+  background: var(--ff-green-dark);
+  box-shadow: none;
+}
+
+.appShell .superAdminMain .admin-user-avatar i {
+  border-color: #ffffff;
+}
+
+.appShell .superAdminMain .admin-user-badge {
+  color: var(--ff-green-dark);
+  border-color: #b9ddce;
+  background: var(--ff-green-soft);
+}
+
+.appShell .superAdminMain .admin-user-badge.super {
+  color: #7a5308;
+  border-color: #ecd89c;
+  background: #fff7d8;
+}
+
+.appShell .superAdminMain .admin-channel-badge.success {
+  color: var(--ff-green-dark);
+  border-color: #b9ddce;
+  background: var(--ff-green-soft);
+}
+
+.appShell .superAdminMain .admin-channel-badge.muted {
+  color: var(--ff-muted);
+  border-color: var(--ff-line);
+  background: #eef2f0;
+}
+
+.appShell .superAdminMain .admin-date-detail > div {
+  color: var(--ff-muted);
+}
+
+.appShell .superAdminMain .admin-package-display strong {
+  color: var(--ff-green-dark);
+  border-color: #b9ddce;
+  background: var(--ff-green-soft);
+}
+
+.appShell .superAdminMain .admin-status-badge.active {
+  color: var(--ff-green-dark);
+  border-color: #b9ddce;
+  background: var(--ff-green-soft);
+}
+
+.appShell .superAdminMain .admin-status-badge.banned {
+  color: #a62f3f;
+  border-color: #f1c8ce;
+  background: var(--ff-red-soft);
+}
+
+.appShell .superAdminMain .admin-status-badge.deactivated {
+  color: #85520d;
+  border-color: #efd8ae;
+  background: #fff7e7;
+}
+
+.appShell .superAdminMain .admin-users-table-footer {
+  color: var(--ff-muted);
+  border-top-color: var(--ff-line);
+  background: #ffffff;
+}
+
+.appShell .superAdminMain .admin-users-pagination button {
+  color: var(--ff-ink);
+  border-color: var(--ff-line);
+  background: #ffffff;
+}
+
+.appShell .superAdminMain .admin-users-pagination strong {
+  color: #ffffff;
+  background: var(--ff-green-dark);
+}
+
+.appShell .superAdminMain :is(
+  .billingAdminPanel button,
+  .promo-admin-header button,
+  .promo-admin-form-actions button:not(.secondary)
+) {
+  color: #ffffff;
+  background: var(--ff-green-dark);
+}
+
+.appShell .superAdminMain :is(
+  .billingAdminPanel button,
+  .promo-admin-header button,
+  .promo-admin-form-actions button:not(.secondary)
+):hover:not(:disabled) {
+  background: #005d41;
+}
+
+.appShell .superAdminMain .admin-user-clickable:hover {
+  background: var(--ff-context);
+  box-shadow: 0 0 0 5px var(--ff-context);
+}
+
+.appShell .superAdminMain .admin-user-clickable:focus-visible {
+  outline: 3px solid rgba(0, 111, 76, .24);
+  outline-offset: 4px;
+  background: var(--ff-context);
+  box-shadow: none;
+}
+
+.appShell .admin-user-modal {
+  color: var(--ff-ink);
+  border-color: var(--ff-line);
+  background: #ffffff;
+  box-shadow: 0 30px 80px rgba(3, 30, 25, .2);
+}
+
+.appShell .admin-user-modal-header,
+.appShell .admin-user-modal-footer {
+  border-color: var(--ff-line);
+  background: rgba(255, 255, 255, .98);
+}
+
+.appShell .admin-user-modal-eyebrow,
+.appShell .admin-user-modal-section-title {
+  color: var(--ff-green-dark);
+}
+
+.appShell .admin-user-modal-profile h3,
+.appShell .admin-user-modal-section-title h4,
+.appShell .admin-user-modal-field strong {
+  color: var(--ff-ink-strong);
+}
+
+.appShell .admin-user-modal-profile p,
+.appShell .admin-user-modal-field span,
+.appShell .admin-user-modal-package > span,
+.appShell :is(.admin-user-modal-package small, .admin-user-modal-empty) {
+  color: var(--ff-muted);
+}
+
+.appShell .admin-user-modal-close,
+.appShell .admin-modal-button {
+  color: var(--ff-ink);
+  border-color: var(--ff-line-strong);
+  background: #ffffff;
+}
+
+.appShell .admin-user-modal-section,
+.appShell .admin-user-modal-field {
+  border-color: var(--ff-line);
+  background: #f8fbf9;
+}
+
+.appShell .admin-user-modal-plan {
+  color: var(--ff-green-dark);
+  border-color: #b9ddce;
+  background: var(--ff-green-soft);
+}
+
+.appShell .admin-user-modal-super {
+  color: #7a5308;
+  border-color: #ecd89c;
+  background: #fff7d8;
+}
+
+.appShell .admin-user-modal-package select {
+  color: var(--ff-ink);
+  border-color: var(--ff-line-strong);
+  background: #ffffff;
+}
+
+.appShell .admin-user-modal-sheet-link,
+.appShell .admin-modal-button.success {
+  color: var(--ff-green-dark);
+  border-color: #b9ddce;
+  background: var(--ff-green-soft);
+}
+
+.appShell .admin-modal-button.warning {
+  color: #744408;
+  border-color: #e5c98f;
+  background: #fff7e7;
+}
+
+.appShell .admin-modal-button.danger {
+  color: #8f2635;
+  border-color: #efc2c8;
+  background: var(--ff-red-soft);
+}
+
 /* Dashboard composition */
 .appShell .pd-focus-dashboard {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 292px;
-  gap: 0 28px;
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 22vw, 336px);
+  gap: 24px 32px;
   padding: 30px 30px 56px;
 }
 
@@ -362,16 +751,15 @@
 
 .appShell .pd-filter-bar {
   grid-column: 2;
-  grid-row: 1 / span 2;
+  grid-row: 1;
   align-self: start;
   display: grid;
   gap: 16px;
   margin: 0;
-  padding: 16px 0 22px 24px;
-  border: 0;
-  border-left: 1px solid var(--ff-line);
-  border-radius: 0;
-  background: transparent;
+  padding: 18px;
+  border: 1px solid var(--ff-line);
+  border-radius: 12px;
+  background: #fff;
 }
 
 .appShell .pd-filter-copy strong {
@@ -428,7 +816,7 @@
   overflow: hidden;
   margin-top: 10px;
   color: var(--ff-ink-strong);
-  font-size: clamp(32px, 3.5vw, 52px);
+  font-size: clamp(32px, 2.8vw, 46px);
   line-height: 1;
   letter-spacing: -.055em;
   text-overflow: ellipsis;
@@ -487,18 +875,18 @@
 
 .appShell .pd-chart-grid,
 .appShell .pd-insight-grid,
-.appShell .pd-content-grid,
 .appShell .pd-bottom-grid {
   grid-column: 1 / -1;
   display: grid;
-  gap: 0 28px;
-  grid-template-columns: minmax(0, 1fr) 292px;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 22vw, 336px);
 }
 
 .appShell .pd-chart-grid {
   grid-column: 1;
+  grid-row: 3;
   grid-template-columns: 1fr;
-  padding-top: 24px;
+  padding-top: 0;
 }
 
 .appShell .pd-chart-grid > .pd-panel:nth-child(2) {
@@ -507,14 +895,48 @@
 
 .appShell .pd-insight-grid {
   grid-column: 1;
+  grid-row: 4;
   grid-template-columns: 1fr 1fr;
-  padding-top: 8px;
+  padding-top: 0;
   border-top: 1px solid var(--ff-line);
 }
 
-.appShell .pd-content-grid,
 .appShell .pd-bottom-grid {
-  padding-top: 24px;
+  padding-top: 0;
+}
+
+.appShell .pd-content-grid {
+  display: contents;
+}
+
+.appShell .pd-recent-transactions-panel {
+  grid-column: 1;
+  grid-row: 5;
+}
+
+.appShell .pd-panel.pd-whatsapp-panel {
+  grid-column: 2;
+  grid-row: 2 / span 4;
+  align-self: start;
+  padding: 18px;
+  border: 1px solid var(--ff-line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.appShell .pd-whatsapp-panel .pd-wa-layout {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.appShell .pd-whatsapp-panel :is(
+  .pd-status-row strong,
+  .pd-member strong,
+  .pd-member span,
+  .pd-alias-help
+) {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .appShell .pd-panel {
@@ -557,12 +979,10 @@
   background: var(--ff-green);
 }
 
-.appShell .pd-content-grid > .pd-panel:first-child,
 .appShell .pd-bottom-grid > .pd-panel:first-child {
   padding-right: 0;
 }
 
-.appShell .pd-content-grid > .pd-panel:nth-child(2),
 .appShell .pd-bottom-grid > .pd-panel:nth-child(2) {
   padding-left: 24px;
   border-left: 1px solid var(--ff-line);
@@ -631,7 +1051,7 @@
   display: none;
 }
 
-@media (max-width: 1260px) {
+@media (max-width: 1320px) {
   .appShell {
     --ff-sidebar: 238px;
   }
@@ -642,17 +1062,15 @@
 
   .appShell .pd-focus-dashboard {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 
   .appShell .pd-filter-bar {
     grid-column: 1;
-    grid-row: auto;
+    grid-row: 2;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    padding: 14px 0;
-    border-left: 0;
-    border-top: 1px solid var(--ff-line);
-    border-bottom: 1px solid var(--ff-line);
+    padding: 18px;
   }
 
   .appShell .pd-filter-controls {
@@ -663,6 +1081,65 @@
   .appShell .pd-chart-grid,
   .appShell .pd-insight-grid {
     grid-column: 1;
+  }
+
+  .appShell .pd-focus-overview {
+    grid-row: 4;
+  }
+
+  .appShell .pd-chart-grid {
+    grid-row: 5;
+  }
+
+  .appShell .pd-insight-grid {
+    grid-row: 6;
+  }
+
+  .appShell .pd-panel.pd-whatsapp-panel {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .appShell .pd-recent-transactions-panel {
+    grid-column: 1;
+    grid-row: 7;
+  }
+
+  .appShell .pd-bottom-grid {
+    grid-column: 1;
+    grid-row: 8;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1180px) {
+  .appShell .superAdminMain .admin-users-table-wrap {
+    border: 0;
+    background: transparent;
+  }
+
+  .appShell .superAdminMain .admin-users-table tbody tr,
+  .appShell .superAdminMain .admin-users-table tbody tr:nth-child(even) {
+    border-color: var(--ff-line);
+    background: #ffffff;
+    box-shadow: 0 8px 22px rgba(3, 30, 25, .04);
+  }
+
+  .appShell .superAdminMain .admin-users-table tbody tr:hover {
+    background: var(--ff-context);
+  }
+
+  .appShell .superAdminMain .admin-users-table tbody td {
+    border-bottom-color: var(--ff-line);
+  }
+
+  .appShell .superAdminMain .admin-users-table tbody td::before {
+    color: var(--ff-green-dark);
+  }
+
+  .appShell .superAdminMain .admin-users-table-footer {
+    border-color: var(--ff-line);
+    background: #ffffff;
   }
 }
 
@@ -785,15 +1262,38 @@
   }
 
   .appShell .appFullWidthGrid > .panel,
-  .appShell .appFullWidthGrid > :is(.admin-users-shell, .promo-admin-shell) {
+  .appShell .appFullWidthGrid > :is(
+    .admin-users-shell,
+    .promo-admin-shell,
+    .billingAdminPanel
+  ) {
     padding: 17px;
   }
 
   .appShell .pd-focus-dashboard {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
     padding: 26px 16px 36px;
+  }
+
+  .appShell .superAdminMain .admin-users-table tr,
+  .appShell .superAdminMain .admin-users-table tr:nth-child(even) {
+    border-color: var(--ff-line);
+    background: #ffffff;
+  }
+
+  .appShell .superAdminMain .admin-user-identity:hover,
+  .appShell .superAdminMain .admin-user-identity:focus-visible {
+    background: var(--ff-context);
+  }
+
+  .appShell .superAdminMain .admin-user-identity strong {
+    color: var(--ff-ink-strong);
+  }
+
+  .appShell .superAdminMain .admin-user-identity > div > span {
+    color: var(--ff-muted);
   }
 
   .appShell .pd-focus-intro {
@@ -817,12 +1317,11 @@
   }
 
   .appShell .pd-filter-bar {
-    order: 1;
+    grid-row: 2;
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
-    padding: 12px 0 18px;
-    border-top: 0;
+    padding: 16px;
   }
 
   .appShell .pd-filter-copy span {
@@ -836,7 +1335,7 @@
   }
 
   .appShell .pd-focus-overview {
-    order: 2;
+    grid-row: 4;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     padding: 22px 0 26px;
@@ -875,31 +1374,32 @@
   }
 
   .appShell .pd-chart-grid {
-    order: 3;
+    grid-row: 5;
     padding-top: 22px;
   }
 
   .appShell .pd-insight-grid {
-    order: 4;
+    grid-row: 6;
     display: grid;
     grid-template-columns: 1fr;
     padding-top: 8px;
   }
 
-  .appShell .pd-content-grid {
-    order: 5;
-    display: grid;
-    grid-template-columns: 1fr;
-    padding-top: 12px;
+  .appShell .pd-panel.pd-whatsapp-panel {
+    grid-row: 3;
+    padding: 16px;
+  }
+
+  .appShell .pd-recent-transactions-panel {
+    grid-row: 7;
   }
 
   .appShell .pd-bottom-grid {
-    order: 6;
+    grid-row: 8;
     display: grid;
     grid-template-columns: 1fr;
   }
 
-  .appShell .pd-content-grid > .pd-panel:nth-child(2),
   .appShell .pd-bottom-grid > .pd-panel:nth-child(2) {
     padding-left: 0;
     border-left: 0;
