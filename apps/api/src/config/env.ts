@@ -6,6 +6,9 @@ import { fileURLToPath } from "node:url";
 import {
   hitPayEnvironmentIssues,
 } from "./hitpay-environment.js";
+import {
+  chipEnvironmentIssues,
+} from "./chip-environment.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,6 +88,51 @@ const EnvSchema = z.object({
 
   GOOGLE_TEMPLATE_ROOT_FOLDER_ID:
     z.string()
+      .optional(),
+
+  BILLING_CHECKOUT_PROVIDER:
+    z.enum([
+      "disabled",
+      "hitpay",
+      "chip",
+    ])
+      .default("hitpay"),
+
+  CHIP_ENVIRONMENT:
+    z.enum([
+      "test",
+      "live",
+    ])
+      .default("test"),
+
+  CHIP_API_BASE_URL:
+    z.string()
+      .url()
+      .default("https://gate.chip-in.asia/api/v1"),
+
+  CHIP_API_KEY:
+    z.string()
+      .min(20)
+      .optional(),
+
+  CHIP_BRAND_ID:
+    z.string()
+      .uuid()
+      .optional(),
+
+  CHIP_WEBHOOK_PUBLIC_KEY:
+    z.string()
+      .min(64)
+      .optional(),
+
+  CHIP_WEBHOOK_URL:
+    z.string()
+      .url()
+      .optional(),
+
+  CHIP_RETURN_URL:
+    z.string()
+      .url()
       .optional(),
 
   HITPAY_ENVIRONMENT:
@@ -168,6 +216,52 @@ const EnvSchema = z.object({
               ? ["HITPAY_WEBHOOK_URL"]
               : ["HITPAY_PLAN_PERSONAL_PRO_ID"],
       });
+    }
+
+    const chipIssues =
+      chipEnvironmentIssues({
+        environment:
+          value.CHIP_ENVIRONMENT,
+        apiBaseUrl:
+          value.CHIP_API_BASE_URL,
+        webhookUrl:
+          value.CHIP_WEBHOOK_URL,
+      });
+
+    for(const issue of chipIssues){
+      context.addIssue({
+        code:
+          "custom",
+        message:
+          issue,
+        path:
+          issue.startsWith("CHIP_WEBHOOK_URL")
+            ? ["CHIP_WEBHOOK_URL"]
+            : ["CHIP_API_BASE_URL"],
+      });
+    }
+
+    if(value.BILLING_CHECKOUT_PROVIDER === "chip"){
+      const requiredChipValues = [
+        ["CHIP_API_KEY", value.CHIP_API_KEY],
+        ["CHIP_BRAND_ID", value.CHIP_BRAND_ID],
+        ["CHIP_WEBHOOK_PUBLIC_KEY", value.CHIP_WEBHOOK_PUBLIC_KEY],
+        ["CHIP_WEBHOOK_URL", value.CHIP_WEBHOOK_URL],
+        ["CHIP_RETURN_URL", value.CHIP_RETURN_URL],
+      ] as const;
+
+      for(const [name, configured] of requiredChipValues){
+        if(!configured){
+          context.addIssue({
+            code:
+              "custom",
+            message:
+              `${name}_REQUIRED_FOR_CHIP`,
+            path:
+              [name],
+          });
+        }
+      }
     }
   },
 );

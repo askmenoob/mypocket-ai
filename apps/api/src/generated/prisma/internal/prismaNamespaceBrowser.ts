@@ -60,6 +60,12 @@ export const ModelName = {
   Subscription: 'Subscription',
   WorkspaceBillingSubscription: 'WorkspaceBillingSubscription',
   BillingWebhookEvent: 'BillingWebhookEvent',
+  BillingRecurringToken: 'BillingRecurringToken',
+  BillingPaymentAttempt: 'BillingPaymentAttempt',
+  BillingRenewal: 'BillingRenewal',
+  BillingReminderDelivery: 'BillingReminderDelivery',
+  BillingSettings: 'BillingSettings',
+  BillingSettingsAuditEvent: 'BillingSettingsAuditEvent',
   PromoCampaign: 'PromoCampaign',
   PromoRedemption: 'PromoRedemption',
   PromoAuditEvent: 'PromoAuditEvent',
@@ -218,6 +224,18 @@ export const WorkspaceBillingSubscriptionScalarFieldEnum = {
   lastPaymentStatus: 'lastPaymentStatus',
   canceledAt: 'canceledAt',
   lastWebhookAt: 'lastWebhookAt',
+  billingInterval: 'billingInterval',
+  renewalMethod: 'renewalMethod',
+  accessState: 'accessState',
+  currency: 'currency',
+  autoRenewEnabled: 'autoRenewEnabled',
+  cancelAtPeriodEnd: 'cancelAtPeriodEnd',
+  paidThroughAt: 'paidThroughAt',
+  nextRenewalAt: 'nextRenewalAt',
+  paymentDueAt: 'paymentDueAt',
+  graceEndsAt: 'graceEndsAt',
+  suspendedAt: 'suspendedAt',
+  reactivatedAt: 'reactivatedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -243,6 +261,129 @@ export const BillingWebhookEventScalarFieldEnum = {
 } as const
 
 export type BillingWebhookEventScalarFieldEnum = (typeof BillingWebhookEventScalarFieldEnum)[keyof typeof BillingWebhookEventScalarFieldEnum]
+
+
+export const BillingRecurringTokenScalarFieldEnum = {
+  id: 'id',
+  workspaceBillingSubscriptionId: 'workspaceBillingSubscriptionId',
+  provider: 'provider',
+  providerTokenId: 'providerTokenId',
+  status: 'status',
+  paymentMethodType: 'paymentMethodType',
+  fingerprint: 'fingerprint',
+  lastFour: 'lastFour',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BillingRecurringTokenScalarFieldEnum = (typeof BillingRecurringTokenScalarFieldEnum)[keyof typeof BillingRecurringTokenScalarFieldEnum]
+
+
+export const BillingPaymentAttemptScalarFieldEnum = {
+  id: 'id',
+  workspaceBillingSubscriptionId: 'workspaceBillingSubscriptionId',
+  provider: 'provider',
+  providerCheckoutId: 'providerCheckoutId',
+  providerPaymentId: 'providerPaymentId',
+  idempotencyKey: 'idempotencyKey',
+  reference: 'reference',
+  attemptType: 'attemptType',
+  status: 'status',
+  plan: 'plan',
+  billingInterval: 'billingInterval',
+  renewalMethod: 'renewalMethod',
+  currency: 'currency',
+  baseAmount: 'baseAmount',
+  discountAmount: 'discountAmount',
+  amountDue: 'amountDue',
+  coverageStart: 'coverageStart',
+  coverageEnd: 'coverageEnd',
+  checkoutUrl: 'checkoutUrl',
+  expiresAt: 'expiresAt',
+  paidAt: 'paidAt',
+  failedAt: 'failedAt',
+  failureCode: 'failureCode',
+  failureMessage: 'failureMessage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BillingPaymentAttemptScalarFieldEnum = (typeof BillingPaymentAttemptScalarFieldEnum)[keyof typeof BillingPaymentAttemptScalarFieldEnum]
+
+
+export const BillingRenewalScalarFieldEnum = {
+  id: 'id',
+  workspaceBillingSubscriptionId: 'workspaceBillingSubscriptionId',
+  paymentAttemptId: 'paymentAttemptId',
+  invoiceReference: 'invoiceReference',
+  status: 'status',
+  plan: 'plan',
+  billingInterval: 'billingInterval',
+  renewalMethod: 'renewalMethod',
+  currency: 'currency',
+  amountDue: 'amountDue',
+  periodStart: 'periodStart',
+  periodEnd: 'periodEnd',
+  dueAt: 'dueAt',
+  graceEndsAt: 'graceEndsAt',
+  paidAt: 'paidAt',
+  failedAt: 'failedAt',
+  expiredAt: 'expiredAt',
+  canceledAt: 'canceledAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BillingRenewalScalarFieldEnum = (typeof BillingRenewalScalarFieldEnum)[keyof typeof BillingRenewalScalarFieldEnum]
+
+
+export const BillingReminderDeliveryScalarFieldEnum = {
+  id: 'id',
+  workspaceBillingSubscriptionId: 'workspaceBillingSubscriptionId',
+  billingRenewalId: 'billingRenewalId',
+  dedupeKey: 'dedupeKey',
+  reminderType: 'reminderType',
+  channel: 'channel',
+  status: 'status',
+  scheduledFor: 'scheduledFor',
+  sentAt: 'sentAt',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BillingReminderDeliveryScalarFieldEnum = (typeof BillingReminderDeliveryScalarFieldEnum)[keyof typeof BillingReminderDeliveryScalarFieldEnum]
+
+
+export const BillingSettingsScalarFieldEnum = {
+  id: 'id',
+  annualDiscountPercent: 'annualDiscountPercent',
+  personalFamilyGraceDays: 'personalFamilyGraceDays',
+  businessGraceDays: 'businessGraceDays',
+  updatedByUserId: 'updatedByUserId',
+  updatedByEmail: 'updatedByEmail',
+  version: 'version',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BillingSettingsScalarFieldEnum = (typeof BillingSettingsScalarFieldEnum)[keyof typeof BillingSettingsScalarFieldEnum]
+
+
+export const BillingSettingsAuditEventScalarFieldEnum = {
+  id: 'id',
+  billingSettingsId: 'billingSettingsId',
+  actorUserId: 'actorUserId',
+  actorEmail: 'actorEmail',
+  action: 'action',
+  before: 'before',
+  after: 'after',
+  createdAt: 'createdAt'
+} as const
+
+export type BillingSettingsAuditEventScalarFieldEnum = (typeof BillingSettingsAuditEventScalarFieldEnum)[keyof typeof BillingSettingsAuditEventScalarFieldEnum]
 
 
 export const PromoCampaignScalarFieldEnum = {

@@ -87,6 +87,36 @@ export type WorkspaceBillingSubscription = Prisma.WorkspaceBillingSubscriptionMo
  */
 export type BillingWebhookEvent = Prisma.BillingWebhookEventModel
 /**
+ * Model BillingRecurringToken
+ *
+ */
+export type BillingRecurringToken = Prisma.BillingRecurringTokenModel
+/**
+ * Model BillingPaymentAttempt
+ *
+ */
+export type BillingPaymentAttempt = Prisma.BillingPaymentAttemptModel
+/**
+ * Model BillingRenewal
+ *
+ */
+export type BillingRenewal = Prisma.BillingRenewalModel
+/**
+ * Model BillingReminderDelivery
+ *
+ */
+export type BillingReminderDelivery = Prisma.BillingReminderDeliveryModel
+/**
+ * Model BillingSettings
+ *
+ */
+export type BillingSettings = Prisma.BillingSettingsModel
+/**
+ * Model BillingSettingsAuditEvent
+ *
+ */
+export type BillingSettingsAuditEvent = Prisma.BillingSettingsAuditEventModel
+/**
  * Model PromoCampaign
  *
  */

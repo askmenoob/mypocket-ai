@@ -146,6 +146,30 @@ test(
       request!.messages[0].content[0].text,
       /Shell logo.*legal merchant/i,
     );
+    assert.match(
+      request!.messages[0].content[0].text,
+      /Sub-total.*payment.*equal/i,
+    );
+    assert.match(
+      request!.messages[0].content[0].text,
+      /referenceNumber.*receiptNumber.*invoiceNumber/i,
+    );
+    assert.match(
+      request!.messages[0].content[0].text,
+      /AEON.*purchased item.*GROCERIES.*RETAIL/i,
+    );
+    assert.match(
+      request!.messages[0].content[0].text,
+      /multiple dates.*printed receipt/i,
+    );
+    assert.match(
+      request!.messages[0].content[0].text,
+      /names only.*prices.*quantities/i,
+    );
+    assert.match(
+      request!.messages[0].content[0].text,
+      /bold|boxed|highlighted/i,
+    );
   },
 );
 
@@ -240,6 +264,68 @@ test(
     }
     assert.equal(result.value.amount, "12.50");
     assert.equal(result.value.currency, "MYR");
+  },
+);
+
+
+test(
+  "prefers total after adjustment and accepts subtotal as a last fallback",
+  async () => {
+    const rawTexts = [
+      {
+        rawText:[
+          "Sub-total 80.00",
+          "Total After Adj INCL SVC TAX 59.00",
+          "Visa 59.00",
+          "Total Sales INCL SVC TAX 80.00",
+        ].join("\n"),
+        expected:"59.00",
+      },
+      {
+        rawText:"Sub-total RM42.50",
+        expected:"42.50",
+      },
+    ];
+
+    for(const fixture of rawTexts){
+      const provider =
+        new GroqVisionProvider({
+          apiKey:"test-key",
+          model:"qwen/qwen3.6-27b",
+          fetchImpl:async () =>
+            new Response(
+              JSON.stringify({
+                choices:[
+                  {
+                    message:{
+                      content:JSON.stringify({
+                        amount:null,
+                        rawText:fixture.rawText,
+                      }),
+                    },
+                  },
+                ],
+              }),
+              {status:200},
+            ),
+        });
+
+      const result =
+        await provider.extractReceipt({
+          image:new Uint8Array([1]),
+          mimeType:"image/jpeg",
+          fileName:"receipt.jpg",
+        });
+
+      assert.equal(result.status, "success");
+      if(result.status !== "success"){
+        continue;
+      }
+      assert.equal(
+        result.value.amount,
+        fixture.expected,
+      );
+    }
   },
 );
 
@@ -441,7 +527,7 @@ test(
     assert.equal(result.value.receiptReference, "8ba50b");
     assert.equal(
       result.value.purchaseDetails,
-      "FS Diesel, Pump 8, 85.340 L @ RM4.570/L",
+      "FS Diesel",
     );
   },
 );
@@ -553,15 +639,138 @@ test(
 
 
 test(
-  "retries once when Groq fails JSON validation and then succeeds",
+  "classifies ambiguous AEON items as retail and restores the printed legal name",
   async () => {
-    let requests = 0;
     const provider =
       new GroqVisionProvider({
         apiKey:"test-key",
         model:"qwen/qwen3.6-27b",
-        fetchImpl:async () => {
+        fetchImpl:async () =>
+          new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      amount:"59.00",
+                      merchantName:"AEON CO. (II) BHD",
+                      merchantBrand:"AEON",
+                      receiptType:"GROCERIES",
+                      transactionDate:"2026-08-08",
+                      description:null,
+                      purchaseDetails:null,
+                      rawText:[
+                        "AEON CO. (M) BHD (126926-H)",
+                        "SUPERMARKET FROM 09:00 HRS",
+                        "CHARACTER BB 39.00",
+                        "KIKILALA BB-7844 20.00",
+                        "Total After Adj INCL SVC TAX 59.00",
+                      ].join("\n"),
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          ),
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"aeon-retail.jpg",
+      });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.merchantName, "AEON CO. (M) BHD");
+    assert.equal(result.value.receiptType, "RETAIL");
+    assert.equal(result.value.classificationSource, "EVIDENCE");
+    assert.equal(
+      result.value.purchaseDetails,
+      "CHARACTER BB, KIKILALA BB-7844",
+    );
+  },
+);
+
+
+test(
+  "classifies AEON as groceries only from recognizable grocery item names",
+  async () => {
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async () =>
+          new Response(
+            JSON.stringify({
+              choices:[
+                {
+                  message:{
+                    content:JSON.stringify({
+                      amount:"28.50",
+                      merchantName:"AEON",
+                      receiptType:"RETAIL",
+                      purchaseDetails:"Fresh milk, rice, eggs",
+                      rawText:[
+                        "AEON",
+                        "FRESH MILK",
+                        "RICE",
+                        "EGGS",
+                        "TOTAL 28.50",
+                      ].join("\n"),
+                    }),
+                  },
+                },
+              ],
+            }),
+            {status:200},
+          ),
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"aeon-groceries.jpg",
+      });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success"){
+      return;
+    }
+    assert.equal(result.value.merchantName, "AEON");
+    assert.equal(result.value.receiptType, "GROCERIES");
+    assert.equal(result.value.classificationSource, "EVIDENCE");
+  },
+);
+
+
+test(
+  "retries once when Groq fails JSON validation and then succeeds",
+  async () => {
+    let requests = 0;
+    const requestPrompts:string[] = [];
+    const requestBodies:Array<Record<string, any>> = [];
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async (_url, init) => {
           requests += 1;
+          const requestBody =
+            JSON.parse(
+              String(init?.body),
+            );
+          requestBodies.push(
+            requestBody,
+          );
+          requestPrompts.push(
+            requestBody.messages[0].content[0].text,
+          );
           if(requests === 1){
             return new Response(
               JSON.stringify({
@@ -578,15 +787,28 @@ test(
               choices:[
                 {
                   message:{
-                    content:JSON.stringify({
-                      amount:"341.92",
-                      currency:"MYR",
-                      merchantName:"Shell",
-                      receiptType:"FUEL",
-                      rawText:
-                        "Shell Pump 1 FS Diesel TOTAL RM341.92",
-                      confidence:0.98,
-                    }),
+                    content:[
+                      "```json",
+                      JSON.stringify({
+                        amount:"341.92",
+                        currency:"MYR",
+                        merchantName:"AEON CO. (M) BHD",
+                        receiptType:"GROCERIES",
+                        invoiceNumber:"260808212110182210317",
+                        rawText:
+                          [
+                            "AEON CO. (M) BHD",
+                            "Sub-total 59.00",
+                            "Total Sales INCL SVC TAX 59.00",
+                            "Total After Adj INCL SVC TAX 59.00",
+                            "Visa 59.00",
+                            "Change Amt 0.00",
+                            "Invoice No: 260808212110182210317",
+                          ].join("\n"),
+                        confidence:0.98,
+                      }),
+                      "```",
+                    ].join("\n"),
                   },
                 },
               ],
@@ -604,12 +826,118 @@ test(
       });
 
     assert.equal(requests, 2);
+    assert.notEqual(
+      requestPrompts[1],
+      requestPrompts[0],
+    );
+    assert.match(
+      requestPrompts[1],
+      /short fallback/i,
+    );
+    assert.match(
+      requestPrompts[1],
+      /invoiceNumber/i,
+    );
+    assert.equal(
+      requestBodies[1].response_format,
+      undefined,
+    );
     assert.equal(result.status, "success");
     if(result.status !== "success"){
       return;
     }
-    assert.equal(result.value.receiptType, "FUEL");
-    assert.equal(result.value.amount, "341.92");
+    assert.equal(result.value.receiptType, "RETAIL");
+    assert.equal(result.value.amount, "59.00");
+    assert.equal(
+      result.value.receiptReference,
+      "260808212110182210317",
+    );
+  },
+);
+
+
+test(
+  "uses invoice number only when reference and receipt numbers are absent",
+  async () => {
+    const responses = [
+      {
+        referenceNumber:"REF-001",
+        receiptNumber:"RCPT-002",
+        invoiceNumber:"INV-003",
+        expected:"REF-001",
+      },
+      {
+        referenceNumber:null,
+        receiptNumber:"RCPT-002",
+        invoiceNumber:"INV-003",
+        expected:"RCPT-002",
+      },
+      {
+        referenceNumber:null,
+        receiptNumber:null,
+        invoiceNumber:"260808212110182210317",
+        expected:"260808212110182210317",
+      },
+      {
+        referenceNumber:"1018 221 2210317",
+        receiptNumber:null,
+        invoiceNumber:"260808212110182210317",
+        rawText:
+          "AEON Total After Adj 59.00\nInvoice No: 260808212110182210317",
+        expected:"260808212110182210317",
+      },
+    ];
+
+    for(const fixture of responses){
+      const provider =
+        new GroqVisionProvider({
+          apiKey:"test-key",
+          model:"qwen/qwen3.6-27b",
+          fetchImpl:async () =>
+            new Response(
+              JSON.stringify({
+                choices:[
+                  {
+                    message:{
+                      content:JSON.stringify({
+                        amount:"59.00",
+                        merchantName:"AEON CO. (M) BHD",
+                        receiptType:"GROCERIES",
+                        referenceNumber:
+                          fixture.referenceNumber,
+                        receiptNumber:
+                          fixture.receiptNumber,
+                        invoiceNumber:
+                          fixture.invoiceNumber,
+                        rawText:
+                          fixture.rawText
+                          ??
+                          "AEON Total After Adj 59.00",
+                      }),
+                    },
+                  },
+                ],
+              }),
+              {status:200},
+            ),
+        });
+
+      const result =
+        await provider.extractReceipt({
+          image:new Uint8Array([1]),
+          mimeType:"image/jpeg",
+          fileName:"aeon.jpg",
+        });
+
+      assert.equal(result.status, "success");
+      if(result.status !== "success"){
+        continue;
+      }
+      assert.equal(
+        result.value.receiptReference,
+        fixture.expected,
+      );
+    }
   },
 );
 

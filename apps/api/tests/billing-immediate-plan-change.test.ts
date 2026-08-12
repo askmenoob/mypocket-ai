@@ -384,7 +384,7 @@ test(
 
 
 test(
-  "the UI presents an immediate paid upgrade instead of next-cycle activation",
+  "the UI presents a provider-neutral immediate CHIP upgrade",
   () => {
     const source =
       readFileSync(
@@ -394,34 +394,34 @@ test(
         ),
         "utf8",
       );
-    const hitPayClient =
+    const chipModal =
       readFileSync(
         resolve(
           process.cwd(),
-          "src/modules/billing/hitpay.client.ts",
+          "../web/src/chip-billing-plan-modal.tsx",
         ),
         "utf8",
       );
 
     assert.match(
       source,
-      /Pay RM\$\{[^}]+\} & switch now/u,
+      /"\/billing\/checkout"/u,
     );
     assert.match(
-      source,
-      /Payment processing/u,
+      chipModal,
+      /Continue to secure CHIP payment/u,
     );
     assert.match(
-      source,
-      /signed HitPay confirmation/u,
+      chipModal,
+      /signed payment notification/u,
     );
     assert.doesNotMatch(
-      source,
+      chipModal,
       /Switch next cycle/u,
     );
     assert.match(
-      hitPayClient,
-      /application\/x-www-form-urlencoded/u,
+      source,
+      /crypto\.randomUUID\(\)/u,
     );
   },
 );

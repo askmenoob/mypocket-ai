@@ -101,11 +101,15 @@ const DEFAULT_MAX_BYTES =
 
 
 const DEFAULT_PROMPT =
-  "Read this receipt or document. Return JSON only with amount, currency, merchantName, merchantBrand, transactionDate, description, purchaseDetails, visualCues, receiptType, rawText, and confidence. merchantName is the printed legal merchant. merchantBrand is the consumer brand or company logo visible on the receipt, even when it differs from merchantName; for example a Shell logo on a MANKON PHOENIX ENTERPRISE receipt means merchantBrand is Shell. If the legal merchant name is unreadable but the brand is visible, use the brand as merchantName; never use a company registration number, site ID, terminal ID, or reference number as merchantName. visualCues must be an array of short visible cues such as Shell logo, petrol-pump icon, Pump 8, or fuel nozzle. purchaseDetails must concisely retain the purchased product or service and useful quantity, unit, pump, and unit-rate details, for example FS Diesel, Pump 8, 85.340 L @ RM4.570/L; exclude card numbers, authorization codes, reference numbers, and other payment credentials. receiptType must be exactly one of FUEL, GROCERIES, DINING, TRANSPORT, UTILITIES, RETAIL, HEALTHCARE, ACCOMMODATION, SERVICES, or OTHER. Use FUEL whenever a fuel-company logo or brand such as Shell, Petronas, Petron, Caltex, BHPetrol, or Esso is visible, even if the legal merchant has another name, or when the receipt shows a petrol-pump icon, pump number, petrol, diesel, fuel, RON grade, a per-litre price such as RM4.570/L, or fuel-volume details combined with service-station evidence. An ordinary grocery item such as milk or water sold in a one-litre package is not fuel. Use GROCERIES for supermarkets and household groceries; DINING for restaurants, cafes, and prepared food. Classify using logos, visual cues, the merchant, purchased items, pump or terminal details, and receipt wording rather than the merchant name alone. description must be a concise human-readable summary of what was bought. The amount must be the final amount actually paid by the customer, usually labelled TOTAL, GRAND TOTAL, TOTAL PAID, NET TOTAL, AMOUNT PAID, JUMLAH BAYAR, JUMLAH DIBAYAR, or TL when TL appears as the receipt total label at the start of an amount line. Prefer that final payable total over subtotal, item totals, tax, service charge, discount, rounding, cash tendered, or change. If multiple totals exist, choose the final amount due/paid. Use YYYY-MM-DD for transactionDate when the printed receipt date is visible; otherwise use null. Do not invent missing values; use null for scalar fields and an empty array for visualCues when evidence is not visible. Preserve the original language and currency. confidence must be a number from 0 to 1 reflecting extraction certainty.";
+  "Read this receipt or document. Return JSON only with amount, currency, merchantName, merchantBrand, transactionDate, description, purchaseDetails, visualCues, receiptType, rawText, and confidence. merchantName is the exact printed legal merchant when visible. For AEON, preserve AEON CO. (M) BHD when that full company name is printed; use AEON only when the legal name is absent or unreadable. merchantBrand is the consumer brand or company logo visible on the receipt, even when it differs from merchantName; for example a Shell logo on a MANKON PHOENIX ENTERPRISE receipt means merchantBrand is Shell. If the legal merchant name is unreadable but the brand is visible, use the brand as merchantName; never use a company registration number, site ID, terminal ID, or reference number as merchantName. visualCues must be an array of short visible cues such as Shell logo, petrol-pump icon, Pump 8, or fuel nozzle. purchaseDetails must contain purchased item or service names only, comma-separated when multiple; exclude prices, totals, quantities, units, pump numbers, card numbers, authorization codes, reference numbers, and other payment credentials. receiptType must be exactly one of FUEL, GROCERIES, DINING, TRANSPORT, UTILITIES, RETAIL, HEALTHCARE, ACCOMMODATION, SERVICES, or OTHER. Use FUEL whenever a fuel-company logo or brand such as Shell, Petronas, Petron, Caltex, BHPetrol, or Esso is visible, even if the legal merchant has another name, or when the receipt shows a petrol-pump icon, pump number, petrol, diesel, fuel, RON grade, a per-litre price such as RM4.570/L, or fuel-volume details combined with service-station evidence. An ordinary grocery item such as milk or water sold in a one-litre package is not fuel. For a mixed department store such as AEON, inspect the purchased item names: use GROCERIES only when the items clearly identify food, drinks, toiletries, cleaning products, or household consumables; use RETAIL when the item names are unclear or coded, including CHARACTER BB or KIKILALA BB-7844. A store header saying SUPERMARKET alone is not grocery-item evidence. Use GROCERIES for recognizable household groceries; DINING for restaurants, cafes, and prepared food. Classify using logos, visual cues, the merchant, purchased items, pump or terminal details, and receipt wording rather than the merchant name alone. description must be a concise human-readable summary of what was bought. The amount must be the final amount actually paid by the customer, usually labelled TOTAL AFTER ADJ, TOTAL, GRAND TOTAL, TOTAL PAID, NET TOTAL, AMOUNT PAID, SUB-TOTAL, JUMLAH BAYAR, JUMLAH DIBAYAR, JUMLAH, or TL when TL appears as the receipt total label at the start of an amount line. Prefer Total After Adj and the final payable total over earlier totals, item totals, tax, service charge, discount, rounding, cash tendered, or change. A final total is often bold, boxed, highlighted, visually emphasized, or placed near the payment method; use that layout as supporting evidence but never choose an item price only because it is bold. Treat Sub-total as the final payment only when no later payable total exists or when Sub-total, Total Sales, Total After Adj, and the payment line such as Visa, Mastercard, Card, or Cash show the same equal amount and change or adjustments are zero. If multiple totals differ, choose the final amount due or paid after adjustments. transactionDate must be the date printed on the receipt for that purchase or receipt issue. If multiple dates are visible, prefer the printed receipt transaction or issue date near the receipt or invoice number and time; do not use membership, promotion, expiry, settlement, delivery, or warranty dates. Use YYYY-MM-DD; otherwise use null. Do not invent missing values; use null for scalar fields and an empty array for visualCues when evidence is not visible. Preserve the original language and currency. confidence must be a number from 0 to 1 reflecting extraction certainty.";
 
 
 const RECEIPT_REFERENCE_PROMPT =
-  "Also return referenceNumber and receiptNumber as separate scalar fields. Read labels such as Reference No, Ref No, Reference Number, Receipt No, Receipt Number, or No. Resit. Preserve leading zeroes. If both are visible, extract both; MyPocket will prefer referenceNumber. Do not use invoice number, terminal ID, site ID, batch number, approval code, authorization code, card number, or company registration number for these fields. Use null when a value is not visible.";
+  "Also return referenceNumber, receiptNumber, and invoiceNumber as separate scalar fields. Read labels such as Reference No, Ref No, Reference Number, Receipt No, Receipt Number, No. Resit, Invoice No, or Invoice Number. Preserve leading zeroes. Extract every labeled value that is visible. MyPocket will prefer referenceNumber, then receiptNumber, then invoiceNumber as the fallback reference. Do not use terminal ID, site ID, batch number, approval code, authorization code, card number, or company registration number for these fields. Use null when a value is not visible.";
+
+
+const RECEIPT_JSON_FALLBACK_PROMPT =
+  "Short fallback receipt extraction. Return exactly one valid JSON object without markdown. Use only these keys: amount, currency, merchantName, merchantBrand, transactionDate, description, purchaseDetails, visualCues, receiptType, referenceNumber, receiptNumber, invoiceNumber, rawText, confidence. Use null for missing scalar values and [] for visualCues. amount is the final amount paid; prefer Total After Adj, then a labeled or visually emphasized final total, and use Sub-total only as the last fallback. Never use cash tendered or change. For AEON, use the full printed legal name AEON CO. (M) BHD when visible. Classify AEON from purchased item names: clear food, drinks, toiletries, cleaning products, or household consumables are GROCERIES; unclear or coded items such as CHARACTER BB or KIKILALA BB-7844 are RETAIL. purchaseDetails contains item names only without prices, quantities, or units. referenceNumber, receiptNumber, and invoiceNumber are separate labeled values; preserve leading zeroes. receiptType must be FUEL, GROCERIES, DINING, TRANSPORT, UTILITIES, RETAIL, HEALTHCARE, ACCOMMODATION, SERVICES, or OTHER. transactionDate is the printed receipt transaction or issue date; when multiple dates exist, ignore expiry, promotion, membership, delivery, settlement, and warranty dates. Use YYYY-MM-DD. rawText must contain the readable receipt text.";
 
 
 export class GroqVisionProvider {
@@ -212,8 +216,11 @@ export class GroqVisionProvider {
 
     let response:Response;
 
-    const requestInit:RequestInit =
-      {
+    const createRequestInit =
+      (
+        prompt:string,
+        strictJson = true,
+      ):RequestInit => ({
         method:"POST",
         headers:{
           Authorization:
@@ -223,22 +230,20 @@ export class GroqVisionProvider {
         body:JSON.stringify({
           model:this.options.model,
           temperature:0,
-          response_format:{
-            type:"json_object",
-          },
+          ...(strictJson
+            ? {
+                response_format:{
+                  type:"json_object",
+                },
+              }
+            : {}),
           messages:[
             {
               role:"user",
               content:[
                 {
                   type:"text",
-                  text:
-                    [
-                      input.prompt
-                      ??
-                      this.defaultPrompt,
-                      RECEIPT_REFERENCE_PROMPT,
-                    ].join(" "),
+                  text:prompt,
                 },
                 {
                   type:"image_url",
@@ -250,7 +255,17 @@ export class GroqVisionProvider {
             },
           ],
         }),
-      };
+      });
+
+    const requestInit =
+      createRequestInit(
+        [
+          input.prompt
+          ??
+          this.defaultPrompt,
+          RECEIPT_REFERENCE_PROMPT,
+        ].join(" "),
+      );
 
     try{
 
@@ -269,7 +284,10 @@ export class GroqVisionProvider {
         response =
           await this.fetchImpl(
             this.endpoint,
-            requestInit,
+            createRequestInit(
+              RECEIPT_JSON_FALLBACK_PROMPT,
+              false,
+            ),
           );
 
       }
@@ -335,16 +353,12 @@ export class GroqVisionProvider {
     }
 
 
-    let candidate:unknown;
+    const candidate =
+      this.parseJsonContent(
+        content,
+      );
 
-    try{
-
-      candidate =
-        JSON.parse(
-          content,
-        );
-
-    }catch{
+    if(candidate === undefined){
 
       return {
         status:"invalid",
@@ -415,6 +429,7 @@ export class GroqVisionProvider {
       this.resolveMerchantName(
         extractedMerchantName,
         merchantBrand,
+        rawText,
       );
 
     const transactionDate =
@@ -428,8 +443,10 @@ export class GroqVisionProvider {
       );
 
     const purchaseDetails =
-      this.asString(
+      this.normalizePurchaseDetails(
         root.purchaseDetails,
+        description,
+        rawText,
       );
 
     const visualCues =
@@ -437,30 +454,51 @@ export class GroqVisionProvider {
         root.visualCues,
       );
 
-    const referenceNumber =
-      this.normalizeReceiptReference(
-        root.referenceNumber,
-      )
-      ??
+    const labeledReferenceNumber =
       this.extractLabeledReceiptReference(
         rawText,
         "REFERENCE",
       );
 
-    const receiptNumber =
-      this.normalizeReceiptReference(
-        root.receiptNumber,
-      )
-      ??
+    const labeledReceiptNumber =
       this.extractLabeledReceiptReference(
         rawText,
         "RECEIPT",
       );
 
+    const labeledInvoiceNumber =
+      this.extractLabeledReceiptReference(
+        rawText,
+        "INVOICE",
+      );
+
+    const modelReferenceNumber =
+      this.normalizeReceiptReference(
+        root.referenceNumber,
+      );
+
+    const modelReceiptNumber =
+      this.normalizeReceiptReference(
+        root.receiptNumber,
+      );
+
+    const modelInvoiceNumber =
+      this.normalizeReceiptReference(
+        root.invoiceNumber,
+      );
+
     const receiptReference =
-      referenceNumber
+      labeledReferenceNumber
       ??
-      receiptNumber;
+      labeledReceiptNumber
+      ??
+      labeledInvoiceNumber
+      ??
+      modelReferenceNumber
+      ??
+      modelReceiptNumber
+      ??
+      modelInvoiceNumber;
 
     const classification =
       this.classifyReceipt(
@@ -667,6 +705,38 @@ export class GroqVisionProvider {
 
     }
 
+    const aeonReceipt =
+      /\baeon\b/i.test(
+        [
+          merchantName,
+          merchantBrand,
+          rawText,
+        ].join("\n"),
+      );
+
+    if(aeonReceipt){
+
+      const purchasedItems =
+        [
+          description,
+          purchaseDetails,
+          rawText,
+        ]
+          .join("\n")
+          .toLowerCase();
+
+      const groceryItems =
+        /\b(?:milk|susu|rice|beras|eggs?|telur|bread|roti|flour|tepung|sugar|gula|salt|garam|cooking\s*oil|minyak\s*masak|chicken|ayam|beef|daging|fish|ikan|vegetables?|sayur|fruits?|buah|mineral\s*water|air\s*mineral|drinks?|minuman|juice|jus|coffee|kopi|tea|teh|biscuits?|cookies?|cereal|noodles?|mee|pasta|diapers?|lampin|detergent|sabun|shampoo|toothpaste|ubat\s*gigi|tissues?|toilet\s*paper|cleaner|softener|dishwash(?:ing)?)\b/i
+          .test(
+            purchasedItems,
+          );
+
+      return groceryItems
+        ? "GROCERIES"
+        : "RETAIL";
+
+    }
+
     if(
       /\b(?:99\s*speed\s*mart|lotus'?s?|tesco|giant|aeon\s*big|econsave|jaya\s*grocer|village\s*grocer)\b/i
         .test(
@@ -712,6 +782,279 @@ export class GroqVisionProvider {
     return this.asString(
       message.content,
     );
+
+  }
+
+
+  private parseJsonContent(
+    content:string,
+  ):unknown | undefined{
+
+    const candidates = [
+      content.trim(),
+    ];
+
+    const fenced =
+      /```(?:json)?\s*([\s\S]*?)```/i
+        .exec(
+          content,
+        )?.[1]
+        ?.trim();
+
+    if(fenced){
+
+      candidates.push(
+        fenced,
+      );
+
+    }
+
+    const firstBrace =
+      content.indexOf(
+        "{",
+      );
+    const lastBrace =
+      content.lastIndexOf(
+        "}",
+      );
+
+    if(
+      firstBrace >= 0
+      &&
+      lastBrace > firstBrace
+    ){
+
+      candidates.push(
+        content.slice(
+          firstBrace,
+          lastBrace + 1,
+        ),
+      );
+
+    }
+
+    for(const candidate of candidates){
+
+      try{
+
+        return JSON.parse(
+          candidate,
+        );
+
+      }catch{
+
+        continue;
+
+      }
+
+    }
+
+    return undefined;
+
+  }
+
+
+  private normalizePurchaseDetails(
+    value:unknown,
+    description:string,
+    rawText:string,
+  ):string{
+
+    const supplied =
+      this.asString(
+        value,
+      );
+
+    const describedItems =
+      /^(?:purchase(?:d)?|bought)(?:\s+of)?\s+(.+)$/i
+        .exec(
+          description,
+        )?.[1]
+        ?.trim()
+      ??
+      "";
+
+    const rawItems =
+      /\baeon\b/i.test(
+        rawText,
+      )
+        ? this.extractAeonPurchaseDetails(
+            rawText,
+          )
+        : "";
+
+    const source =
+      supplied
+      ||
+      describedItems
+      ||
+      rawItems;
+
+    if(!source){
+
+      return "";
+
+    }
+
+    const itemSource =
+      supplied
+        ? source
+        : source.replace(
+            /\s+and\s+/gi,
+            ", ",
+          );
+
+    const items =
+      itemSource
+        .split(/[,;\r\n]+/)
+        .map((item) =>
+          item
+            .trim()
+            .replace(/^\d+\s*x\s+/i, "")
+            .replace(/\s*\(?pump\s*\d+\)?/gi, "")
+            .replace(/\s+(?:RM|MYR)\s*\d[\d,.]*(?:\s*\/\s*(?:l|ltr|litres?|liters?))?.*$/i, "")
+            .replace(/\s+\d+(?:[.,]\d+)?\s*(?:l|ltr|litres?|liters?|ml|kg|g|pcs?|units?)\b(?:\s*@.*)?$/i, "")
+            .trim(),
+        )
+        .filter((item) =>
+          item.length > 0
+          &&
+          !/^pump\s*\d+$/i.test(
+            item,
+          )
+          &&
+          !/^(?:(?:RM|MYR)\s*)?\d+(?:[.,]\d+)?$/i.test(
+            item,
+          )
+          &&
+          !/^\d+(?:[.,]\d+)?\s*(?:l|ltr|litres?|liters?|ml|kg|g|pcs?|units?)\b/i.test(
+            item,
+          ),
+        )
+        .filter((item, index, all) =>
+          all.findIndex(
+            (candidate) =>
+              candidate.toLowerCase()
+              ===
+              item.toLowerCase(),
+          ) === index,
+        )
+        .slice(0, 12);
+
+    return items.join(", ");
+
+  }
+
+
+  private extractAeonPurchaseDetails(
+    rawText:string,
+  ):string{
+
+    const lines =
+      rawText
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    const names:string[] = [];
+
+    const addName =
+      (candidate:string) => {
+
+        const name =
+          candidate
+            .replace(/^\d+\s*x\s+/i, "")
+            .trim();
+
+        if(
+          !/[a-z]/i.test(
+            name,
+          )
+          ||
+          /^(?:sub[-\s]*total|total|tax|visa|mastercard|card|cash|change|e-?voucher|invoice|date|time|item\s*count|shopping\s*hours|valued\s*customer)\b/i.test(
+            name,
+          )
+          ||
+          /^\d+\s*x\s+[a-z0-9-]+$/i.test(
+            candidate,
+          )
+        ){
+
+          return;
+
+        }
+
+        if(
+          !names.some(
+            (existing) =>
+              existing.toLowerCase()
+              ===
+              name.toLowerCase(),
+          )
+        ){
+
+          names.push(
+            name,
+          );
+
+        }
+
+      };
+
+    for(let index = 0; index < lines.length; index += 1){
+
+      const line =
+        lines[index];
+
+      if(
+        /^\d+\s*x\s+[a-z0-9-]{4,}\s+(?:RM\s*)?\d+(?:[.,]\d{2})$/i.test(
+          line,
+        )
+      ){
+
+        const nextLine =
+          lines[index + 1]
+          ??
+          "";
+
+        if(
+          nextLine
+          &&
+          !/(?:RM\s*)?\d+(?:[.,]\d{2})\s*$/i.test(
+            nextLine,
+          )
+        ){
+
+          addName(
+            nextLine,
+          );
+
+        }
+
+        continue;
+
+      }
+
+      const itemWithPrice =
+        /^(.{2,100}?)\s+(?:RM\s*)?\d+(?:[.,]\d{2})$/i
+          .exec(
+            line,
+          )?.[1]
+          ?.trim();
+
+      if(itemWithPrice){
+
+        addName(
+          itemWithPrice,
+        );
+
+      }
+
+    }
+
+    return names
+      .slice(0, 12)
+      .join(", ");
 
   }
 
@@ -787,12 +1130,24 @@ export class GroqVisionProvider {
 
     const priorityLabels:[RegExp, number][] = [
       [
+        /(?:total\s*after\s*(?:adj(?:ustment)?|adjusted)|adjusted\s*total)/i,
+        4,
+      ],
+      [
         /^tl\b/i,
         3,
       ],
       [
         /(?:grand\s*total|total\s*paid|amount\s*paid|net\s*total|total\s*due|balance\s*due|jumlah\s*(?:perlu\s*)?(?:bayar|dibayar))/i,
         3,
+      ],
+      [
+        /^jumlah\b(?!\s*(?:item|barang|kuantiti|qty))/i,
+        2,
+      ],
+      [
+        /^sub[-\s]*total\b/i,
+        0,
       ],
       [
         /\btotal\b/i,
@@ -826,7 +1181,7 @@ export class GroqVisionProvider {
           line.slice(0, match.index);
 
         if(
-          /sub\s*$/i.test(
+          /sub[-\s]*$/i.test(
             beforeLabel,
           )
         ){
@@ -839,6 +1194,18 @@ export class GroqVisionProvider {
           line.slice(
             match.index + match[0].length,
           );
+
+        if(
+          priority === 0
+          &&
+          /\b(?:total|jumlah\s*(?:bayar|dibayar))\b/i.test(
+            afterLabel,
+          )
+        ){
+
+          continue;
+
+        }
 
         const afterValues =
           this.extractMonetaryValues(
@@ -997,13 +1364,18 @@ export class GroqVisionProvider {
 
   private extractLabeledReceiptReference(
     rawText:string,
-    type:"REFERENCE" | "RECEIPT",
+    type:
+      | "REFERENCE"
+      | "RECEIPT"
+      | "INVOICE",
   ):string | undefined{
 
     const label =
       type === "REFERENCE"
         ? /\b(?:reference|ref)\s*(?:no\.?|number|#)?\s*[:#-]?\s*([a-z0-9][a-z0-9\/-]{2,})/i
-        : /\b(?:receipt\s*(?:no\.?|number|#)|no\.?\s*resit)\s*[:#-]?\s*([a-z0-9][a-z0-9\/-]{2,})/i;
+        : type === "RECEIPT"
+          ? /\b(?:receipt\s*(?:no\.?|number|#)|no\.?\s*resit)\s*[:#-]?\s*([a-z0-9][a-z0-9\/-]{2,})/i
+          : /\binvoice\s*(?:no\.?|number|#)\s*[:#-]?\s*([a-z0-9][a-z0-9\/-]{2,})/i;
 
     const match =
       label.exec(
@@ -1057,7 +1429,18 @@ export class GroqVisionProvider {
   private resolveMerchantName(
     merchantName:string,
     merchantBrand:string,
+    rawText:string,
   ){
+
+    if(
+      /\baeon\s+co\.?\s*\(\s*m\s*\)\s*bhd\b/i.test(
+        rawText,
+      )
+    ){
+
+      return "AEON CO. (M) BHD";
+
+    }
 
     if(!merchantBrand){
 

@@ -32,6 +32,10 @@ import {
 } from "./hitpay.client.js";
 
 import {
+  assertBillingProviderCallAllowed,
+} from "./billing-provider.policy.js";
+
+import {
   GoogleDriveService,
 } from "../google/drive/google-drive.service.js";
 
@@ -157,6 +161,38 @@ export class BillingService {
       membership.workspace
         .billingSubscription;
 
+    const renewalHistory =
+      billing
+        ? await this.app.prisma.billingRenewal.findMany({
+            where:{
+              workspaceBillingSubscriptionId:
+                billing.id,
+            },
+            orderBy:{
+              createdAt:
+                "desc",
+            },
+            take:
+              10,
+            select:{
+              id:true,
+              invoiceReference:true,
+              status:true,
+              plan:true,
+              billingInterval:true,
+              renewalMethod:true,
+              currency:true,
+              amountDue:true,
+              periodStart:true,
+              periodEnd:true,
+              dueAt:true,
+              graceEndsAt:true,
+              paidAt:true,
+              createdAt:true,
+            },
+          })
+        : [];
+
 
     return {
       workspace:{
@@ -228,8 +264,37 @@ export class BillingService {
 
             canceledAt:
               billing.canceledAt,
+
+            billingInterval:
+              billing.billingInterval,
+
+            renewalMethod:
+              billing.renewalMethod,
+
+            accessState:
+              billing.accessState,
+
+            paidThroughAt:
+              billing.paidThroughAt,
+
+            nextRenewalAt:
+              billing.nextRenewalAt,
+
+            paymentDueAt:
+              billing.paymentDueAt,
+
+            graceEndsAt:
+              billing.graceEndsAt,
+
+            autoRenewEnabled:
+              billing.autoRenewEnabled,
+
+            cancelAtPeriodEnd:
+              billing.cancelAtPeriodEnd,
           }
           : null,
+
+      renewalHistory,
     };
 
   }
@@ -243,6 +308,11 @@ export class BillingService {
         CreateHitPayCheckoutInput;
     },
   ){
+
+    assertBillingProviderCallAllowed(
+      env.BILLING_CHECKOUT_PROVIDER,
+      "hitpay",
+    );
 
     const membership =
       await this.findMembership(
@@ -671,6 +741,11 @@ export class BillingService {
         ChangeHitPayPlanInput;
     },
   ){
+
+    assertBillingProviderCallAllowed(
+      env.BILLING_CHECKOUT_PROVIDER,
+      "hitpay",
+    );
 
     const membership =
       await this.findMembership(

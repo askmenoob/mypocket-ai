@@ -100,6 +100,11 @@ import {
   type PendingReceiptUpload,
 } from "./whatsapp-receipt.pipeline.js";
 
+import {
+  evaluateWhatsAppBillingAccess,
+  isBillingPaymentCommand,
+} from "../billing/billing-access.policy.js";
+
 type CommitmentDraftStep =
   | "name"
   | "amount"
@@ -2165,6 +2170,42 @@ export class WhatsAppService {
     }
 
 
+    const mediaBillingAccess =
+      await this.billingWhatsAppAccess(
+        instance.workspaceId,
+        "",
+        true,
+      );
+
+    if(!mediaBillingAccess.allowed){
+      await this.safeSendWebhookReply(
+        normalized,
+        this.billingBlockedReply(
+          mediaBillingAccess.checkoutUrl,
+        ),
+      );
+
+      return {
+        message:"WhatsApp media blocked by billing",
+        source:"EVOLUTION",
+        normalized:{
+          ...normalized,
+          reason:"BILLING_ACCESS_SUSPENDED",
+        },
+      };
+    }
+
+    if(mediaBillingAccess.warning){
+      await this.safeSendWebhookReply(
+        normalized,
+        this.billingWarningReply(
+          mediaBillingAccess.warning,
+          mediaBillingAccess.checkoutUrl,
+        ),
+      );
+    }
+
+
     const message =
       this.extractEvolutionMessageEnvelope(
         payload,
@@ -3356,6 +3397,71 @@ export class WhatsAppService {
       await this.getWorkspaceReplyLanguage(
         instance.workspaceId,
       );
+
+    const billingAccess =
+      await this.billingWhatsAppAccess(
+        instance.workspaceId,
+        normalized.text
+        ??
+        "",
+        false,
+      );
+
+    if(!billingAccess.allowed){
+      await this.safeSendWebhookReply(
+        normalized,
+        this.billingBlockedReply(
+          billingAccess.checkoutUrl,
+        ),
+      );
+
+      return {
+        message:"WhatsApp command blocked by billing",
+        source:"EVOLUTION",
+        normalized:{
+          ...normalized,
+          reason:"BILLING_ACCESS_SUSPENDED",
+        },
+      };
+    }
+
+    if(
+      isBillingPaymentCommand(
+        normalized.text
+        ??
+        "",
+      )
+    ){
+      await this.safeSendWebhookReply(
+        normalized,
+        billingAccess.checkoutUrl
+          ? [
+              "💳 Pautan pembayaran MyPocket:",
+              billingAccess.checkoutUrl,
+              "Akses akan dikemas kini selepas CHIP mengesahkan bayaran.",
+            ].join("\n")
+          : [
+              "💳 Tiada pautan pembayaran aktif.",
+              "Buka Billing di https://app.imai.my untuk memilih pelan dan tempoh.",
+            ].join("\n"),
+      );
+
+      return {
+        message:"WhatsApp billing payment link sent",
+        source:"EVOLUTION",
+        normalized,
+      };
+    }
+
+    if(billingAccess.warning){
+      await this.safeSendWebhookReply(
+        normalized,
+        this.billingWarningReply(
+          billingAccess.warning,
+          billingAccess.checkoutUrl,
+        ),
+      );
+    }
 
     const payCommitmentDraftResult =
       await this.handlePayCommitmentDraftMessage(
@@ -10652,6 +10758,113 @@ export class WhatsAppService {
 
 
 
+
+
+  private async billingWhatsAppAccess(
+    workspaceId:string,
+    text:string,
+    isMedia:boolean,
+  ){
+    const delegate =
+      (
+        this.app.prisma as unknown as
+        {
+          workspaceBillingSubscription?:{
+            findUnique:(input:unknown) => Promise<any>;
+          };
+        }
+      ).workspaceBillingSubscription;
+
+    if(!delegate){
+      return {
+        allowed:true,
+        warning:null,
+        checkoutUrl:null,
+      };
+    }
+
+    const billing =
+      await delegate
+        .findUnique({
+          where:{
+            workspaceId,
+          },
+          include:{
+            paymentAttempts:{
+              where:{
+                provider:"CHIP",
+                status:{
+                  in:[
+                    "CREATED",
+                    "PENDING",
+                  ],
+                },
+                checkoutUrl:{
+                  not:null,
+                },
+              },
+              orderBy:{
+                createdAt:"desc",
+              },
+              take:1,
+            },
+          },
+        });
+
+    const decision =
+      evaluateWhatsAppBillingAccess({
+        accessState:
+          billing?.accessState
+          ??
+          null,
+        text,
+        isMedia,
+      });
+
+    return {
+      ...decision,
+      checkoutUrl:
+        billing?.paymentAttempts[0]
+          ?.checkoutUrl
+        ??
+        billing?.checkoutUrl
+        ??
+        null,
+    };
+  }
+
+
+  private billingBlockedReply(
+    checkoutUrl:string | null,
+  ){
+    return [
+      "⚠️ Langganan MyPocket telah digantung kerana bayaran belum disahkan.",
+      "Tiada transaksi, resit atau voice direkodkan.",
+      checkoutUrl
+        ? `Bayar di sini: ${checkoutUrl}`
+        : "Taip !pay atau buka Billing di https://app.imai.my.",
+    ].join("\n");
+  }
+
+
+  private billingWarningReply(
+    state:
+      | "PAYMENT_DUE"
+      | "GRACE"
+      | "SUSPENDED",
+    checkoutUrl:string | null,
+  ){
+    return [
+      state === "GRACE"
+        ? "⚠️ Langganan berada dalam tempoh bertenang. Bot masih aktif buat sementara."
+        : state === "PAYMENT_DUE"
+          ? "🔔 Bayaran langganan MyPocket telah tiba masanya."
+          : "⚠️ Langganan MyPocket telah digantung.",
+      checkoutUrl
+        ? `Bayar: ${checkoutUrl}`
+        : "Taip !pay untuk semak pautan pembayaran.",
+    ].join("\n");
+  }
 
 
   private async safeSendWebhookReply(

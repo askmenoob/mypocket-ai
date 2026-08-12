@@ -192,7 +192,7 @@ test(
 
 
 test(
-  "the web checkout guard permits only terminal billing states to start again",
+  "the web delegates checkout lifecycle and idempotency to the CHIP API",
   () => {
 
     const source =
@@ -204,38 +204,16 @@ test(
         "utf8",
       );
 
-    const message =
-      "This subscription is still being processed. Please refresh before choosing another plan.";
-    const messageIndex =
-      source.indexOf(
-        message,
-      );
-
-    assert.notEqual(
-      messageIndex,
-      -1,
-    );
-
-    const guard =
-      source.slice(
-        Math.max(
-          0,
-          messageIndex - 420,
-        ),
-        messageIndex,
-      );
-
-    assert.match(
-      guard,
-      /!\[\s*"CANCELED",\s*"INACTIVE",\s*"EXPIRED",\s*\]\.includes\(\s*billing\.status,\s*\)/s,
-    );
+    assert.match(source, /"\/billing\/checkout"/u);
+    assert.match(source, /requestId:\s*crypto\.randomUUID\(\)/u);
+    assert.doesNotMatch(source, /"\/billing\/hitpay\/checkout"/u);
 
   },
 );
 
 
 test(
-  "the HitPay return route reports pending, canceled and failed outcomes safely",
+  "the provider-neutral return route reports pending, canceled and failed outcomes safely",
   () => {
 
     const source =
@@ -249,7 +227,7 @@ test(
 
     const returnIndex =
       source.indexOf(
-        '=== "/billing/hitpay/return"',
+        '.startsWith("/billing/")',
       );
 
     assert.notEqual(
@@ -277,7 +255,7 @@ test(
     );
     assert.match(
       returnBlock,
-      /verifying the signed HitPay confirmation before activating access/,
+      /verifying CHIP's signed confirmation before activating access/,
     );
     assert.match(
       returnBlock,

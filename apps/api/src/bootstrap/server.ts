@@ -1,6 +1,7 @@
 import { buildApp } from "../app.js";
 import { env } from "../config/index.js";
 import { CommitmentScheduler } from "../modules/commitment/commitment.scheduler.js";
+import { BillingLifecycleScheduler } from "../modules/billing/billing-lifecycle.scheduler.js";
 
 export async function startServer() {
 
@@ -11,10 +12,16 @@ export async function startServer() {
       app,
     );
 
+  const billingScheduler =
+    new BillingLifecycleScheduler(
+      app,
+    );
+
   app.addHook(
     "onClose",
     async () => {
       commitmentScheduler.stop();
+      billingScheduler.stop();
     },
   );
 
@@ -24,5 +31,6 @@ export async function startServer() {
   });
 
   commitmentScheduler.start();
+  billingScheduler.start();
 
 }

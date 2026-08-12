@@ -6,6 +6,7 @@ import type {
 import {
   env,
 } from "../../config/index.js";
+import { requireSuperAdmin } from "../../shared/auth/index.js";
 
 import {
   activeHitPayWebhookPath,
@@ -18,6 +19,10 @@ import {
 import {
   BillingService,
 } from "./billing.service.js";
+import { BillingSettingsController } from "./billing-settings.controller.js";
+import { activeChipWebhookPath } from "../../config/chip-environment.js";
+import { ChipBillingController } from "./chip-billing.controller.js";
+import { ChipBillingService } from "./chip-billing.service.js";
 
 
 type RawBodyRequest =
@@ -140,6 +145,16 @@ async (
       service,
     );
 
+  const settingsController =
+    new BillingSettingsController(
+      app,
+    );
+
+  const chipController =
+    new ChipBillingController(
+      new ChipBillingService(app),
+    );
+
 
   app.get(
     "/billing/subscription",
@@ -149,6 +164,75 @@ async (
       ],
     },
     controller.getSubscription,
+  );
+
+  app.get(
+    "/billing/admin/settings",
+    {
+      preHandler:[
+        app.authenticate,
+        requireSuperAdmin,
+      ],
+    },
+    settingsController.getSettings,
+  );
+
+  app.patch(
+    "/billing/admin/settings/annual-discount",
+    {
+      preHandler:[
+        app.authenticate,
+        requireSuperAdmin,
+      ],
+    },
+    settingsController.updateAnnualDiscount,
+  );
+
+  app.get(
+    "/billing/quote",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    chipController.getQuote,
+  );
+
+  app.get(
+    "/billing/chip/payment-methods",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    chipController.getPaymentMethods,
+  );
+
+  app.post(
+    "/billing/checkout",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    chipController.createCheckout,
+  );
+
+  app.post(
+    "/billing/cancel-renewal",
+    {
+      preHandler:[
+        app.authenticate,
+      ],
+    },
+    chipController.cancelAutomaticRenewal,
+  );
+
+  app.post(
+    activeChipWebhookPath(
+      env.CHIP_ENVIRONMENT,
+    ),
+    chipController.receiveWebhook,
   );
 
 
