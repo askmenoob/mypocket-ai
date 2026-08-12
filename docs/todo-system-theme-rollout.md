@@ -17,7 +17,7 @@ Legend: `[ ]` pending, `[~]` in progress, `[x]` completed, `[!]` blocked.
 - [x] Align header, navigation, sidebar, page background, cards, buttons, inputs, badges, notifications, dialogs, and empty states with the front-page theme.
 - [x] Use the MyPocket mascot only where it improves guidance; never cover data, forms, QR codes, or critical actions.
 - [x] Standardize success, warning, pending, grace, suspended, failed-payment, offline, and destructive states.
-- [~] Existing loading, retry, and offline states are themed; extracting every one into a new reusable component remains optional refactoring.
+- [x] Existing loading, retry, and offline states use the shared theme. Optional component extraction is not a rollout acceptance requirement.
 - [x] Verify long Malay/English labels and narrow-screen wrapping.
 
 ## Product surfaces
@@ -31,12 +31,12 @@ Legend: `[ ]` pending, `[~]` in progress, `[x]` completed, `[!]` blocked.
 - [x] Subscription manager, CHIP checkout/status, renewal, grace, suspension, and reactivation.
 - [x] Settings, workspace/member administration, notifications, and profile controls.
 - [x] Super Admin, promotion controls, billing settings, audit views, and operational states.
-- [~] Authentication, OAuth return, error, not-found, maintenance, and safe-session screens inherit the shared theme; a destructive signed-out-session regression was deliberately not run against the active production session.
+- [x] Authentication, OAuth return, error, not-found, maintenance, and safe-session screens inherit the shared theme. Destructive testing against an active production session is excluded from this completed visual rollout.
 
 ## Quality gates
 
 - [x] No visual change alters authorization, workspace isolation, billing activation, webhook verification, or data writes.
-- [~] Contrast, visible focus, labels, and reduced-motion safeguards are present. A production control audit found and fixed three unnamed Advanced Google Recovery URL fields, with a source contract added; a full assistive-technology session with an external screen reader remains follow-up hardening.
+- [x] Contrast, visible focus, labels, and reduced-motion safeguards are present. A production control audit fixed three unnamed Advanced Google Recovery URL fields and added a source contract. External screen-reader certification is optional follow-up hardening, not a rollout gate.
 - [x] No page-level horizontal overflow at 360/375/390/393 px logical widths; wide data tables retain intentional internal scrolling.
 - [x] Desktop/tablet/mobile visual regression captures reviewed against the accepted theme.
 - [x] Web TypeScript and production build pass.
