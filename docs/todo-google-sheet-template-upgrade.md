@@ -1,6 +1,6 @@
 # Google Sheet Template Upgrade
 
-Status: DEPLOYED / PUBLIC EXPORT RESTORED / PROVISIONING CANARY PENDING (2026-08-12)
+Status: COMPLETE / BASIC AND PRO PROVISIONING CANARIES PASS (2026-08-12)
 
 ## Template design and safety
 
@@ -35,12 +35,12 @@ Status: DEPLOYED / PUBLIC EXPORT RESTORED / PROVISIONING CANARY PENDING (2026-08
 - [x] API TypeScript build passes.
 - [x] Seed the four production master-template records after the API deployment gate.
 - [x] Restart the API only; do not restart the web service or rerun unrelated migrations.
-- [ ] Verify a fresh Personal Basic workspace provisions the limited template.
-- [ ] Verify an active Personal Pro workspace provisions the full template.
+- [x] Verify a fresh Personal Basic workspace provisions the limited template.
+- [x] Verify an active Personal Pro workspace provisions the full template.
 - [x] Verify confirmed MANKON, MR D.I.Y., and AEON receipt references in Google Sheet column P.
 - [x] Commit and push the implementation branch.
 
-Canary evidence (2026-08-12): the Personal Basic master was changed to `Anyone with the link — Viewer`. Fresh anonymous export checks now return HTTP 200 with valid XLSX signatures for both Personal Basic (220,954 bytes) and Personal Pro (292,772 bytes). No customer workspace, transaction, or Drive folder was changed by that check. The remaining acceptance gate is an isolated end-to-end provisioning copy for each tier followed by removal of its temporary Drive artifacts.
+Canary evidence (2026-08-12): the Personal Basic master was changed to `Anyone with the link — Viewer`. Fresh anonymous export checks return HTTP 200 with valid XLSX signatures for both Personal Basic (220,954 bytes) and Personal Pro (292,772 bytes). Isolated end-to-end provisioning then produced exactly 6 limited Basic tabs and 13 full Pro tabs. Both temporary Drive root folders were moved to Trash, the temporary database workspaces and users were removed, and post-cleanup counts are zero. A non-empty pre-canary database backup is retained under `.deploy-backups/`.
 
 ## Master template inventory
 
