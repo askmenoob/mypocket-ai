@@ -2130,8 +2130,31 @@ export function PremiumDashboard(
       },
     );
 
+  const incomeCoverage =
+    periodExpense > 0
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            (periodIncome / periodExpense) * 100,
+          ),
+        )
+      : periodIncome > 0
+        ? 100
+        : 0;
+
+  const dashboardHeading =
+    language === "ms"
+      ? "Kewangan anda bulan ini"
+      : "Your money this month";
+
+  const dashboardSubheading =
+    language === "ms"
+      ? "Ringkasan aliran tunai dan perbelanjaan semasa."
+      : "A real-time overview of your cash flow and spending.";
+
   return (
-    <div className="pd-root">
+    <div className="pd-root pd-focus-dashboard">
       <style>{`
         .pd-legacy-hidden{display:none!important}
         .pd-root{display:flex;flex-direction:column;gap:14px;padding-bottom:24px}
@@ -2265,6 +2288,24 @@ export function PremiumDashboard(
         @media(max-width:720px){.pd-metrics,.pd-insight-grid{grid-template-columns:1fr}.pd-donut-layout,.pd-wa-layout,.pd-sheet{grid-template-columns:1fr}.pd-quick-grid{grid-template-columns:1fr}.pd-spark{width:72px}.pd-panel{padding:14px}.pd-legend-row{grid-template-columns:9px minmax(0,1fr) auto}.pd-legend-percent{display:none}.pd-rank-row{grid-template-columns:minmax(110px,1fr) auto}.pd-rank-track{grid-column:1/-1}.pd-rank-row>b{grid-column:2;grid-row:1}}
       `}</style>
 
+      <section className="pd-focus-intro">
+        <div>
+          <h1>{dashboardHeading}</h1>
+          <p>{dashboardSubheading}</p>
+        </div>
+
+        <div className="pd-focus-intro-status" aria-label="Integration status">
+          <span className={whatsappStatus === text.connected ? "connected" : ""}>
+            <AppIcon name="whatsapp" size={17} />
+            WhatsApp {whatsappStatus}
+          </span>
+          <span className={google.spreadsheetId ? "connected" : ""}>
+            <AppIcon name="sheet" size={17} />
+            Google Sheet {google.spreadsheetId ? text.connected : text.notConnected}
+          </span>
+        </div>
+      </section>
+
       <section className="pd-filter-bar">
         <div className="pd-filter-copy">
           <strong>
@@ -2343,6 +2384,41 @@ export function PremiumDashboard(
               />
             </>
           )}
+        </div>
+      </section>
+
+      <section className="pd-focus-overview" aria-label={dashboardHeading}>
+        <div className="pd-focus-balance">
+          <span>{text.netBalance}</span>
+          <strong className={periodBalance < 0 ? "negative" : "positive"}>
+            {currency(periodBalance)}
+          </strong>
+        </div>
+
+        <div className="pd-focus-stat">
+          <span>{text.income}</span>
+          <strong className="positive">{currency(periodIncome)}</strong>
+        </div>
+
+        <div className="pd-focus-stat">
+          <span>{text.expense}</span>
+          <strong className="negative">{currency(periodExpense)}</strong>
+        </div>
+
+        <div className="pd-focus-stat pd-focus-count">
+          <strong>{periodSummary.transactionCount.toLocaleString(locale)}</strong>
+          <span>{text.transactionCount}</span>
+        </div>
+
+        <div className="pd-focus-coverage">
+          <div className="pd-focus-coverage-track">
+            <span style={{ width:`${incomeCoverage}%` }} />
+          </div>
+          <div>
+            <span>{currency(0)}</span>
+            <span>{currency(periodIncome)}</span>
+            <span>{currency(periodExpense)}</span>
+          </div>
         </div>
       </section>
 
@@ -2455,7 +2531,7 @@ export function PremiumDashboard(
               >
                 <stop
                   offset="0%"
-                  stopColor="#079b83"
+                  stopColor="#f04444"
                   stopOpacity=".23"
                 />
                 <stop
@@ -2506,7 +2582,7 @@ export function PremiumDashboard(
             <path
               d={smoothLinePath}
               fill="none"
-              stroke="#079b83"
+              stroke="#f04444"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -2528,7 +2604,7 @@ export function PremiumDashboard(
                   cy={yFor(item.amount)}
                   r="3.2"
                   fill="#fff"
-                  stroke="#079b83"
+                  stroke="#f04444"
                   strokeWidth="2.2"
                 >
                   <title>

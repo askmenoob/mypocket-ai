@@ -1,0 +1,1190 @@
+/*
+ * Financial Focus — signed-in product experience.
+ *
+ * Scope is deliberately limited to .appShell. The public landing page and
+ * setup wizard remain governed by their existing, accepted style sheets.
+ */
+
+.appShell {
+  --ff-ink: #092f29;
+  --ff-ink-strong: #031e19;
+  --ff-muted: #60736f;
+  --ff-canvas: #ffffff;
+  --ff-context: #eef8f3;
+  --ff-line: #dce7e2;
+  --ff-line-strong: #bfd5cc;
+  --ff-green: #009b65;
+  --ff-green-dark: #006f4c;
+  --ff-green-soft: #dcf4e7;
+  --ff-red: #f04444;
+  --ff-red-soft: #fff0f0;
+  --ff-sidebar: 286px;
+  grid-template-columns: var(--ff-sidebar) minmax(0, 1fr);
+  color: var(--ff-ink);
+  background: var(--ff-canvas);
+}
+
+.appShell .main {
+  background: var(--ff-canvas);
+}
+
+/* Two-layer desktop navigation: a dark icon rail and a quiet context panel. */
+.appShell .sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 100vh;
+  gap: 24px;
+  overflow: hidden auto;
+  padding: 28px 18px 24px 90px;
+  color: var(--ff-ink);
+  border-right: 1px solid var(--ff-line);
+  background: var(--ff-context);
+  box-shadow: none;
+}
+
+.appShell .sidebar::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 72px;
+  background: #003c2f;
+  content: "";
+}
+
+.appShell .sidebar .brand {
+  position: relative;
+  min-height: 46px;
+  gap: 10px;
+  color: var(--ff-ink-strong);
+  font-size: 20px;
+  letter-spacing: -.045em;
+}
+
+.appShell .sidebar .brandMark {
+  position: static;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #d1e5dc;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .72);
+}
+
+.appShell .sidebar .brandMark img {
+  width: 28px;
+  height: 28px;
+}
+
+.appShell .sidebarWorkspaceContext {
+  display: grid;
+  gap: 5px;
+  padding: 0 12px 18px;
+  border-bottom: 1px solid #c9ddd5;
+}
+
+.appShell .sidebarWorkspaceContext span,
+.appShell .sidebarWorkspaceContext small {
+  color: var(--ff-muted);
+  font-size: 9px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.appShell .sidebarWorkspaceContext strong {
+  overflow: hidden;
+  color: var(--ff-ink);
+  font-size: 11px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.appShell .nav {
+  gap: 5px;
+}
+
+.appShell .nav > button:not(.sideCard) {
+  position: relative;
+  min-height: 46px;
+  gap: 12px;
+  padding: 11px 12px;
+  color: #294d45;
+  border: 0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 720;
+  transform: none;
+}
+
+.appShell .nav > button:not(.sideCard) > span:first-child,
+.appShell .nav > button:not(.sideCard) > .super-admin-nav-icon {
+  position: absolute;
+  left: -68px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, .78);
+  border-radius: 8px;
+}
+
+.appShell .nav > button:not(.sideCard):hover,
+.appShell .nav > button:not(.sideCard).active {
+  color: var(--ff-ink-strong);
+  border-color: transparent;
+  background: #d4eee1;
+  transform: none;
+}
+
+.appShell .nav > button:not(.sideCard):hover > span:first-child,
+.appShell .nav > button:not(.sideCard).active > span:first-child,
+.appShell .nav > button:not(.sideCard).active > .super-admin-nav-icon {
+  color: #ffffff;
+  background: var(--ff-green);
+}
+
+.appShell .billingSideCard {
+  margin-top: 22px;
+  padding: 14px;
+  color: var(--ff-ink);
+  border: 1px solid #c9ded5;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .6);
+}
+
+.appShell .billingSideCard span,
+.appShell .billingSideCard small {
+  color: var(--ff-muted);
+}
+
+.appShell.sidebarCollapsed {
+  --ff-sidebar: 72px;
+}
+
+.appShell.sidebarCollapsed .sidebar {
+  width: 72px;
+  padding: 28px 0;
+  overflow: hidden;
+}
+
+.appShell.sidebarCollapsed .sidebar::before {
+  width: 72px;
+}
+
+.appShell.sidebarCollapsed .brand > span:last-child,
+.appShell.sidebarCollapsed .sidebarWorkspaceContext,
+.appShell.sidebarCollapsed .nav > button:not(.sideCard),
+.appShell.sidebarCollapsed .sideCard {
+  visibility: hidden;
+}
+
+.appShell.sidebarCollapsed .brandMark {
+  visibility: visible;
+  margin-left: 17px;
+}
+
+/* Quiet product header */
+.appShell .topbar {
+  height: 72px;
+  padding: 0 30px;
+  color: var(--ff-ink);
+  border-bottom: 1px solid var(--ff-line);
+  background: rgba(255, 255, 255, .96);
+  box-shadow: none;
+  backdrop-filter: blur(16px);
+}
+
+.appShell .menu,
+.appShell .notificationBell,
+.appShell .topActions .ghost {
+  min-width: 40px;
+  min-height: 40px;
+  color: var(--ff-ink);
+  border: 1px solid var(--ff-line);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.appShell .workspace {
+  color: var(--ff-ink-strong);
+  font-size: 13px;
+  letter-spacing: -.015em;
+}
+
+.appShell .mobileProductBrand {
+  display: none;
+}
+
+.appShell .profileAvatar {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #ffffff;
+  border-radius: 50%;
+  background: #003c2f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.appShell .pill,
+.appShell .status {
+  color: var(--ff-green-dark);
+  border: 0;
+  border-radius: 7px;
+  background: var(--ff-green-soft);
+}
+
+.appShell .notice,
+.appShell .errorBox {
+  margin: 16px 30px 0;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.appShell :is(
+  .primary,
+  .pd-button.primary,
+  .admin-users-refresh,
+  .billingAdminPanel button,
+  .promo-admin-header button,
+  .promo-admin-form-actions button:not(.secondary),
+  .chipBillingControls button:not(.ghost):not(.danger)
+) {
+  background: var(--ff-green);
+  box-shadow: none;
+}
+
+.appShell :is(
+  .primary,
+  .pd-button.primary,
+  .admin-users-refresh,
+  .billingAdminPanel button,
+  .promo-admin-header button,
+  .promo-admin-form-actions button:not(.secondary),
+  .chipBillingControls button:not(.ghost):not(.danger)
+):hover:not(:disabled) {
+  background: var(--ff-green-dark);
+}
+
+/* Internal routes share the same quiet ledger system. */
+.appShell .appFullWidthGrid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  padding: 30px;
+}
+
+.appShell .appFullWidthGrid > .panel,
+.appShell .appFullWidthGrid > :is(.admin-users-shell, .promo-admin-shell) {
+  padding: 24px;
+  border: 1px solid var(--ff-line);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.appShell .appFullWidthGrid .panelHeader {
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--ff-line);
+}
+
+.appShell .appFullWidthGrid .panelHeader h2,
+.appShell .appFullWidthGrid :is(.admin-users-title, .promo-admin-header h2) {
+  color: var(--ff-ink-strong);
+  font-size: 21px;
+  letter-spacing: -.035em;
+}
+
+.appShell .appFullWidthGrid :is(.tableWrap, .admin-users-table-wrap, .promo-admin-table) {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.appShell .appFullWidthGrid :is(.memberRow, .commitmentRow, .inviteBox) {
+  border-radius: 7px;
+  box-shadow: none;
+}
+
+/* Dashboard composition */
+.appShell .pd-focus-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 292px;
+  gap: 0 28px;
+  padding: 30px 30px 56px;
+}
+
+.appShell .pd-focus-dashboard > * {
+  min-width: 0;
+}
+
+.appShell .pd-focus-intro {
+  grid-column: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 0 22px;
+}
+
+.appShell .pd-focus-intro h1 {
+  margin: 0;
+  color: var(--ff-ink-strong);
+  font-size: clamp(30px, 3vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -.055em;
+}
+
+.appShell .pd-focus-intro p {
+  margin: 9px 0 0;
+  color: var(--ff-muted);
+  font-size: 13px;
+}
+
+.appShell .pd-focus-intro-status {
+  display: grid;
+  min-width: 180px;
+  gap: 8px;
+}
+
+.appShell .pd-focus-intro-status span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ff-muted);
+  font-size: 11px;
+}
+
+.appShell .pd-focus-intro-status span.connected {
+  color: var(--ff-green-dark);
+}
+
+.appShell .pd-filter-bar {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 16px 0 22px 24px;
+  border: 0;
+  border-left: 1px solid var(--ff-line);
+  border-radius: 0;
+  background: transparent;
+}
+
+.appShell .pd-filter-copy strong {
+  color: var(--ff-ink);
+  font-size: 12px;
+}
+
+.appShell .pd-filter-copy span {
+  line-height: 1.5;
+}
+
+.appShell .pd-filter-controls,
+.appShell .pd-filter-select,
+.appShell .pd-filter-date {
+  width: 100%;
+}
+
+.appShell .pd-filter-controls {
+  display: grid;
+}
+
+.appShell .pd-metrics {
+  display: none;
+}
+
+.appShell .pd-focus-overview {
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: minmax(250px, 1.4fr) repeat(3, minmax(120px, .72fr));
+  gap: 0;
+  padding: 8px 0 30px;
+  border-bottom: 1px solid var(--ff-line);
+}
+
+.appShell .pd-focus-overview > div:not(.pd-focus-coverage) {
+  min-width: 0;
+  padding: 10px 24px;
+  border-left: 1px solid var(--ff-line);
+}
+
+.appShell .pd-focus-overview > div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.appShell .pd-focus-overview span {
+  display: block;
+  color: var(--ff-muted);
+  font-size: 11px;
+}
+
+.appShell .pd-focus-balance strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 10px;
+  color: var(--ff-ink-strong);
+  font-size: clamp(32px, 3.5vw, 52px);
+  line-height: 1;
+  letter-spacing: -.055em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.appShell .pd-focus-stat strong {
+  display: block;
+  margin-top: 10px;
+  font-size: clamp(17px, 1.4vw, 23px);
+  line-height: 1.1;
+  letter-spacing: -.035em;
+}
+
+.appShell .pd-focus-count strong {
+  display: block;
+  color: var(--ff-ink-strong);
+  font-size: 34px;
+  line-height: .9;
+}
+
+.appShell .pd-focus-count span {
+  margin-top: 10px;
+}
+
+.appShell .pd-focus-overview .positive {
+  color: var(--ff-green);
+}
+
+.appShell .pd-focus-overview .negative {
+  color: var(--ff-red);
+}
+
+.appShell .pd-focus-coverage {
+  grid-column: 1 / -1;
+  padding-top: 25px;
+}
+
+.appShell .pd-focus-coverage-track {
+  position: relative;
+  height: 12px;
+  overflow: hidden;
+  background: var(--ff-red);
+}
+
+.appShell .pd-focus-coverage-track span {
+  height: 100%;
+  background: var(--ff-green);
+}
+
+.appShell .pd-focus-coverage > div:last-child {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 8px;
+}
+
+.appShell .pd-chart-grid,
+.appShell .pd-insight-grid,
+.appShell .pd-content-grid,
+.appShell .pd-bottom-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0 28px;
+  grid-template-columns: minmax(0, 1fr) 292px;
+}
+
+.appShell .pd-chart-grid {
+  grid-column: 1;
+  grid-template-columns: 1fr;
+  padding-top: 24px;
+}
+
+.appShell .pd-chart-grid > .pd-panel:nth-child(2) {
+  display: none;
+}
+
+.appShell .pd-insight-grid {
+  grid-column: 1;
+  grid-template-columns: 1fr 1fr;
+  padding-top: 8px;
+  border-top: 1px solid var(--ff-line);
+}
+
+.appShell .pd-content-grid,
+.appShell .pd-bottom-grid {
+  padding-top: 24px;
+}
+
+.appShell .pd-panel {
+  padding: 18px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.appShell .pd-panel:hover {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.appShell .pd-panel-header {
+  margin-bottom: 14px;
+}
+
+.appShell .pd-panel-header h2 {
+  color: var(--ff-ink-strong);
+  font-size: 15px;
+  letter-spacing: -.02em;
+}
+
+.appShell .pd-chart {
+  max-height: 236px;
+}
+
+.appShell .pd-rank-list {
+  gap: 10px;
+}
+
+.appShell .pd-rank-track,
+.appShell .pd-rank-track span {
+  border-radius: 0;
+}
+
+.appShell .pd-rank-track span {
+  background: var(--ff-green);
+}
+
+.appShell .pd-content-grid > .pd-panel:first-child,
+.appShell .pd-bottom-grid > .pd-panel:first-child {
+  padding-right: 0;
+}
+
+.appShell .pd-content-grid > .pd-panel:nth-child(2),
+.appShell .pd-bottom-grid > .pd-panel:nth-child(2) {
+  padding-left: 24px;
+  border-left: 1px solid var(--ff-line);
+}
+
+.appShell .pd-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--ff-line);
+  border-radius: 0;
+}
+
+.appShell .pd-table th {
+  padding: 11px 10px;
+  color: var(--ff-muted);
+  background: #f5f8f7;
+  font-size: 9px;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.appShell .pd-table td {
+  padding: 11px 10px;
+  color: #38554f;
+}
+
+.appShell .pd-table tbody tr:hover {
+  background: var(--ff-context);
+}
+
+.appShell .pd-type,
+.appShell .pd-health {
+  border-radius: 5px;
+}
+
+.appShell .pd-member,
+.appShell .pd-alias-card,
+.appShell .pd-quick,
+.appShell .pd-url,
+.appShell .pd-empty-state {
+  border-radius: 7px;
+  box-shadow: none;
+}
+
+.appShell .pd-quick-grid {
+  grid-template-columns: 1fr;
+}
+
+.appShell .pd-quick {
+  min-height: 78px;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 0 11px;
+  padding: 12px;
+}
+
+.appShell .pd-quick-icon {
+  margin: 0;
+}
+
+.appShell .pd-quick > span:last-child {
+  width: 100%;
+  padding-left: 48px;
+}
+
+.appShell .mobileMoreBackdrop {
+  display: none;
+}
+
+@media (max-width: 1260px) {
+  .appShell {
+    --ff-sidebar: 238px;
+  }
+
+  .appShell .sidebar {
+    padding-right: 12px;
+  }
+
+  .appShell .pd-focus-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .appShell .pd-filter-bar {
+    grid-column: 1;
+    grid-row: auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 14px 0;
+    border-left: 0;
+    border-top: 1px solid var(--ff-line);
+    border-bottom: 1px solid var(--ff-line);
+  }
+
+  .appShell .pd-filter-controls {
+    min-width: 170px;
+  }
+
+  .appShell .pd-focus-overview,
+  .appShell .pd-chart-grid,
+  .appShell .pd-insight-grid {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 1100px) {
+  .appShell {
+    --ff-sidebar: 214px;
+    display: grid;
+    grid-template-columns: var(--ff-sidebar) minmax(0, 1fr);
+  }
+
+  .appShell .sidebar {
+    display: flex;
+    padding-right: 10px;
+    padding-left: 80px;
+  }
+
+  .appShell .nav > button:not(.sideCard) > span:first-child,
+  .appShell .nav > button:not(.sideCard) > .super-admin-nav-icon {
+    left: -60px;
+  }
+
+  .appShell .sidebar .brandMark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .appShell .sidebar .brand {
+    font-size: 18px;
+  }
+
+  .appShell .appFullWidthGrid {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 720px) {
+  .appShell {
+    --ff-mobile-nav-height: 82px;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    display: block;
+  }
+
+  .appShell .sidebar {
+    display: none;
+  }
+
+  .appShell .main {
+    padding-bottom: calc(var(--ff-mobile-nav-height) + env(safe-area-inset-bottom));
+  }
+
+  .appShell .topbar {
+    min-height: 72px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+
+  .appShell .topIdentity {
+    min-width: 0;
+    flex: 1;
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .appShell .mobileProductBrand {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    color: var(--ff-ink-strong);
+    font-size: 17px;
+    font-weight: 850;
+    letter-spacing: -.035em;
+  }
+
+  .appShell .mobileProductBrand img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+  }
+
+  .appShell .menu,
+  .appShell .topIdentity .pill,
+  .appShell .topActions .status,
+  .appShell .topActions > .ghost {
+    display: none;
+  }
+
+  .appShell .workspace {
+    display: none;
+  }
+
+  .appShell .workspaceSelect {
+    display: none;
+  }
+
+  .appShell .topActions {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .appShell .profileAvatar {
+    display: grid;
+  }
+
+  .appShell .notificationBell {
+    display: grid;
+  }
+
+  .appShell .notice,
+  .appShell .errorBox {
+    margin: 10px 16px 0;
+  }
+
+  .appShell .appFullWidthGrid {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .appShell .appFullWidthGrid > .panel,
+  .appShell .appFullWidthGrid > :is(.admin-users-shell, .promo-admin-shell) {
+    padding: 17px;
+  }
+
+  .appShell .pd-focus-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 26px 16px 36px;
+  }
+
+  .appShell .pd-focus-intro {
+    display: block;
+    padding-bottom: 18px;
+  }
+
+  .appShell .pd-focus-intro h1 {
+    font-size: clamp(30px, 9vw, 38px);
+  }
+
+  .appShell .pd-focus-intro p {
+    font-size: 12px;
+  }
+
+  .appShell .pd-focus-intro-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin-top: 18px;
+  }
+
+  .appShell .pd-filter-bar {
+    order: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px 0 18px;
+    border-top: 0;
+  }
+
+  .appShell .pd-filter-copy span {
+    display: none;
+  }
+
+  .appShell .pd-filter-select,
+  .appShell .pd-filter-date {
+    min-height: 46px;
+    font-size: 14px;
+  }
+
+  .appShell .pd-focus-overview {
+    order: 2;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 22px 0 26px;
+  }
+
+  .appShell .pd-focus-overview > div:not(.pd-focus-coverage) {
+    padding: 0 11px;
+  }
+
+  .appShell .pd-focus-balance {
+    grid-column: 1 / -1;
+    padding: 0 0 24px !important;
+    border-left: 0 !important;
+  }
+
+  .appShell .pd-focus-balance strong {
+    margin-top: 8px;
+    font-size: clamp(42px, 13vw, 58px);
+    white-space: normal;
+  }
+
+  .appShell .pd-focus-stat strong {
+    font-size: clamp(15px, 4vw, 19px);
+  }
+
+  .appShell .pd-focus-count strong {
+    font-size: 30px;
+  }
+
+  .appShell .pd-focus-coverage {
+    padding-top: 24px;
+  }
+
+  .appShell .pd-focus-coverage > div:last-child span {
+    font-size: 9px;
+  }
+
+  .appShell .pd-chart-grid {
+    order: 3;
+    padding-top: 22px;
+  }
+
+  .appShell .pd-insight-grid {
+    order: 4;
+    display: grid;
+    grid-template-columns: 1fr;
+    padding-top: 8px;
+  }
+
+  .appShell .pd-content-grid {
+    order: 5;
+    display: grid;
+    grid-template-columns: 1fr;
+    padding-top: 12px;
+  }
+
+  .appShell .pd-bottom-grid {
+    order: 6;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .appShell .pd-content-grid > .pd-panel:nth-child(2),
+  .appShell .pd-bottom-grid > .pd-panel:nth-child(2) {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--ff-line);
+  }
+
+  .appShell .pd-chart {
+    min-height: 190px;
+  }
+
+  .appShell .pd-rank-row {
+    grid-template-columns: minmax(105px, 1fr) auto;
+  }
+
+  .appShell .pd-rank-track {
+    grid-column: 1 / -1;
+  }
+
+  .appShell .pd-rank-row > b {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .appShell .pd-table-wrap {
+    border-right: 0;
+    border-left: 0;
+  }
+
+  .appShell .pd-table,
+  .appShell .pd-table tbody {
+    display: block;
+    width: 100%;
+    white-space: normal;
+  }
+
+  .appShell .pd-table thead {
+    display: none;
+  }
+
+  .appShell .pd-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 14px;
+    padding: 13px 4px;
+    border-bottom: 1px solid var(--ff-line);
+  }
+
+  .appShell .pd-table td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .appShell .pd-table td:nth-child(4) {
+    grid-column: 1;
+    grid-row: 1;
+    color: var(--ff-ink-strong);
+    font-size: 14px;
+    font-weight: 750;
+  }
+
+  .appShell .pd-table td:nth-child(5) {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    font-size: 13px;
+  }
+
+  .appShell .pd-table td:nth-child(3) {
+    grid-column: 1;
+    grid-row: 2;
+    color: var(--ff-muted);
+    font-size: 11px;
+  }
+
+  .appShell .pd-table td:nth-child(1) {
+    grid-column: 1;
+    grid-row: 3;
+    color: #80918d;
+    font-size: 9px;
+  }
+
+  .appShell .pd-table td:nth-child(2),
+  .appShell .pd-table td:nth-child(6),
+  .appShell .pd-table td:nth-child(7) {
+    display: none;
+  }
+
+  .appShell .mobileNav,
+  body:has(.appShell) .mobileNav {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    align-items: end;
+    min-height: var(--ff-mobile-nav-height);
+    padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--ff-line);
+    border-radius: 0;
+    background: rgba(255, 255, 255, .97);
+    box-shadow: 0 -8px 24px rgba(6, 54, 44, .08);
+    backdrop-filter: blur(18px);
+  }
+
+  .appShell .mobileNav button {
+    min-width: 0;
+    min-height: 58px;
+    gap: 4px;
+    padding: 6px 2px;
+    color: #526a64;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+  }
+
+  .appShell .mobileNav button.active {
+    color: var(--ff-green-dark);
+    background: transparent;
+  }
+
+  .appShell .mobileNav button > span:not(.mobileMoreIcon) {
+    overflow: hidden;
+    max-width: 100%;
+    color: inherit;
+    font-size: 9px;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .appShell .mobileNav .mobileAddAction {
+    position: relative;
+    align-self: start;
+    margin-top: -26px;
+    overflow: visible;
+  }
+
+  .appShell .mobileNav .mobileAddAction > span {
+    display: grid;
+    width: 54px;
+    height: 54px;
+    place-items: center;
+    color: #ffffff;
+    border-radius: 50%;
+    background: var(--ff-green);
+    box-shadow: 0 10px 22px rgba(0, 155, 101, .24);
+    font-size: 34px;
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  .appShell .mobileNav .mobileAddAction small {
+    display: block;
+    overflow: hidden;
+    max-width: 70px;
+    color: var(--ff-green-dark);
+    font-size: 8px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .appShell .mobileMoreIcon {
+    display: flex;
+    height: 20px;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .appShell .mobileMoreIcon i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .appShell .mobileMoreBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: calc(var(--ff-mobile-nav-height) + env(safe-area-inset-bottom));
+    background: rgba(0, 35, 27, .38);
+    backdrop-filter: blur(4px);
+  }
+
+  .appShell .mobileMoreSheet {
+    width: 100%;
+    max-height: min(70dvh, 540px);
+    overflow: auto;
+    padding: 20px 16px 24px;
+    border-radius: 18px 18px 0 0;
+    background: #ffffff;
+    box-shadow: 0 -18px 48px rgba(0, 42, 32, .18);
+  }
+
+  .appShell .mobileMoreSheet header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .appShell .mobileMoreSheet header div {
+    display: grid;
+    gap: 4px;
+  }
+
+  .appShell .mobileMoreSheet header strong {
+    color: var(--ff-ink-strong);
+    font-size: 22px;
+  }
+
+  .appShell .mobileMoreSheet header span {
+    color: var(--ff-muted);
+    font-size: 11px;
+  }
+
+  .appShell .mobileMoreSheet header button {
+    width: 42px;
+    height: 42px;
+    color: var(--ff-ink);
+    border: 1px solid var(--ff-line);
+    border-radius: 50%;
+    background: #ffffff;
+    font-size: 24px;
+  }
+
+  .appShell .mobileMoreGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .appShell .mobileMoreGrid button {
+    display: flex;
+    min-height: 58px;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    color: var(--ff-ink);
+    border: 1px solid var(--ff-line);
+    border-radius: 8px;
+    background: #ffffff;
+    font-size: 12px;
+    font-weight: 750;
+    text-align: left;
+  }
+
+  .appShell .mobileMoreGrid button.active {
+    color: var(--ff-green-dark);
+    border-color: #9bceb9;
+    background: var(--ff-context);
+  }
+}
+
+@media (max-width: 390px) {
+  .appShell .pd-focus-dashboard {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .appShell .pd-focus-overview > div:not(.pd-focus-coverage) {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .appShell .pd-focus-balance strong {
+    font-size: 43px;
+  }
+
+  .appShell .mobileNav button > span:not(.mobileMoreIcon) {
+    font-size: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appShell *,
+  .appShell *::before,
+  .appShell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .001ms !important;
+    animation-duration: .001ms !important;
+  }
+}

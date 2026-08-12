@@ -27,6 +27,7 @@ import "./styles.css";
 import "./public-landing.css";
 import "./setup-wizard.css";
 import "./system-theme.css";
+import "./financial-focus.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
@@ -3704,6 +3705,15 @@ function Dashboard(
   const [sidebarOpen, setSidebarOpen] =
     useState(true);
 
+  const [mobileMoreOpen, setMobileMoreOpen] =
+    useState(false);
+
+  const mobileMoreSheetRef =
+    useRef<HTMLElement | null>(null);
+
+  const mobileMoreTriggerRef =
+    useRef<HTMLButtonElement | null>(null);
+
   const [actionMessage, setActionMessage] =
     useState("");
 
@@ -3749,6 +3759,37 @@ function Dashboard(
     cancelNotificationClose();
 
   }, []);
+
+  useEffect(
+    () => {
+      if(!mobileMoreOpen){
+        return;
+      }
+
+      const previousOverflow =
+        document.body.style.overflow;
+
+      const closeOnEscape =
+        (event:KeyboardEvent) => {
+          if(event.key === "Escape"){
+            setMobileMoreOpen(false);
+          }
+        };
+
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", closeOnEscape);
+      window.requestAnimationFrame(() => {
+        mobileMoreSheetRef.current?.focus();
+      });
+
+      return () => {
+        document.body.style.overflow = previousOverflow;
+        window.removeEventListener("keydown", closeOnEscape);
+        mobileMoreTriggerRef.current?.focus();
+      };
+    },
+    [mobileMoreOpen],
+  );
 
   const [seenNotificationIds, setSeenNotificationIds] =
     useState<string[]>([]);
@@ -6052,6 +6093,7 @@ function Dashboard(
   ){
 
     setActiveView(view);
+    setMobileMoreOpen(false);
 
     if(typeof window !== "undefined"){
       window.history.replaceState(
@@ -6501,11 +6543,47 @@ function Dashboard(
     }
   }
 
+  const activeWorkspaceName =
+    props.data.me?.workspace?.name
+    ||
+    "MyPocket Workspace";
+
+  const activeWorkspaceType =
+    props.data.me?.workspace?.type
+    ||
+    "PERSONAL";
+
+  const profileLabel = String(
+    props.data.me?.user?.name
+    ||
+    props.data.me?.name
+    ||
+    props.data.me?.user?.email
+    ||
+    props.data.me?.email
+    ||
+    activeWorkspaceName,
+  );
+
+  const profileInitials = profileLabel
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("")
+    ||
+    "MP";
+
 
   return (
     <div className={sidebarOpen ? "appShell" : "appShell sidebarCollapsed"}>
       <aside className="sidebar">
         <LogoBlock />
+        <div className="sidebarWorkspaceContext">
+          <span>{dashboardLanguage === "ms" ? "Workspace" : "Workspace"}</span>
+          <strong>{activeWorkspaceName}</strong>
+          <small>{dashboardLanguage === "ms" ? "Pelan" : "Plan"} · {activeWorkspaceType}</small>
+        </div>
         <nav className="nav">
           {navItems.map((item) => (
             <button
@@ -6623,6 +6701,10 @@ function Dashboard(
             >
               ☰
             </button>
+            <span className="mobileProductBrand">
+              <img src="/mypocket-logo.png?v=3" alt="" aria-hidden="true" />
+              MyPocket AI
+            </span>
             {props.data.workspaces.length > 1 ? (
               <select
                 className="workspace workspaceSelect"
@@ -6865,6 +6947,9 @@ function Dashboard(
             >
               {dashboardText.logout}
             </button>
+            <span className="profileAvatar" aria-label={profileLabel} title={profileLabel}>
+              {profileInitials}
+            </span>
           </div>
         </header>
 
@@ -6947,10 +7032,10 @@ function Dashboard(
               actorRole === "ADMIN"
             }
             onOpenTransactions={() =>
-              setActiveView("transactions")
+              goToView("transactions")
             }
             onOpenWhatsApp={() =>
-              setActiveView("whatsapp")
+              goToView("whatsapp")
             }
             canManageWhatsApp={
               canChangeWorkspaceSettings
@@ -8595,58 +8680,138 @@ function Dashboard(
           />
         )}
 
-        <nav className="mobileNav">
-          {navItems.map(
-            (item) => (
+        {mobileMoreOpen && (
+          <div
+            className="mobileMoreBackdrop"
+            role="presentation"
+            onClick={() => setMobileMoreOpen(false)}
+          >
+            <section
+              className="mobileMoreSheet"
+              ref={mobileMoreSheetRef}
+              role="dialog"
+              aria-modal="true"
+              tabIndex={-1}
+              aria-label={
+                dashboardLanguage === "ms"
+                  ? "Lebih banyak menu"
+                  : "More navigation"
+              }
+              onClick={(event) => event.stopPropagation()}
+            >
+              <header>
+                <div>
+                  <strong>
+                    {dashboardLanguage === "ms" ? "Menu lain" : "More"}
+                  </strong>
+                  <span>
+                    {props.data.me?.workspace?.name || "MyPocket Workspace"}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  aria-label={dashboardLanguage === "ms" ? "Tutup menu" : "Close menu"}
+                  onClick={() => setMobileMoreOpen(false)}
+                >
+                  ×
+                </button>
+              </header>
+
+              <div className="mobileMoreGrid">
+                {navItems
+                  .filter((item) => ![
+                    "dashboard",
+                    "transactions",
+                    "commitments",
+                  ].includes(item.view))
+                  .map((item) => (
+                    <button
+                      type="button"
+                      key={item.view}
+                      className={activeView === item.view ? "active" : ""}
+                      onClick={() => goToView(item.view)}
+                    >
+                      <AppIcon name={item.icon} size={20} strokeWidth={2} />
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+
+                {isSuperAdmin && (
+                  <button
+                    type="button"
+                    className={activeView === "super-admin" ? "active" : ""}
+                    onClick={() => goToView("super-admin")}
+                  >
+                    <AppIcon name="settings" size={20} strokeWidth={2} />
+                    <span>Super Admin</span>
+                  </button>
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+
+        <nav className="mobileNav" aria-label="Primary navigation">
+          {navItems
+            .filter((item) => [
+              "dashboard",
+              "transactions",
+            ].includes(item.view))
+            .map((item) => (
               <button
                 type="button"
                 key={item.view}
                 className={activeView === item.view ? "active" : ""}
                 onClick={() => goToView(item.view)}
               >
-                <AppIcon
-                  name={item.icon}
-                  size={18}
-                  strokeWidth={2}
-                />
-
-                <span>
-                  {item.label}
-                </span>
+                <AppIcon name={item.icon} size={20} strokeWidth={2} />
+                <span>{item.label}</span>
               </button>
-            ),
-          )}
+            ))}
 
-          {isSuperAdmin && (
-            <button
-              type="button"
-              className={
-                activeView === "super-admin"
-                  ? "active"
-                  : ""
-              }
-              onClick={() => goToView("super-admin")}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
+          <button
+            type="button"
+            className="mobileAddAction"
+            aria-label={dashboardText.addTransaction}
+            onClick={() => showActionMessage(
+              dashboardLanguage === "ms"
+                ? "Untuk tambah transaksi, hantar mesej kepada WhatsApp bot seperti: makan nasi RM8 TNG."
+                : "To add a transaction, send a WhatsApp bot message like: lunch mamak RM8 TNG.",
+            )}
+          >
+            <span aria-hidden="true">+</span>
+            <small>{dashboardText.addTransaction}</small>
+          </button>
+
+          {navItems
+            .filter((item) => item.view === "commitments")
+            .map((item) => (
+              <button
+                type="button"
+                key={item.view}
+                className={activeView === item.view ? "active" : ""}
+                onClick={() => goToView(item.view)}
               >
-                <path d="M12 3 20 6v5c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
+                <AppIcon name={item.icon} size={20} strokeWidth={2} />
+                <span>{item.label}</span>
+              </button>
+            ))}
 
-              <span>
-                Super Admin
-              </span>
-            </button>
-          )}
+          <button
+            type="button"
+            ref={mobileMoreTriggerRef}
+            className={mobileMoreOpen ? "active" : ""}
+            aria-expanded={mobileMoreOpen}
+            onClick={() => setMobileMoreOpen((current) => !current)}
+          >
+            <span className="mobileMoreIcon" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+            <span>{dashboardLanguage === "ms" ? "Lagi" : "More"}</span>
+          </button>
         </nav>
       </main>
     </div>
