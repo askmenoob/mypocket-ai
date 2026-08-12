@@ -46,6 +46,29 @@ function googleLoginUrl(){
   return `${API_BASE}/auth/google`;
 }
 
+function buildWhatsAppBotUrl(
+  phoneNumber:string | null | undefined,
+){
+  const normalizedPhoneNumber = String(
+    phoneNumber
+    ??
+    "",
+  ).replace(
+    /\D/g,
+    "",
+  );
+
+  if(!normalizedPhoneNumber){
+    return null;
+  }
+
+  return `https://wa.me/${
+    normalizedPhoneNumber
+  }?text=${
+    encodeURIComponent("!")
+  }`;
+}
+
 type Member = {
   memberId:string;
   userId:string;
@@ -4752,39 +4775,12 @@ function Dashboard(
       props.data.whatsapp?.instance?.status,
     );
 
-  const whatsAppShortcutNumber =
-    String(
-      props.data.whatsapp?.instance?.phoneNumber
-      ??
-      "",
-    )
-      .replace(
-        /\D/g,
-        "",
-      );
-
-  const whatsAppShortcutAlias =
-    String(
-      props.data.whatsapp?.instance?.botAlias
-      ??
-      "bot",
-    )
-      .replace(
-        /^[@!]+/,
-        "",
-      )
-      .trim()
-    ||
-    "bot";
-
   const mobileWhatsAppUrl =
-    `https://wa.me/${
-      whatsAppShortcutNumber
-    }?text=${
-      encodeURIComponent(
-        `${whatsAppShortcutAlias} `,
-      )
-    }`;
+    isWhatsAppConnected
+      ? buildWhatsAppBotUrl(
+          props.data.whatsapp?.instance?.phoneNumber,
+        )
+      : null;
 
   const hasDashboardGoogleSheet =
     Boolean(
@@ -7127,8 +7123,8 @@ function Dashboard(
                 />
               )}
 
-            <div className="tableWrap">
-              <table>
+            <div className="tableWrap transactionsTableWrap">
+              <table className="transactionsTable">
                 <thead>
                   <tr>
                     {
@@ -7179,7 +7175,7 @@ function Dashboard(
                             ? 9
                             : 8
                         }
-                        className="hint"
+                        className="hint transactionEmptyCell"
                         role="status"
                         aria-live="polite"
                       >
@@ -7200,7 +7196,7 @@ function Dashboard(
                         canBulkDeleteTransactions
                         &&
                         (
-                          <td>
+                          <td className="transactionSelectCell">
                             <input
                               type="checkbox"
                               checked={
@@ -7234,21 +7230,59 @@ function Dashboard(
                           </td>
                         )
                       }
-                      <td>{new Date(item.transactionDate).toLocaleString("en-MY")}</td>
-                      <td>
+                      <td
+                        className="transactionDateCell"
+                        data-label={dashboardText.date}
+                      >
+                        {new Date(item.transactionDate).toLocaleString("en-MY")}
+                      </td>
+                      <td
+                        className="transactionTypeCell"
+                        data-label={dashboardText.type}
+                      >
                         <span className={`type ${item.type.toLowerCase()}`}>
                           {item.type}
                         </span>
                       </td>
-                      <td>{item.category?.name || "-"}</td>
-                      <td>{item.merchant?.name || "-"}</td>
-                      <td>{item.receiptReference || "-"}</td>
-                      <td className={item.type === "INCOME" ? "incomeText" : "expenseText"}>
+                      <td
+                        className="transactionCategoryCell"
+                        data-label={dashboardText.category}
+                      >
+                        {item.category?.name || "-"}
+                      </td>
+                      <td
+                        className="transactionMerchantCell"
+                        data-label={dashboardText.merchant}
+                      >
+                        {item.merchant?.name || "-"}
+                      </td>
+                      <td
+                        className="transactionReferenceCell"
+                        data-label={dashboardText.receiptReference}
+                      >
+                        {item.receiptReference || "-"}
+                      </td>
+                      <td
+                        className={`transactionAmountCell ${
+                          item.type === "INCOME"
+                            ? "incomeText"
+                            : "expenseText"
+                        }`}
+                        data-label={dashboardText.amount}
+                      >
                         {money(item.amount, item.currency)}
                       </td>
-                      <td>{item.source || "SYSTEM"}</td>
+                      <td
+                        className="transactionSourceCell"
+                        data-label={dashboardText.source}
+                      >
+                        {item.source || "SYSTEM"}
+                      </td>
 
-                      <td>
+                      <td
+                        className="transactionRecordedByCell"
+                        data-label={dashboardText.recordedBy}
+                      >
 
                         {
 
@@ -8818,20 +8852,42 @@ function Dashboard(
               </button>
             ))}
 
-          <a
-            className="mobileAddAction"
-            href={mobileWhatsAppUrl}
-            aria-label={
-              dashboardLanguage === "ms"
-                ? "Buka WhatsApp untuk tambah transaksi"
-                : "Open WhatsApp to add a transaction"
-            }
-          >
-            <span aria-hidden="true">
-              <AppIcon name="whatsapp" size={23} strokeWidth={2.2} />
-            </span>
-            <small>WhatsApp</small>
-          </a>
+          {
+            mobileWhatsAppUrl
+              ? (
+                  <a
+                    className="mobileAddAction"
+                    href={mobileWhatsAppUrl}
+                    aria-label={
+                      dashboardLanguage === "ms"
+                        ? "Buka bot MyPocket di WhatsApp dengan arahan tanda seru"
+                        : "Open the MyPocket WhatsApp bot with an exclamation command"
+                    }
+                  >
+                    <span aria-hidden="true">
+                      <AppIcon name="whatsapp" size={23} strokeWidth={2.2} />
+                    </span>
+                    <small>WhatsApp</small>
+                  </a>
+                )
+              : (
+                  <button
+                    type="button"
+                    className="mobileAddAction"
+                    onClick={() => goToView("whatsapp")}
+                    aria-label={
+                      dashboardLanguage === "ms"
+                        ? "Sambungkan bot WhatsApp"
+                        : "Connect the WhatsApp bot"
+                    }
+                  >
+                    <span aria-hidden="true">
+                      <AppIcon name="whatsapp" size={23} strokeWidth={2.2} />
+                    </span>
+                    <small>WhatsApp</small>
+                  </button>
+                )
+          }
 
           {navItems
             .filter((item) => item.view === "commitments")

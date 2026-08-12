@@ -84,10 +84,11 @@ test("dashboard spacing and narrow WhatsApp content are responsive", () => {
 });
 
 test("mobile center action opens the connected WhatsApp bot", () => {
-  assert.match(appSource, /const whatsAppShortcutNumber\s*=/);
+  assert.match(appSource, /function buildWhatsAppBotUrl\s*\(/);
   assert.match(appSource, /props\.data\.whatsapp\?\.instance\?\.phoneNumber/);
   assert.match(appSource, /const mobileWhatsAppUrl\s*=/);
   assert.match(appSource, /https:\/\/wa\.me\//);
+  assert.match(appSource, /encodeURIComponent\("!"\)/);
   assert.match(appSource, /className="mobileAddAction"[\s\S]*href=\{mobileWhatsAppUrl\}/);
   assert.match(appSource, /<AppIcon name="whatsapp"/);
   assert.match(focusStyles, /\.appShell \.mobileNav a\s*\{/);

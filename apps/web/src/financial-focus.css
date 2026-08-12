@@ -1620,6 +1620,149 @@
     display: none;
   }
 
+  .appShell .transactionsTableWrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .appShell .transactionsTable,
+  .appShell .transactionsTable tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .appShell .transactionsTable thead {
+    display: none;
+  }
+
+  .appShell .transactionsTable tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .appShell .transactionsTable tbody tr {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "merchant amount"
+      "category type"
+      "date date"
+      "reference reference"
+      "source recorded";
+    gap: 5px 12px;
+    padding: 12px;
+    border: 1px solid var(--ff-line);
+    border-radius: 10px;
+    background: #fff;
+    content-visibility: auto;
+    contain-intrinsic-size: 150px;
+  }
+
+  .appShell .transactionsTable tbody tr:has(.transactionSelectCell) {
+    padding-left: 38px;
+  }
+
+  .appShell .transactionsTable td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    color: var(--ff-ink);
+    font-size: 11px;
+    line-height: 1.35;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .appShell .transactionsTable .transactionSelectCell {
+    position: absolute;
+    top: 13px;
+    left: 12px;
+  }
+
+  .appShell .transactionsTable .transactionSelectCell input {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    min-height: 16px;
+    margin: 0;
+    padding: 0;
+    accent-color: var(--ff-green);
+  }
+
+  .appShell .transactionMerchantCell {
+    grid-area: merchant;
+    color: var(--ff-ink-strong) !important;
+    font-size: 12px !important;
+    font-weight: 780;
+  }
+
+  .appShell .transactionAmountCell {
+    grid-area: amount;
+    align-self: start;
+    text-align: right;
+    font-size: 12px !important;
+    font-weight: 820;
+    white-space: nowrap !important;
+  }
+
+  .appShell .transactionCategoryCell {
+    grid-area: category;
+  }
+
+  .appShell .transactionTypeCell {
+    grid-area: type;
+    justify-self: end;
+  }
+
+  .appShell .transactionTypeCell .type {
+    padding: 4px 7px;
+    font-size: 9px;
+  }
+
+  .appShell .transactionDateCell {
+    grid-area: date;
+    color: var(--ff-muted) !important;
+    font-size: 10px !important;
+  }
+
+  .appShell .transactionReferenceCell {
+    grid-area: reference;
+    padding-top: 4px !important;
+    border-top: 1px dashed var(--ff-line) !important;
+  }
+
+  .appShell .transactionSourceCell {
+    grid-area: source;
+  }
+
+  .appShell .transactionRecordedByCell {
+    grid-area: recorded;
+    text-align: right;
+  }
+
+  .appShell .transactionReferenceCell::before,
+  .appShell .transactionSourceCell::before,
+  .appShell .transactionRecordedByCell::before {
+    content: attr(data-label) ": ";
+    color: var(--ff-muted);
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  .appShell .transactionsTable .transactionEmptyCell {
+    display: block;
+    padding: 18px;
+    text-align: center;
+  }
+
   .appShell .mobileNav,
   body:has(.appShell) .mobileNav {
     position: fixed;
