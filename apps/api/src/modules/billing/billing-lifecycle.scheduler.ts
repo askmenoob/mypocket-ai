@@ -4,6 +4,7 @@ import {
   buildRenewalSchedule,
   computePlanQuote,
   deriveBillingAccessState,
+  automaticRenewalChargeCutoff,
   getGraceDays,
   getReminderOffsetsDays,
   type BillingPlan,
@@ -116,12 +117,12 @@ export class BillingLifecycleScheduler {
   }
 
   private async startUpcomingPayments(now: Date) {
-    const horizon = new Date(now.getTime() + 30 * DAY_MS);
+    const chargeCutoff = automaticRenewalChargeCutoff(now);
     const renewals = await this.app.prisma.billingRenewal.findMany({
       where: {
         status: "SCHEDULED",
         paymentAttemptId: null,
-        dueAt: { lte: horizon },
+        dueAt: { lte: chargeCutoff },
       },
       orderBy: { dueAt: "asc" },
       take: 20,

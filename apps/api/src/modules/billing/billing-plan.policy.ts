@@ -271,3 +271,8 @@ export const calculateProratedUpgrade = (input: {
       BigInt(totalMs),
   );
 };
+
+export const automaticRenewalChargeCutoff = (now: Date) => {
+  assertDate(now, "now");
+  return new Date(now.getTime());
+};

@@ -7,9 +7,21 @@ import {
 } from "node:path";
 import test from "node:test";
 
+import { env } from "../src/config/index.js";
+
 import {
   BillingService,
 } from "../src/modules/billing/billing.service.js";
+
+const originalBillingProvider = env.BILLING_CHECKOUT_PROVIDER;
+
+test.before(() => {
+  env.BILLING_CHECKOUT_PROVIDER = "hitpay";
+});
+
+test.after(() => {
+  env.BILLING_CHECKOUT_PROVIDER = originalBillingProvider;
+});
 
 
 type BillingStatus =

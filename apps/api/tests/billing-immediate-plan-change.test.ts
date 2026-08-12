@@ -14,6 +14,16 @@ import {
   BillingService,
 } from "../src/modules/billing/billing.service.js";
 
+const originalBillingProvider = env.BILLING_CHECKOUT_PROVIDER;
+
+test.before(() => {
+  env.BILLING_CHECKOUT_PROVIDER = "hitpay";
+});
+
+test.after(() => {
+  env.BILLING_CHECKOUT_PROVIDER = originalBillingProvider;
+});
+
 
 function immediateUpgradeHarness(){
   const providerCalls:Array<Record<string, any>> = [];

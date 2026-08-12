@@ -337,7 +337,7 @@ test(
 
     assert.match(
       webSource,
-      /Log masuk hanya berkongsi nama dan alamat e-mel anda/,
+      /Google hanya berkongsi nama dan alamat e-mel anda semasa log\s+masuk/,
     );
     assert.match(
       webSource,
