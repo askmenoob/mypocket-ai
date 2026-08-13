@@ -1,6 +1,6 @@
 # Sprint Q — Receipt Intelligence 2.0
 
-Status: **READY FOR COMMIT AND DEPLOY**
+Status: **DEPLOYED — 2026-08-14**
 Priority rule: Sprint P remains the live-money release track. Sprint Q must not
 change billing access or the `!confirm` persistence boundary.
 
@@ -127,8 +127,8 @@ added. Processing is in memory with sanitized filenames.
   Settings; compatibility default is PDF, the draft window is five minutes, and
   neither format is uploaded before `!confirm`. Additive schema/migration and
   regenerated Prisma client validate; 26/26 focused, 271/271 full API and 32/32
-  web tests pass; API/web production builds pass. Migration was not applied and
-  no commit, push, service restart or deployment was performed.
+  web tests pass; API/web production builds pass. Commit `b8e6f8b` was deployed,
+  the additive migration is applied, and API/web runtime checks are green.
 
 ## H. Verification evidence
 
@@ -136,8 +136,9 @@ added. Processing is in memory with sanitized filenames.
 - Full API suite after aggregate observability: **266/266 PASS**.
 - API TypeScript build: **PASS**.
 - `git diff --check`: **PASS** (line-ending warnings only).
-- No production deployment, database migration, provider activation or service
-  restart was performed for Sprint Q.
+- Production deployment completed from commit `b8e6f8b`; the additive receipt
+  preference migration is applied. API, readiness, app and public landing checks
+  returned HTTP 200. CHIP remains intentionally in test mode.
 
 The image-receipt MVP is green. Generic PDF/invoice automation is outside this
 MVP and remains fail-closed until a future accounting design can prove whether
