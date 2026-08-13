@@ -155,7 +155,8 @@ added. Processing is in memory with sanitized filenames.
   full original aspect ratio. Focused scanner/pipeline/webhook/Drive checks
   pass 27/27; the wider receipt/media/voice suite passes 66/66; the complete
   API suite passes 231/231; and the API TypeScript build passes. Runtime
-  deployment remains pending explicit approval.
+  deployment completed from production commit `02c982a`; API health/readiness
+  and public app checks return HTTP 200 with zero service restart failures.
 
 The image-receipt MVP is green. Generic PDF/invoice automation is outside this
 MVP and remains fail-closed until a future accounting design can prove whether
