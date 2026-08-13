@@ -43,7 +43,7 @@ Migration evidence (2026-08-12): the full chain first passed in an ephemeral Pos
 - [x] P6: deduplicate semantic webhook replays even when CHIP changes only the delivery timestamp.
 - [x] P6: reject stale/out-of-order events so an older success or failure cannot reverse newer billing state.
 - [x] P6: serialize concurrent deliveries and retry transaction conflicts with a strict three-attempt bound.
-- [ ] P6: apply the additive webhook-ordering migration and deploy only after explicit approval and a fresh database backup.
+- [x] P6: apply the additive webhook-ordering migration after explicit approval and a fresh verified database backup.
 
 ## Plans, duration, and pricing
 
@@ -94,7 +94,20 @@ Migration evidence (2026-08-12): the full chain first passed in an ephemeral Pos
 - [x] Apply the live additive migration only after explicit deployment approval and verified backup.
 - [!] Enable CHIP production only after merchant approval, production credentials, and sandbox E2E evidence are present.
 - [x] Commit/push the verified Test Mode implementation while keeping live-money activation blocked.
-- [ ] Commit/push/deploy the isolated P6 webhook-safety patch while keeping CHIP Test Mode enabled.
+- [x] Commit/push/deploy the isolated P6 webhook-safety patch while keeping CHIP Test Mode enabled.
+
+## Sprint P closure gates
+
+- [x] P1: automatic renewal becomes chargeable only at the exact due time; signed webhook verification remains mandatory.
+- [~] P2: deterministic failed-payment, refund, chargeback, renewal, grace, suspension, and reactivation coverage passes; hosted Test Mode canaries for every outcome are still pending.
+- [~] P3: the CHIP brand and FPX B2C are active; local/international cards and e-wallet approval remain external CHIP gates.
+- [ ] P4: install and independently verify production-only CHIP credentials without mixing them with Test Mode.
+- [x] P5: monthly D-7/D-3/D-1/D0 and long-term D-30/D-14/D-7/D0 reminders, due-date-only charging, grace/suspension access, and the `!pay` recovery path are verified by 12 focused passing tests.
+- [x] P6: semantic replay protection, stale-event ordering, serializable conflict retry, additive migration, source publication, and API deployment are complete.
+- [x] P7: reconcile production Test Mode attempts, webhook events, subscription access, refund state, and unprocessed events with zero mismatches.
+- [x] P8: restore the fresh production backup into an isolated disposable PostgreSQL 15 instance, apply the P6 migration there, and validate restored billing counts.
+- [ ] P9: run the first low-value live-money FPX canary only after an explicit owner go-ahead and production credentials are installed.
+- [ ] P10: issue the final production go/no-go only after P2-P4 and P9 evidence is complete; live-money activation remains blocked.
 
 ## Rollback and current runtime state
 
@@ -102,12 +115,15 @@ Migration evidence (2026-08-12): the full chain first passed in an ephemeral Pos
 - To roll back application code, restore the immediately preceding source/database backups and rebuild API/web. Do not edit or remove an already-applied migration file.
 - The default provider for every new subscription and webhook row is CHIP. Returning to HitPay would require a separately reviewed new implementation; it is not a configuration switch.
 - The pre-migration custom database dump is the last-resort disaster-recovery artifact. Restoring it is destructive and requires a maintenance window, exact target verification, and a separate explicit approval.
-- Deployment evidence (2026-08-12): the verified API regression suite and recurring-token/renewal-safety tests pass, API and web builds pass, Prisma validates, all 24 migrations are current, API/web services are active, public health/web return HTTP 200, and an unsigned CHIP Test Mode webhook is rejected with HTTP 401.
+- Deployment evidence (2026-08-13): the verified API regression suite and recurring-token/renewal-safety tests pass, API and web builds pass, Prisma validates, all 25 migrations are current, API/web services are active, local and public health/readiness/web return HTTP 200, and CHIP remains in Test Mode.
 - Credential checkpoint (2026-08-12): CHIP Test Mode API key, Brand ID, webhook public key, webhook URL, and return URL are installed and cross-checked without exposing their values. The configured webhook callback and public key match the CHIP portal record.
 - Sandbox checkout evidence (2026-08-12): Family monthly automatic renewal completed at RM19 by sandbox Mastercard, followed by Family yearly automatic renewal at RM228 by sandbox Visa. Both CHIP purchases report `is_test=true`, both signed `purchase.paid` events are `PROCESSED_ACTIVATED`, and paid coverage now extends through 2027-09-12.
 - Recurring-token correction (2026-08-12): CHIP marks the paid Purchase itself with `is_recurring_token=true`; its Purchase ID is the token even when `recurring_token` is null. The webhook handler now follows that official contract, 12/12 focused CHIP tests pass, and the active yearly token was safely backfilled after a fresh database backup.
 - Renewal hardening (2026-08-12): automatic CHIP token charges start only at the exact due time. New dashboard JWTs expire after 12 hours and transaction routes no longer print JWT payloads.
 - HitPay retirement (2026-08-12): the user confirmed all HitPay activity was sandbox-only. Active HitPay runtime code, routes, configuration, scripts, tests, documentation, secrets, one sandbox subscription, and 37 sandbox webhook rows were retired after recoverable backups; historical migration files remain immutable. The affected test account returned to Free and its workspace returned to Personal.
 - Source publication (2026-08-12): retirement commits `f660c48` and `d3c0053` are pushed to `codex/prod-readiness-20260803`, with server/GitHub parity and a clean tracked worktree. Live-money enablement remains blocked only by the hosted lifecycle gates above.
-- P6 verification (2026-08-13): semantic replay, duplicate concurrency, bounded serializable retry, and stale refund/success/preauthorization ordering tests pass; the full API suite passes 254/254, API TypeScript build passes, Prisma validates, and the additive migration remains unapplied pending deployment approval.
-- Rollback artifacts: `.env.backup-chip-activation-20260812-075800` plus scoped source/dist backups under `.deploy-backups/chip-refund-hotfix-*`, `.deploy-backups/chip-access-plan-*`, `.deploy-backups/chip-downgrade-label-*`, and `.deploy-backups/chip-recurring-hotfix-*`; pre-backfill database dump `.deploy-backups/chip-recurring-data-20260812-084007.dump`.
+- P5 verification (2026-08-13): 12/12 focused scheduler, pricing, reminder-offset, grace/suspension, and WhatsApp payment-recovery tests pass. Automatic charges use the exact due-time cutoff; reminder creation may begin earlier without initiating a charge.
+- P6 verification and deployment (2026-08-13): semantic replay, duplicate concurrency, bounded serializable retry, and stale refund/success/preauthorization ordering tests pass; the full API suite passes 254/254, API TypeScript build passes, Prisma validates, migration `20260813090000_harden_chip_webhook_ordering` is applied, and commit `39fbb0b` is pushed. The API was rebuilt and restarted with zero restart failures while CHIP Test Mode remained enabled.
+- P7 reconciliation (2026-08-13): duplicate event keys, paid attempts without success events, failed attempts without failure events, refund-state mismatches, active subscriptions without paid attempts, failed-but-active subscriptions, and unprocessed webhook events all equal zero. Both successful attempts resolve to `PROCESSED_ACTIVATED` signed events.
+- P8 restore rehearsal (2026-08-13): `.deploy-backups/p6-pre-20260813-205618.dump` (144,434 bytes) passes `pg_restore --list`, restores successfully into a disposable PostgreSQL 15 instance, accepts the P6 migration, and reproduces one subscription, four attempts, and four webhook rows. The disposable instance was removed after verification.
+- Rollback artifacts: `.env.backup-chip-activation-20260812-075800`, `.deploy-backups/p6-pre-20260813-205618.dump`, `.deploy-backups/p6-source-20260813-205618.bundle`, and the P6 API dist snapshot under `.deploy-backups/p6-api-dist-pre-20260813-210727`, plus the earlier scoped CHIP source/dist backups and `.deploy-backups/chip-recurring-data-20260812-084007.dump`.
