@@ -158,6 +158,8 @@ type ReceiptConfirmationDraft = {
   pendingUpload:PendingReceiptUpload;
   fileName:string;
   extraction:ReceiptVisionCandidate;
+  whatsappReceivedAt:string;
+  timezone:string;
   expiresAt:number;
 };
 
@@ -2612,7 +2614,10 @@ export class WhatsAppService {
       await this.app.prisma.workspaceBotSettings
         ?.findUnique?.({
           where:{workspaceId},
-          select:{receiptPdfEnabled:true},
+          select:{
+            receiptPdfEnabled:true,
+            timezone:true,
+          },
         })
       ??
       null;
@@ -2683,6 +2688,14 @@ export class WhatsAppService {
               result.pendingUpload,
             fileName:result.fileName,
             extraction:result.extraction,
+            whatsappReceivedAt:
+              normalized.timestamp
+              ??
+              new Date().toISOString(),
+            timezone:
+              botSettings?.timezone
+              ??
+              "Asia/Kuala_Lumpur",
             expiresAt,
           },
         );
@@ -4593,6 +4606,14 @@ export class WhatsAppService {
 
       if(!draft.receiptUrl){
 
+        draft.pendingUpload = {
+          ...draft.pendingUpload,
+          fileName:
+            this.buildConfirmedReceiptFileName(
+              draft,
+            ),
+        };
+
         const stored =
           await this.receiptPipeline
             .storeConfirmedReceipt({
@@ -4723,6 +4744,108 @@ export class WhatsAppService {
       };
 
     }
+
+  }
+
+
+  private buildConfirmedReceiptFileName(
+    draft:ReceiptConfirmationDraft,
+  ):string{
+
+    const uploadTimestamp =
+      this.formatReceiptUploadTimestamp(
+        draft.whatsappReceivedAt,
+        draft.timezone,
+      );
+
+    const actorId =
+      this.sanitizeReceiptFileSegment(
+        draft.actorUserId,
+        "unknown-user",
+        80,
+      );
+
+    const merchant =
+      this.sanitizeReceiptFileSegment(
+        draft.extraction.merchantName,
+        "Receipt",
+        60,
+      );
+
+    const reference =
+      this.sanitizeReceiptFileSegment(
+        draft.extraction.receiptReference,
+        "NO-REFERENCE",
+        50,
+      );
+
+    const extension =
+      draft.pendingUpload.mimeType === "application/pdf"
+        ? "pdf"
+        : draft.pendingUpload.mimeType === "image/png"
+          ? "png"
+          : draft.pendingUpload.mimeType === "image/webp"
+            ? "webp"
+            : "jpg";
+
+    return [
+      "Receipt",
+      uploadTimestamp.date,
+      uploadTimestamp.time.replace(/:/g, "-"),
+      `CreatedByID_${actorId}`,
+      merchant,
+      `Reference_${reference}`,
+    ].join("_") + `.${extension}`;
+
+  }
+
+
+  private formatReceiptUploadTimestamp(
+    value:string,
+    timezone:string,
+  ):{date:string; time:string}{
+
+    const receivedAt =
+      new Date(value);
+
+    const safeDate =
+      Number.isNaN(receivedAt.getTime())
+        ? new Date()
+        : receivedAt;
+
+    try{
+      return this.getDateTimePartsInTimezone(
+        safeDate,
+        timezone,
+      );
+    }catch{
+      const iso = safeDate.toISOString();
+      return {
+        date:iso.slice(0, 10),
+        time:iso.slice(11, 19),
+      };
+    }
+
+  }
+
+
+  private sanitizeReceiptFileSegment(
+    value:string | undefined,
+    fallback:string,
+    maxLength:number,
+  ):string{
+
+    const sanitized =
+      value
+        ?.normalize("NFKC")
+        .replace(/[\r\n\t]+/g, " ")
+        .replace(/[^\p{L}\p{N}._-]+/gu, "-")
+        .replace(/-+/g, "-")
+        .replace(/^[._-]+|[._-]+$/g, "")
+        .slice(0, maxLength)
+        .replace(/[._-]+$/g, "");
+
+    return sanitized || fallback;
 
   }
 

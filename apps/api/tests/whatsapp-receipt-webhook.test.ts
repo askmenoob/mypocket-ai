@@ -555,7 +555,10 @@ test(
       ) => {
         events.push("pdf");
         assert.equal(mediaUrl, "https://drive.example/receipt-1");
-        assert.equal(fileName, "receipt-scan.pdf");
+        assert.equal(
+          fileName,
+          "Receipt_2026-08-14_02-22-00_CreatedByID_user-1_MANKON-PHOENIX-ENTERPRISE_Reference_613694.pdf",
+        );
       };
     service.receiptPipeline = {
       storeConfirmedReceipt:async (input:any) => {
@@ -564,10 +567,14 @@ test(
           input.receiptsFolderId,
           "receipts-folder",
         );
+        assert.equal(
+          input.media.fileName,
+          "Receipt_2026-08-14_02-22-00_CreatedByID_user-1_MANKON-PHOENIX-ENTERPRISE_Reference_613694.pdf",
+        );
         return {
           status:"success",
           receiptUrl:"https://drive.example/receipt-1",
-          fileName:"receipt-scan.pdf",
+          fileName:input.media.fileName,
         };
       },
     };
@@ -591,6 +598,8 @@ test(
           fileName:"receipt-scan.pdf",
         },
         fileName:"receipt-scan.pdf",
+        whatsappReceivedAt:"2026-08-13T18:22:00.000Z",
+        timezone:"Asia/Kuala_Lumpur",
         extraction:{
           merchantName:"MANKON PHOENIX ENTERPRISE",
           merchantBrand:"Shell",
@@ -600,6 +609,8 @@ test(
             "FS Diesel, Pump 8, 85.340 L @ RM4.570/L",
           amount:"390.00",
           currency:"MYR",
+          transactionDate:"2026-08-06",
+          receiptReference:"613694",
           rawText:"FS Diesel Pump 8 TOTAL RM390.00",
           confidence:0.95,
           latencyMs:10,
@@ -651,6 +662,39 @@ test(
       ),
       false,
     );
+  },
+);
+
+
+test(
+  "receipt archive naming uses the WhatsApp upload date and Created By ID",
+  () => {
+    const service = createService("receipts-folder");
+
+    const fileName = service.buildConfirmedReceiptFileName({
+      actorUserId:"user/id unsafe",
+      whatsappReceivedAt:"2026-08-13T18:22:00.000Z",
+      timezone:"Asia/Kuala_Lumpur",
+      pendingUpload:{
+        bytes:new Uint8Array([1, 2, 3]),
+        mimeType:"image/png",
+        fileName:"random-upload.png",
+      },
+      extraction:{
+        transactionDate:"2020-01-02",
+        rawText:"TOTAL RM10.00",
+        amount:"10.00",
+        latencyMs:1,
+        model:"test-model",
+      },
+    });
+
+    assert.equal(
+      fileName,
+      "Receipt_2026-08-14_02-22-00_CreatedByID_user-id-unsafe_Receipt_Reference_NO-REFERENCE.png",
+    );
+    assert.doesNotMatch(fileName, /2020-01-02/);
+    assert.doesNotMatch(fileName, /random-upload/);
   },
 );
 

@@ -157,6 +157,16 @@ added. Processing is in memory with sanitized filenames.
   API suite passes 231/231; and the API TypeScript build passes. Runtime
   deployment completed from production commit `02c982a`; API health/readiness
   and public app checks return HTTP 200 with zero service restart failures.
+- [x] Q15 Receipt archive naming source fix: the final Drive filename is built
+  only at `!confirm` from the WhatsApp upload date/time in the workspace
+  timezone, the same Created By ID used by the transaction/Google Sheet,
+  merchant and receipt reference. Printed receipt date remains the transaction
+  date and is deliberately not used as the upload filename date. PDF/PNG
+  extensions follow the selected Bot Settings format; unsafe path characters
+  are removed and missing merchant/reference values fail safely to labels.
+  Focused receipt/Drive checks pass 28/28, the complete API suite passes
+  232/232, and the API TypeScript build passes. Runtime deployment remains
+  pending explicit approval.
 
 The image-receipt MVP is green. Generic PDF/invoice automation is outside this
 MVP and remains fail-closed until a future accounting design can prove whether
