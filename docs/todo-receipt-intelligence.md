@@ -139,6 +139,12 @@ added. Processing is in memory with sanitized filenames.
 - Production deployment completed from commit `b8e6f8b`; the additive receipt
   preference migration is applied. API, readiness, app and public landing checks
   returned HTTP 200. CHIP remains intentionally in test mode.
+- [x] Q13 Groq resilience hotfix: Qwen vision reasoning is disabled for strict
+  JSON extraction, completion size is bounded, malformed output receives one
+  concise fail-closed retry, short `429` responses honor `retry-after`, and bot
+  replies now distinguish temporary AI/provider failures from poor image
+  quality. Receipt/media/voice regression tests pass 78/78; the complete API
+  suite passes 275/275 and the API TypeScript build passes.
 
 The image-receipt MVP is green. Generic PDF/invoice automation is outside this
 MVP and remains fail-closed until a future accounting design can prove whether

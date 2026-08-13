@@ -102,11 +102,19 @@ interface GroqVisionProviderOptions {
 
   defaultPrompt?:string;
 
+  maxRateLimitRetryMs?:number;
+
+  sleepImpl?:(delayMs:number) => Promise<void>;
+
 }
 
 
 const DEFAULT_MAX_BYTES =
   20 * 1024 * 1024;
+
+
+const DEFAULT_MAX_RATE_LIMIT_RETRY_MS =
+  10_000;
 
 
 const RECEIPT_GATE_PROMPT =
@@ -139,6 +147,10 @@ export class GroqVisionProvider {
 
   private readonly defaultPrompt:string;
 
+  private readonly maxRateLimitRetryMs:number;
+
+  private readonly sleepImpl:(delayMs:number) => Promise<void>;
+
 
   constructor(
     private readonly options:
@@ -164,6 +176,18 @@ export class GroqVisionProvider {
       options.defaultPrompt
       ??
       DEFAULT_PROMPT;
+
+    this.maxRateLimitRetryMs =
+      options.maxRateLimitRetryMs
+      ??
+      DEFAULT_MAX_RATE_LIMIT_RETRY_MS;
+
+    this.sleepImpl =
+      options.sleepImpl
+      ??
+      (delayMs => new Promise(
+        resolve => setTimeout(resolve, delayMs),
+      ));
 
   }
 
@@ -243,6 +267,9 @@ export class GroqVisionProvider {
         body:JSON.stringify({
           model:this.options.model,
           temperature:0,
+          max_completion_tokens:2048,
+          reasoning_effort:"none",
+          reasoning_format:"hidden",
           ...(strictJson
             ? {
                 response_format:{
@@ -270,6 +297,50 @@ export class GroqVisionProvider {
         }),
       });
 
+    let rateLimitRetryUsed = false;
+
+    const fetchVision =
+      async (
+        init:RequestInit,
+      ) => {
+        let nextResponse =
+          await this.fetchImpl(
+            this.endpoint,
+            init,
+          );
+
+        if(
+          nextResponse.status === 429
+          &&
+          !rateLimitRetryUsed
+        ){
+          const retryDelayMs =
+            this.retryAfterMs(
+              nextResponse.headers.get(
+                "retry-after",
+              ),
+            );
+
+          if(
+            retryDelayMs !== undefined
+            &&
+            retryDelayMs <= this.maxRateLimitRetryMs
+          ){
+            rateLimitRetryUsed = true;
+            await this.sleepImpl(
+              retryDelayMs,
+            );
+            nextResponse =
+              await this.fetchImpl(
+                this.endpoint,
+                init,
+              );
+          }
+        }
+
+        return nextResponse;
+      };
+
     const requestInit =
       createRequestInit(
         [
@@ -281,11 +352,21 @@ export class GroqVisionProvider {
         ].join(" "),
       );
 
+    const fallbackRequestInit =
+      createRequestInit(
+        [
+          RECEIPT_GATE_PROMPT,
+          RECEIPT_JSON_FALLBACK_PROMPT,
+        ].join(" "),
+        false,
+      );
+
+    let fallbackUsed = false;
+
     try{
 
       response =
-        await this.fetchImpl(
-          this.endpoint,
+        await fetchVision(
           requestInit,
         );
 
@@ -296,16 +377,11 @@ export class GroqVisionProvider {
       ){
 
         response =
-          await this.fetchImpl(
-            this.endpoint,
-            createRequestInit(
-              [
-                RECEIPT_GATE_PROMPT,
-                RECEIPT_JSON_FALLBACK_PROMPT,
-              ].join(" "),
-              false,
-            ),
+          await fetchVision(
+            fallbackRequestInit,
           );
+
+        fallbackUsed = true;
 
       }
 
@@ -318,11 +394,6 @@ export class GroqVisionProvider {
       };
 
     }
-
-    const latencyMs =
-      Date.now()
-      -
-      startedAt;
 
     if(!response.ok){
 
@@ -354,26 +425,73 @@ export class GroqVisionProvider {
     }
 
 
-    const content =
+    let content =
       this.extractContent(
         payload,
       );
 
-    if(!content){
+    let candidate =
+      this.parseJsonContent(
+        content,
+      );
 
+    if(
+      candidate === undefined
+      &&
+      !fallbackUsed
+    ){
+      fallbackUsed = true;
+
+      try{
+        response =
+          await fetchVision(
+            fallbackRequestInit,
+          );
+      }catch{
+        return {
+          status:"failed",
+          provider:this.name,
+          reason:"GROQ_VISION_REQUEST_FAILED",
+        };
+      }
+
+      if(!response.ok){
+        return {
+          status:"failed",
+          provider:this.name,
+          reason:
+            `GROQ_VISION_HTTP_${response.status}`,
+        };
+      }
+
+      try{
+        payload =
+          await response.json();
+      }catch{
+        return {
+          status:"invalid",
+          provider:this.name,
+          reason:"GROQ_VISION_RESPONSE_NOT_JSON",
+        };
+      }
+
+      content =
+        this.extractContent(
+          payload,
+        );
+      candidate =
+        this.parseJsonContent(
+          content,
+        );
+    }
+
+    if(!content){
       return {
         status:"invalid",
         provider:this.name,
         reason:"GROQ_VISION_CONTENT_MISSING",
       };
-
     }
-
-
-    const candidate =
-      this.parseJsonContent(
-        content,
-      );
 
     if(candidate === undefined){
 
@@ -414,6 +532,11 @@ export class GroqVisionProvider {
       this.asString(
         root.rawText,
       );
+
+    const latencyMs =
+      Date.now()
+      -
+      startedAt;
 
     if(documentKind === "NOT_RECEIPT"){
 
@@ -1490,6 +1613,51 @@ export class GroqVisionProvider {
       return false;
 
     }
+
+  }
+
+
+  private retryAfterMs(
+    value:string | null,
+  ):number | undefined{
+
+    const normalized =
+      value?.trim()
+      ??
+      "";
+
+    if(!normalized){
+      return undefined;
+    }
+
+    const seconds =
+      Number(
+        normalized,
+      );
+
+    if(
+      Number.isFinite(seconds)
+      &&
+      seconds >= 0
+    ){
+      return Math.ceil(
+        seconds * 1000,
+      );
+    }
+
+    const retryAt =
+      Date.parse(
+        normalized,
+      );
+
+    if(!Number.isFinite(retryAt)){
+      return undefined;
+    }
+
+    return Math.max(
+      0,
+      retryAt - Date.now(),
+    );
 
   }
 

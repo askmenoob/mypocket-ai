@@ -656,6 +656,114 @@ test(
 
 
 test(
+  "tells the user Groq is temporarily busy without blaming the receipt image",
+  async () => {
+    const service =
+      createService(
+        "receipts-folder",
+      );
+    service.findWebhookActorMember =
+      async () => ({
+        userId:"user-1",
+        role:"MEMBER",
+      });
+    let reply = "";
+    service.safeSendWebhookReply =
+      async (_normalized:any, text:string) => {
+        reply = text;
+      };
+    service.receiptPipeline = {
+      async process(){
+        return {
+          status:"failed",
+          source:"RECEIPT",
+          reason:"GROQ_VISION_HTTP_429",
+        };
+      },
+    };
+
+    const result =
+      await service.handleEvolutionWebhook(
+        payload,
+      );
+
+    assert.equal(
+      result.receipt.reason,
+      "GROQ_VISION_HTTP_429",
+    );
+    assert.match(
+      reply,
+      /Groq.*sibuk|AI.*sibuk/i,
+    );
+    assert.match(
+      reply,
+      /bukan disebabkan gambar/i,
+    );
+    assert.match(
+      reply,
+      /Tiada transaksi direkodkan/,
+    );
+    assert.doesNotMatch(
+      reply,
+      /gambar resit yang jelas/i,
+    );
+  },
+);
+
+
+test(
+  "reports malformed Groq output as a temporary AI failure instead of blaming image quality",
+  async () => {
+    const service =
+      createService(
+        "receipts-folder",
+      );
+    service.findWebhookActorMember =
+      async () => ({
+        userId:"user-1",
+        role:"MEMBER",
+      });
+    let reply = "";
+    service.safeSendWebhookReply =
+      async (_normalized:any, text:string) => {
+        reply = text;
+      };
+    service.receiptPipeline = {
+      async process(){
+        return {
+          status:"failed",
+          source:"RECEIPT",
+          reason:"GROQ_VISION_CONTENT_INVALID_JSON",
+        };
+      },
+    };
+
+    const result =
+      await service.handleEvolutionWebhook(
+        payload,
+      );
+
+    assert.equal(
+      result.receipt.reason,
+      "GROQ_VISION_CONTENT_INVALID_JSON",
+    );
+    assert.match(
+      reply,
+      /pembaca resit AI.*masalah sementara/i,
+    );
+    assert.match(
+      reply,
+      /bukan semestinya masalah gambar/i,
+    );
+    assert.doesNotMatch(
+      reply,
+      /gambar resit yang jelas/i,
+    );
+  },
+);
+
+
+test(
   "receipt draft fields can be corrected before confirm without resetting expiry",
   async () => {
     const service = createService("receipts-folder");

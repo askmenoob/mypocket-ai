@@ -1028,6 +1028,142 @@ test(
 
 
 test(
+  "retries one short Groq rate limit using retry-after",
+  async () => {
+    let requests = 0;
+    const delays:number[] = [];
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        sleepImpl:async delayMs => {
+          delays.push(delayMs);
+        },
+        fetchImpl:async () => {
+          requests += 1;
+          if(requests === 1){
+            return new Response(
+              JSON.stringify({
+                error:{message:"rate limited"},
+              }),
+              {
+                status:429,
+                headers:{
+                  "retry-after":"0.25",
+                },
+              },
+            );
+          }
+          return new Response(
+            JSON.stringify({
+              choices:[{
+                message:{
+                  content:JSON.stringify({
+                    documentKind:"RECEIPT",
+                    receiptEvidence:[
+                      "printed merchant",
+                      "Total After Adj 59.00",
+                    ],
+                    amount:"59.00",
+                    currency:"MYR",
+                    merchantName:"AEON CO. (M) BHD",
+                    receiptType:"RETAIL",
+                    rawText:[
+                      "AEON CO. (M) BHD",
+                      "Total After Adj 59.00",
+                      "Visa 59.00",
+                    ].join("\n"),
+                    confidence:0.97,
+                  }),
+                },
+              }],
+            }),
+            {status:200},
+          );
+        },
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"aeon.jpg",
+      });
+
+    assert.equal(requests, 2);
+    assert.deepEqual(delays, [250]);
+    assert.equal(result.status, "success");
+  },
+);
+
+
+test(
+  "uses the concise fallback when Groq returns malformed JSON",
+  async () => {
+    const requestBodies:Record<string, any>[] = [];
+    const provider =
+      new GroqVisionProvider({
+        apiKey:"test-key",
+        model:"qwen/qwen3.6-27b",
+        fetchImpl:async (_url, init) => {
+          requestBodies.push(
+            JSON.parse(
+              String(init?.body),
+            ),
+          );
+          if(requestBodies.length === 1){
+            return new Response(
+              JSON.stringify({
+                choices:[{
+                  message:{content:"not json"},
+                }],
+              }),
+              {status:200},
+            );
+          }
+          return new Response(
+            JSON.stringify({
+              choices:[{
+                message:{
+                  content:JSON.stringify({
+                    documentKind:"RECEIPT",
+                    receiptEvidence:["TOTAL 59.00"],
+                    amount:"59.00",
+                    merchantName:"AEON CO. (M) BHD",
+                    receiptType:"RETAIL",
+                    rawText:"AEON CO. (M) BHD\nTOTAL 59.00",
+                    confidence:0.9,
+                  }),
+                },
+              }],
+            }),
+            {status:200},
+          );
+        },
+      });
+
+    const result =
+      await provider.extractReceipt({
+        image:new Uint8Array([1]),
+        mimeType:"image/jpeg",
+        fileName:"aeon.jpg",
+      });
+
+    assert.equal(requestBodies.length, 2);
+    assert.equal(requestBodies[0].reasoning_effort, "none");
+    assert.equal(requestBodies[0].reasoning_format, "hidden");
+    assert.equal(requestBodies[0].max_completion_tokens, 2048);
+    assert.equal(requestBodies[1].response_format, undefined);
+    assert.match(
+      requestBodies[1].messages[0].content[0].text,
+      /short fallback receipt extraction/i,
+    );
+    assert.equal(result.status, "success");
+  },
+);
+
+
+test(
   "marks ordinary photos as not receipts and sends the fail-closed gate prompt",
   async () => {
     let prompt = "";

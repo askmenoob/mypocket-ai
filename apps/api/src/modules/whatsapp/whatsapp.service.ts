@@ -2788,16 +2788,31 @@ export class WhatsAppService {
       result.status === "unsupported"
     ){
 
+      const isVisionProviderFailure =
+        result.reason.startsWith(
+          "GROQ_VISION_",
+        );
+
       await this.safeSendWebhookReply(
         normalized,
         [
-          "⚠️ Resit belum dapat diproses.",
+          result.reason === "GROQ_VISION_HTTP_429"
+            ? "⏳ AI Groq sedang sibuk buat sementara waktu."
+            : isVisionProviderFailure
+              ? "⚠️ Servis pembaca resit AI menghadapi masalah sementara."
+            : "⚠️ Resit belum dapat diproses.",
           "Tiada transaksi direkodkan.",
           result.reason === "RECEIPT_FOLDER_NOT_CONFIGURED"
             ?
             "Sila sambungkan semula Google Sheet/Drive, kemudian hantar gambar resit sekali lagi."
+            : result.reason === "GROQ_VISION_HTTP_429"
+              ?
+                "Ini bukan disebabkan gambar resit anda. Sila cuba semula selepas beberapa saat."
+              : isVisionProviderFailure
+                ?
+                  "Ini bukan semestinya masalah gambar resit anda. Sila cuba semula selepas beberapa saat."
             :
-            "Sila hantar semula gambar resit yang jelas dalam format JPEG atau PNG.",
+              "Sila hantar semula gambar resit yang jelas dalam format JPEG atau PNG.",
         ].join(
           "\n",
         ),
