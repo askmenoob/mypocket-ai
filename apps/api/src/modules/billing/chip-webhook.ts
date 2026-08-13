@@ -1,4 +1,4 @@
-import { createHash, createVerify } from "node:crypto";
+import { createVerify } from "node:crypto";
 import { AppError } from "../../shared/errors/app-error.js";
 
 export type ChipWebhookPayload = {
@@ -6,7 +6,7 @@ export type ChipWebhookPayload = {
   id: string;
   status: string;
   is_test: boolean;
-  updated_on?: number;
+  updated_on: number;
   reference?: string | null;
   is_recurring_token?: boolean;
   recurring_token?: string | null;
@@ -77,7 +77,10 @@ export const parseChipWebhookPayload = (rawBody: Buffer) => {
   if (
     typeof payload.event_type !== "string" ||
     typeof payload.id !== "string" ||
-    typeof payload.is_test !== "boolean"
+    typeof payload.is_test !== "boolean" ||
+    typeof payload.updated_on !== "number" ||
+    !Number.isSafeInteger(payload.updated_on) ||
+    payload.updated_on <= 0
   ) {
     throw new AppError(
       "CHIP_WEBHOOK_FIELDS_INVALID",
@@ -125,11 +128,10 @@ export const chipWebhookObjectType = (payload: ChipWebhookPayload) =>
 
 export const chipWebhookEventKey = (
   payload: ChipWebhookPayload,
-  rawBody: Buffer,
+  _rawBody: Buffer,
 ) => [
   "CHIP",
   payload.event_type,
   payload.id,
-  payload.updated_on ?? createHash("sha256").update(rawBody).digest("hex"),
   payload.status,
 ].join(":");

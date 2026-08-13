@@ -747,7 +747,17 @@ export class ChipBillingService {
     return { reconciled: false, reason: "STILL_PENDING" as const };
   }
 
-  async receiveWebhook(input: { rawBody: Buffer; signature: string }) {
+  async receiveWebhook(
+    input: { rawBody: Buffer; signature: string },
+    serializationRetry = 0,
+  ): Promise<{
+    received: true;
+    duplicate: boolean;
+    mapped: boolean;
+    activated?: boolean;
+    refunded?: boolean;
+    stale?: boolean;
+  }> {
     const publicKey = this.requiredEnvironment(
       "CHIP_WEBHOOK_PUBLIC_KEY",
       env.CHIP_WEBHOOK_PUBLIC_KEY,
@@ -768,6 +778,7 @@ export class ChipBillingService {
     this.assertPurchaseEnvironment(payload);
     const eventKey = chipWebhookEventKey(payload, input.rawBody);
     const purchaseId = chipWebhookPurchaseId(payload);
+    const providerEventAt = new Date(payload.updated_on * 1_000);
 
     try {
       return await this.app.prisma.$transaction(async (tx) => {
@@ -801,6 +812,42 @@ export class ChipBillingService {
             data: { status: "IGNORED", processedAt: new Date() },
           });
           return { received: true, duplicate: false, mapped: false };
+        }
+
+        const providerLastEventAt =
+          attempt.workspaceBillingSubscription.providerLastEventAt;
+        const staleByTime =
+          providerLastEventAt !== null &&
+          providerEventAt.getTime() < providerLastEventAt.getTime();
+        const terminalAttempt = attempt.status === "REFUNDED";
+        const paidAttempt = attempt.status === "PAID";
+        const successfulEvent =
+          (payload.event_type === "purchase.paid" && payload.status === "paid") ||
+          (payload.event_type === "purchase.preauthorized" &&
+            payload.status === "preauthorized" &&
+            Number(attempt.amountDue) === 0);
+        const failureEvent =
+          payload.event_type === "purchase.payment_failure" ||
+          payload.event_type === "purchase.subscription_charge_failure" ||
+          ["error", "blocked", "expired", "cancelled"].includes(payload.status);
+
+        if (
+          staleByTime ||
+          (successfulEvent && terminalAttempt) ||
+          (failureEvent && (paidAttempt || terminalAttempt))
+        ) {
+          await tx.billingWebhookEvent.update({
+            where: { id: event.id },
+            data: { status: "IGNORED_STALE", processedAt: new Date() },
+          });
+          return {
+            received: true,
+            duplicate: false,
+            mapped: true,
+            activated: false,
+            refunded: false,
+            stale: true,
+          };
         }
 
         const processedAt = new Date();
@@ -898,6 +945,7 @@ export class ChipBillingService {
                 subscription.accessState === "SUSPENDED" ? processedAt : null,
               canceledAt: null,
               lastWebhookAt: processedAt,
+              providerLastEventAt: providerEventAt,
               cancelAtPeriodEnd: false,
             },
           });
@@ -1042,6 +1090,7 @@ export class ChipBillingService {
               lastPaymentAt: processedAt,
               lastPaymentStatus: "FAILED",
               lastWebhookAt: processedAt,
+              providerLastEventAt: providerEventAt,
             },
           });
         } else if (refunded) {
@@ -1063,6 +1112,7 @@ export class ChipBillingService {
               lastPaymentAt: processedAt,
               lastPaymentStatus: "REFUNDED",
               lastWebhookAt: processedAt,
+              providerLastEventAt: providerEventAt,
             },
           });
           await tx.subscription.updateMany({
@@ -1097,6 +1147,15 @@ export class ChipBillingService {
         };
       }, { isolationLevel: "Serializable" });
     } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code?: string }).code === "P2034" &&
+        serializationRetry < 2
+      ) {
+        return this.receiveWebhook(input, serializationRetry + 1);
+      }
       if (
         typeof error === "object" &&
         error !== null &&

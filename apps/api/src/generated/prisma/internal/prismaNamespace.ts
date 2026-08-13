@@ -2669,6 +2669,7 @@ export const WorkspaceBillingSubscriptionScalarFieldEnum = {
   lastPaymentStatus: 'lastPaymentStatus',
   canceledAt: 'canceledAt',
   lastWebhookAt: 'lastWebhookAt',
+  providerLastEventAt: 'providerLastEventAt',
   billingInterval: 'billingInterval',
   renewalMethod: 'renewalMethod',
   accessState: 'accessState',

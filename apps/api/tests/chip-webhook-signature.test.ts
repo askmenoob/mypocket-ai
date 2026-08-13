@@ -89,7 +89,7 @@ test("CHIP payment events require the related purchase identity", () => {
 
 test("CHIP webhook event key is stable for duplicate delivery", () => {
   const rawBody = Buffer.from(
-    '{"event_type":"purchase.paid","id":"purchase-1","status":"paid","is_test":true}',
+    '{"event_type":"purchase.paid","id":"purchase-1","status":"paid","is_test":true,"updated_on":1786400000}',
   );
   const payload = parseChipWebhookPayload(rawBody);
   assert.equal(chipWebhookEventKey(payload, rawBody), chipWebhookEventKey(payload, rawBody));

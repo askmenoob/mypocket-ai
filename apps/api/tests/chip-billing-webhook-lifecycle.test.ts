@@ -14,7 +14,10 @@ const { ChipBillingService } = await import(
 
 const checkoutId = "11111111-1111-4111-8111-111111111111";
 
-function makeHarness(options:{ conversionPromo?:boolean } = {}){
+function makeHarness(options:{
+  conversionPromo?:boolean;
+  transactionConflicts?:number;
+} = {}){
   const writes:Array<{ target:string; data:Record<string, unknown> }> = [];
   const lookups:Array<Record<string, unknown>> = [];
   const seenEvents = new Set<string>();
@@ -25,6 +28,7 @@ function makeHarness(options:{ conversionPromo?:boolean } = {}){
     plan:"FAMILY",
     paidThroughAt:new Date("2026-08-31T00:00:00.000Z"),
     accessState:"SUSPENDED",
+    providerLastEventAt:null as Date | null,
   };
   const attempt = {
     id:"attempt-1",
@@ -37,6 +41,7 @@ function makeHarness(options:{ conversionPromo?:boolean } = {}){
     billingInterval:"MONTHLY",
     renewalMethod:"AUTOMATIC",
     attemptType:"RENEWAL",
+    status:"PENDING",
     coverageStart:new Date("2026-09-01T00:00:00.000Z"),
     coverageEnd:new Date("2026-10-01T00:00:00.000Z"),
     workspaceBillingSubscription:subscription,
@@ -92,10 +97,16 @@ function makeHarness(options:{ conversionPromo?:boolean } = {}){
   };
   const app:any = {
     prisma:{
-      $transaction:async (callback:(client:typeof tx) => unknown) => callback(tx),
+      $transaction:async (callback:(client:typeof tx) => unknown) => {
+        if ((options.transactionConflicts ?? 0) > 0) {
+          options.transactionConflicts = (options.transactionConflicts ?? 0) - 1;
+          throw Object.assign(new Error("serialization conflict"), { code:"P2034" });
+        }
+        return callback(tx);
+      },
     },
   };
-  return { service:new ChipBillingService(app), writes, lookups };
+  return { service:new ChipBillingService(app), writes, lookups, subscription, attempt };
 }
 
 function delivery(payload:Record<string, unknown>){
@@ -130,6 +141,164 @@ test("signed paid webhook stores the purchase id when CHIP marks it as the recur
   assert.equal(fixture.writes.find((item) => item.target === "billing")?.data.accessState, "ACTIVE");
   assert.equal(fixture.writes.find((item) => item.target === "token")?.data.providerTokenId, checkoutId);
   assert.equal(fixture.writes.find((item) => item.target === "reminder")?.data.reminderType, "ACCESS_REACTIVATED");
+});
+
+test("semantic replay stays duplicate when CHIP changes only the delivery timestamp", async () => {
+  const fixture = makeHarness();
+  const first = delivery({
+    event_type:"purchase.paid",
+    id:checkoutId,
+    status:"paid",
+    is_test:true,
+    updated_on:1788211200,
+    payment:{ amount:1900, currency:"MYR", paid_on:1788211200 },
+    purchase:{ total:1900, currency:"MYR" },
+  });
+  const replay = delivery({
+    event_type:"purchase.paid",
+    id:checkoutId,
+    status:"paid",
+    is_test:true,
+    updated_on:1788211260,
+    payment:{ amount:1900, currency:"MYR", paid_on:1788211200 },
+    purchase:{ total:1900, currency:"MYR" },
+  });
+
+  const initial = await fixture.service.receiveWebhook(first);
+  const repeated = await fixture.service.receiveWebhook(replay);
+
+  assert.equal(initial.activated, true);
+  assert.equal(repeated.duplicate, true);
+  assert.equal(
+    fixture.writes.filter((item) => item.target === "billing").length,
+    1,
+  );
+});
+
+test("concurrent duplicate delivery produces one financial state transition", async () => {
+  const fixture = makeHarness();
+  const paid = delivery({
+    event_type:"purchase.paid",
+    id:checkoutId,
+    status:"paid",
+    is_test:true,
+    updated_on:1788211200,
+    payment:{ amount:1900, currency:"MYR", paid_on:1788211200 },
+    purchase:{ total:1900, currency:"MYR" },
+  });
+
+  const results = await Promise.all([
+    fixture.service.receiveWebhook(paid),
+    fixture.service.receiveWebhook(paid),
+  ]);
+
+  assert.equal(results.filter((item) => item.duplicate).length, 1);
+  assert.equal(
+    fixture.writes.filter((item) => item.target === "billing").length,
+    1,
+  );
+});
+
+test("serializable webhook conflict retries with a strict bound", async () => {
+  const fixture = makeHarness({ transactionConflicts:2 });
+  const paid = delivery({
+    event_type:"purchase.paid",
+    id:checkoutId,
+    status:"paid",
+    is_test:true,
+    updated_on:1788211200,
+    payment:{ amount:1900, currency:"MYR", paid_on:1788211200 },
+    purchase:{ total:1900, currency:"MYR" },
+  });
+
+  const result = await fixture.service.receiveWebhook(paid);
+
+  assert.equal(result.activated, true);
+  assert.equal(
+    fixture.writes.filter((item) => item.target === "billing").length,
+    1,
+  );
+});
+
+test("serializable webhook conflicts stop after three total attempts", async () => {
+  const fixture = makeHarness({ transactionConflicts:3 });
+  const paid = delivery({
+    event_type:"purchase.paid",
+    id:checkoutId,
+    status:"paid",
+    is_test:true,
+    updated_on:1788211200,
+    payment:{ amount:1900, currency:"MYR", paid_on:1788211200 },
+    purchase:{ total:1900, currency:"MYR" },
+  });
+
+  await assert.rejects(
+    fixture.service.receiveWebhook(paid),
+    (error:unknown) =>
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?:string }).code === "P2034",
+  );
+  assert.equal(fixture.writes.length, 0);
+});
+
+test("older paid event cannot reactivate access after a newer refund", async () => {
+  const fixture = makeHarness();
+  const refunded = delivery({
+    event_type:"payment.refunded",
+    id:"33333333-3333-4333-8333-333333333333",
+    is_test:true,
+    updated_on:1788211300,
+    related_to:{ type:"purchase", id:checkoutId },
+    payment:{ amount:1900, currency:"MYR" },
+  });
+  const stalePaid = delivery({
+    event_type:"purchase.paid",
+    id:checkoutId,
+    status:"paid",
+    is_test:true,
+    updated_on:1788211200,
+    payment:{ amount:1900, currency:"MYR", paid_on:1788211200 },
+    purchase:{ total:1900, currency:"MYR" },
+  });
+
+  await fixture.service.receiveWebhook(refunded);
+  fixture.writes.length = 0;
+  fixture.attempt.status = "REFUNDED";
+  fixture.subscription.providerLastEventAt = new Date(1788211300 * 1000);
+  const result = await fixture.service.receiveWebhook(stalePaid);
+
+  assert.equal(result.stale, true);
+  assert.equal(result.activated, false);
+  assert.equal(
+    fixture.writes.some((item) => item.target === "billing"),
+    false,
+  );
+});
+
+test("preauthorization cannot reactivate a refunded zero-value attempt", async () => {
+  const fixture = makeHarness();
+  fixture.attempt.amountDue = 0;
+  fixture.attempt.status = "REFUNDED";
+  fixture.subscription.providerLastEventAt = new Date(1788211200 * 1000);
+  const preauthorized = delivery({
+    event_type:"purchase.preauthorized",
+    id:checkoutId,
+    status:"preauthorized",
+    is_test:true,
+    updated_on:1788211300,
+    purchase:{ total:0, currency:"MYR" },
+  });
+
+  const result = await fixture.service.receiveWebhook(preauthorized);
+
+  assert.equal(result.stale, true);
+  assert.equal(result.activated, false);
+  assert.equal(
+    fixture.writes.some((item) => item.target === "billing"),
+    false,
+  );
 });
 
 test("signed paid renewal converts the linked active promotion", async () => {

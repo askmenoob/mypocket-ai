@@ -12,6 +12,13 @@ const migrationPath = join(
   "20260812043000_add_provider_neutral_billing",
   "migration.sql",
 );
+const webhookOrderingMigrationPath = join(
+  apiRoot,
+  "prisma",
+  "migrations",
+  "20260813090000_harden_chip_webhook_ordering",
+  "migration.sql",
+);
 
 test("billing schema exposes provider-neutral subscription state", () => {
   const schema = readFileSync(schemaPath, "utf8");
@@ -33,6 +40,18 @@ test("billing schema exposes provider-neutral subscription state", () => {
   assert.match(schema, /nextRenewalAt\s+DateTime\?/u);
   assert.match(schema, /graceEndsAt\s+DateTime\?/u);
   assert.match(schema, /suspendedAt\s+DateTime\?/u);
+  assert.match(schema, /providerLastEventAt\s+DateTime\?/u);
+});
+
+test("webhook ordering migration is additive and preserves existing billing rows", () => {
+  const migration = readFileSync(webhookOrderingMigrationPath, "utf8");
+
+  assert.match(
+    migration,
+    /ALTER TABLE "WorkspaceBillingSubscription"[\s\S]+ADD COLUMN "providerLastEventAt" TIMESTAMP\(3\)/u,
+  );
+  assert.doesNotMatch(migration, /DROP\s+(?:TABLE|COLUMN|TYPE)/iu);
+  assert.doesNotMatch(migration, /DELETE\s+FROM|TRUNCATE\s+TABLE/iu);
 });
 
 test("billing schema has idempotent payment, renewal, reminder and settings records", () => {

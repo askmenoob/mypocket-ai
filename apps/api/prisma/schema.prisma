@@ -178,6 +178,7 @@ model WorkspaceBillingSubscription {
   lastPaymentStatus      String?
   canceledAt             DateTime?
   lastWebhookAt          DateTime?
+  providerLastEventAt    DateTime?
   billingInterval        BillingInterval      @default(MONTHLY)
   renewalMethod          BillingRenewalMethod @default(AUTOMATIC)
   accessState            BillingAccessState   @default(PENDING)

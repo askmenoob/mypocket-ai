@@ -1,6 +1,6 @@
 # TODO — CHIP Billing Migration
 
-Last updated: 2026-08-12 (Asia/Kuala_Lumpur)
+Last updated: 2026-08-13 (Asia/Kuala_Lumpur)
 
 Legend: `[ ]` pending, `[~]` in progress, `[x]` completed, `[!]` blocked.
 
@@ -40,6 +40,10 @@ Migration evidence (2026-08-12): the full chain first passed in an ephemeral Pos
 - [x] Implement payment status reconciliation, refunds/cancellations, and safe retry behavior.
 - [x] Align final refund and chargeback handling with the official `payment.refunded` / `payment.charged_back` payload and its `related_to` purchase ID.
 - [x] Restrict the Test Mode webhook to paid, failure, recurring-charge failure, cancellation, refund, and chargeback events only.
+- [x] P6: deduplicate semantic webhook replays even when CHIP changes only the delivery timestamp.
+- [x] P6: reject stale/out-of-order events so an older success or failure cannot reverse newer billing state.
+- [x] P6: serialize concurrent deliveries and retry transaction conflicts with a strict three-attempt bound.
+- [ ] P6: apply the additive webhook-ordering migration and deploy only after explicit approval and a fresh database backup.
 
 ## Plans, duration, and pricing
 
@@ -90,6 +94,7 @@ Migration evidence (2026-08-12): the full chain first passed in an ephemeral Pos
 - [x] Apply the live additive migration only after explicit deployment approval and verified backup.
 - [!] Enable CHIP production only after merchant approval, production credentials, and sandbox E2E evidence are present.
 - [x] Commit/push the verified Test Mode implementation while keeping live-money activation blocked.
+- [ ] Commit/push/deploy the isolated P6 webhook-safety patch while keeping CHIP Test Mode enabled.
 
 ## Rollback and current runtime state
 
@@ -104,4 +109,5 @@ Migration evidence (2026-08-12): the full chain first passed in an ephemeral Pos
 - Renewal hardening (2026-08-12): automatic CHIP token charges start only at the exact due time. New dashboard JWTs expire after 12 hours and transaction routes no longer print JWT payloads.
 - HitPay retirement (2026-08-12): the user confirmed all HitPay activity was sandbox-only. Active HitPay runtime code, routes, configuration, scripts, tests, documentation, secrets, one sandbox subscription, and 37 sandbox webhook rows were retired after recoverable backups; historical migration files remain immutable. The affected test account returned to Free and its workspace returned to Personal.
 - Source publication (2026-08-12): retirement commits `f660c48` and `d3c0053` are pushed to `codex/prod-readiness-20260803`, with server/GitHub parity and a clean tracked worktree. Live-money enablement remains blocked only by the hosted lifecycle gates above.
+- P6 verification (2026-08-13): semantic replay, duplicate concurrency, bounded serializable retry, and stale refund/success/preauthorization ordering tests pass; the full API suite passes 254/254, API TypeScript build passes, Prisma validates, and the additive migration remains unapplied pending deployment approval.
 - Rollback artifacts: `.env.backup-chip-activation-20260812-075800` plus scoped source/dist backups under `.deploy-backups/chip-refund-hotfix-*`, `.deploy-backups/chip-access-plan-*`, `.deploy-backups/chip-downgrade-label-*`, and `.deploy-backups/chip-recurring-hotfix-*`; pre-backfill database dump `.deploy-backups/chip-recurring-data-20260812-084007.dump`.

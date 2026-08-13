@@ -44,6 +44,7 @@ export type WorkspaceBillingSubscriptionMinAggregateOutputType = {
   lastPaymentStatus: string | null
   canceledAt: Date | null
   lastWebhookAt: Date | null
+  providerLastEventAt: Date | null
   billingInterval: $Enums.BillingInterval | null
   renewalMethod: $Enums.BillingRenewalMethod | null
   accessState: $Enums.BillingAccessState | null
@@ -80,6 +81,7 @@ export type WorkspaceBillingSubscriptionMaxAggregateOutputType = {
   lastPaymentStatus: string | null
   canceledAt: Date | null
   lastWebhookAt: Date | null
+  providerLastEventAt: Date | null
   billingInterval: $Enums.BillingInterval | null
   renewalMethod: $Enums.BillingRenewalMethod | null
   accessState: $Enums.BillingAccessState | null
@@ -116,6 +118,7 @@ export type WorkspaceBillingSubscriptionCountAggregateOutputType = {
   lastPaymentStatus: number
   canceledAt: number
   lastWebhookAt: number
+  providerLastEventAt: number
   billingInterval: number
   renewalMethod: number
   accessState: number
@@ -154,6 +157,7 @@ export type WorkspaceBillingSubscriptionMinAggregateInputType = {
   lastPaymentStatus?: true
   canceledAt?: true
   lastWebhookAt?: true
+  providerLastEventAt?: true
   billingInterval?: true
   renewalMethod?: true
   accessState?: true
@@ -190,6 +194,7 @@ export type WorkspaceBillingSubscriptionMaxAggregateInputType = {
   lastPaymentStatus?: true
   canceledAt?: true
   lastWebhookAt?: true
+  providerLastEventAt?: true
   billingInterval?: true
   renewalMethod?: true
   accessState?: true
@@ -226,6 +231,7 @@ export type WorkspaceBillingSubscriptionCountAggregateInputType = {
   lastPaymentStatus?: true
   canceledAt?: true
   lastWebhookAt?: true
+  providerLastEventAt?: true
   billingInterval?: true
   renewalMethod?: true
   accessState?: true
@@ -335,6 +341,7 @@ export type WorkspaceBillingSubscriptionGroupByOutputType = {
   lastPaymentStatus: string | null
   canceledAt: Date | null
   lastWebhookAt: Date | null
+  providerLastEventAt: Date | null
   billingInterval: $Enums.BillingInterval
   renewalMethod: $Enums.BillingRenewalMethod
   accessState: $Enums.BillingAccessState
@@ -392,6 +399,7 @@ export type WorkspaceBillingSubscriptionWhereInput = {
   lastPaymentStatus?: Prisma.StringNullableFilter<"WorkspaceBillingSubscription"> | string | null
   canceledAt?: Prisma.DateTimeNullableFilter<"WorkspaceBillingSubscription"> | Date | string | null
   lastWebhookAt?: Prisma.DateTimeNullableFilter<"WorkspaceBillingSubscription"> | Date | string | null
+  providerLastEventAt?: Prisma.DateTimeNullableFilter<"WorkspaceBillingSubscription"> | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFilter<"WorkspaceBillingSubscription"> | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFilter<"WorkspaceBillingSubscription"> | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFilter<"WorkspaceBillingSubscription"> | $Enums.BillingAccessState
@@ -435,6 +443,7 @@ export type WorkspaceBillingSubscriptionOrderByWithRelationInput = {
   lastPaymentStatus?: Prisma.SortOrderInput | Prisma.SortOrder
   canceledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastWebhookAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  providerLastEventAt?: Prisma.SortOrderInput | Prisma.SortOrder
   billingInterval?: Prisma.SortOrder
   renewalMethod?: Prisma.SortOrder
   accessState?: Prisma.SortOrder
@@ -481,6 +490,7 @@ export type WorkspaceBillingSubscriptionWhereUniqueInput = Prisma.AtLeast<{
   lastPaymentStatus?: Prisma.StringNullableFilter<"WorkspaceBillingSubscription"> | string | null
   canceledAt?: Prisma.DateTimeNullableFilter<"WorkspaceBillingSubscription"> | Date | string | null
   lastWebhookAt?: Prisma.DateTimeNullableFilter<"WorkspaceBillingSubscription"> | Date | string | null
+  providerLastEventAt?: Prisma.DateTimeNullableFilter<"WorkspaceBillingSubscription"> | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFilter<"WorkspaceBillingSubscription"> | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFilter<"WorkspaceBillingSubscription"> | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFilter<"WorkspaceBillingSubscription"> | $Enums.BillingAccessState
@@ -524,6 +534,7 @@ export type WorkspaceBillingSubscriptionOrderByWithAggregationInput = {
   lastPaymentStatus?: Prisma.SortOrderInput | Prisma.SortOrder
   canceledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastWebhookAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  providerLastEventAt?: Prisma.SortOrderInput | Prisma.SortOrder
   billingInterval?: Prisma.SortOrder
   renewalMethod?: Prisma.SortOrder
   accessState?: Prisma.SortOrder
@@ -566,6 +577,7 @@ export type WorkspaceBillingSubscriptionScalarWhereWithAggregatesInput = {
   lastPaymentStatus?: Prisma.StringNullableWithAggregatesFilter<"WorkspaceBillingSubscription"> | string | null
   canceledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WorkspaceBillingSubscription"> | Date | string | null
   lastWebhookAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WorkspaceBillingSubscription"> | Date | string | null
+  providerLastEventAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WorkspaceBillingSubscription"> | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalWithAggregatesFilter<"WorkspaceBillingSubscription"> | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodWithAggregatesFilter<"WorkspaceBillingSubscription"> | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateWithAggregatesFilter<"WorkspaceBillingSubscription"> | $Enums.BillingAccessState
@@ -600,6 +612,7 @@ export type WorkspaceBillingSubscriptionCreateInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -643,6 +656,7 @@ export type WorkspaceBillingSubscriptionUncheckedCreateInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -682,6 +696,7 @@ export type WorkspaceBillingSubscriptionUpdateInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -725,6 +740,7 @@ export type WorkspaceBillingSubscriptionUncheckedUpdateInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -766,6 +782,7 @@ export type WorkspaceBillingSubscriptionCreateManyInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -800,6 +817,7 @@ export type WorkspaceBillingSubscriptionUpdateManyMutationInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -836,6 +854,7 @@ export type WorkspaceBillingSubscriptionUncheckedUpdateManyInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -887,6 +906,7 @@ export type WorkspaceBillingSubscriptionCountOrderByAggregateInput = {
   lastPaymentStatus?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   lastWebhookAt?: Prisma.SortOrder
+  providerLastEventAt?: Prisma.SortOrder
   billingInterval?: Prisma.SortOrder
   renewalMethod?: Prisma.SortOrder
   accessState?: Prisma.SortOrder
@@ -923,6 +943,7 @@ export type WorkspaceBillingSubscriptionMaxOrderByAggregateInput = {
   lastPaymentStatus?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   lastWebhookAt?: Prisma.SortOrder
+  providerLastEventAt?: Prisma.SortOrder
   billingInterval?: Prisma.SortOrder
   renewalMethod?: Prisma.SortOrder
   accessState?: Prisma.SortOrder
@@ -959,6 +980,7 @@ export type WorkspaceBillingSubscriptionMinOrderByAggregateInput = {
   lastPaymentStatus?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   lastWebhookAt?: Prisma.SortOrder
+  providerLastEventAt?: Prisma.SortOrder
   billingInterval?: Prisma.SortOrder
   renewalMethod?: Prisma.SortOrder
   accessState?: Prisma.SortOrder
@@ -1156,6 +1178,7 @@ export type WorkspaceBillingSubscriptionCreateWithoutOwnerUserInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -1197,6 +1220,7 @@ export type WorkspaceBillingSubscriptionUncheckedCreateWithoutOwnerUserInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -1267,6 +1291,7 @@ export type WorkspaceBillingSubscriptionScalarWhereInput = {
   lastPaymentStatus?: Prisma.StringNullableFilter<"WorkspaceBillingSubscription"> | string | null
   canceledAt?: Prisma.DateTimeNullableFilter<"WorkspaceBillingSubscription"> | Date | string | null
   lastWebhookAt?: Prisma.DateTimeNullableFilter<"WorkspaceBillingSubscription"> | Date | string | null
+  providerLastEventAt?: Prisma.DateTimeNullableFilter<"WorkspaceBillingSubscription"> | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFilter<"WorkspaceBillingSubscription"> | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFilter<"WorkspaceBillingSubscription"> | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFilter<"WorkspaceBillingSubscription"> | $Enums.BillingAccessState
@@ -1301,6 +1326,7 @@ export type WorkspaceBillingSubscriptionCreateWithoutWorkspaceInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -1342,6 +1368,7 @@ export type WorkspaceBillingSubscriptionUncheckedCreateWithoutWorkspaceInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -1397,6 +1424,7 @@ export type WorkspaceBillingSubscriptionUpdateWithoutWorkspaceInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -1438,6 +1466,7 @@ export type WorkspaceBillingSubscriptionUncheckedUpdateWithoutWorkspaceInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -1477,6 +1506,7 @@ export type WorkspaceBillingSubscriptionCreateWithoutWebhookEventsInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -1519,6 +1549,7 @@ export type WorkspaceBillingSubscriptionUncheckedCreateWithoutWebhookEventsInput
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -1573,6 +1604,7 @@ export type WorkspaceBillingSubscriptionUpdateWithoutWebhookEventsInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -1615,6 +1647,7 @@ export type WorkspaceBillingSubscriptionUncheckedUpdateWithoutWebhookEventsInput
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -1653,6 +1686,7 @@ export type WorkspaceBillingSubscriptionCreateWithoutRecurringTokensInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -1695,6 +1729,7 @@ export type WorkspaceBillingSubscriptionUncheckedCreateWithoutRecurringTokensInp
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -1749,6 +1784,7 @@ export type WorkspaceBillingSubscriptionUpdateWithoutRecurringTokensInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -1791,6 +1827,7 @@ export type WorkspaceBillingSubscriptionUncheckedUpdateWithoutRecurringTokensInp
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -1829,6 +1866,7 @@ export type WorkspaceBillingSubscriptionCreateWithoutPaymentAttemptsInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -1871,6 +1909,7 @@ export type WorkspaceBillingSubscriptionUncheckedCreateWithoutPaymentAttemptsInp
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -1925,6 +1964,7 @@ export type WorkspaceBillingSubscriptionUpdateWithoutPaymentAttemptsInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -1967,6 +2007,7 @@ export type WorkspaceBillingSubscriptionUncheckedUpdateWithoutPaymentAttemptsInp
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -2005,6 +2046,7 @@ export type WorkspaceBillingSubscriptionCreateWithoutRenewalsInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -2047,6 +2089,7 @@ export type WorkspaceBillingSubscriptionUncheckedCreateWithoutRenewalsInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -2101,6 +2144,7 @@ export type WorkspaceBillingSubscriptionUpdateWithoutRenewalsInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -2143,6 +2187,7 @@ export type WorkspaceBillingSubscriptionUncheckedUpdateWithoutRenewalsInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -2181,6 +2226,7 @@ export type WorkspaceBillingSubscriptionCreateWithoutReminderDeliveriesInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -2223,6 +2269,7 @@ export type WorkspaceBillingSubscriptionUncheckedCreateWithoutReminderDeliveries
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -2277,6 +2324,7 @@ export type WorkspaceBillingSubscriptionUpdateWithoutReminderDeliveriesInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -2319,6 +2367,7 @@ export type WorkspaceBillingSubscriptionUncheckedUpdateWithoutReminderDeliveries
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -2358,6 +2407,7 @@ export type WorkspaceBillingSubscriptionCreateManyOwnerUserInput = {
   lastPaymentStatus?: string | null
   canceledAt?: Date | string | null
   lastWebhookAt?: Date | string | null
+  providerLastEventAt?: Date | string | null
   billingInterval?: $Enums.BillingInterval
   renewalMethod?: $Enums.BillingRenewalMethod
   accessState?: $Enums.BillingAccessState
@@ -2392,6 +2442,7 @@ export type WorkspaceBillingSubscriptionUpdateWithoutOwnerUserInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -2433,6 +2484,7 @@ export type WorkspaceBillingSubscriptionUncheckedUpdateWithoutOwnerUserInput = {
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -2473,6 +2525,7 @@ export type WorkspaceBillingSubscriptionUncheckedUpdateManyWithoutOwnerUserInput
   lastPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastWebhookAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  providerLastEventAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   billingInterval?: Prisma.EnumBillingIntervalFieldUpdateOperationsInput | $Enums.BillingInterval
   renewalMethod?: Prisma.EnumBillingRenewalMethodFieldUpdateOperationsInput | $Enums.BillingRenewalMethod
   accessState?: Prisma.EnumBillingAccessStateFieldUpdateOperationsInput | $Enums.BillingAccessState
@@ -2576,6 +2629,7 @@ export type WorkspaceBillingSubscriptionSelect<ExtArgs extends runtime.Types.Ext
   lastPaymentStatus?: boolean
   canceledAt?: boolean
   lastWebhookAt?: boolean
+  providerLastEventAt?: boolean
   billingInterval?: boolean
   renewalMethod?: boolean
   accessState?: boolean
@@ -2620,6 +2674,7 @@ export type WorkspaceBillingSubscriptionSelectCreateManyAndReturn<ExtArgs extend
   lastPaymentStatus?: boolean
   canceledAt?: boolean
   lastWebhookAt?: boolean
+  providerLastEventAt?: boolean
   billingInterval?: boolean
   renewalMethod?: boolean
   accessState?: boolean
@@ -2658,6 +2713,7 @@ export type WorkspaceBillingSubscriptionSelectUpdateManyAndReturn<ExtArgs extend
   lastPaymentStatus?: boolean
   canceledAt?: boolean
   lastWebhookAt?: boolean
+  providerLastEventAt?: boolean
   billingInterval?: boolean
   renewalMethod?: boolean
   accessState?: boolean
@@ -2696,6 +2752,7 @@ export type WorkspaceBillingSubscriptionSelectScalar = {
   lastPaymentStatus?: boolean
   canceledAt?: boolean
   lastWebhookAt?: boolean
+  providerLastEventAt?: boolean
   billingInterval?: boolean
   renewalMethod?: boolean
   accessState?: boolean
@@ -2712,7 +2769,7 @@ export type WorkspaceBillingSubscriptionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type WorkspaceBillingSubscriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workspaceId" | "ownerUserId" | "plan" | "status" | "provider" | "providerPlanId" | "pendingPlan" | "pendingProviderPlanId" | "planChangeRequestedAt" | "providerSubscriptionId" | "checkoutReference" | "checkoutUrl" | "currentPeriodStart" | "currentPeriodEnd" | "lastPaymentAt" | "lastPaymentStatus" | "canceledAt" | "lastWebhookAt" | "billingInterval" | "renewalMethod" | "accessState" | "currency" | "autoRenewEnabled" | "cancelAtPeriodEnd" | "paidThroughAt" | "nextRenewalAt" | "paymentDueAt" | "graceEndsAt" | "suspendedAt" | "reactivatedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workspaceBillingSubscription"]>
+export type WorkspaceBillingSubscriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workspaceId" | "ownerUserId" | "plan" | "status" | "provider" | "providerPlanId" | "pendingPlan" | "pendingProviderPlanId" | "planChangeRequestedAt" | "providerSubscriptionId" | "checkoutReference" | "checkoutUrl" | "currentPeriodStart" | "currentPeriodEnd" | "lastPaymentAt" | "lastPaymentStatus" | "canceledAt" | "lastWebhookAt" | "providerLastEventAt" | "billingInterval" | "renewalMethod" | "accessState" | "currency" | "autoRenewEnabled" | "cancelAtPeriodEnd" | "paidThroughAt" | "nextRenewalAt" | "paymentDueAt" | "graceEndsAt" | "suspendedAt" | "reactivatedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workspaceBillingSubscription"]>
 export type WorkspaceBillingSubscriptionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   workspace?: boolean | Prisma.WorkspaceDefaultArgs<ExtArgs>
   ownerUser?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -2763,6 +2820,7 @@ export type $WorkspaceBillingSubscriptionPayload<ExtArgs extends runtime.Types.E
     lastPaymentStatus: string | null
     canceledAt: Date | null
     lastWebhookAt: Date | null
+    providerLastEventAt: Date | null
     billingInterval: $Enums.BillingInterval
     renewalMethod: $Enums.BillingRenewalMethod
     accessState: $Enums.BillingAccessState
@@ -3226,6 +3284,7 @@ export interface WorkspaceBillingSubscriptionFieldRefs {
   readonly lastPaymentStatus: Prisma.FieldRef<"WorkspaceBillingSubscription", 'String'>
   readonly canceledAt: Prisma.FieldRef<"WorkspaceBillingSubscription", 'DateTime'>
   readonly lastWebhookAt: Prisma.FieldRef<"WorkspaceBillingSubscription", 'DateTime'>
+  readonly providerLastEventAt: Prisma.FieldRef<"WorkspaceBillingSubscription", 'DateTime'>
   readonly billingInterval: Prisma.FieldRef<"WorkspaceBillingSubscription", 'BillingInterval'>
   readonly renewalMethod: Prisma.FieldRef<"WorkspaceBillingSubscription", 'BillingRenewalMethod'>
   readonly accessState: Prisma.FieldRef<"WorkspaceBillingSubscription", 'BillingAccessState'>
