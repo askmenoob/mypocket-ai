@@ -176,14 +176,20 @@ test(
 
 
 test(
-  "stores documents without sending PDFs to image OCR",
+  "ignores documents and videos without download, OCR, storage or bot work",
   async () => {
     const saved =
       storage();
     let visionCalls = 0;
+    let downloadCalls = 0;
     const pipeline =
       new WhatsAppReceiptPipeline(
-        downloader(),
+        {
+          async download(){
+            downloadCalls += 1;
+            throw new Error("must not download unrelated media");
+          },
+        },
         {
           async extractReceipt(){
             visionCalls += 1;
@@ -193,49 +199,163 @@ test(
         saved,
       );
 
-    const result =
-      await pipeline.process({
+    for(const media of [
+      {
+        kind:"document" as const,
+        mimeType:"application/pdf",
+        fileName:"family-document.pdf",
+      },
+      {
+        kind:"video" as const,
+        mimeType:"video/mp4",
+        fileName:"family-video.mp4",
+      },
+    ]){
+      const result = await pipeline.process({
         workspaceId:"workspace-1",
         instanceName:"demo",
-        messageId:"document-1",
-        message:{key:{id:"document-1"}},
-        media:{
-          kind:"document",
-          mimeType:"application/pdf",
-          fileName:"receipt.pdf",
-        },
+        messageId:`media-${media.kind}`,
+        message:{key:{id:`media-${media.kind}`}},
+        media,
         receiptsFolderId:"folder-1",
       });
 
-    assert.equal(
-      result.status,
-      "stored_pending_ocr",
-    );
+      assert.deepEqual(result, {
+        status:"ignored",
+        source:"RECEIPT",
+        reason:"NON_RECEIPT_MEDIA_IGNORED",
+      });
+    }
+    assert.equal(downloadCalls, 0);
     assert.equal(
       visionCalls,
       0,
     );
     assert.equal(
       saved.calls.count,
-      1,
+      0,
     );
   },
 );
 
 
 test(
-  "fails before media download when receipt folder is missing",
+  "silently ignores an ordinary image classified as not a receipt",
+  async () => {
+    const saved = storage();
+    let scanCalls = 0;
+    const pipeline = new WhatsAppReceiptPipeline(
+      downloader(),
+      {
+        async extractReceipt(){
+          return {
+            status:"success" as const,
+            provider:"groq-vision",
+            value:{
+              documentKind:"NOT_RECEIPT" as const,
+              receiptEvidence:[],
+              rawText:"JOIN US NOW IMAI.MY",
+              confidence:0.99,
+              latencyMs:8,
+              model:"vision-model",
+            },
+          };
+        },
+      },
+      saved,
+      0.75,
+      60_000,
+      {
+        async scan(){
+          scanCalls += 1;
+          throw new Error("non-receipt media must not enter scanner");
+        },
+      },
+    );
+
+    const result = await pipeline.process({
+      workspaceId:"workspace-1",
+      instanceName:"demo",
+      messageId:"family-photo-1",
+      message:{key:{id:"family-photo-1"}},
+      media:image,
+      receiptsFolderId:"",
+    });
+
+    assert.deepEqual(result, {
+      status:"ignored",
+      source:"RECEIPT",
+      reason:"NON_RECEIPT_IMAGE_IGNORED",
+    });
+    assert.equal(saved.calls.count, 0);
+    assert.equal(scanCalls, 0);
+  },
+);
+
+
+test(
+  "accepts only a classified receipt with transaction and payable-total evidence",
+  async () => {
+    const pipeline = new WhatsAppReceiptPipeline(
+      downloader(),
+      {
+        async extractReceipt(){
+          return {
+            status:"success" as const,
+            provider:"groq-vision",
+            value:{
+              documentKind:"RECEIPT" as const,
+              receiptEvidence:["receipt paper", "TOTAL RM59.00", "Invoice No"],
+              amount:"59.00",
+              currency:"MYR",
+              merchantName:"AEON CO. (M) BHD",
+              rawText:"AEON CO. (M) BHD\nTOTAL AFTER ADJ RM59.00\nVISA RM59.00\nINVOICE NO 260808",
+              confidence:0.95,
+              latencyMs:9,
+              model:"vision-model",
+            },
+          };
+        },
+      },
+      storage(),
+    );
+
+    const result = await pipeline.process({
+      workspaceId:"workspace-1",
+      instanceName:"demo",
+      messageId:"aeon-receipt-1",
+      message:{key:{id:"aeon-receipt-1"}},
+      media:image,
+      receiptsFolderId:"folder-1",
+    });
+
+    assert.equal(result.status, "draft_ready");
+  },
+);
+
+
+test(
+  "checks the Drive folder only after the image is proven to be a receipt",
   async () => {
     const pipeline =
       new WhatsAppReceiptPipeline(
-        {
-          async download(){
-            throw new Error("must not download");
-          },
-        },
+        downloader(),
         {
           async extractReceipt(){
-            throw new Error("must not OCR");
+            return {
+              status:"success" as const,
+              provider:"groq-vision",
+              value:{
+                documentKind:"RECEIPT" as const,
+                receiptEvidence:["receipt paper", "TOTAL RM12.50"],
+                amount:"12.50",
+                merchantName:"Kedai Makan",
+                rawText:"KEDAI MAKAN\nTOTAL RM12.50\nCASH",
+                confidence:0.95,
+                latencyMs:4,
+                model:"vision-model",
+              },
+            };
           },
         },
         storage(),

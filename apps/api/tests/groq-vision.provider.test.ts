@@ -1025,3 +1025,48 @@ test(
     );
   },
 );
+
+
+test(
+  "marks ordinary photos as not receipts and sends the fail-closed gate prompt",
+  async () => {
+    let prompt = "";
+    const provider = new GroqVisionProvider({
+      apiKey:"test-key",
+      model:"vision-model",
+      fetchImpl:async (_url, init) => {
+        const body = JSON.parse(String(init?.body));
+        prompt = body.messages[0].content[0].text;
+        return new Response(JSON.stringify({
+          choices:[{
+            message:{
+              content:JSON.stringify({
+                documentKind:"NOT_RECEIPT",
+                receiptEvidence:["promotional poster", "no payable total"],
+                rawText:"",
+                confidence:0.99,
+              }),
+            },
+          }],
+        }), {status:200});
+      },
+    });
+
+    const result = await provider.extractReceipt({
+      image:new Uint8Array([1, 2, 3]),
+      mimeType:"image/jpeg",
+      fileName:"family-photo.jpg",
+    });
+
+    assert.equal(result.status, "success");
+    if(result.status !== "success") return;
+    assert.equal(result.value.documentKind, "NOT_RECEIPT");
+    assert.deepEqual(result.value.receiptEvidence, [
+      "promotional poster",
+      "no payable total",
+    ]);
+    assert.equal(result.value.rawText, "");
+    assert.match(prompt, /Family photos.*NOT_RECEIPT/iu);
+    assert.match(prompt, /payable-total cue/iu);
+  },
+);

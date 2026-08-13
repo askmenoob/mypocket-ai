@@ -25,7 +25,10 @@ const payload = {
 };
 
 
-function createService(folderId:string | null){
+function createService(
+  folderId:string | null,
+  receiptPdfEnabled = true,
+){
 
   const app = {
     prisma:{
@@ -45,6 +48,9 @@ function createService(folderId:string | null){
             :
             {receiptsFolderId:folderId},
       },
+      workspaceBotSettings:{
+        findUnique:async () => ({receiptPdfEnabled}),
+      },
     },
   };
 
@@ -61,6 +67,7 @@ test(
     const service =
       createService(
         "receipts-folder",
+        false,
       );
 
     let reply = "";
@@ -76,6 +83,10 @@ test(
         assert.equal(
           input.receiptsFolderId,
           "receipts-folder",
+        );
+        assert.equal(
+          input.receiptOutputFormat,
+          "image",
         );
         return {
           status:"draft_ready",
@@ -134,7 +145,11 @@ test(
     );
     assert.match(
       reply,
-      /!confirm dalam 1 minit/,
+      /!confirm dalam 5 minit/,
+    );
+    assert.match(
+      reply,
+      /Format selepas !confirm: gambar PNG/,
     );
     assert.match(
       reply,
@@ -157,16 +172,16 @@ test(
         "workspace-1:user-1",
       );
     assert.ok(
-      draft.expiresAt - Date.now() <= 60_000
+      draft.expiresAt - Date.now() <= 300_000
       &&
-      draft.expiresAt - Date.now() > 58_000,
+      draft.expiresAt - Date.now() > 298_000,
     );
   },
 );
 
 
 test(
-  "self-sent group receipt without caption uses the bot phone as actor and replies",
+  "self-sent group image without receipt intent is ignored before actor lookup",
   async () => {
     const service =
       createService(
@@ -233,17 +248,15 @@ test(
         },
       });
 
-    assert.equal(
-      actorJid,
-      "60103250032",
-    );
+    assert.equal(actorJid, "");
     assert.equal(
       result.message,
-      "WhatsApp receipt draft ready",
+      "WhatsApp media ignored",
     );
-    assert.match(
-      reply,
-      /!confirm dalam 1 minit/,
+    assert.equal(reply, "");
+    assert.equal(
+      result.normalized.reason,
+      "GROUP_MEDIA_RECEIPT_INTENT_REQUIRED",
     );
   },
 );
@@ -458,7 +471,7 @@ test(
 
 
 test(
-  "receipt image fails closed when workspace has no receipts folder",
+  "proven receipt fails closed when workspace has no receipts folder",
   async () => {
     const service =
       createService(
@@ -474,6 +487,15 @@ test(
       async (_normalized:any, text:string) => {
         reply = text;
       };
+    service.receiptPipeline = {
+      async process(){
+        return {
+          status:"failed",
+          source:"RECEIPT",
+          reason:"RECEIPT_FOLDER_NOT_CONFIGURED",
+        };
+      },
+    };
 
     const result =
       await service.handleEvolutionWebhook(
@@ -525,6 +547,16 @@ test(
       async (_normalized:any, text:string) => {
         reply = text;
       };
+    service.safeSendWebhookDocument =
+      async (
+        _normalized:any,
+        mediaUrl:string,
+        fileName:string,
+      ) => {
+        events.push("pdf");
+        assert.equal(mediaUrl, "https://drive.example/receipt-1");
+        assert.equal(fileName, "receipt-scan.pdf");
+      };
     service.receiptPipeline = {
       storeConfirmedReceipt:async (input:any) => {
         events.push("upload");
@@ -535,7 +567,7 @@ test(
         return {
           status:"success",
           receiptUrl:"https://drive.example/receipt-1",
-          fileName:"receipt.jpg",
+          fileName:"receipt-scan.pdf",
         };
       },
     };
@@ -555,10 +587,10 @@ test(
         receiptsFolderId:"receipts-folder",
         pendingUpload:{
           bytes:new Uint8Array([1, 2, 3]),
-          mimeType:"image/jpeg",
-          fileName:"receipt.jpg",
+          mimeType:"application/pdf",
+          fileName:"receipt-scan.pdf",
         },
-        fileName:"receipt.jpg",
+        fileName:"receipt-scan.pdf",
         extraction:{
           merchantName:"MANKON PHOENIX ENTERPRISE",
           merchantBrand:"Shell",
@@ -603,7 +635,7 @@ test(
     );
     assert.deepEqual(
       events,
-      ["upload", "transaction"],
+      ["upload", "transaction", "pdf"],
     );
     assert.match(
       reply,
@@ -619,6 +651,77 @@ test(
       ),
       false,
     );
+  },
+);
+
+
+test(
+  "receipt draft fields can be corrected before confirm without resetting expiry",
+  async () => {
+    const service = createService("receipts-folder");
+    let reply = "";
+    service.findWebhookActorMember = async () => ({
+      userId:"user-1",
+      role:"MEMBER",
+    });
+    service.getWorkspaceReplyLanguage = async () => "ms";
+    service.safeSendWebhookReply = async (_normalized:any, text:string) => {
+      reply = text;
+    };
+    const expiresAt = Date.now() + 45_000;
+    service.receiptDrafts.set("workspace-1:user-1", {
+      workspaceId:"workspace-1",
+      actorUserId:"user-1",
+      role:"MEMBER",
+      language:"ms",
+      receiptsFolderId:"receipts-folder",
+      pendingUpload:{
+        bytes:new Uint8Array([1, 2, 3]),
+        mimeType:"application/pdf",
+        fileName:"receipt-scan.pdf",
+      },
+      fileName:"receipt-scan.pdf",
+      extraction:{
+        merchantName:"AEON",
+        amount:"59.00",
+        currency:"MYR",
+        rawText:"TOTAL RM59.00",
+        confidence:0.82,
+        latencyMs:1,
+        model:"test-model",
+      },
+      expiresAt,
+    });
+
+    const edit = async (text:string, id:string) =>
+      service.handleEvolutionWebhook({
+        event:"messages.upsert",
+        instance:"demo",
+        data:{
+          key:{
+            fromMe:false,
+            remoteJid:"60123456789@s.whatsapp.net",
+            id,
+          },
+          message:{conversation:text},
+        },
+      });
+
+    assert.equal(
+      (await edit("!ubah jumlah RM 61.20", "receipt-edit-amount")).message,
+      "WhatsApp receipt draft updated",
+    );
+    await edit("!ubah peniaga AEON CO. (M) BHD", "receipt-edit-merchant");
+    await edit("!ubah tarikh 2026-08-08", "receipt-edit-date");
+    await edit("!ubah rujukan INV-260808", "receipt-edit-reference");
+
+    const draft = service.receiptDrafts.get("workspace-1:user-1");
+    assert.equal(draft.extraction.amount, "61.20");
+    assert.equal(draft.extraction.merchantName, "AEON CO. (M) BHD");
+    assert.match(draft.extraction.transactionDate, /^2026-08-08/);
+    assert.equal(draft.extraction.receiptReference, "INV-260808");
+    assert.equal(draft.expiresAt, expiresAt);
+    assert.match(reply, /Draft resit dikemas kini/);
   },
 );
 

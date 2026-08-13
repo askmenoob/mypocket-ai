@@ -158,7 +158,7 @@ test(
 
 
 test(
-  "self-sent receipt images without captions enter the media pipeline",
+  "self-sent group images without receipt intent stay outside the media pipeline",
   () => {
     const service =
       new WhatsAppService(
@@ -245,5 +245,182 @@ test(
       normalized.reason,
       "MESSAGE_FROM_SELF",
     );
+  },
+);
+
+
+test(
+  "registered video and document messages are ignored before member lookup",
+  async () => {
+    for(const [messageId, message] of [
+      ["video-1", {videoMessage:{mimetype:"video/mp4"}}],
+      ["document-1", {documentMessage:{mimetype:"application/pdf", fileName:"family.pdf"}}],
+    ] as const){
+      const service = new WhatsAppService({
+        prisma:{
+          whatsAppInstance:{
+            async findUnique(){
+              return {
+                workspaceId:"workspace-1",
+                phoneNumber:"60100000000",
+              };
+            },
+          },
+        },
+      } as any);
+      (service as any).findWebhookActorMember = async () => {
+        throw new Error("must not identify a human for unrelated media");
+      };
+
+      const result = await service.handleEvolutionWebhook({
+        event:"messages.upsert",
+        instance:"demo",
+        data:{
+          key:{
+            fromMe:false,
+            remoteJid:"60123456789@s.whatsapp.net",
+            id:messageId,
+          },
+          message,
+        },
+      });
+
+      assert.equal(result.message, "WhatsApp media ignored");
+      assert.equal((result.normalized as any).reason, "NON_RECEIPT_MEDIA_IGNORED");
+    }
+  },
+);
+
+
+test(
+  "group images without an explicit receipt trigger are ignored before actor lookup",
+  async () => {
+    let actorLookups = 0;
+    let pipelineCalls = 0;
+    const service = new WhatsAppService({
+      prisma:{
+        whatsAppInstance:{
+          async findUnique(){
+            return {
+              workspaceId:"workspace-1",
+              phoneNumber:"60100000000",
+              botAlias:"mypocket",
+            };
+          },
+        },
+      },
+    } as any) as any;
+    service.findWebhookActorMember = async () => {
+      actorLookups += 1;
+      return {userId:"user-1", role:"OWNER"};
+    };
+    service.receiptPipeline = {
+      process:async () => {
+        pipelineCalls += 1;
+        throw new Error("unrelated group media must not reach receipt processing");
+      },
+    };
+
+    const result = await service.handleEvolutionWebhook({
+      event:"messages.upsert",
+      instance:"demo",
+      data:{
+        key:{
+          fromMe:false,
+          remoteJid:"60132195990-1508049801@g.us",
+          participant:"60123456789@s.whatsapp.net",
+          id:"group-family-photo-1",
+        },
+        message:{
+          imageMessage:{
+            mimetype:"image/jpeg",
+            fileName:"family.jpg",
+          },
+        },
+      },
+    });
+
+    assert.equal(result.message, "WhatsApp media ignored");
+    assert.equal(
+      (result.normalized as any).reason,
+      "GROUP_MEDIA_RECEIPT_INTENT_REQUIRED",
+    );
+    assert.equal(actorLookups, 0);
+    assert.equal(pipelineCalls, 0);
+  },
+);
+
+
+test(
+  "group receipt triggers and the configured alias may enter receipt processing",
+  async () => {
+    for(const caption of [
+      "!resit petrol",
+      "@mypocket rekod resit ini",
+    ]){
+      let pipelineCalls = 0;
+      const service = new WhatsAppService({
+        prisma:{
+          whatsAppInstance:{
+            async findUnique(){
+              return {
+                workspaceId:"workspace-1",
+                phoneNumber:"60100000000",
+                botAlias:"mypocket",
+              };
+            },
+          },
+          workspaceGoogleSetting:{
+            async findUnique(){
+              return {receiptsFolderId:"receipts-folder"};
+            },
+          },
+        },
+      } as any) as any;
+      service.findWebhookActorMember = async () => ({
+        userId:"user-1",
+        role:"OWNER",
+      });
+      service.hasActiveBillingAccess = async () => true;
+      service.getWorkspaceReplyLanguage = async () => "ms";
+      service.safeSendWebhookReply = async () => {};
+      service.transactionService = {
+        getSheetCategoryNames:async () => [],
+        getSheetTransactions:async () => [],
+      };
+      service.receiptPipeline = {
+        process:async () => {
+          pipelineCalls += 1;
+          return {
+            status:"ignored",
+            source:"RECEIPT",
+            reason:"NOT_A_RECEIPT",
+          };
+        },
+      };
+
+      const result = await service.handleEvolutionWebhook({
+        event:"messages.upsert",
+        instance:"demo",
+        data:{
+          key:{
+            fromMe:false,
+            remoteJid:"60132195990-1508049801@g.us",
+            participant:"60123456789@s.whatsapp.net",
+            id:`group-receipt-${caption}`,
+          },
+          message:{
+            imageMessage:{
+              mimetype:"image/jpeg",
+              fileName:"receipt.jpg",
+              caption,
+            },
+          },
+        },
+      });
+
+      assert.equal(result.message, "WhatsApp receipt input ignored");
+      assert.equal(pipelineCalls, 1);
+    }
   },
 );

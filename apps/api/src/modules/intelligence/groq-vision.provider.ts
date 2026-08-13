@@ -35,7 +35,16 @@ export type ReceiptClassificationSource =
   | "MEMORY";
 
 
+export type ReceiptDocumentKind =
+  | "RECEIPT"
+  | "NOT_RECEIPT";
+
+
 export interface ReceiptVisionCandidate {
+
+  documentKind?:ReceiptDocumentKind;
+
+  receiptEvidence?:string[];
 
   amount?:string;
 
@@ -98,6 +107,10 @@ interface GroqVisionProviderOptions {
 
 const DEFAULT_MAX_BYTES =
   20 * 1024 * 1024;
+
+
+const RECEIPT_GATE_PROMPT =
+  "Classify the image before extraction. Return documentKind exactly RECEIPT or NOT_RECEIPT and receiptEvidence as an array of short directly visible reasons. A RECEIPT must visibly be a physical or digital proof of a completed transaction and must contain a payable-total cue such as TOTAL, GRAND TOTAL, AMOUNT, AMOUNT PAID, BILL, SUB-TOTAL, JUMLAH, JUMLAH BAYAR or TL, together with transaction context such as a merchant, purchased item, receipt or invoice number, date/time or payment method. Family photos, portraits, posters, advertisements, social-media images, chat screenshots, memes, product-only photos, menus, price tags, unrelated documents and video frames are NOT_RECEIPT even if they contain a logo, currency symbol, number or the word amount. Never invent receipt text. For NOT_RECEIPT, leave all financial fields null. For RECEIPT, include documentKind and receiptEvidence with the normal extraction fields.";
 
 
 const DEFAULT_PROMPT =
@@ -260,6 +273,7 @@ export class GroqVisionProvider {
     const requestInit =
       createRequestInit(
         [
+          RECEIPT_GATE_PROMPT,
           input.prompt
           ??
           this.defaultPrompt,
@@ -285,7 +299,10 @@ export class GroqVisionProvider {
           await this.fetchImpl(
             this.endpoint,
             createRequestInit(
-              RECEIPT_JSON_FALLBACK_PROMPT,
+              [
+                RECEIPT_GATE_PROMPT,
+                RECEIPT_JSON_FALLBACK_PROMPT,
+              ].join(" "),
               false,
             ),
           );
@@ -374,10 +391,55 @@ export class GroqVisionProvider {
         candidate,
       );
 
+    const rawDocumentKind =
+      this.asString(
+        root.documentKind,
+      )
+        .trim()
+        .toUpperCase();
+
+    const documentKind =
+      rawDocumentKind === "RECEIPT"
+        ? "RECEIPT" as const
+        : rawDocumentKind === "NOT_RECEIPT"
+          ? "NOT_RECEIPT" as const
+          : undefined;
+
+    const receiptEvidence =
+      this.asStringArray(
+        root.receiptEvidence,
+      );
+
     const rawText =
       this.asString(
         root.rawText,
       );
+
+    if(documentKind === "NOT_RECEIPT"){
+
+      const confidence =
+        this.normalizeConfidence(
+          root.confidence,
+        );
+
+      return {
+        status:"success",
+        provider:this.name,
+        value:{
+          documentKind,
+          ...(receiptEvidence.length > 0
+            ? {receiptEvidence}
+            : {}),
+          rawText,
+          ...(confidence !== undefined
+            ? {confidence}
+            : {}),
+          latencyMs,
+          model:this.options.model,
+        },
+      };
+
+    }
 
     if(!rawText){
 
@@ -520,6 +582,12 @@ export class GroqVisionProvider {
       status:"success",
       provider:this.name,
       value:{
+        ...(documentKind
+          ? {documentKind}
+          : {}),
+        ...(receiptEvidence.length > 0
+          ? {receiptEvidence}
+          : {}),
         ...(amount
           ? {amount}
           : {}),

@@ -23,6 +23,17 @@ import {
   GoogleDriveService,
 } from "../google/drive/google-drive.service.js";
 
+import {
+  PassthroughReceiptImageScanner,
+  ReceiptMediaValidationError,
+  type ReceiptImageScanner,
+  type ReceiptOutputFormat,
+} from "./receipt-image.scanner.js";
+
+import type {
+  WhatsAppMediaMetricObserver,
+} from "./whatsapp-media.telemetry.js";
+
 
 export interface ReceiptMediaDownloader {
 
@@ -116,6 +127,13 @@ implements ReceiptStorage {
 
 export type ReceiptPipelineResult =
   | {
+      status:"ignored";
+      source:"RECEIPT";
+      reason:
+        | "NON_RECEIPT_MEDIA_IGNORED"
+        | "NON_RECEIPT_IMAGE_IGNORED";
+    }
+  | {
       status:"duplicate";
       source:"RECEIPT";
       reason:"RECEIPT_DUPLICATE_IGNORED";
@@ -165,6 +183,10 @@ export class WhatsAppReceiptPipeline {
       DEFAULT_CONFIDENCE_THRESHOLD,
     private readonly idempotencyTtlMs =
       24 * 60 * 60 * 1000,
+    private readonly imageScanner:ReceiptImageScanner =
+      new PassthroughReceiptImageScanner(),
+    private readonly observeMediaMetric:WhatsAppMediaMetricObserver =
+      () => undefined,
   ){}
 
 
@@ -176,19 +198,16 @@ export class WhatsAppReceiptPipeline {
       message:Record<string, unknown>;
       media:EvolutionMediaDescriptor;
       receiptsFolderId:string;
+      receiptOutputFormat?:ReceiptOutputFormat;
     },
   ):Promise<ReceiptPipelineResult>{
 
-    if(
-      input.media.kind !== "image"
-      &&
-      input.media.kind !== "document"
-    ){
+    if(input.media.kind !== "image"){
 
       return {
-        status:"unsupported",
+        status:"ignored",
         source:"RECEIPT",
-        reason:"RECEIPT_MEDIA_KIND_UNSUPPORTED",
+        reason:"NON_RECEIPT_MEDIA_IGNORED",
       };
 
     }
@@ -219,17 +238,6 @@ export class WhatsAppReceiptPipeline {
     }
 
 
-    if(!input.receiptsFolderId.trim()){
-
-      return {
-        status:"failed",
-        source:"RECEIPT",
-        reason:"RECEIPT_FOLDER_NOT_CONFIGURED",
-      };
-
-    }
-
-
     const downloaded =
       await this.downloader.download({
         instanceName:
@@ -253,36 +261,26 @@ export class WhatsAppReceiptPipeline {
     const value =
       downloaded.value;
 
-    if(input.media.kind === "document"){
+    let archiveMedia = value;
 
-      const stored =
-        await this.store(
-          input,
-          value,
-        );
-
-      if(stored.status === "failed"){
-
-        return stored;
-
+    try{
+      this.imageScanner.validate?.(value);
+    }catch(error){
+      if(error instanceof ReceiptMediaValidationError){
+        return {
+          status:"failed",
+          source:"RECEIPT",
+          reason:error.message,
+        };
       }
-
-      this.processed.set(
-        idempotencyKey,
-        Date.now() + this.idempotencyTtlMs,
-      );
-
       return {
-        status:"stored_pending_ocr",
+        status:"failed",
         source:"RECEIPT",
-        receiptUrl:
-          stored.receiptUrl,
-        fileName:
-          stored.fileName,
+        reason:"RECEIPT_IMAGE_VALIDATION_FAILED",
       };
-
     }
 
+    this.observeMediaMetric("classification_request");
 
     const extracted =
       await this.visionProvider.extractReceipt({
@@ -322,6 +320,60 @@ export class WhatsAppReceiptPipeline {
     const extraction =
       extracted.value;
 
+    if(!this.isReceiptImage(extraction)){
+
+      this.observeMediaMetric("classified_non_receipt");
+
+      this.processed.set(
+        idempotencyKey,
+        Date.now() + this.idempotencyTtlMs,
+      );
+
+      return {
+        status:"ignored",
+        source:"RECEIPT",
+        reason:"NON_RECEIPT_IMAGE_IGNORED",
+      };
+
+    }
+
+    this.observeMediaMetric("classified_receipt");
+
+    // Local scanning starts only after the media has passed the receipt
+    // classifier. This keeps random/private company media out of scanner and
+    // storage work while retaining the existing one-call Vision extraction.
+    try{
+      const scan = await this.imageScanner.scan(
+        value,
+        {
+          outputFormat:
+            input.receiptOutputFormat
+            ??
+            "pdf",
+        },
+      );
+      archiveMedia = scan.archiveMedia;
+      this.observeMediaMetric("scan_success");
+      if(scan.archiveMedia.mimeType === "application/pdf"){
+        this.observeMediaMetric("pdf_generated");
+      }
+    }catch{
+      // Scan/PDF generation is best effort. A classified receipt may still
+      // proceed as an in-memory draft using the validated original image.
+      archiveMedia = value;
+      this.observeMediaMetric("scan_fallback");
+    }
+
+    if(!input.receiptsFolderId.trim()){
+
+      return {
+        status:"failed",
+        source:"RECEIPT",
+        reason:"RECEIPT_FOLDER_NOT_CONFIGURED",
+      };
+
+    }
+
     const lowConfidence =
       extraction.confidence === undefined
       ||
@@ -337,9 +389,9 @@ export class WhatsAppReceiptPipeline {
           value.fileName,
         extraction,
         pendingUpload:{
-          bytes:value.bytes,
-          mimeType:value.mimeType,
-          fileName:value.fileName,
+          bytes:archiveMedia.bytes,
+          mimeType:archiveMedia.mimeType,
+          fileName:archiveMedia.fileName,
         },
         reason:
           "RECEIPT_LOW_CONFIDENCE_CONFIRMATION",
@@ -354,11 +406,48 @@ export class WhatsAppReceiptPipeline {
         value.fileName,
       extraction,
       pendingUpload:{
-        bytes:value.bytes,
-        mimeType:value.mimeType,
-        fileName:value.fileName,
+        bytes:archiveMedia.bytes,
+        mimeType:archiveMedia.mimeType,
+        fileName:archiveMedia.fileName,
       },
     };
+
+  }
+
+
+  private isReceiptImage(
+    extraction:ReceiptVisionCandidate,
+  ){
+
+    // Older deterministic providers did not emit documentKind. Keep them
+    // compatible; Groq now always emits the explicit fail-closed decision.
+    if(extraction.documentKind === undefined){
+      return true;
+    }
+
+    if(extraction.documentKind !== "RECEIPT"){
+      return false;
+    }
+
+    const rawText = extraction.rawText.trim();
+    const hasPayableTotal =
+      /\b(?:grand\s+total|total(?:\s+after\s+adj(?:ustment)?)?|amount(?:\s+paid)?|sub[ -]?total|bill|jumlah(?:\s+(?:bayar|dibayar))?|tl)\b[^\n]*\d[\d.,]*/iu
+        .test(rawText);
+    const hasTransactionContext =
+      Boolean(extraction.merchantName?.trim())
+      ||
+      /\b(?:receipt|invoice|resit|date|tarikh|visa|mastercard|cash|tunai|card)\b/iu
+        .test(rawText);
+
+    return Boolean(
+      extraction.amount?.trim()
+      &&
+      hasPayableTotal
+      &&
+      hasTransactionContext
+      &&
+      (extraction.receiptEvidence?.length ?? 0) >= 2,
+    );
 
   }
 

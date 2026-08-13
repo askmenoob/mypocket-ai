@@ -41,6 +41,19 @@ import {
   extractEvolutionMedia,
 } from "./whatsapp-media.js";
 
+import {
+  routeWhatsAppMediaIntent,
+} from "./whatsapp-media-intent.router.js";
+
+import {
+  WhatsAppMediaTelemetry,
+  type WhatsAppMediaMetric,
+} from "./whatsapp-media.telemetry.js";
+
+import {
+  SmartReceiptImageScanner,
+} from "./receipt-image.scanner.js";
+
 
 import {
   WhatsAppReplyBuilder,
@@ -175,7 +188,7 @@ const COMMITMENT_DRAFT_TTL_MS =
 
 
 const RECEIPT_DRAFT_TTL_MS =
-  60 * 1000;
+  5 * 60 * 1000;
 
 
 
@@ -207,6 +220,9 @@ export class WhatsAppService {
 
   private readonly receiptPipeline:
     WhatsAppReceiptPipeline;
+
+  private readonly mediaTelemetry =
+    new WhatsAppMediaTelemetry();
 
   private readonly commitmentDrafts =
     new Map<string, CommitmentDraft>();
@@ -283,6 +299,10 @@ export class WhatsAppService {
             app,
           ),
         ),
+        undefined,
+        undefined,
+        new SmartReceiptImageScanner(),
+        metric => this.recordMediaMetric(metric),
       );
 
   }
@@ -2095,6 +2115,8 @@ export class WhatsAppService {
     normalized:NormalizedEvolutionMessage,
   ):Promise<Record<string, unknown>>{
 
+    this.recordMediaMetric("incoming_media");
+
     const instance =
       await this.app.prisma.whatsAppInstance
         .findUnique({
@@ -2127,6 +2149,33 @@ export class WhatsAppService {
         )
       ??
       false;
+
+    const mediaIntent =
+      routeWhatsAppMediaIntent({
+        isGroup:isGroupMessage,
+        kind:normalized.media!.kind,
+        text:
+          normalized.text
+          ??
+          normalized.media?.caption,
+        botAlias:instance.botAlias,
+      });
+
+    if(mediaIntent.action === "IGNORE"){
+
+      this.recordMediaMetric("ignored_no_intent");
+
+      return {
+        message:"WhatsApp media ignored",
+        source:"EVOLUTION",
+        normalized:{
+          ...normalized,
+          reason:mediaIntent.reason,
+        },
+      };
+
+    }
+
 
     const actorJid =
       normalized.fromMe
@@ -2559,6 +2608,15 @@ export class WhatsAppService {
           },
         });
 
+    const botSettings =
+      await this.app.prisma.workspaceBotSettings
+        ?.findUnique?.({
+          where:{workspaceId},
+          select:{receiptPdfEnabled:true},
+        })
+      ??
+      null;
+
     const result =
       await this.receiptPipeline.process({
         workspaceId,
@@ -2577,6 +2635,10 @@ export class WhatsAppService {
           setting?.receiptsFolderId
           ??
           "",
+        receiptOutputFormat:
+          botSettings?.receiptPdfEnabled === false
+            ? "image"
+            : "pdf",
       });
 
     if(
@@ -2685,6 +2747,15 @@ export class WhatsAppService {
               `${result.extraction.currency ?? ""} ${result.extraction.amount}`.trim()
               :
               "Jumlah tidak jelas",
+            result.extraction.confidence === undefined
+              ? "Keyakinan: tidak tersedia"
+              : `Keyakinan: ${Math.round(result.extraction.confidence * 100)}%`,
+            (result.extraction.receiptEvidence?.length ?? 0) > 0
+              ? `Bukti resit: ${result.extraction.receiptEvidence!.slice(0, 2).join("; ")}`
+              : "Bukti resit: semakan visual diperlukan",
+            result.pendingUpload.mimeType === "application/pdf"
+              ? "Format selepas !confirm: PDF"
+              : "Format selepas !confirm: gambar PNG",
             this.normalizeReceiptTransactionDate(
               result.extraction.transactionDate,
             )
@@ -2696,7 +2767,7 @@ export class WhatsAppService {
               "Tarikh resit tidak jelas; tarikh confirm akan digunakan.",
             result.extraction.amount?.trim()
               ?
-              "Taip !confirm dalam 1 minit untuk upload dan rekod, atau !cancel untuk batal."
+              "Taip !ubah <jumlah|peniaga|kategori|tarikh|rujukan|butiran> <nilai> jika perlu; kemudian !confirm dalam 5 minit untuk upload dan rekod, atau !cancel untuk batal."
               :
               "Jumlah tidak jelas; sila hantar semula gambar resit.",
           ].join(
@@ -2743,6 +2814,21 @@ export class WhatsAppService {
             result.reason,
         },
         "WhatsApp receipt processing failed",
+      );
+
+    }
+
+
+    if(result.status === "ignored"){
+
+      this.app.log?.debug(
+        {
+          workspaceId,
+          instanceName:normalized.instanceName,
+          messageId:normalized.messageId,
+          reason:result.reason,
+        },
+        "WhatsApp unrelated media ignored",
       );
 
     }
@@ -4301,10 +4387,10 @@ export class WhatsAppService {
     language:"ms" | "en",
   ){
 
-    const text =
+    const originalText =
       (normalized.text ?? "")
-        .trim()
-        .toLowerCase();
+        .trim();
+    const text = originalText.toLowerCase();
 
     if(
       text !== "confirm"
@@ -4312,6 +4398,10 @@ export class WhatsAppService {
       text !== "cancel"
       &&
       text !== "batal"
+      &&
+      !text.startsWith("edit ")
+      &&
+      !text.startsWith("ubah ")
     ){
 
       return null;
@@ -4406,6 +4496,84 @@ export class WhatsAppService {
 
     }
 
+    const editMatch =
+      /^(?:edit|ubah)\s+(amount|jumlah|merchant|peniaga|category|kategori|date|tarikh|reference|rujukan|details|butiran)\s+(.+)$/i
+        .exec(originalText.replace(/^!/, ""));
+
+    if(editMatch){
+      const field = editMatch[1]!.toLowerCase();
+      const value = editMatch[2]!.trim();
+      const extraction = draft.extraction;
+
+      if(field === "amount" || field === "jumlah"){
+        const normalizedAmount = value
+          .replace(/\s+/g, "")
+          .replace(/^(?:rm|myr)/i, "")
+          .replace(/,/g, "");
+        if(!/^\d+(?:\.\d{1,2})?$/.test(normalizedAmount)){
+          await this.safeSendWebhookReply(
+            normalized,
+            language === "en"
+              ? "Invalid amount. Example: !edit amount 59.00"
+              : "Jumlah tidak sah. Contoh: !ubah jumlah 59.00",
+          );
+          return {
+            message:"WhatsApp receipt draft edit rejected",
+            source:"RECEIPT",
+            normalized,
+          };
+        }
+        extraction.amount = Number(normalizedAmount).toFixed(2);
+      }else if(field === "date" || field === "tarikh"){
+        const normalizedDate = this.normalizeReceiptTransactionDate(value);
+        if(!normalizedDate){
+          await this.safeSendWebhookReply(
+            normalized,
+            language === "en"
+              ? "Invalid date. Example: !edit date 2026-08-08"
+              : "Tarikh tidak sah. Contoh: !ubah tarikh 2026-08-08",
+          );
+          return {
+            message:"WhatsApp receipt draft edit rejected",
+            source:"RECEIPT",
+            normalized,
+          };
+        }
+        extraction.transactionDate = normalizedDate;
+      }else{
+        const safeValue = value
+          .replace(/[\r\n\t]+/g, " ")
+          .trim()
+          .slice(0, 180);
+        if(!safeValue){
+          return null;
+        }
+        if(field === "merchant" || field === "peniaga"){
+          extraction.merchantName = safeValue;
+        }else if(field === "category" || field === "kategori"){
+          extraction.categoryName = safeValue;
+        }else if(field === "reference" || field === "rujukan"){
+          extraction.receiptReference = safeValue;
+        }else{
+          extraction.purchaseDetails = safeValue;
+        }
+      }
+
+      await this.safeSendWebhookReply(
+        normalized,
+        language === "en"
+          ? "✅ Receipt draft updated. Review it, then type !confirm within the original 5-minute window."
+          : "✅ Draft resit dikemas kini. Semak dahulu, kemudian taip !confirm dalam tempoh asal 5 minit.",
+      );
+
+      return {
+        message:"WhatsApp receipt draft updated",
+        source:"RECEIPT",
+        normalized,
+        extraction,
+      };
+    }
+
     try{
 
       if(!draft.receiptUrl){
@@ -4496,6 +4664,20 @@ export class WhatsAppService {
             draft.receiptUrl,
           ].join("\n"),
       );
+
+      if(
+        draft.pendingUpload?.mimeType === "application/pdf"
+        && draft.receiptUrl
+      ){
+        await this.safeSendWebhookDocument(
+          normalized,
+          draft.receiptUrl,
+          draft.fileName,
+          language === "en"
+            ? "Clean receipt scan (PDF)"
+            : "Salinan resit bersih (PDF)",
+        );
+      }
 
       return {
         message:"WhatsApp receipt confirmed",
@@ -10896,6 +11078,113 @@ export class WhatsAppService {
 
     }
 
+  }
+
+
+  private recordMediaMetric(metric:WhatsAppMediaMetric):void{
+    // Some focused source-contract tests construct a prototype-only service.
+    // Observability must never change webhook behaviour when telemetry/logger
+    // infrastructure is unavailable.
+    if(!this.mediaTelemetry){
+      return;
+    }
+    const counters = this.mediaTelemetry.record(metric);
+    const logger = (this.app as FastifyInstance | undefined)?.log;
+    logger?.info(
+      {
+        event:"whatsapp_media_telemetry",
+        metric,
+        counters,
+      },
+      "WhatsApp media telemetry",
+    );
+  }
+
+
+  private async safeSendWebhookDocument(
+    normalized:NormalizedEvolutionMessage,
+    mediaUrl:string,
+    fileName:string,
+    caption:string,
+  ):Promise<void>{
+    try{
+      await this.sendWhatsAppMedia(
+        normalized.instanceName ?? "",
+        normalized.remoteJid ?? "",
+        {
+          mediaType:"document",
+          mimeType:"application/pdf",
+          mediaUrl,
+          fileName,
+          caption,
+        },
+      );
+    }catch{
+      // Do not log provider bodies or receipt URLs. A PDF delivery failure is
+      // best-effort and must never roll back a confirmed transaction.
+      console.error("WHATSAPP_RECEIPT_PDF_REPLY_FAILED");
+    }
+  }
+
+
+  private async sendWhatsAppMedia(
+    instanceName:string,
+    remoteJid:string,
+    input:{
+      mediaType:"document";
+      mimeType:string;
+      mediaUrl:string;
+      fileName:string;
+      caption:string;
+    },
+  ):Promise<void>{
+    if(!instanceName || !remoteJid){
+      return;
+    }
+
+    if(!env.EVOLUTION_API_KEY){
+      throw new AppError(
+        "EVOLUTION_API_KEY_MISSING",
+        "Evolution API key is not configured",
+        500,
+      );
+    }
+
+    const normalizedRemoteJid = remoteJid.trim();
+    const number = normalizedRemoteJid.toLowerCase().endsWith("@g.us")
+      ? normalizedRemoteJid
+      : this.extractPhoneNumber(normalizedRemoteJid);
+    if(!number){
+      return;
+    }
+
+    const response = await fetch(
+      `${env.EVOLUTION_API_URL}/message/sendMedia/${encodeURIComponent(instanceName)}`,
+      {
+        method:"POST",
+        headers:{
+          apikey:env.EVOLUTION_API_KEY,
+          "Content-Type":"application/json",
+        },
+        body:JSON.stringify({
+          number,
+          mediatype:input.mediaType,
+          mimetype:input.mimeType,
+          media:input.mediaUrl,
+          fileName:input.fileName,
+          caption:input.caption,
+        }),
+      },
+    );
+
+    if(!response.ok){
+      const body = await response.text();
+      throw new AppError(
+        "EVOLUTION_SEND_MEDIA_FAILED",
+        body || "Cannot send WhatsApp media",
+        response.status,
+      );
+    }
   }
 
 

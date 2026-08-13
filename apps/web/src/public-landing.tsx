@@ -562,7 +562,7 @@ export function PublicLandingPage() {
             </details>
             <details>
               <summary>Are receipts uploaded before I confirm?<span aria-hidden="true">+</span></summary>
-              <p>No. MyPocket prepares a one-minute draft. Upload and recording only happen after !confirm.</p>
+              <p>No. MyPocket prepares a five-minute draft. Upload and recording only happen after !confirm.</p>
             </details>
             <details>
               <summary>Can I cancel anytime?<span aria-hidden="true">+</span></summary>

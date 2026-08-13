@@ -42,6 +42,7 @@ export const botSettingsSchema = z.object({
   quietHoursEnd: timeSchema.optional(),
   overdueReminderEnabled: z.boolean().optional(),
   whatsappNotificationEnabled: z.boolean().optional(),
+  receiptPdfEnabled: z.boolean().optional(),
 });
 
 export type CreateCommitmentBody = z.infer<typeof createCommitmentSchema>;

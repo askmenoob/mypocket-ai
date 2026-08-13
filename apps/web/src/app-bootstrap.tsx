@@ -263,6 +263,7 @@ type BotSettingsData = {
   quietHoursEnd:string;
   overdueReminderEnabled:boolean;
   whatsappNotificationEnabled:boolean;
+  receiptPdfEnabled:boolean;
 };
 
 type DashboardData = {
@@ -563,6 +564,8 @@ const DASHBOARD_TEXT = {
     defaultReminderTime:"Default reminder time",
     quietHoursStart:"Quiet hours start",
     quietHoursEnd:"Quiet hours end",
+    receiptPdfEnabled:"Save confirmed receipts as PDF",
+    receiptPdfHelp:"On: save a cleaned PDF after !confirm. Off: save the cleaned receipt as a PNG image. Nothing is uploaded before confirmation.",
     saveBotSettings:"Save bot settings",
     botSettingsHelp:"Reply language controls WhatsApp reminder and bot help replies. If the bot is disabled, scheduled reminders are not sent. Dashboard can still be used.",
     workspace:"Workspace",
@@ -648,6 +651,8 @@ const DASHBOARD_TEXT = {
     defaultReminderTime:"Default waktu reminder",
     quietHoursStart:"Waktu senyap mula",
     quietHoursEnd:"Waktu senyap tamat",
+    receiptPdfEnabled:"Simpan resit yang disahkan sebagai PDF",
+    receiptPdfHelp:"Aktif: simpan PDF yang telah dibersihkan selepas !confirm. Tidak aktif: simpan resit sebagai gambar PNG. Tiada fail dimuat naik sebelum pengesahan.",
     saveBotSettings:"Simpan tetapan bot",
     botSettingsHelp:"Bahasa reply mengawal WhatsApp reminder dan bantuan bot. Jika bot disabled, scheduled reminder tidak akan dihantar. Dashboard masih boleh digunakan.",
     workspace:"Workspace",
@@ -3975,6 +3980,9 @@ function Dashboard(
   const [botQuietEnd, setBotQuietEnd] =
     useState("08:00");
 
+  const [receiptPdfEnabled, setReceiptPdfEnabled] =
+    useState(true);
+
   const actorRole =
     (
       props.data.me?.workspace?.role ||
@@ -4093,6 +4101,9 @@ function Dashboard(
       setBotReminderTime(props.data.botSettings.defaultReminderTime);
       setBotQuietStart(props.data.botSettings.quietHoursStart);
       setBotQuietEnd(props.data.botSettings.quietHoursEnd);
+      setReceiptPdfEnabled(
+        props.data.botSettings.receiptPdfEnabled !== false,
+      );
     },
     [props.data.botSettings],
   );
@@ -6016,6 +6027,7 @@ function Dashboard(
           defaultReminderTime:botReminderTime,
           quietHoursStart:botQuietStart,
           quietHoursEnd:botQuietEnd,
+          receiptPdfEnabled,
         }),
       },
     );
@@ -7467,6 +7479,18 @@ function Dashboard(
                   <input type="checkbox" checked={botEnabled} onChange={(event) => setBotEnabled(event.target.checked)} />
                   {dashboardText.botEnabled}
                 </label>
+                <label className="field checkboxField">
+                  <input
+                    type="checkbox"
+                    checked={receiptPdfEnabled}
+                    onChange={(event) => setReceiptPdfEnabled(event.target.checked)}
+                    disabled={!canChangeWorkspaceSettings}
+                  />
+                  {dashboardText.receiptPdfEnabled}
+                </label>
+                <p className="helperText">
+                  {dashboardText.receiptPdfHelp}
+                </p>
                 <label className="field">
                   {dashboardText.replyLanguage}
                   <select value={botReplyLanguage} onChange={(event) => setBotReplyLanguage(event.target.value)}>

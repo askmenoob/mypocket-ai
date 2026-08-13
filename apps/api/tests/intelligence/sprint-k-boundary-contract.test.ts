@@ -158,5 +158,5 @@ test("receipt extraction remains on its separate vision confirmation boundary", 
   assert.match(receiptPipeline, /visionProvider\.extractReceipt/);
   assert.match(service, /new GroqVisionProvider/);
   assert.match(service, /handleReceiptDraftMessage/);
-  assert.match(service, /RECEIPT_DRAFT_TTL_MS\s*=\s*60\s*\*\s*1000/);
+  assert.match(service, /RECEIPT_DRAFT_TTL_MS\s*=\s*5\s*\*\s*60\s*\*\s*1000/);
 });

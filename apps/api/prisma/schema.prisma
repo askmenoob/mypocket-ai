@@ -667,6 +667,7 @@ model WorkspaceBotSettings {
   quietHoursEnd                   String   @default("08:00")
   overdueReminderEnabled          Boolean  @default(true)
   whatsappNotificationEnabled     Boolean  @default(true)
+  receiptPdfEnabled               Boolean  @default(true)
   createdAt                       DateTime @default(now())
   updatedAt                       DateTime @updatedAt
 

@@ -18,7 +18,7 @@ The safe current behavior remains deterministic. `WhatsAppService` constructs `A
 | MyPocket WhatsApp service | Trigger/alias handling, actor lookup, workspace and role checks, deterministic command routing, isolated draft state, validation, execution and replies | Trust an AI result without the normal workspace/role boundary |
 | AI provider router | Try configured text providers, return structured value plus attempt status, fall back deterministically | Access Prisma, transaction/commitment services, Sheets or Drive |
 | Groq text adapter | Convert one text message into a normalized transaction candidate | Execute financial writes or process receipt images |
-| Receipt pipeline | Separate Evolution media, vision extraction, one-minute draft and explicit confirmation boundary | Reuse the text provider or upload an unconfirmed image |
+| Receipt pipeline | Separate Evolution media, vision extraction, five-minute draft and explicit confirmation boundary | Reuse the text provider or upload an unconfirmed image |
 
 ## Benchmark
 

@@ -3003,6 +3003,7 @@ export const WorkspaceBotSettingsScalarFieldEnum = {
   quietHoursEnd: 'quietHoursEnd',
   overdueReminderEnabled: 'overdueReminderEnabled',
   whatsappNotificationEnabled: 'whatsappNotificationEnabled',
+  receiptPdfEnabled: 'receiptPdfEnabled',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

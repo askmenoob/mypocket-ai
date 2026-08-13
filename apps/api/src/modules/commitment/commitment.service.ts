@@ -994,6 +994,8 @@ export class CommitmentService {
           input.overdueReminderEnabled ?? true,
         whatsappNotificationEnabled:
           input.whatsappNotificationEnabled ?? true,
+        receiptPdfEnabled:
+          input.receiptPdfEnabled ?? true,
       },
       update:{
         ...input,
