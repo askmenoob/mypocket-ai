@@ -601,8 +601,8 @@ export function PublicLandingPage() {
           </nav>
           <span>
             © 2026 MyPocket AI · RIFTECH ENTERPRISE ·
-            <a href="mailto:support@imai.my"> support@imai.my</a> ·
-            <a href="tel:+60103250032"> +60 10-325 0032</a>
+            201803398437 (002913082-T) ·
+            <a href="mailto:support@imai.my"> support@imai.my</a>
           </span>
         </div>
       </footer>

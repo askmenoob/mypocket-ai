@@ -342,8 +342,9 @@ export function renderPrivacyPage(): void {
         Privacy-related questions, Google data requests, and deletion
         requests may be submitted through the official contact channel on
         <a href="https://imai.my">imai.my</a> or by emailing
-        <a href="mailto:support@imai.my">support@imai.my</a> or by calling
-        <a href="tel:+60103250032">+60 10-325 0032</a>.
+        <a href="mailto:support@imai.my">support@imai.my</a>. MyPocket AI is
+        operated by RIFTECH ENTERPRISE, SSM registration
+        201803398437 (002913082-T).
       </p>
 
       <footer>

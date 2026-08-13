@@ -24,11 +24,7 @@ test("policies disclose operator, digital delivery, refunds, and support", async
   for (const required of [
     "RIFTECH ENTERPRISE",
     "201803398437 (002913082-T)",
-    "NO. 7, JALAN TANJUNG API-API 30/241",
-    "40460 SHAH ALAM, SELANGOR",
-    "Sole proprietorship",
     "support@imai.my",
-    "+60 10-325 0032",
     "Digital Delivery Policy",
     "no physical goods",
     "original payment method",
@@ -40,6 +36,7 @@ test("policies disclose operator, digital delivery, refunds, and support", async
   }
 
   assert.doesNotMatch(policy, /admin@imai\.my/);
+  assert.doesNotMatch(policy, /TANJUNG API-API|SEKSYEN 30|SHAH ALAM|Sole proprietorship|Registration status|Telephone|\+60 10-325 0032/);
 });
 
 test("public landing exposes payment-review policy links and subscription prices", async () => {
@@ -67,5 +64,14 @@ test("privacy and terms use the submitted CHIP support identity", async () => {
   }
 
   assert.match(terms, /201803398437 \(002913082-T\)/);
-  assert.match(terms, /NO\. 7, JALAN TANJUNG API-API 30\/241/);
+
+  for (const page of [privacy, terms]) {
+    assert.doesNotMatch(page, /TANJUNG API-API|SEKSYEN 30|SHAH ALAM|sole proprietorship|\+60 10-325 0032/);
+  }
+});
+
+test("public landing does not publish private merchant details", async () => {
+  const landing = await source("src/public-landing.tsx");
+
+  assert.doesNotMatch(landing, /TANJUNG API-API|SEKSYEN 30|SHAH ALAM|\+60 10-325 0032/);
 });
