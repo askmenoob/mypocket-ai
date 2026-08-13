@@ -1204,6 +1204,69 @@
   }
 }
 
+/* iPad/tablet: keep every user readable without six tall stacked card rows. */
+@media (min-width: 721px) and (max-width: 1180px) {
+  .appShell .superAdminMain .admin-users-table tbody {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .appShell .superAdminMain .admin-users-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 16px;
+    padding: 12px 14px;
+    border-radius: 10px;
+  }
+
+  .appShell .superAdminMain .admin-users-table tbody td {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    width: auto !important;
+    min-width: 0;
+    min-height: 54px;
+    padding: 6px 0;
+  }
+
+  .appShell .superAdminMain .admin-users-table tbody td:nth-child(odd) {
+    padding-right: 12px;
+    border-right: 1px solid var(--ff-line);
+  }
+
+  .appShell .superAdminMain .admin-users-table tbody td:nth-child(n + 5) {
+    border-bottom: 0;
+  }
+
+  .appShell .superAdminMain .admin-user-identity {
+    gap: 8px;
+  }
+
+  .appShell .superAdminMain .admin-user-avatar {
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+    font-size: 11px;
+  }
+
+  .appShell .superAdminMain .admin-user-avatar i {
+    width: 8px;
+    height: 8px;
+  }
+
+  .appShell .superAdminMain .admin-channel-badge,
+  .appShell .superAdminMain .admin-package-display strong,
+  .appShell .superAdminMain .admin-status-badge {
+    min-height: 22px;
+    padding: 3px 7px;
+  }
+
+  .appShell .superAdminMain .admin-users-table-footer {
+    margin-top: 10px;
+  }
+}
+
 @media (max-width: 1100px) {
   .appShell {
     --ff-sidebar: 214px;

@@ -50,6 +50,21 @@ test("tablet and mobile Super Admin cards cannot fall back to the legacy dark pa
   );
 });
 
+test("iPad User Management cards use a compact two-column information grid", () => {
+  assert.match(
+    focusStyles,
+    /@media \(min-width: 721px\) and \(max-width: 1180px\)[\s\S]*?\.appShell \.superAdminMain \.admin-users-table tbody tr\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?padding:\s*12px 14px;/,
+  );
+  assert.match(
+    focusStyles,
+    /@media \(min-width: 721px\) and \(max-width: 1180px\)[\s\S]*?\.appShell \.superAdminMain \.admin-users-table tbody td\s*\{[\s\S]*?min-height:\s*54px;[\s\S]*?padding:\s*6px 0;/,
+  );
+  assert.match(
+    focusStyles,
+    /@media \(min-width: 721px\) and \(max-width: 1180px\)[\s\S]*?\.appShell \.superAdminMain \.admin-user-avatar\s*\{[\s\S]*?width:\s*34px;[\s\S]*?height:\s*34px;/,
+  );
+});
+
 test("all Super Admin root panels share the same final surface rule", () => {
   assert.match(
     focusStyles,
