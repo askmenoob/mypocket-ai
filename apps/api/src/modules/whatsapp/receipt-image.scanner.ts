@@ -509,22 +509,23 @@ implements ReceiptImageScanner {
       .png({compressionLevel:9})
       .toBuffer({resolveWithObject:true});
     const baseName = safeBaseName(input.fileName);
-    const pngBytes = new Uint8Array(scanned.data);
+    const ocrPngBytes = new Uint8Array(scanned.data);
+    const fullColourPngBytes = new Uint8Array(oriented.data);
     const keepImage =
       options.outputFormat === "image";
 
     const archiveMedia:ReceiptScanMedia =
       keepImage
         ? {
-            bytes:pngBytes,
+            bytes:fullColourPngBytes,
             mimeType:"image/png",
             fileName:`${baseName}-scan.png`,
           }
         : {
             bytes:await buildPdf(
-              pngBytes,
-              scanned.info.width,
-              scanned.info.height,
+              fullColourPngBytes,
+              oriented.info.width,
+              oriented.info.height,
             ),
             mimeType:"application/pdf",
             fileName:`${baseName}-scan.pdf`,
@@ -533,7 +534,7 @@ implements ReceiptImageScanner {
     return {
       status:"success",
       ocrMedia:{
-        bytes:pngBytes,
+        bytes:ocrPngBytes,
         mimeType:"image/png",
         fileName:`${baseName}-scan.png`,
       },

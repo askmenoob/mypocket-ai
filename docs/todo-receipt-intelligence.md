@@ -148,6 +148,14 @@ added. Processing is in memory with sanitized filenames.
   is deployed and pushed; API health/readiness and public checks return 200,
   restart failures remain zero, and a privacy-safe live Groq canary correctly
   returns `NOT_RECEIPT` for a generated blank image.
+- [x] Q14 Receipt archive fidelity source fix: OCR still receives the bounded,
+  perspective-corrected grayscale scan, but Drive PNG/PDF archives now use the
+  complete auto-oriented colour image. Regression coverage proves that PNG
+  retains the original dimensions and colour pixels, while PDF retains the
+  full original aspect ratio. Focused scanner/pipeline/webhook/Drive checks
+  pass 27/27; the wider receipt/media/voice suite passes 66/66; the complete
+  API suite passes 231/231; and the API TypeScript build passes. Runtime
+  deployment remains pending explicit approval.
 
 The image-receipt MVP is green. Generic PDF/invoice automation is outside this
 MVP and remains fail-closed until a future accounting design can prove whether

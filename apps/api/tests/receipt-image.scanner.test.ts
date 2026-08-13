@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import {PDFDocument} from "pdf-lib";
 import sharp from "sharp";
 
 import {
@@ -81,7 +82,7 @@ async function perspectiveReceiptPng():Promise<Uint8Array>{
 
 
 test(
-  "smart scanner produces an enhanced PNG and a one-page PDF archive",
+  "smart scanner keeps OCR enhancement internal and archives the full receipt in PDF",
   async () => {
     const scanner = new SmartReceiptImageScanner();
     const result = await scanner.scan({
@@ -99,13 +100,19 @@ test(
       Buffer.from(result.archiveMedia.bytes.slice(0, 4)).toString("ascii"),
       "%PDF",
     );
+    const pdf = await PDFDocument.load(result.archiveMedia.bytes);
+    const [{width, height}] = pdf.getPages().map(page => page.getSize());
+    assert.ok(
+      Math.abs(width / height - 720 / 1200) < 0.01,
+      "the PDF page must retain the full original receipt aspect ratio",
+    );
     assert.equal(result.enhanced, true);
   },
 );
 
 
 test(
-  "smart scanner skips PDF generation when workspace keeps cleaned images",
+  "smart scanner archives a full-colour PNG when PDF output is disabled",
   async () => {
     const scanner = new SmartReceiptImageScanner();
     const result = await scanner.scan(
@@ -119,7 +126,19 @@ test(
 
     assert.equal(result.archiveMedia.mimeType, "image/png");
     assert.match(result.archiveMedia.fileName, /image-preference-scan\.png$/);
-    assert.deepEqual(result.archiveMedia.bytes, result.ocrMedia.bytes);
+    assert.notDeepEqual(result.archiveMedia.bytes, result.ocrMedia.bytes);
+
+    const archive = await sharp(result.archiveMedia.bytes)
+      .raw()
+      .toBuffer({resolveWithObject:true});
+    assert.equal(archive.info.width, 720);
+    assert.equal(archive.info.height, 1200);
+    assert.ok(archive.info.channels >= 3);
+    assert.deepEqual(
+      [...archive.data.subarray(0, 3)],
+      [216, 209, 196],
+      "the coloured outer background from the uploaded image must be retained",
+    );
   },
 );
 
