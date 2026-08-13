@@ -144,7 +144,10 @@ added. Processing is in memory with sanitized filenames.
   concise fail-closed retry, short `429` responses honor `retry-after`, and bot
   replies now distinguish temporary AI/provider failures from poor image
   quality. Receipt/media/voice regression tests pass 78/78; the complete API
-  suite passes 275/275 and the API TypeScript build passes.
+  suite passes 275/275 and the API TypeScript build passes. Commit `abf7d6a`
+  is deployed and pushed; API health/readiness and public checks return 200,
+  restart failures remain zero, and a privacy-safe live Groq canary correctly
+  returns `NOT_RECEIPT` for a generated blank image.
 
 The image-receipt MVP is green. Generic PDF/invoice automation is outside this
 MVP and remains fail-closed until a future accounting design can prove whether
