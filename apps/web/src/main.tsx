@@ -16,6 +16,10 @@ if (pathname === "/terms") {
   renderMerchantPolicyPage(pathname);
 } else if (["/blog", "/help", "/guides", "/guides/whatsapp-bot", "/updates"].includes(pathname)) {
   renderResourcePage(pathname);
+} else if (pathname === "/catalog") {
+  void import("./catalog-page").then(
+    ({ renderCatalogPage }) => renderCatalogPage(),
+  );
 } else {
   void import("./app-bootstrap");
 }
